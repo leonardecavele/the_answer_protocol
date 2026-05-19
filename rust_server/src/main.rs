@@ -3,7 +3,7 @@ use std::net::{TcpListener, TcpStream};
 use std::thread;
 use std::sync::{Arc, Mutex};
 
-fn start_reader_thread(reader_stream: TcpStream, shared_buffer: Arc<Mutex<String>>)
+fn start_reader_thread(reader_stream: TcpStream, shared_buffer: Arc<Mutex<Vec<String>>>)
 {
     thread::spawn(move || {
         let reader = BufReader::new(reader_stream);
@@ -12,7 +12,7 @@ fn start_reader_thread(reader_stream: TcpStream, shared_buffer: Arc<Mutex<String
             match line {
                 Ok(message) => {
                     let mut buffer = shared_buffer.lock().unwrap();
-                    *buffer = message;
+                    buffer.push(message);
                 }
                 Err(err) => {
                     eprintln!("Read error: {}", err);
@@ -35,12 +35,15 @@ fn main() -> std::io::Result<()> {
 
     let reader_stream = writer_stream.try_clone()?;
 
-    let shared_buffer = Arc::new(Mutex::new(String::new()));
+    let shared_buffer = Arc::new(Mutex::new(Vec::<String>::new()));
     start_reader_thread(reader_stream, Arc::clone(&shared_buffer));
     loop {
         let print_pong = {
             let mut buffer = shared_buffer.lock().unwrap();
-            if buffer.as_str() == "PING" {
+            if buffer.len() == 0 {
+                false
+            }
+            else if buffer[0].as_str() == "PING" {
                 buffer.clear();
                 true
             }
