@@ -12,13 +12,9 @@ func handle_client(conn net.Conn, i int, rust_server *RustServer) {
 	reader := bufio.NewReader(conn)
 
 	for {
-		message, err := reader.ReadString('\n')
+		_, err := reader.ReadString('\n')
 		if err != nil {
 			fmt.Println(err)
-			return
-		}
-
-		if message == "stop" {
 			return
 		}
 
