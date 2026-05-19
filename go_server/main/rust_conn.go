@@ -9,6 +9,10 @@ import (
 	"time"
 )
 
+import (
+	constants "go_server/constants"
+)
+
 type RustServer struct {
 	conn        net.Conn
 	print_mutex sync.Mutex
@@ -46,6 +50,7 @@ func (rust_server *RustServer) read_loop() {
 		}
 
 		message = strings.TrimSpace(message)
-		fmt.Printf("[%v] Received %s from Rust\n", time.Now(), message)
+		time := time.Now().Format(constants.LogFormat)
+		fmt.Printf("[%v] Received %s from Rust\n", time, message)
 	}
 }
