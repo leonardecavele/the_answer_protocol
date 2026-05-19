@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"net"
 	"sync"
@@ -8,8 +9,8 @@ import (
 )
 
 type RustServer struct {
-	conn  net.Conn
-	mutex sync.Mutex
+	conn        net.Conn
+	print_mutex sync.Mutex
 }
 
 func connect_to_rust(addr string) *RustServer {
@@ -22,5 +23,27 @@ func connect_to_rust(addr string) *RustServer {
 
 		fmt.Println("Waiting for Rust server:", err)
 		time.Sleep(time.Second)
+	}
+}
+
+func (rust_server *RustServer) write(message string) error {
+	rust_server.print_mutex.Lock()
+	defer rust_server.print_mutex.Unlock()
+
+	_, err := fmt.Fprintf(rust_server.conn, "%s\n", message)
+	return err
+}
+
+func (rust_server *RustServer) read_loop() {
+	reader := bufio.NewReader(rust_server.conn)
+
+	for {
+		message, err := reader.ReadString('\n')
+		if err != nil {
+			fmt.Println("Rust connection closed:", err)
+			return
+		}
+
+		fmt.Print("Received from Rust: ", message)
 	}
 }

@@ -12,6 +12,10 @@ import (
 
 func main() {
 
+	rust_server := connect_to_rust("127.0.0.1:38801")
+	defer rust_server.conn.Close()
+	go rust_server.read_loop()
+
 	listener, err := net.Listen("tcp", ":38800")
 	if err != nil {
 		os.Exit(int(error.ListenerError))
@@ -27,7 +31,7 @@ func main() {
 			continue
 		}
 
-		go handle_client(conn, i)
+		go handle_client(conn, i, rust_server)
 		i++
 	}
 }
