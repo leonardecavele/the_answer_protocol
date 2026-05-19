@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"net"
+	"strings"
 	"sync"
 	"time"
 )
@@ -44,6 +45,7 @@ func (rust_server *RustServer) read_loop() {
 			return
 		}
 
-		fmt.Printf("[%v] Received %s from Rust", time.Now(), message)
+		message = strings.TrimSpace(message)
+		fmt.Printf("[%v] Received %s from Rust\n", time.Now(), message)
 	}
 }

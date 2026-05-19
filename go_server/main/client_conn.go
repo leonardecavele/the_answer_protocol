@@ -22,7 +22,7 @@ func handle_client(conn net.Conn, i int, rust_server *RustServer) {
 			return
 		}
 
-		fmt.Printf("Received ping from client %d\n", i)
+		fmt.Printf("[%v] Received PING from client %d\n", time.Now(), i)
 		fmt.Printf("[%v] Sending PING to Rust\n", time.Now())
 		err = rust_server.write("PING")
 		if err != nil {
