@@ -20,11 +20,10 @@ func main() {
 	if err != nil {
 		os.Exit(int(error.ListenerError))
 	}
-
+	defer listener.Close()
 	fmt.Println("TCP server started on 38800")
 
-	i := 0
-	for {
+	for i := 0; true; i++ {
 		conn, err := listener.Accept()
 		if err != nil {
 			fmt.Println("Accept error:", err)
@@ -32,6 +31,5 @@ func main() {
 		}
 
 		go handle_client(conn, i, rust_server)
-		i++
 	}
 }

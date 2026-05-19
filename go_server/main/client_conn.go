@@ -1,22 +1,27 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"net"
 )
 
 func handle_client(conn net.Conn, i int, rust_server *RustServer) {
 	defer conn.Close()
-	buffer := make([]byte, 1024)
+	reader := bufio.NewReader(conn)
 
 	for {
-		_, err := conn.Read(buffer)
+		message, err := reader.ReadString('\n')
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
-		fmt.Printf("Received ping from client %d\n", i)
 
+		if message == "stop" {
+			return
+		}
+
+		fmt.Printf("Received ping from client %d\n", i)
 		err = rust_server.write(fmt.Sprintf("PING %d", i))
 		if err != nil {
 			fmt.Println("Rust send error:", err)
