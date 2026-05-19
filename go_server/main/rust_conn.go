@@ -44,6 +44,6 @@ func (rust_server *RustServer) read_loop() {
 			return
 		}
 
-		fmt.Print("Received from Rust: ", message)
+		fmt.Printf("[%v] Received %s from Rust", time.Now(), message)
 	}
 }

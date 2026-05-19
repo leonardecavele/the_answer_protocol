@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"net"
+	"time"
 )
 
 func handle_client(conn net.Conn, i int, rust_server *RustServer) {
@@ -22,7 +23,8 @@ func handle_client(conn net.Conn, i int, rust_server *RustServer) {
 		}
 
 		fmt.Printf("Received ping from client %d\n", i)
-		err = rust_server.write(fmt.Sprintf("PING %d", i))
+		fmt.Printf("[%v] Sending PING to Rust\n", time.Now())
+		err = rust_server.write("PING")
 		if err != nil {
 			fmt.Println("Rust send error:", err)
 			return
