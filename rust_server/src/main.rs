@@ -1,9 +1,10 @@
 use std::io::{BufRead, BufReader, Write};
 use std::net::{TcpListener, TcpStream};
 use std::thread;
+use std::collections::VecDeque;
 use std::sync::{Arc, Mutex};
 
-fn start_reader_thread(reader_stream: TcpStream, shared_buffer: Arc<Mutex<Vec<String>>>)
+fn start_reader_thread(reader_stream: TcpStream, shared_buffer: Arc<Mutex<VecDeque<String>>>)
 {
     thread::spawn(move || {
         let reader = BufReader::new(reader_stream);
@@ -12,7 +13,7 @@ fn start_reader_thread(reader_stream: TcpStream, shared_buffer: Arc<Mutex<Vec<St
             match line {
                 Ok(message) => {
                     let mut buffer = shared_buffer.lock().unwrap();
-                    buffer.push(message);
+                    buffer.push_back(message);
                 }
                 Err(err) => {
                     eprintln!("Read error: {}", err);
@@ -23,7 +24,7 @@ fn start_reader_thread(reader_stream: TcpStream, shared_buffer: Arc<Mutex<Vec<St
     });
 }
 
-fn need_to_print(buffer: &Vec<String>) -> bool 
+fn need_to_print(buffer: &VecDeque<String>) -> bool 
 {
 
     if buffer.len() == 0 {
@@ -48,14 +49,16 @@ fn main() -> std::io::Result<()> {
 
     let reader_stream = writer_stream.try_clone()?;
 
-    let shared_buffer = Arc::new(Mutex::new(Vec::<String>::new()));
+    let shared_buffer = Arc::new(Mutex::new(VecDeque::<String>::new()));
     start_reader_thread(reader_stream, Arc::clone(&shared_buffer));
     loop {
+        // let current_time =
+        // if last_tick 
         let mut buffer = shared_buffer.lock().unwrap();
         let print_pong = need_to_print(&buffer) ;
 
         if print_pong {
-            buffer.clear();
+            buffer.pop_front();
             writer_stream.write_all(b"PONG\n")?;
         }
     }
