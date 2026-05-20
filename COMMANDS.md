@@ -1,45 +1,67 @@
 ## TAP PROTOCOL
 
-Text in uppercase with single quotes is a word string.
-Text in uppercase with quotes are commands.
-Text in uppercase without quotes are ASCII characters.
-Text in lowercase are variables.
+This document uses an ABNF-like syntax.
 
-Establish a connection
+```abnf
+protocol-version = 1*DIGIT
+username = 1*VCHAR
+password = 1*VCHAR
+```
+
+### establish connection
+
+Client
 ```bash
 ./client 127.0.0.1 4242
 ```
 
-Server response
-```txt
-'OK' SP 'hello' SP 'proto=' protocol_version CRLF
+
+Server
+```abnf
+server-greeting = "OK" SP "hello" SP "proto=" protocol-version CRLF
 ```
 
 ### CONNECT command
 
-Client request
-```txt
-"CONNECT" SP username CRLF
+Client
+```abnf
+connect-request = "CONNECT" SP username CRLF
 ```
 
 
-Server response
-```txt
-'Password:' SP
+Server
+```abnf
+connect-response = password-prompt / name-in-use-error
+
+password-prompt = "Password:" SP
+name-in-use-error = "ERR" SP "201" SP "NAME_IN_USE" CRLF
 ```
 
 
-Client request
-```txt
-password CRLF
+Client
+```abnf
+password-request = password CRLF
 ```
 
 
-Server response
-```txt
-'Successfully' SP 'connected' SP 'as' username CRLF
+Server
+```abnf
+password-response = connection-success / invalid-user-or-password
+
+connection-success = "Successfully" SP "connected" SP "as" SP username CRLF
+invalid-user-or-password = "Invalid" SP "user" SP "or" SP "password" CRLF
 ```
-or
-```txt
-'Invalid' SP 'user' SP 'or' SP 'password' CRLF
+
+### QUIT command
+
+Client
+```abnf
+quit-request = "QUIT" CRLF
+```
+or due to server/client connection issue or program aborption
+
+
+Server
+```abnf
+quit-response = "Successfully" SP "disconnected" CRLF
 ```
