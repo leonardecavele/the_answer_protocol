@@ -23,6 +23,19 @@ fn start_reader_thread(reader_stream: TcpStream, shared_buffer: Arc<Mutex<Vec<St
     });
 }
 
+fn need_to_print(buffer: &Vec<String>) -> bool 
+{
+
+    if buffer.len() == 0 {
+        false
+    }
+    else if buffer[0].as_str() == "PING" {
+        true
+    }
+    else{
+        false
+    }
+}
 
 fn main() -> std::io::Result<()> {
     let listener = TcpListener::bind("127.0.0.1:38801")?;
@@ -38,23 +51,12 @@ fn main() -> std::io::Result<()> {
     let shared_buffer = Arc::new(Mutex::new(Vec::<String>::new()));
     start_reader_thread(reader_stream, Arc::clone(&shared_buffer));
     loop {
-        let print_pong = {
-            let mut buffer = shared_buffer.lock().unwrap();
-            if buffer.len() == 0 {
-                false
-            }
-            else if buffer[0].as_str() == "PING" {
-                buffer.clear();
-                true
-            }
-            else{
-                false
-            }
-        };
+        let mut buffer = shared_buffer.lock().unwrap();
+        let print_pong = need_to_print(&buffer) ;
+
         if print_pong {
+            buffer.clear();
             writer_stream.write_all(b"PONG\n")?;
         }
     }
-
-
 }
