@@ -1,6 +1,7 @@
 use std::io::{BufRead, BufReader, Write};
 use std::net::{TcpListener, TcpStream};
 use std::thread;
+use std::time{Duration, Instant};
 use std::sync::mpsc;
 
 fn start_reader_thread(reader_stream: TcpStream, mpsc_sender: mpsc::Sender<String>)
@@ -40,7 +41,7 @@ fn main() -> std::io::Result<()> {
     // the receover now reads the sent message and sends PONG back to the go server
     start_reader_thread(reader_stream, mpsc_sender);
     loop {
-        let msg = mpsc_receiver.recv().unwrap();
+        let msg: String = mpsc_receiver.recv().unwrap();
         if msg == "PING" {
            writer_stream.write_all(b"PONG\n")?;
         }
