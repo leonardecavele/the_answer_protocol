@@ -1,10 +1,9 @@
 use std::io::{BufRead, BufReader, Write};
 use std::net::{TcpListener, TcpStream};
 use std::thread;
-use std::collections::VecDeque;
-use std::sync::{Arc, Mutex};
+use std::sync::mpsc;
 
-fn start_reader_thread(reader_stream: TcpStream, shared_buffer: Arc<Mutex<VecDeque<String>>>)
+fn start_reader_thread(reader_stream: TcpStream, mpsc_sender: mpsc::Sender<String>)
 {
     thread::spawn(move || {
         let reader = BufReader::new(reader_stream);
@@ -12,8 +11,7 @@ fn start_reader_thread(reader_stream: TcpStream, shared_buffer: Arc<Mutex<VecDeq
         for line in reader.lines() {
             match line {
                 Ok(message) => {
-                    let mut buffer = shared_buffer.lock().unwrap();
-                    buffer.push_back(message);
+                    let _ = mpsc_sender.send(message);
                 }
                 Err(err) => {
                     eprintln!("Read error: {}", err);
@@ -22,20 +20,6 @@ fn start_reader_thread(reader_stream: TcpStream, shared_buffer: Arc<Mutex<VecDeq
             }
         }
     });
-}
-
-fn need_to_print(buffer: &VecDeque<String>) -> bool 
-{
-
-    if buffer.len() == 0 {
-        false
-    }
-    else if buffer[0].as_str() == "PING" {
-        true
-    }
-    else{
-        false
-    }
 }
 
 fn main() -> std::io::Result<()> {
@@ -49,17 +33,16 @@ fn main() -> std::io::Result<()> {
 
     let reader_stream = writer_stream.try_clone()?;
 
-    let shared_buffer = Arc::new(Mutex::new(VecDeque::<String>::new()));
-    start_reader_thread(reader_stream, Arc::clone(&shared_buffer));
-    loop {
-        // let current_time =
-        // if last_tick 
-        let mut buffer = shared_buffer.lock().unwrap();
-        let print_pong = need_to_print(&buffer) ;
 
-        if print_pong {
-            buffer.pop_front();
-            writer_stream.write_all(b"PONG\n")?;
+    let (mpsc_sender, mpsc_receiver) = mpsc::channel();
+    // channel to make the two threads communicate: 
+    // first thread reads from the socket and sends the message to the receiver
+    // the receover now reads the sent message and sends PONG back to the go server
+    start_reader_thread(reader_stream, mpsc_sender);
+    loop {
+        let msg = mpsc_receiver.recv().unwrap();
+        if msg == "PING" {
+           writer_stream.write_all(b"PONG\n")?;
         }
     }
 }
