@@ -1,5 +1,24 @@
 ## TAP PROTOCOL
 
+/* move to another md file */
+ROOM TEMPLATE
+```json
+{
+  "room": {
+    "id": "room.identifier",
+    "name": "Room Display Name",
+    "description": "Room description text",
+    "exits": {
+      "north": "room.north_id",
+      "south": "room.south_id"
+    }
+  },
+  "players": ["username1", "username2"],
+  "items": ["item.id1", "item.id2"],
+  "npcs": ["npc.id1", "npc.id2"]
+}
+```
+
 ABNF Syntax
 ```txt
 message = command-line / response-line / event-line
@@ -34,6 +53,8 @@ Client
 Server
 ```abnf
 server-greeting = "OK" SP "hello" SP "proto=" protocol-version LF
+
+protocol-version = 1*DIGIT
 ```
 
 ### CONNECT command
@@ -41,30 +62,45 @@ server-greeting = "OK" SP "hello" SP "proto=" protocol-version LF
 Client
 ```abnf
 connect-request = "CONNECT" SP username LF
+
+username = ALPHA *(ALPHA / DIGIT / "_" / "-")
 ```
 
 
 Server
 ```abnf
-connect-response = password-prompt / name-in-use-error
-
-password-prompt = "OK" SP "Password:" LF
-name-in-use-error = "ERR" SP "201" SP "NAME_IN_USE" LF
+connect-response = "OK" SP "connected" LF
 ```
 
+### LOOK command
 
 Client
 ```abnf
-password-request = "AUTH" SP password LF
+look-request = "LOOK" LF
 ```
 
 
 Server
 ```abnf
-password-response = connection-success / invalid-user-or-password
+look-response = "OK" SP current-room-state-json LF
 
-connection-success = "OK" SP "Successfully" SP "connected" SP "as" SP username LF
-invalid-user-or-password = "ERR" SP "202" SP "INVALID_USER_OR_PASSWORD" LF
+current-room-state-json = <valid JSON text encoded on one line, without LF>
+```
+
+### MOVE command
+
+Client
+```abnf
+move-request = "MOVE" lf
+```
+
+
+Server
+```abnf
+move-response = succesful_move / failed_move
+
+succesful_move = "OK" SP "room=" room_id LF
+failed_move = "ERR" SP "301" NO_EXIT LF
 ```
 
 ### QUIT command
@@ -78,5 +114,53 @@ or due to server/client connection issue or program aborption
 
 Server
 ```abnf
-quit-response = "OK" SP "Successfully" SP "disconnected" LF
+quit-response = "OK" SP "bye" LF
 ```
+
+### CHAT command
+
+Client
+```abnf
+chat-request = "CHAT" SP chat-scope SP chat_message LF
+
+chat-scope = "GLOBAL" / "ROOM" / "GROUP"
+chat-message = VCHAR *(SP / VCHAR)
+```
+
+
+Server
+```abnf
+chat-response = "OK" LF
+```
+
+### WHO command
+
+Client
+```abnf
+who-request = "WHO" LF
+```
+
+
+Server
+```abnf
+who-response = "OK" SP "players=" player-server-count LF
+
+player-server-count = 1*DIGIT
+```
+
+### GROUP CREATE command
+
+Client
+```abnf
+group-create-request = "GROUP" SP "CREATE" LF
+```
+
+
+Server
+```abnf
+group-create-response = "OK" SP "group=" group-id LF
+
+group-id = 1*DIGIT
+```
+
+### GROUP INVITE command
