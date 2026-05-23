@@ -1,7 +1,7 @@
 use std::io::{BufRead, BufReader, Write};
 use std::net::{TcpListener, TcpStream};
 use std::thread;
-use std::time{Duration, Instant};
+use std::time::{Duration, Instant};
 use std::sync::mpsc;
 
 fn start_reader_thread(reader_stream: TcpStream, mpsc_sender: mpsc::Sender<String>)
