@@ -1,55 +1,62 @@
+<style>
+h6 { display: none; }
+</style>
+
 # TAP ERRORS
 
 ## Format
 
 ### Response Format
 
-```abnf
-; response format
-message = response-line
-response-line = ("OK" / error-response) [SP response-data] LF
-response-data = 1*(VCHAR / SP)
-```
+###### message
+###### response-line
+###### response-data
+
+<pre><code class="language-abnf">; response format
+<a href="TAP_ERRORS.md#message">message</a> = <a href="TAP_ERRORS.md#response-line">response-line</a>
+<a href="TAP_ERRORS.md#response-line">response-line</a> = ("OK" / <a href="TAP_ERRORS.md#error-response">error-response</a>) [SP <a href="TAP_ERRORS.md#response-data">response-data</a>] LF
+<a href="TAP_ERRORS.md#response-data">response-data</a> = 1*(VCHAR / SP)
+</code></pre>
 
 ### Error Format
 
-```abnf
-; error format
-error-response = "ERR" SP error-code SP error-message
-error-code = 3DIGIT
-error-message = 1*(ALPHA / DIGIT / "_")
-```
+###### error-response
+###### error-code
+###### error-message
 
-## RFC Errors
+<pre><code class="language-abnf">; error format
+<a href="TAP_ERRORS.md#error-response">error-response</a> = "ERR" SP <a href="TAP_ERRORS.md#error-code">error-code</a> SP <a href="TAP_ERRORS.md#error-message">error-message</a>
+<a href="TAP_ERRORS.md#error-code">error-code</a> = 3DIGIT
+<a href="TAP_ERRORS.md#error-message">error-message</a> = 1*(ALPHA / DIGIT / "_")
+</code></pre>
 
-```abnf
-; error response-lines
-err-name-in-use = "ERR" SP "201" SP "NAME_IN_USE" LF
-err-no-exit = "ERR" SP "301" SP "NO_EXIT" LF
-err-not-in-group = "ERR" SP "401" SP "NOT_IN_GROUP" LF
-err-already-in-group = "ERR" SP "402" SP "ALREADY_IN_GROUP" LF
-err-item-not-found = "ERR" SP "404" SP "ITEM_NOT_FOUND" LF
-err-item-not-in-inventory = "ERR" SP "404" SP "ITEM_NOT_IN_INVENTORY" LF
-err-npc-not-found = "ERR" SP "404" SP "NPC_NOT_FOUND" LF
-err-npc-not-hostile = "ERR" SP "405" SP "NPC_NOT_HOSTILE" LF
-err-no-quest-available = "ERR" SP "406" SP "NO_QUEST_AVAILABLE" LF
-err-connection-failed = "ERR" SP "900" SP "CONNECTION_FAILED" LF
-err-send-failed = "ERR" SP "901" SP "SEND_FAILED" LF
-```
+## Errors
 
-## Implementation Errors
+###### err-name-in-use
+###### err-no-exit
+###### err-not-in-group
+###### err-already-in-group
+###### err-item-not-found
+###### err-item-not-in-inventory
+###### err-npc-not-found
+###### err-npc-not-hostile
+###### err-no-quest-available
+###### err-connection-failed
+###### err-send-failed
 
-```abnf
-; custom error response-lines
-err-already-connected = "ERR" SP "400" SP "ALREADY_CONNECTED" LF
-err-invalid-scope = "ERR" SP "400" SP "INVALID_SCOPE" LF
-err-no-such-user = "ERR" SP "403" SP "NO_SUCH_USER" LF
-err-not-invited = "ERR" SP "403" SP "NOT_INVITED" LF
-err-group-not-found = "ERR" SP "404" SP "GROUP_NOT_FOUND" LF
-err-no-such-group = "ERR" SP "404" SP "NO_SUCH_GROUP" LF
-```
-
-## Standard Error Meaning
+<pre><code class="language-abnf">; error response-lines
+<a href="TAP_ERRORS.md#err-name-in-use">err-name-in-use</a> = "ERR" SP "201" SP "NAME_IN_USE" LF
+<a href="TAP_ERRORS.md#err-no-exit">err-no-exit</a> = "ERR" SP "301" SP "NO_EXIT" LF
+<a href="TAP_ERRORS.md#err-not-in-group">err-not-in-group</a> = "ERR" SP "401" SP "NOT_IN_GROUP" LF
+<a href="TAP_ERRORS.md#err-already-in-group">err-already-in-group</a> = "ERR" SP "402" SP "ALREADY_IN_GROUP" LF
+<a href="TAP_ERRORS.md#err-item-not-found">err-item-not-found</a> = "ERR" SP "404" SP "ITEM_NOT_FOUND" LF
+<a href="TAP_ERRORS.md#err-item-not-in-inventory">err-item-not-in-inventory</a> = "ERR" SP "404" SP "ITEM_NOT_IN_INVENTORY" LF
+<a href="TAP_ERRORS.md#err-npc-not-found">err-npc-not-found</a> = "ERR" SP "404" SP "NPC_NOT_FOUND" LF
+<a href="TAP_ERRORS.md#err-npc-not-hostile">err-npc-not-hostile</a> = "ERR" SP "405" SP "NPC_NOT_HOSTILE" LF
+<a href="TAP_ERRORS.md#err-no-quest-available">err-no-quest-available</a> = "ERR" SP "406" SP "NO_QUEST_AVAILABLE" LF
+<a href="TAP_ERRORS.md#err-connection-failed">err-connection-failed</a> = "ERR" SP "900" SP "CONNECTION_FAILED" LF
+<a href="TAP_ERRORS.md#err-send-failed">err-send-failed</a> = "ERR" SP "901" SP "SEND_FAILED" LF
+</code></pre>
 
 | Error | Meaning |
 |---|---|
@@ -65,7 +72,24 @@ err-no-such-group = "ERR" SP "404" SP "NO_SUCH_GROUP" LF
 | `ERR 900 CONNECTION_FAILED` | Connection establishment failed |
 | `ERR 901 SEND_FAILED` | Message transmission failed |
 
-## Additional Error Meaning
+
+## Additional Errors
+
+###### err-already-connected
+###### err-invalid-scope
+###### err-no-such-user
+###### err-not-invited
+###### err-group-not-found
+###### err-no-such-group
+
+<pre><code class="language-abnf">; custom error response-lines
+<a href="TAP_ERRORS.md#err-already-connected">err-already-connected</a> = "ERR" SP "400" SP "ALREADY_CONNECTED" LF
+<a href="TAP_ERRORS.md#err-invalid-scope">err-invalid-scope</a> = "ERR" SP "400" SP "INVALID_SCOPE" LF
+<a href="TAP_ERRORS.md#err-no-such-user">err-no-such-user</a> = "ERR" SP "403" SP "NO_SUCH_USER" LF
+<a href="TAP_ERRORS.md#err-not-invited">err-not-invited</a> = "ERR" SP "403" SP "NOT_INVITED" LF
+<a href="TAP_ERRORS.md#err-group-not-found">err-group-not-found</a> = "ERR" SP "404" SP "GROUP_NOT_FOUND" LF
+<a href="TAP_ERRORS.md#err-no-such-group">err-no-such-group</a> = "ERR" SP "404" SP "NO_SUCH_GROUP" LF
+</code></pre>
 
 | Error | Meaning |
 |---|---|

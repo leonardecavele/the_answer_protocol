@@ -1,84 +1,116 @@
+<style>
+h6 { display: none; }
+</style>
+
 # TAP COMMANDS
 
 ## Format
 
 ### Command Format
 
-```abnf
-; command format
-message = command-line
-command-line = command-name [SP arguments] LF
-command-name = 1*ALPHA
-arguments = 1*(VCHAR / SP)
-```
+###### message
+###### command-line
+###### command-name
+###### arguments
+
+<pre><code class="language-abnf">; command format
+<a href="TAP_COMMANDS.md#message">message</a> = <a href="TAP_COMMANDS.md#command-line">command-line</a>
+<a href="TAP_COMMANDS.md#command-line">command-line</a> = <a href="TAP_COMMANDS.md#command-name">command-name</a> [SP <a href="TAP_COMMANDS.md#arguments">arguments</a>] LF
+<a href="TAP_COMMANDS.md#command-name">command-name</a> = 1*ALPHA
+<a href="TAP_COMMANDS.md#arguments">arguments</a> = 1*(VCHAR / SP)
+</code></pre>
 
 ### Success Response Format
 
-```abnf
-; success response format
-response-line = "OK" [SP response-data] LF
-response-data = 1*(VCHAR / SP)
-```
+###### response-line
+###### response-data
+
+<pre><code class="language-abnf">; success response format
+<a href="TAP_COMMANDS.md#response-line">response-line</a> = "OK" [SP <a href="TAP_COMMANDS.md#response-data">response-data</a>] LF
+<a href="TAP_COMMANDS.md#response-data">response-data</a> = 1*(VCHAR / SP)
+</code></pre>
 
 ## Arguments
 
 ### Common Values
 
-```abnf
-; common values
-line-text = VCHAR *(SP / VCHAR)
-json-text = <valid JSON text encoded on one line, without LF>
-json-array = <valid JSON array encoded on one line, without LF>
-number = 1*DIGIT
-```
+###### line-text
+###### json-text
+###### json-array
+###### number
+
+<pre><code class="language-abnf">; common values
+<a href="TAP_COMMANDS.md#line-text">line-text</a> = VCHAR *(SP / VCHAR)
+<a href="TAP_COMMANDS.md#json-text">json-text</a> = &lt;valid JSON text encoded on one line, without LF&gt;
+<a href="TAP_COMMANDS.md#json-array">json-array</a> = &lt;valid JSON array encoded on one line, without LF&gt;
+<a href="TAP_COMMANDS.md#number">number</a> = 1*DIGIT
+</code></pre>
 
 ### Arguments
 
-```abnf
-; protocol values
-protocol-version = number
-```
+###### protocol-version
 
-```abnf
-; player values
-username = ALPHA *(ALPHA / DIGIT / "_" / "-")
-leader-name = username
-player-server-count = number
-```
+<pre><code class="language-abnf">; protocol values
+<a href="TAP_COMMANDS.md#protocol-version">protocol-version</a> = <a href="TAP_COMMANDS.md#number">number</a>
+</code></pre>
 
-```abnf
-; world values
-room-id = 1*(ALPHA / DIGIT / "_" / "-" / ".")
-direction = 1*ALPHA
-```
+###### username
+###### leader-name
+###### player-server-count
 
-```abnf
-; group values
-group-id = 1*(ALPHA / DIGIT / "_" / "-" / ".")
-```
+<pre><code class="language-abnf">; player values
+<a href="TAP_COMMANDS.md#username">username</a> = ALPHA *(ALPHA / DIGIT / "_" / "-")
+<a href="TAP_COMMANDS.md#leader-name">leader-name</a> = <a href="TAP_COMMANDS.md#username">username</a>
+<a href="TAP_COMMANDS.md#player-server-count">player-server-count</a> = <a href="TAP_COMMANDS.md#number">number</a>
+</code></pre>
 
-```abnf
-; resource values
-item-identifier = line-text
-npc-name = line-text
-dialogue = line-text
-```
+###### room-id
+###### direction
 
-```abnf
-; chat values
-chat-scope = "GLOBAL" / "ROOM" / "GROUP"
-chat-message = line-text
-```
+<pre><code class="language-abnf">; world values
+<a href="TAP_COMMANDS.md#room-id">room-id</a> = 1*(ALPHA / DIGIT / "_" / "-" / ".")
+<a href="TAP_COMMANDS.md#direction">direction</a> = 1*ALPHA
+</code></pre>
 
-```abnf
-; json payloads
-current-room-state-json = json-text
-combat-result-json = json-text
-player-status-json = json-text
-quest-data-json = json-text
-quest-list-json = json-array
-inventory-json = json-array
-```
+###### group-id
+
+<pre><code class="language-abnf">; group values
+<a href="TAP_COMMANDS.md#group-id">group-id</a> = 1*(ALPHA / DIGIT / "_" / "-" / ".")
+</code></pre>
+
+###### item-identifier
+###### npc-name
+###### dialogue
+
+<pre><code class="language-abnf">; resource values
+<a href="TAP_COMMANDS.md#item-identifier">item-identifier</a> = <a href="TAP_COMMANDS.md#line-text">line-text</a>
+<a href="TAP_COMMANDS.md#npc-name">npc-name</a> = <a href="TAP_COMMANDS.md#line-text">line-text</a>
+<a href="TAP_COMMANDS.md#dialogue">dialogue</a> = <a href="TAP_COMMANDS.md#line-text">line-text</a>
+</code></pre>
+
+###### chat-scope
+###### chat-message
+
+<pre><code class="language-abnf">; chat values
+<a href="TAP_COMMANDS.md#chat-scope">chat-scope</a> = "GLOBAL" / "ROOM" / "GROUP"
+<a href="TAP_COMMANDS.md#chat-message">chat-message</a> = <a href="TAP_COMMANDS.md#line-text">line-text</a>
+</code></pre>
+
+###### current-room-state-json
+###### combat-result-json
+###### player-status-json
+###### quest-data-json
+###### quest-list-json
+###### inventory-json
+
+<pre><code class="language-abnf">; json payloads
+<a href="TAP_COMMANDS.md#current-room-state-json">current-room-state-json</a> = <a href="TAP_COMMANDS.md#json-text">json-text</a>
+<a href="TAP_COMMANDS.md#combat-result-json">combat-result-json</a> = <a href="TAP_COMMANDS.md#json-text">json-text</a>
+<a href="TAP_COMMANDS.md#player-status-json">player-status-json</a> = <a href="TAP_COMMANDS.md#json-text">json-text</a>
+<a href="TAP_COMMANDS.md#quest-data-json">quest-data-json</a> = <a href="TAP_COMMANDS.md#json-text">json-text</a>
+<a href="TAP_COMMANDS.md#quest-list-json">quest-list-json</a> = <a href="TAP_COMMANDS.md#json-array">json-array</a>
+<a href="TAP_COMMANDS.md#inventory-json">inventory-json</a> = <a href="TAP_COMMANDS.md#json-array">json-array</a>
+</code></pre>
 
 ## Establish Connection
 
@@ -89,310 +121,360 @@ Client
 
 
 Server
-```abnf
-; response-line
-server-greeting = "OK" SP "hello" SP "proto=" protocol-version LF
-```
+###### server-greeting
+
+<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#response-line">response-line</a>
+<a href="TAP_COMMANDS.md#server-greeting">server-greeting</a> = "OK" SP "hello" SP "proto=" <a href="TAP_COMMANDS.md#protocol-version">protocol-version</a> LF
+</code></pre>
 
 ## Core Commands
 
 ### CONNECT command
 
 Client
-```abnf
-; command-line
-connect-request = "CONNECT" SP username LF
-```
+###### connect-request
+
+<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#command-line">command-line</a>
+<a href="TAP_COMMANDS.md#connect-request">connect-request</a> = "CONNECT" SP <a href="TAP_COMMANDS.md#username">username</a> LF
+</code></pre>
 
 Server
-```abnf
-; response-line
-connect-response = connect-success / err-name-in-use / err-already-connected
+###### connect-response
+###### connect-success
 
-connect-success = "OK" SP "connected" LF
-```
+<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#response-line">response-line</a>
+<a href="TAP_COMMANDS.md#connect-response">connect-response</a> = <a href="TAP_COMMANDS.md#connect-success">connect-success</a> / <a href="TAP_ERRORS.md#err-name-in-use">err-name-in-use</a> / <a href="TAP_ERRORS.md#err-already-connected">err-already-connected</a>
+
+<a href="TAP_COMMANDS.md#connect-success">connect-success</a> = "OK" SP "connected" LF
+</code></pre>
 
 ### LOOK command
 
 Client
-```abnf
-; command-line
-look-request = "LOOK" LF
-```
+###### look-request
+
+<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#command-line">command-line</a>
+<a href="TAP_COMMANDS.md#look-request">look-request</a> = "LOOK" LF
+</code></pre>
 
 
 Server
-```abnf
-; response-line
-look-response = "OK" SP current-room-state-json LF
-```
+###### look-response
+
+<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#response-line">response-line</a>
+<a href="TAP_COMMANDS.md#look-response">look-response</a> = "OK" SP <a href="TAP_COMMANDS.md#current-room-state-json">current-room-state-json</a> LF
+</code></pre>
 
 ### MOVE command
 
 Client
-```abnf
-; command-line
-move-request = "MOVE" SP direction LF
-```
+###### move-request
+
+<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#command-line">command-line</a>
+<a href="TAP_COMMANDS.md#move-request">move-request</a> = "MOVE" SP <a href="TAP_COMMANDS.md#direction">direction</a> LF
+</code></pre>
 
 
 Server
-```abnf
-; response-line
-move-response = successful-move / err-no-exit
+###### move-response
+###### successful-move
 
-successful-move = "OK" SP "room=" room-id LF
-```
+<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#response-line">response-line</a>
+<a href="TAP_COMMANDS.md#move-response">move-response</a> = <a href="TAP_COMMANDS.md#successful-move">successful-move</a> / <a href="TAP_ERRORS.md#err-no-exit">err-no-exit</a>
+
+<a href="TAP_COMMANDS.md#successful-move">successful-move</a> = "OK" SP "room=" <a href="TAP_COMMANDS.md#room-id">room-id</a> LF
+</code></pre>
 
 ### QUIT command
 
 Client
-```abnf
-; command-line
-quit-request = quit-request-command / <server/client connection issue or program aborption>
+###### quit-request
+###### quit-request-command
 
-quit-request-command = "QUIT" LF
-```
+<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#command-line">command-line</a>
+<a href="TAP_COMMANDS.md#quit-request">quit-request</a> = <a href="TAP_COMMANDS.md#quit-request-command">quit-request-command</a> / &lt;server/client connection issue or program aborption&gt;
+
+<a href="TAP_COMMANDS.md#quit-request-command">quit-request-command</a> = "QUIT" LF
+</code></pre>
 
 
 Server
-```abnf
-; response-line
-quit-response = "OK" SP "bye" LF
-```
+###### quit-response
+
+<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#response-line">response-line</a>
+<a href="TAP_COMMANDS.md#quit-response">quit-response</a> = "OK" SP "bye" LF
+</code></pre>
 
 ## Communication Commands
 
 ### CHAT command
 
 Client
-```abnf
-; command-line
-chat-request = "CHAT" SP chat-scope SP chat-message LF
-```
+###### chat-request
+
+<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#command-line">command-line</a>
+<a href="TAP_COMMANDS.md#chat-request">chat-request</a> = "CHAT" SP <a href="TAP_COMMANDS.md#chat-scope">chat-scope</a> SP <a href="TAP_COMMANDS.md#chat-message">chat-message</a> LF
+</code></pre>
 
 
 Server
-```abnf
-; response-line
-chat-response = chat-success / err-not-in-group / err-invalid-scope / err-no-such-group
+###### chat-response
+###### chat-success
 
-chat-success = "OK" LF
-```
+<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#response-line">response-line</a>
+<a href="TAP_COMMANDS.md#chat-response">chat-response</a> = <a href="TAP_COMMANDS.md#chat-success">chat-success</a> / <a href="TAP_ERRORS.md#err-not-in-group">err-not-in-group</a> / <a href="TAP_ERRORS.md#err-invalid-scope">err-invalid-scope</a> / <a href="TAP_ERRORS.md#err-no-such-group">err-no-such-group</a>
+
+<a href="TAP_COMMANDS.md#chat-success">chat-success</a> = "OK" LF
+</code></pre>
 
 ### WHO command
 
 Client
-```abnf
-; command-line
-who-request = "WHO" LF
-```
+###### who-request
+
+<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#command-line">command-line</a>
+<a href="TAP_COMMANDS.md#who-request">who-request</a> = "WHO" LF
+</code></pre>
 
 
 Server
-```abnf
-; response-line
-who-response = "OK" SP "players=" player-server-count LF
-```
+###### who-response
+
+<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#response-line">response-line</a>
+<a href="TAP_COMMANDS.md#who-response">who-response</a> = "OK" SP "players=" <a href="TAP_COMMANDS.md#player-server-count">player-server-count</a> LF
+</code></pre>
 
 ## Group Management Commands
 
 ### GROUP CREATE command
 
 Client
-```abnf
-; command-line
-group-create-request = "GROUP" SP "CREATE" LF
-```
+###### group-create-request
+
+<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#command-line">command-line</a>
+<a href="TAP_COMMANDS.md#group-create-request">group-create-request</a> = "GROUP" SP "CREATE" LF
+</code></pre>
 
 
 Server
-```abnf
-; response-line
-group-create-response = group-create-success / err-already-in-group
+###### group-create-response
+###### group-create-success
 
-group-create-success = "OK" SP "group=" group-id LF
-```
+<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#response-line">response-line</a>
+<a href="TAP_COMMANDS.md#group-create-response">group-create-response</a> = <a href="TAP_COMMANDS.md#group-create-success">group-create-success</a> / <a href="TAP_ERRORS.md#err-already-in-group">err-already-in-group</a>
+
+<a href="TAP_COMMANDS.md#group-create-success">group-create-success</a> = "OK" SP "group=" <a href="TAP_COMMANDS.md#group-id">group-id</a> LF
+</code></pre>
 
 ### GROUP INVITE command
 
 Client
-```abnf
-; command-line
-group-invite-request = "GROUP" SP "INVITE" SP username LF
-```
+###### group-invite-request
+
+<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#command-line">command-line</a>
+<a href="TAP_COMMANDS.md#group-invite-request">group-invite-request</a> = "GROUP" SP "INVITE" SP <a href="TAP_COMMANDS.md#username">username</a> LF
+</code></pre>
 
 
 Server
-```abnf
-; response-line
-group-invite-response = group-invite-success / err-not-in-group / err-no-such-user / err-already-in-group / err-group-not-found
+###### group-invite-response
+###### group-invite-success
 
-group-invite-success = "OK" LF
-```
+<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#response-line">response-line</a>
+<a href="TAP_COMMANDS.md#group-invite-response">group-invite-response</a> = <a href="TAP_COMMANDS.md#group-invite-success">group-invite-success</a> / <a href="TAP_ERRORS.md#err-not-in-group">err-not-in-group</a> / <a href="TAP_ERRORS.md#err-no-such-user">err-no-such-user</a> / <a href="TAP_ERRORS.md#err-already-in-group">err-already-in-group</a> / <a href="TAP_ERRORS.md#err-group-not-found">err-group-not-found</a>
+
+<a href="TAP_COMMANDS.md#group-invite-success">group-invite-success</a> = "OK" LF
+</code></pre>
 
 ### GROUP JOIN command
 
 Client
-```abnf
-; command-line
-group-join-request = "GROUP" SP "JOIN" SP leader-name LF
-```
+###### group-join-request
+
+<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#command-line">command-line</a>
+<a href="TAP_COMMANDS.md#group-join-request">group-join-request</a> = "GROUP" SP "JOIN" SP <a href="TAP_COMMANDS.md#leader-name">leader-name</a> LF
+</code></pre>
 
 
 Server
-```abnf
-; response-line
-group-join-response = group-join-success / err-no-such-user / err-already-in-group / err-not-invited / err-group-not-found
+###### group-join-response
+###### group-join-success
 
-group-join-success = "OK" SP "group=" group-id LF
-```
+<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#response-line">response-line</a>
+<a href="TAP_COMMANDS.md#group-join-response">group-join-response</a> = <a href="TAP_COMMANDS.md#group-join-success">group-join-success</a> / <a href="TAP_ERRORS.md#err-no-such-user">err-no-such-user</a> / <a href="TAP_ERRORS.md#err-already-in-group">err-already-in-group</a> / <a href="TAP_ERRORS.md#err-not-invited">err-not-invited</a> / <a href="TAP_ERRORS.md#err-group-not-found">err-group-not-found</a>
+
+<a href="TAP_COMMANDS.md#group-join-success">group-join-success</a> = "OK" SP "group=" <a href="TAP_COMMANDS.md#group-id">group-id</a> LF
+</code></pre>
 
 ### GROUP LEAVE command
 
 Client
-```abnf
-; command-line
-group-leave-request = "GROUP" SP "LEAVE" LF
-```
+###### group-leave-request
+
+<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#command-line">command-line</a>
+<a href="TAP_COMMANDS.md#group-leave-request">group-leave-request</a> = "GROUP" SP "LEAVE" LF
+</code></pre>
 
 
 Server
-```abnf
-; response-line
-group-leave-response = group-leave-success / err-not-in-group / err-group-not-found
+###### group-leave-response
+###### group-leave-success
 
-group-leave-success = "OK" LF
-```
+<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#response-line">response-line</a>
+<a href="TAP_COMMANDS.md#group-leave-response">group-leave-response</a> = <a href="TAP_COMMANDS.md#group-leave-success">group-leave-success</a> / <a href="TAP_ERRORS.md#err-not-in-group">err-not-in-group</a> / <a href="TAP_ERRORS.md#err-group-not-found">err-group-not-found</a>
+
+<a href="TAP_COMMANDS.md#group-leave-success">group-leave-success</a> = "OK" LF
+</code></pre>
 
 ## Resource Interaction Commands
 
 ### TAKE command
 
 Client
-```abnf
-; command-line
-take-request = "TAKE" SP item-identifier LF
-```
+###### take-request
+
+<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#command-line">command-line</a>
+<a href="TAP_COMMANDS.md#take-request">take-request</a> = "TAKE" SP <a href="TAP_COMMANDS.md#item-identifier">item-identifier</a> LF
+</code></pre>
 
 
 Server
-```abnf
-; response-line
-take-response = take-success / err-item-not-found
+###### take-response
+###### take-success
 
-take-success = "OK" SP "taken=" item-identifier LF
-```
+<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#response-line">response-line</a>
+<a href="TAP_COMMANDS.md#take-response">take-response</a> = <a href="TAP_COMMANDS.md#take-success">take-success</a> / <a href="TAP_ERRORS.md#err-item-not-found">err-item-not-found</a>
+
+<a href="TAP_COMMANDS.md#take-success">take-success</a> = "OK" SP "taken=" <a href="TAP_COMMANDS.md#item-identifier">item-identifier</a> LF
+</code></pre>
 
 ### DROP command
 
 Client
-```abnf
-; command-line
-drop-request = "DROP" SP item-identifier LF
-```
+###### drop-request
+
+<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#command-line">command-line</a>
+<a href="TAP_COMMANDS.md#drop-request">drop-request</a> = "DROP" SP <a href="TAP_COMMANDS.md#item-identifier">item-identifier</a> LF
+</code></pre>
 
 
 Server
-```abnf
-; response-line
-drop-response = drop-success / err-item-not-in-inventory
+###### drop-response
+###### drop-success
 
-drop-success = "OK" SP "dropped=" item-identifier LF
-```
+<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#response-line">response-line</a>
+<a href="TAP_COMMANDS.md#drop-response">drop-response</a> = <a href="TAP_COMMANDS.md#drop-success">drop-success</a> / <a href="TAP_ERRORS.md#err-item-not-in-inventory">err-item-not-in-inventory</a>
+
+<a href="TAP_COMMANDS.md#drop-success">drop-success</a> = "OK" SP "dropped=" <a href="TAP_COMMANDS.md#item-identifier">item-identifier</a> LF
+</code></pre>
 
 ### INVENTORY command
 
 Client
-```abnf
-; command-line
-inventory-request = "INVENTORY" LF
-```
+###### inventory-request
+
+<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#command-line">command-line</a>
+<a href="TAP_COMMANDS.md#inventory-request">inventory-request</a> = "INVENTORY" LF
+</code></pre>
 
 
 Server
-```abnf
-; response-line
-inventory-response = "OK" SP inventory-json LF
-```
+###### inventory-response
+
+<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#response-line">response-line</a>
+<a href="TAP_COMMANDS.md#inventory-response">inventory-response</a> = "OK" SP <a href="TAP_COMMANDS.md#inventory-json">inventory-json</a> LF
+</code></pre>
 
 ### TALK command
 
 Client
-```abnf
-; command-line
-talk-request = "TALK" SP npc-name LF
-```
+###### talk-request
+
+<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#command-line">command-line</a>
+<a href="TAP_COMMANDS.md#talk-request">talk-request</a> = "TALK" SP <a href="TAP_COMMANDS.md#npc-name">npc-name</a> LF
+</code></pre>
 
 
 Server
-```abnf
-; response-line
-talk-response = talk-success / err-npc-not-found
+###### talk-response
+###### talk-success
 
-talk-success = "OK" SP dialogue LF
-```
+<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#response-line">response-line</a>
+<a href="TAP_COMMANDS.md#talk-response">talk-response</a> = <a href="TAP_COMMANDS.md#talk-success">talk-success</a> / <a href="TAP_ERRORS.md#err-npc-not-found">err-npc-not-found</a>
+
+<a href="TAP_COMMANDS.md#talk-success">talk-success</a> = "OK" SP <a href="TAP_COMMANDS.md#dialogue">dialogue</a> LF
+</code></pre>
 
 ### ATTACK command
 
 Client
-```abnf
-; command-line
-attack-request = "ATTACK" SP npc-name LF
-```
+###### attack-request
+
+<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#command-line">command-line</a>
+<a href="TAP_COMMANDS.md#attack-request">attack-request</a> = "ATTACK" SP <a href="TAP_COMMANDS.md#npc-name">npc-name</a> LF
+</code></pre>
 
 
 Server
-```abnf
-; response-line
-attack-response = attack-success / err-npc-not-found / err-npc-not-hostile
+###### attack-response
+###### attack-success
 
-attack-success = "OK" SP combat-result-json LF
-```
+<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#response-line">response-line</a>
+<a href="TAP_COMMANDS.md#attack-response">attack-response</a> = <a href="TAP_COMMANDS.md#attack-success">attack-success</a> / <a href="TAP_ERRORS.md#err-npc-not-found">err-npc-not-found</a> / <a href="TAP_ERRORS.md#err-npc-not-hostile">err-npc-not-hostile</a>
+
+<a href="TAP_COMMANDS.md#attack-success">attack-success</a> = "OK" SP <a href="TAP_COMMANDS.md#combat-result-json">combat-result-json</a> LF
+</code></pre>
 
 ### STATUS command
 
 Client
-```abnf
-; command-line
-status-request = "STATUS" LF
-```
+###### status-request
+
+<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#command-line">command-line</a>
+<a href="TAP_COMMANDS.md#status-request">status-request</a> = "STATUS" LF
+</code></pre>
 
 
 Server
-```abnf
-; response-line
-status-response = "OK" SP player-status-json LF
-```
+###### status-response
+
+<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#response-line">response-line</a>
+<a href="TAP_COMMANDS.md#status-response">status-response</a> = "OK" SP <a href="TAP_COMMANDS.md#player-status-json">player-status-json</a> LF
+</code></pre>
 
 ### QUEST command
 
 Client
-```abnf
-; command-line
-quest-request = "QUEST" SP npc-name LF
-```
+###### quest-request
+
+<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#command-line">command-line</a>
+<a href="TAP_COMMANDS.md#quest-request">quest-request</a> = "QUEST" SP <a href="TAP_COMMANDS.md#npc-name">npc-name</a> LF
+</code></pre>
 
 
 Server
-```abnf
-; response-line
-quest-response = quest-success / err-npc-not-found / err-no-quest-available
+###### quest-response
+###### quest-success
 
-quest-success = "OK" SP quest-data-json LF
-```
+<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#response-line">response-line</a>
+<a href="TAP_COMMANDS.md#quest-response">quest-response</a> = <a href="TAP_COMMANDS.md#quest-success">quest-success</a> / <a href="TAP_ERRORS.md#err-npc-not-found">err-npc-not-found</a> / <a href="TAP_ERRORS.md#err-no-quest-available">err-no-quest-available</a>
+
+<a href="TAP_COMMANDS.md#quest-success">quest-success</a> = "OK" SP <a href="TAP_COMMANDS.md#quest-data-json">quest-data-json</a> LF
+</code></pre>
 
 ### QUESTS command
 
 Client
-```abnf
-; command-line
-quests-request = "QUESTS" LF
-```
+###### quests-request
+
+<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#command-line">command-line</a>
+<a href="TAP_COMMANDS.md#quests-request">quests-request</a> = "QUESTS" LF
+</code></pre>
 
 
 Server
-```abnf
-; response-line
-quests-response = "OK" SP quest-list-json LF
-```
+###### quests-response
+
+<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#response-line">response-line</a>
+<a href="TAP_COMMANDS.md#quests-response">quests-response</a> = "OK" SP <a href="TAP_COMMANDS.md#quest-list-json">quest-list-json</a> LF
+</code></pre>
