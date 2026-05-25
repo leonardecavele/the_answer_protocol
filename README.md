@@ -1,23 +1,4 @@
-## TAP PROTOCOL
-
-/* move to another md file */
-ROOM TEMPLATE
-```json
-{
-  "room": {
-    "id": "room.identifier",
-    "name": "Room Display Name",
-    "description": "Room description text",
-    "exits": {
-      "north": "room.north_id",
-      "south": "room.south_id"
-    }
-  },
-  "players": ["username1", "username2"],
-  "items": ["item.id1", "item.id2"],
-  "npcs": ["npc.id1", "npc.id2"]
-}
-```
+# TAP PROTOCOL
 
 ABNF Syntax
 ```txt
@@ -35,14 +16,7 @@ event-type = 1*ALPHA
 event-data = 1*(VCHAR / SP)
 ```
 
-Variables
-```abnf
-protocol-version = 1*DIGIT
-username = 1*VCHAR
-password = 1*VCHAR
-```
-
-### establish connection
+## Establish Connection
 
 Client
 ```bash
@@ -56,6 +30,8 @@ server-greeting = "OK" SP "hello" SP "proto=" protocol-version LF
 
 protocol-version = 1*DIGIT
 ```
+
+## Core Commands
 
 ### CONNECT command
 
@@ -118,6 +94,8 @@ Server
 quit-response = "OK" SP "bye" LF
 ```
 
+## Communication Commands
+
 ### CHAT command
 
 Client
@@ -151,6 +129,8 @@ who-response = "OK" SP "players=" player-server-count LF
 player-server-count = 1*DIGIT
 ```
 
+## Group Management Commands
+
 ### GROUP CREATE command
 
 Client
@@ -169,7 +149,6 @@ group-id = 1*DIGIT
 
 ### GROUP INVITE command
 
-
 Client
 ```abnf
 group-invite-request = "GROUP" SP "INVITE" SP username LF
@@ -177,10 +156,67 @@ group-invite-request = "GROUP" SP "INVITE" SP username LF
 username = ALPHA *(ALPHA / DIGIT / "_" / "-")
 ```
 
+
 Server
 ```abnf
-
 group-invite-response = group-invite-success / err-no-such-user / err-already-in-group / err-group-not-found
 
 groupe-invite-success = "OK" LF
 ```
+
+### GROUP JOIN command
+
+Client
+```abnf
+group-join-request = "GOUP" SP "JOIN" SP leader_name LF
+
+leader_name = ALPHA *(ALPHA / DIGIT / "_" / "-")
+```
+
+
+Server
+```abnf
+group-join-response = group-join-success / err-no-such-user / err-group-not-found
+
+group-join-success = "OK" SP "group=" group-id LF
+group-id = 1*DIGIT
+```
+
+### GROUP LEAVE command
+
+Client
+```abnf
+group-leave-request = "GROUP" SP "LEAVE" LF
+```
+
+
+Server
+```abnf
+group-leave-reponse = group-leave-success / err-group-not-found
+
+group-leave-success = "OK" LF
+```
+
+###
+
+Client
+```abnf
+```
+
+
+Server
+```abnf
+```
+
+###
+
+Client
+```abnf
+```
+
+
+Server
+```abnf
+```
+
+###

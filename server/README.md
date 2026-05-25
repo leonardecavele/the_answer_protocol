@@ -1,4 +1,28 @@
-### ROOM MODEL
+# ROOM MODEL
+
+## Json Room Format
+
+```json
+{
+  "room": {
+    "id": "room.identifier",
+    "name": "Room Display Name",
+    "description": "Room description text",
+    "exits": {
+      "north": "room.north_id",
+      "south": "room.south_id"
+    }
+  },
+  "players": ["username1", "username2"],
+  "items": ["item.id1", "item.id2"],
+  "npcs": ["npc.id1", "npc.id2"]
+}
+```
+
+## User State (Server Side)
+
+### As Graph
+
 ```mermaid
 stateDiagram-v2
     [*] --> EMPTY
@@ -10,6 +34,8 @@ stateDiagram-v2
     CONNECTED --> EMPTY: authentication failed / socket closed
 ```
 
+### As C Code
+
 ```c
 typedef enum e_state
 {
@@ -18,6 +44,8 @@ typedef enum e_state
     AUTHENTICATED
 }   t_state;
 ```
+
+### Text Representation
 
 ```txt
 [ROOM]

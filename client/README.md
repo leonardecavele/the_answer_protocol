@@ -1,4 +1,9 @@
-### CLIENT MODEL
+# CLIENT MODEL
+
+## User State (Client Side)
+
+### As Graph
+
 ```mermaid
 stateDiagram-v2
     [*] --> DISCONNECTED
@@ -11,6 +16,8 @@ stateDiagram-v2
 
     AUTHENTICATED --> TERMINATED: QUIT / socket closed / error
 ```
+
+### As C Code
 
 ```c
 typedef enum e_client_state
