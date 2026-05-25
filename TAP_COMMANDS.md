@@ -1,4 +1,4 @@
-# TAP PROTOCOL
+# TAP COMMANDS
 
 ## Format
 
@@ -6,64 +6,62 @@
 
 ```abnf
 ; command format
+message = command-line
 command-line = command-name [SP arguments] LF
 command-name = 1*ALPHA
 arguments = 1*(VCHAR / SP)
 ```
 
-### Response Format
+### Success Response Format
 
 ```abnf
-; response format
-response-line = ("OK" / error-response) [SP response-data] LF
+; success response format
+response-line = "OK" [SP response-data] LF
 response-data = 1*(VCHAR / SP)
-```
-
-```abnf
-; error format
-error-response = "ERR" SP error-code SP error-message
-error-code = 3DIGIT
-error-message = 1*(ALPHA / DIGIT / "_")
-```
-
-### Event Format
-
-```abnf
-; event format
-event-line = "EVT" SP event-type SP event-data LF
-event-type = 1*ALPHA
-event-data = 1*(VCHAR / SP)
-```
-
-### Message Format
-
-```abnf
-; protocol format
-message = command-line / response-line / event-line
 ```
 
 ## Arguments
 
 ```abnf
-; arguments format
-chat-scope = "GLOBAL" / "ROOM" / "GROUP"
-chat-message = VCHAR *(SP / VCHAR)
-protocol-version = 1*DIGIT
-room-id = 1*(ALPHA / DIGIT / "_" / "-" / ".")
-player-server-count = 1*DIGIT
-current-room-state-json = <valid JSON text encoded on one line, without LF>
-group-id = 1*(ALPHA / DIGIT / "_" / "-" / ".")
+; common values
+line-text = VCHAR *(SP / VCHAR)
+json-text = <valid JSON text encoded on one line, without LF>
+json-array = <valid JSON array encoded on one line, without LF>
+number = 1*DIGIT
+```
+
+```abnf
+; protocol values
+protocol-version = number
+
+; player values
 username = ALPHA *(ALPHA / DIGIT / "_" / "-")
 leader-name = username
-item-identifier = 1*(VCHAR / SP)
+player-server-count = number
+
+; world values
+room-id = 1*(ALPHA / DIGIT / "_" / "-" / ".")
 direction = 1*ALPHA
-npc-name = 1*(VCHAR / SP)
-dialogue = 1*(VCHAR / SP)
-combat-result-json = <valid JSON text encoded on one line, without LF>
-player-status-json = <valid JSON text encoded on one line, without LF>
-quest-data-json = <valid JSON text encoded on one line, without LF>
-quest-list-json = <valid JSON array encoded on one line, without LF>
-inventory-json = <valid JSON array encoded on one line, without LF>
+
+; group values
+group-id = 1*(ALPHA / DIGIT / "_" / "-" / ".")
+
+; resource values
+item-identifier = line-text
+npc-name = line-text
+dialogue = line-text
+
+; chat values
+chat-scope = "GLOBAL" / "ROOM" / "GROUP"
+chat-message = line-text
+
+; json payloads
+current-room-state-json = json-text
+combat-result-json = json-text
+player-status-json = json-text
+quest-data-json = json-text
+quest-list-json = json-array
+inventory-json = json-array
 ```
 
 ## Establish Connection
@@ -79,39 +77,6 @@ Server
 ; response-line
 server-greeting = "OK" SP "hello" SP "proto=" protocol-version LF
 ```
-
-# Error Handling
-
-## RFC Errors
-
-```abnf
-; error response-lines
-err-name-in-use = "ERR" SP "201" SP "NAME_IN_USE" LF
-err-no-exit = "ERR" SP "301" SP "NO_EXIT" LF
-err-not-in-group = "ERR" SP "401" SP "NOT_IN_GROUP" LF
-err-already-in-group = "ERR" SP "402" SP "ALREADY_IN_GROUP" LF
-err-item-not-found = "ERR" SP "404" SP "ITEM_NOT_FOUND" LF
-err-item-not-in-inventory = "ERR" SP "404" SP "ITEM_NOT_IN_INVENTORY" LF
-err-npc-not-found = "ERR" SP "404" SP "NPC_NOT_FOUND" LF
-err-npc-not-hostile = "ERR" SP "405" SP "NPC_NOT_HOSTILE" LF
-err-no-quest-available = "ERR" SP "406" SP "NO_QUEST_AVAILABLE" LF
-err-connection-failed = "ERR" SP "900" SP "CONNECTION_FAILED" LF
-err-send-failed = "ERR" SP "901" SP "SEND_FAILED" LF
-```
-
-## Implementation Errors
-
-```abnf
-; custom error response-lines
-err-already-connected = "ERR" SP "400" SP "ALREADY_CONNECTED" LF
-err-invalid-scope = "ERR" SP "400" SP "INVALID_SCOPE" LF
-err-no-such-user = "ERR" SP "403" SP "NO_SUCH_USER" LF
-err-not-invited = "ERR" SP "403" SP "NOT_INVITED" LF
-err-group-not-found = "ERR" SP "404" SP "GROUP_NOT_FOUND" LF
-err-no-such-group = "ERR" SP "404" SP "NO_SUCH_GROUP" LF
-```
-
-# Commands
 
 ## Core Commands
 
@@ -168,7 +133,9 @@ successful-move = "OK" SP "room=" room-id LF
 Client
 ```abnf
 ; command-line
-quit-request = "QUIT" LF
+quit-request = quit-request-command / <server/client connection issue or program aborption>
+
+quit-request-command = "QUIT" LF
 ```
 
 
@@ -412,45 +379,4 @@ Server
 ```abnf
 ; response-line
 quests-response = "OK" SP quest-list-json LF
-```
-
-# Events
-
-## Room Events
-
-```abnf
-; event-line
-room-event = room-presence-enter-event / room-presence-leave-event / room-chat-event
-
-room-presence-enter-event = "EVT" SP "ROOM" SP "PRESENCE" SP "ENTER" SP username LF
-room-presence-leave-event = "EVT" SP "ROOM" SP "PRESENCE" SP "LEAVE" SP username LF
-room-chat-event = "EVT" SP "ROOM" SP "CHAT" SP username SP chat-message LF
-```
-
-## Global Events
-
-```abnf
-; event-line
-global-event = global-chat-event
-
-global-chat-event = "EVT" SP "GLOBAL" SP "CHAT" SP username SP chat-message LF
-```
-
-## Group Events
-
-```abnf
-; event-line
-group-event = group-invite-event / group-join-event / group-leave-event / group-chat-event
-
-group-invite-event = "EVT" SP "GROUP" SP "INVITE" SP leader-name LF
-group-join-event = "EVT" SP "GROUP" SP "JOIN" SP username LF
-group-leave-event = "EVT" SP "GROUP" SP "LEAVE" SP username LF
-group-chat-event = "EVT" SP "GROUP" SP "CHAT" SP username SP chat-message LF
-```
-
-## Stats Events
-
-```abnf
-; event-line
-stats-event = "EVT" SP "STATS" SP "players=" player-server-count LF
 ```
