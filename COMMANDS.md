@@ -68,22 +68,10 @@ username = ALPHA *(ALPHA / DIGIT / "_" / "-")
 
 Server
 ```abnf
-connect-response = connect-success / err-invalid-user-or-password / err-already-connected
+connect-response = connect-success / err-already-connected
+
 connect-success = "OK" SP "connected" LF
 ```
-
-### AUTH command
-Client
-```abnf
-auth-request = "AUTH" SP username SP password LF
-```
-
-Server
-```abnf
-auth-response = auth-success / err-invalid-user-or-password / err-already-connected
-auth-success = "OK" SP "authenticated" LF
-```
-
 
 ### LOOK command
 
@@ -144,6 +132,7 @@ chat-message = VCHAR *(SP / VCHAR)
 Server
 ```abnf
 chat-response = chat-success / err-no-such-group / err-invalid-scope
+
 chat-success = "OK" LF
 ```
 
@@ -173,8 +162,8 @@ group-create-request = "GROUP" SP "CREATE" LF
 Server
 ```abnf
 group-create-response = group-create-success / err-already-in-group 
-group-create-success = "OK" SP "group-id=" group-id LF
 
+group-create-success = "OK" SP "group-id=" group-id LF
 group-id = 1*DIGIT
 ```
 
@@ -184,6 +173,7 @@ group-id = 1*DIGIT
 Client
 ```abnf
 group-invite-request = "GROUP" SP "INVITE" SP username LF
+
 username = ALPHA *(ALPHA / DIGIT / "_" / "-")
 ```
 
@@ -191,5 +181,6 @@ Server
 ```abnf
 
 group-invite-response = group-invite-success / err-no-such-user / err-already-in-group / err-group-not-found
+
 groupe-invite-success = "OK" LF
 ```
