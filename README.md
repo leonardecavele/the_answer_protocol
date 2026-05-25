@@ -26,6 +26,13 @@ username = ALPHA *(ALPHA / DIGIT / "_" / "-")
 leader-name = username
 item-identifier = 1*DIGIT
 direction = "north" / "south" / "east" / "west"
+npc-name = 1*(ALPHA / DIGIT / "_" / "-")
+dialogue = 1*(VCHAR / SP)
+combat-result-json = <valid JSON text encoded on one line, without LF>
+player-status-json = <valid JSON text encoded on one line, without LF>
+quest-data-json = <valid JSON text encoded on one line, without LF>
+quest-list-json = <valid JSON text encoded on one line, without LF>
+inventory-json = <valid JSON array encoded on one line, without LF>
 ```
 
 ```abnf
@@ -52,6 +59,9 @@ err-no-such-group = "ERR" SP "404" SP "NO_SUCH_GROUP" LF
 err-item-not-found = "ERR" SP "404" SP "ITEM_NOT_FOUND" LF
 err-item-not-in-inventory = "ERR" SP "404" SP "ITEM_NOT_IN_INVENTORY" LF
 err-no-exit = "ERR" SP "301" SP "NO_EXIT" LF
+err-npc-not-found = "ERR" SP "404" SP "NPC_NOT_FOUND" LF
+err-npc-not-hostile = "ERR" SP "405" SP "NPC_NOT_HOSTILE" LF
+err-no-quest-available = "ERR" SP "406" SP "NO_QUEST_AVAILABLE" LF
 ```
 
 ## Establish Connection
@@ -244,23 +254,128 @@ group-leave-success = "OK" LF
 
 Client
 ```abnf
+; command-line
 take-request = "TAKE" SP item-identifier LF
 ```
 
 
 Server
 ```abnf
+; response-line
+take-response = take-success / err-item-not-found
+
+take-success = "OK" SP "taken=" item-identifier LF
 ```
 
-###
+### DROP command
 
 Client
 ```abnf
+; command-line
+drop-request = "DROP" SP item-identifier LF
 ```
 
 
 Server
 ```abnf
+; response-line
+drop-response = drop-success / err-item-not-found / err-item-not-in-inventory
+
+drop-success = "OK" SP "dropped=" item-identifier LF
 ```
 
-###
+### INVENTORY command
+
+Client
+```abnf
+; command-line
+inventory-request = "INVENTORY" LF
+```
+
+
+Server
+```abnf
+; response-line
+inventory-response = "OK" SP inventory-json LF
+```
+
+### TALK command
+
+Client
+```abnf
+; command-line
+talk-request = "TALK" SP npc-name LF
+```
+
+
+Server
+```abnf
+; response-line
+talk-response = talk-success / err-npc-not-found
+
+talk-success = "OK" SP dialogue LF
+```
+
+### ATTACK command
+
+Client
+```abnf
+; command-line
+attack-request = "ATTACK" SP npc-name LF
+```
+
+
+Server
+```abnf
+; response-line
+attack-response = attack-success / err-npc-not-found / err-npc-not-hostile
+
+attack-success = "OK" SP combat-result-json LF
+```
+
+### STATUS command
+
+Client
+```abnf
+; command-line
+status-request = "STATUS" LF
+```
+
+
+Server
+```abnf
+; response-line
+status-response = "OK" SP player-status-json LF
+```
+
+### QUEST command
+
+Client
+```abnf
+; command-line
+quest-request = "QUEST" SP npc-name LF
+```
+
+
+Server
+```abnf
+; response-line
+quest-response = quest-success / err-npc-not-found / err-no-quest-available
+
+quest-success = "OK" SP quest-data-json LF
+```
+
+### QUESTS command
+
+Client
+```abnf
+; command-line
+quests-request = "QUESTS" LF
+```
+
+
+Server
+```abnf
+; response-line
+quests-response = "OK" SP quest-list-json LF
+```
