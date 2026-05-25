@@ -22,6 +22,8 @@ response-data = 1*(VCHAR / SP)
 
 ## Arguments
 
+### Common Values
+
 ```abnf
 ; common values
 line-text = VCHAR *(SP / VCHAR)
@@ -30,31 +32,45 @@ json-array = <valid JSON array encoded on one line, without LF>
 number = 1*DIGIT
 ```
 
+### Arguments
+
 ```abnf
 ; protocol values
 protocol-version = number
+```
 
+```abnf
 ; player values
 username = ALPHA *(ALPHA / DIGIT / "_" / "-")
 leader-name = username
 player-server-count = number
+```
 
+```abnf
 ; world values
 room-id = 1*(ALPHA / DIGIT / "_" / "-" / ".")
 direction = 1*ALPHA
+```
 
+```abnf
 ; group values
 group-id = 1*(ALPHA / DIGIT / "_" / "-" / ".")
+```
 
+```abnf
 ; resource values
 item-identifier = line-text
 npc-name = line-text
 dialogue = line-text
+```
 
+```abnf
 ; chat values
 chat-scope = "GLOBAL" / "ROOM" / "GROUP"
 chat-message = line-text
+```
 
+```abnf
 ; json payloads
 current-room-state-json = json-text
 combat-result-json = json-text

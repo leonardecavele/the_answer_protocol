@@ -65,7 +65,7 @@ err-no-such-group = "ERR" SP "404" SP "NO_SUCH_GROUP" LF
 | `ERR 900 CONNECTION_FAILED` | Connection establishment failed |
 | `ERR 901 SEND_FAILED` | Message transmission failed |
 
-## Implementation Error Meaning
+## Additional Error Meaning
 
 | Error | Meaning |
 |---|---|
