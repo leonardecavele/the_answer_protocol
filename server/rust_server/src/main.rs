@@ -1,7 +1,10 @@
-use std::io::{BufRead, BufReader, Write};
+use rust_server::simulation::{apply_players_changes, update_game_state};
+use rust_server::player_response::send_diff;
+use rust_server::constantes::TickResult;
+use std::io::{BufReader, BufRead};
 use std::net::{TcpListener, TcpStream};
 use std::thread;
-use std::time::{Duration, Instant};
+use std::time::Instant;
 use std::sync::mpsc;
 
 fn start_reader_thread(reader_stream: TcpStream, mpsc_sender: mpsc::Sender<String>)
@@ -34,16 +37,30 @@ fn main() -> std::io::Result<()> {
 
     let reader_stream = writer_stream.try_clone()?;
 
-
     let (mpsc_sender, mpsc_receiver) = mpsc::channel();
     // channel to make the two threads communicate: 
     // first thread reads from the socket and sends the message to the receiver
     // the receover now reads the sent message and sends PONG back to the go server
     start_reader_thread(reader_stream, mpsc_sender);
-    loop {
-        let msg: String = mpsc_receiver.recv().unwrap();
-        if msg == "PING" {
-           writer_stream.write_all(b"PONG\n")?;
+
+    loop {     
+        let start = Instant::now(); // this tick's time start
+        /*
+         here we should update the game state ( npcs, monsters, mouvements, etc 
+         and store the diff in a buffer, we will send it back to players at the end of the tick
+        */
+        update_game_state();
+
+
+        match apply_players_changes(&mpsc_receiver, start, &mut writer_stream)? {
+            TickResult::TickEnd => {
+                send_diff();
+            }
+            TickResult::Exit => {
+                println!("exiting...");
+                return Ok(());
+            }
         }
+
     }
 }
