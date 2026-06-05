@@ -1,5 +1,5 @@
 use rust_server::simulation::{apply_players_changes, update_game_state};
-use rust_server::player_response::send_diff;
+use rust_server::player_response::send_diff_to_players;
 use rust_server::constantes::TickResult;
 use std::io::{BufReader, BufRead};
 use std::net::{TcpListener, TcpStream};
@@ -45,16 +45,12 @@ fn main() -> std::io::Result<()> {
 
     loop {     
         let start = Instant::now(); // this tick's time start
-        /*
-         here we should update the game state ( npcs, monsters, mouvements, etc 
-         and store the diff in a buffer, we will send it back to players at the end of the tick
-        */
         update_game_state();
 
 
         match apply_players_changes(&mpsc_receiver, start, &mut writer_stream)? {
             TickResult::TickEnd => {
-                send_diff();
+                send_diff_to_players();
             }
             TickResult::Exit => {
                 println!("exiting...");

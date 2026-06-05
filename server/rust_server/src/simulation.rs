@@ -29,8 +29,16 @@ pub fn apply_players_changes(mpsc_receiver: &mpsc::Receiver<String>, tick_timer:
             }
         };
     }
-    return Ok(TickResult::Timeout);
+    return Ok(TickResult::TickEnd);
 }
 
-pub fn update_game_state(){}
+
+
+pub fn update_game_state(){
+/*
+here we should update the game state ( npcs, monsters, mouvements, etc 
+and store the diff in a buffer (an argument of this function), 
+we will send it back to players at the end of the tick
+*/
+}
 
