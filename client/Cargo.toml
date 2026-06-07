@@ -1,0 +1,8 @@
+[workspace]
+members = [
+    "api-client",
+    "tui",
+    "gui",
+    "mock-server"
+]
+resolver = "3"
