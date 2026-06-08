@@ -19,14 +19,9 @@ pub fn apply_players_changes(mpsc_receiver: &mpsc::Receiver<String>, tick_timer:
                 }
             }
 
-            Err(mpsc::RecvTimeoutError::Timeout) =>
-            {
-                break;
-            }
+            Err(mpsc::RecvTimeoutError::Timeout) => break,
 
-            Err(mpsc::RecvTimeoutError::Disconnected) => {
-                return Ok(TickResult::Exit);
-            }
+            Err(mpsc::RecvTimeoutError::Disconnected) => return Ok(TickResult::Exit),
         };
     }
     return Ok(TickResult::TickEnd);
