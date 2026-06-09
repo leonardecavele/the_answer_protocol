@@ -1,5 +1,6 @@
-use crate::packet::{Packet, PacketOpcode};
+
 use std::io::{Error, ErrorKind};
+use crate::protocol::packet::{Packet, PacketOpcode};
 
 pub struct ConnectPacket;
 

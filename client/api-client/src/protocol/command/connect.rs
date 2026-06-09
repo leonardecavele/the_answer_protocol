@@ -1,6 +1,6 @@
 use std::io;
 use crate::client::ServerInfo;
-use crate::command::Command;
+use crate::protocol::command::Command;
 
 pub fn create_command_connect(server_info: &ServerInfo, player_name: String) -> io::Result<Command> {
     let command: String = match server_info.protocol_version {

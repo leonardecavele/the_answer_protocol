@@ -11,6 +11,7 @@ const PROTOCOL_VERSION: u32 = 1;
 fn handle_client(stream: &mut TcpStream) -> Result<()> {
     println!("New connection: {}", stream.peer_addr().unwrap());
 
+    sleep(Duration::from_secs(3));
     stream.write(format!("OK hello proto={}\n", PROTOCOL_VERSION).as_bytes())?;
     sleep(Duration::from_secs(1));
 

@@ -1,4 +1,4 @@
-use crate::packet::{Packet, PacketOpcode};
+use crate::protocol::packet::{Packet, PacketOpcode};
 use regex::Regex;
 use std::io;
 use std::io::{Error, ErrorKind};
@@ -48,7 +48,7 @@ impl TryFrom<Packet> for HandshakePacket {
                 }
             }
             .parse()
-            .map_err(|e| {
+            .map_err(|_| {
                 Error::new(
                     ErrorKind::InvalidInput,
                     "Handshake server protocol version is not a valid number",

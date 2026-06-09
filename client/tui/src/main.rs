@@ -5,8 +5,8 @@ pub enum Command {
     Quit,
 }
 
-// const SERVER_ADDRESS: &str = "127.0.0.1:3000";
-const SERVER_ADDRESS: &str = "10.14.4.3:38800";
+const SERVER_ADDRESS: &str = "127.0.0.1:3000";
+// const SERVER_ADDRESS: &str = "10.14.4.3:38800";
 
 const PLAYER: &str = "Alice";
 
