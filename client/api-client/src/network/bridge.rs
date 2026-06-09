@@ -1,11 +1,12 @@
+use crate::error::{TapError, TapResult};
 use crate::protocol::envelope::Envelope;
 use crate::protocol::packet::Packet;
-use futures::stream::StreamExt;
 use futures::SinkExt;
-use std::io::{Error, ErrorKind, Result};
+use futures::stream::StreamExt;
 use tokio::net::TcpStream;
 use tokio::sync::mpsc::Receiver;
 use tokio_util::codec::{Framed, LinesCodec, LinesCodecError};
+use tracing::{debug, error, info, warn};
 
 pub struct Bridge {
     socket: Framed<TcpStream, LinesCodec>,
@@ -14,10 +15,7 @@ pub struct Bridge {
 }
 
 impl Bridge {
-    pub fn new(
-        socket: Framed<TcpStream, LinesCodec>,
-        rx: Receiver<Envelope>,
-    ) -> Bridge {
+    pub fn new(socket: Framed<TcpStream, LinesCodec>, rx: Receiver<Envelope>) -> Bridge {
         Bridge {
             socket,
             rx,
@@ -28,8 +26,12 @@ impl Bridge {
     pub async fn listen(
         &mut self,
         handshake_tx: tokio::sync::oneshot::Sender<Packet>,
+        ready_tx: tokio::sync::oneshot::Sender<()>,
     ) -> () {
         self.pending_request = Some(handshake_tx);
+        info!("bridge is now listening for incoming and outgoing packets");
+
+        let _ = ready_tx.send(());
 
         loop {
             tokio::select! {
@@ -42,7 +44,7 @@ impl Bridge {
                             }
                         },
                         Err(e) => {
-                            println!("[network incoming] error during handling incoming frame: {}", e);
+                            error!("error handling incoming frame: {}", e);
                             break;
                         }
                     }
@@ -56,7 +58,7 @@ impl Bridge {
                             }
                         },
                         Err(e) => {
-                            println!("[network outgoing] error during handling incoming frame: {}", e);
+                            error!("error handling outgoing frame: {}", e);
                             break;
                         }
                     }
@@ -64,84 +66,63 @@ impl Bridge {
             }
         }
 
-        println!("[network] connection closed");
+        info!("network connection closed");
     }
 
     async fn handle_incoming(
         &mut self,
-        frame: Option<core::result::Result<String, LinesCodecError>>,
-    ) -> Result<bool> {
+        frame: Option<Result<String, LinesCodecError>>,
+    ) -> TapResult<bool> {
         if frame.is_none() {
             return Ok(false);
         }
 
         match frame.unwrap() {
             Ok(line) => {
-                println!("[network bridge] receive response: {}", line);
+                debug!("receive response: {}", line);
 
-                match Packet::parse(line) {
+                match Packet::try_from(line) {
                     Ok(packet) => {
                         if let Some(tx) = self.pending_request.take() {
                             tx.send(packet).and(Ok(true)).map_err(|pkt| {
-                                Error::new(
-                                    ErrorKind::BrokenPipe,
-                                    format!(
-                                        "[network incoming] lost packet {:?}",
-                                        pkt
-                                    ),
-                                )
+                                TapError::Channel(format!("internal lost packet {:?}", pkt))
                             })
                         } else {
                             Ok(true)
                         }
                     }
                     Err(e) => {
-                        eprintln!(
-                            "[network bridge] error parsing packet: {}",
-                            e
-                        );
+                        error!("error parsing packet: {}", e);
                         Ok(true)
                     }
                 }
             }
             Err(e) => {
-                eprintln!("[network bridge] error reading from socket: {}", e);
+                error!("error reading from socket: {}", e);
                 Ok(true)
             }
         }
     }
 
-    async fn handle_outgoing(
-        &mut self,
-        request: Option<Envelope>,
-    ) -> Result<bool> {
+    async fn handle_outgoing(&mut self, request: Option<Envelope>) -> TapResult<bool> {
         match request {
             Some(envelope) => {
                 if !self.pending_request.is_none() {
-                    eprintln!(
-                        "[network outgoing] waiting for another request. command dropped"
-                    );
+                    warn!("waiting for another request. Command dropped");
                     return Ok(true);
                 }
 
                 self.pending_request = envelope.tx;
-                println!(
-                    "[network outgoing] send command: {}",
-                    envelope.command.command
-                );
+                debug!("send command: {}", envelope.command.command);
 
-                if let Err(e) = self.socket.send(envelope.command.command).await
-                {
-                    eprintln!(
-                        "[network outgoing] error sending to socket: {}",
-                        e
-                    );
+                if let Err(e) = self.socket.send(envelope.command.command).await {
+                    error!("error sending to socket: {}", e);
                 }
 
                 Ok(true)
             }
             None => {
-                eprintln!("[network outgoing] no data to send");
+                warn!("no data to send");
                 Ok(true)
             }
         }

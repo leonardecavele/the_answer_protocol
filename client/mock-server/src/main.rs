@@ -1,5 +1,5 @@
-use std::io::{Read, Result};
 use std::io::Write;
+use std::io::{Read, Result};
 use std::net::{TcpListener, TcpStream};
 use std::process::exit;
 use std::thread;
@@ -22,7 +22,7 @@ fn handle_client(stream: &mut TcpStream) -> Result<()> {
         Ok(n) => {
             let data = &buffer[..n];
             println!("Got buffer: <{:?}>", str::from_utf8(data).unwrap());
-        },
+        }
         Err(e) => {
             println!("Error reading from stream: {}", e);
         }

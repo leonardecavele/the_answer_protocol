@@ -1,9 +1,8 @@
-pub mod handshake;
 pub mod connect;
+pub mod handshake;
 
+use crate::error::{TapError, TapResult};
 use std::fmt::{Display, Formatter};
-use std::io;
-use std::io::{Error, ErrorKind};
 
 #[derive(Debug, PartialEq)]
 enum PacketOpcode {
@@ -28,11 +27,13 @@ impl Display for PacketOpcode {
 pub struct Packet {
     raw: String,
     opcode: PacketOpcode,
-    arguments: Option<Vec<String>>
+    arguments: Option<Vec<String>>,
 }
 
-impl Packet {
-    pub fn parse(frame: String) -> io::Result<Packet> {
+impl TryFrom<String> for Packet {
+    type Error = TapError;
+
+    fn try_from(frame: String) -> TapResult<Packet> {
         let raw_frame = frame.trim().to_owned();
         let frame = frame.trim().to_owned();
 
@@ -50,18 +51,15 @@ impl Packet {
                 "EVT" => PacketOpcode::Evt,
                 "ERR" => PacketOpcode::Err,
                 _ => {
-                    return Err(Error::new(
-                        ErrorKind::InvalidInput,
-                        format!(
-                            "Invalid frame identifier. \
+                    return Err(TapError::PacketParse(format!(
+                        "Invalid frame identifier. \
                             expected (OK, EVT, ERR), received '{}'",
-                            x
-                        ),
-                    ));
+                        x
+                    )));
                 }
             },
             None => {
-                return Err(Error::new(ErrorKind::Other, "invalid frame"));
+                return Err(TapError::PacketParse("invalid frame".to_string()));
             }
         };
 

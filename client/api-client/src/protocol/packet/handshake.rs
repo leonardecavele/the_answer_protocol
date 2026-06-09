@@ -1,7 +1,6 @@
+use crate::error::{TapError, TapResult};
 use crate::protocol::packet::{Packet, PacketOpcode};
 use regex::Regex;
-use std::io;
-use std::io::{Error, ErrorKind};
 use std::sync::LazyLock;
 
 static RE_TAP_HANDSHAKE: LazyLock<Regex> =
@@ -13,59 +12,52 @@ pub struct HandshakePacket {
 }
 
 impl TryFrom<Packet> for HandshakePacket {
-    type Error = Error;
+    type Error = TapError;
 
-    fn try_from(packet: Packet) -> io::Result<Self> {
+    fn try_from(packet: Packet) -> TapResult<Self> {
         if packet.opcode != PacketOpcode::Ok {
-            return Err(Error::new(
-                ErrorKind::InvalidInput,
-                format!(
-                    "Invalid handshake opcode. expected (OK), received '{}'",
-                    packet.opcode
-                ),
+            return Err(TapError::ProtocolInvalidOpcode(
+                PacketOpcode::Ok.to_string(),
+                packet.opcode.to_string(),
             ));
         }
 
         if let Some(arguments) = packet.arguments {
             if arguments.len() != 2 || arguments[0] != "hello" {
-                return Err(Error::new(
-                    ErrorKind::InvalidInput,
-                    format!(
-                        "Invalid handshake arguments, \
-                            expected (OK hello proto=<version>), received '{}'",
-                        packet.raw
-                    ),
+                return Err(TapError::ProtocolInvalidArguments(
+                    "OK hello proto=<unsigned number>".to_string(),
+                    packet.raw,
                 ));
             }
 
             let server_protocol_version: i64 = match RE_TAP_HANDSHAKE.captures(&packet.raw) {
                 Some(caps) => caps.name("proto").unwrap().as_str().to_owned(),
                 None => {
-                    return Err(Error::new(
-                        ErrorKind::InvalidInput,
-                        "Invalid handshake protocol version",
+                    return Err(TapError::ProtocolInvalidArguments(
+                        "OK hello proto=<unsigned number>".to_string(),
+                        packet.raw,
                     ));
                 }
             }
             .parse()
             .map_err(|_| {
-                Error::new(
-                    ErrorKind::InvalidInput,
-                    "Handshake server protocol version is not a valid number",
+                TapError::ProtocolInvalidArguments(
+                    "OK hello proto=<unsigned number>".to_string(),
+                    packet.raw.clone(),
                 )
             })?;
 
             if server_protocol_version <= 0 {
-                return Err(Error::new(
-                    ErrorKind::InvalidInput,
-                    "Handshake server protocol version is negative",
+                return Err(TapError::ProtocolInvalidArguments(
+                    "OK hello proto=<unsigned number>".to_string(),
+                    packet.raw,
                 ));
             }
 
             if server_protocol_version > u32::MAX as i64 {
-                return Err(Error::new(
-                    ErrorKind::InvalidInput,
-                    "Handshake server protocol version is greater than u32::MAX",
+                return Err(TapError::ProtocolInvalidArguments(
+                    "OK hello proto=<unsigned number>".to_string(),
+                    packet.raw,
                 ));
             }
 
@@ -73,7 +65,10 @@ impl TryFrom<Packet> for HandshakePacket {
                 server_protocol_version: server_protocol_version as u32,
             })
         } else {
-            Err(Error::new(ErrorKind::Other, "invalid handshake"))
+            Err(TapError::ProtocolInvalidArguments(
+                "OK hello proto=<unsigned number>".to_string(),
+                packet.raw,
+            ))
         }
     }
 }

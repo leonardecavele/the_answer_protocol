@@ -1,5 +1,8 @@
 use api_client::client::APIClient;
 use std::process::exit;
+use time::macros::format_description;
+use tracing_subscriber::EnvFilter;
+use tracing_subscriber::fmt::time::LocalTime;
 
 pub enum Command {
     Quit,
@@ -12,7 +15,15 @@ const PLAYER: &str = "Alice";
 
 #[tokio::main]
 async fn main() {
-    // let (tx, mut rx) = mpsc::channel::<Command>(1024);
+    let time_format = format_description!("[hour]:[minute]:[second]");
+    let timer = LocalTime::new(time_format);
+
+    tracing_subscriber::fmt()
+        .with_env_filter(
+            EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info")),
+        )
+        .with_timer(timer)
+        .init();
 
     let client = match APIClient::new(SERVER_ADDRESS).await {
         Ok(client) => client,
@@ -25,17 +36,11 @@ async fn main() {
         }
     };
 
-    println!(
-        "Connection established to {} (Ver. {})",
-        client.server.addr, client.server.protocol_version
-    );
-
     if let Err(e) = client.connect(PLAYER.to_string()).await {
         eprintln!("Fail to connect player: {}", e);
+        client.exit();
         exit(1);
     }
-
-    println!("Connected to the server as {}", PLAYER);
 
     // client
     //     .on_event(|message| {

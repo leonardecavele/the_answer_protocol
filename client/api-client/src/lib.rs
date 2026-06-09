@@ -1,3 +1,4 @@
-pub mod network;
 pub mod client;
+mod error;
+pub mod network;
 mod protocol;
