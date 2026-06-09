@@ -16,8 +16,8 @@ type Client struct {
 	Username string
 }
 
-func NewClient(conn net.Conn) Client {
-	return Client{
+func NewClient(conn net.Conn) *Client {
+	return &Client{
 		Conn: conn,
 		Id:   conn.RemoteAddr().String(),
 	}

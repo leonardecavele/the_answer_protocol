@@ -5,13 +5,13 @@ import (
 	"strings"
 )
 
-type handleTapCommandArgs func(args string, client Client) (string, error)
+type handleTapCommandArgs func(args string, client *Client) (string, error)
 
 var tapCommands = map[string]handleTapCommandArgs{
 	"CONNECT": handleConnectCommand,
 }
 
-func handleConnectCommand(args string, client Client) (string, error) {
+func handleConnectCommand(args string, client *Client) (string, error) {
 	isValidUsername := func(username string) bool {
 		if username == "" {
 			return false
@@ -31,7 +31,7 @@ func handleConnectCommand(args string, client Client) (string, error) {
 		return "ERR 6060 INVALID USERNAME PLACEHOLDER\n", errors.New("invalid username")
 	}
 
-	response, err := client.SetUsername(args)
+	response, err := client.SetUsername(strings.ToUpper(args))
 	if err != nil {
 		// TODO (edit response according to protocol)
 		return response, errors.New("username taken")

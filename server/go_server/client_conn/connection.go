@@ -31,7 +31,7 @@ func parseCommand(msg string) (string, string, error) {
 	return "", "", errors.New("unknown command")
 }
 
-func handleTapCommand(str string, client Client) string {
+func handleTapCommand(str string, client *Client) string {
 	response := ""
 
 	cmd, args, err := parseCommand(str)
@@ -59,7 +59,7 @@ func handleTapCommand(str string, client Client) string {
 	//}
 }
 
-func HandleClient(client Client) { //, rustServer *rust_conn.RustServer) {
+func HandleClient(client *Client) { //, rustServer *rust_conn.RustServer) {
 	defer client.EraseClient()
 
 	logger.AppLogger.Info("%s Connected", client.Id)
