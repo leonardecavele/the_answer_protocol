@@ -1,14 +1,12 @@
-use rust_server::simulation::{apply_players_changes, update_game_state};
-use rust_server::player_response::send_diff_to_players;
 use rust_server::constantes::TickResult;
+use rust_server::game_manager::GameManager;
 use std::io::{BufReader, BufRead};
 use std::net::{TcpListener, TcpStream};
 use std::thread;
 use std::time::Instant;
 use std::sync::mpsc;
 
-fn start_reader_thread(reader_stream: TcpStream, mpsc_sender: mpsc::Sender<String>)
-{
+fn start_reader_thread(reader_stream: TcpStream, mpsc_sender: mpsc::Sender<String>) {
     thread::spawn(move || {
         let reader = BufReader::new(reader_stream);
 
@@ -42,21 +40,19 @@ fn main() -> std::io::Result<()> {
     // first thread reads from the socket and sends the message to the receiver
     // the receover now reads the sent message and sends PONG back to the go server
     start_reader_thread(reader_stream, mpsc_sender);
-
+    let mut game_manager = GameManager::new();
     loop {     
-        let start = Instant::now(); // this tick's time start
-        update_game_state();
+        let start = Instant::now(); // this tick time start
+        game_manager.update_game_state();
 
-
-        match apply_players_changes(&mpsc_receiver, start, &mut writer_stream)? {
+        match game_manager.apply_players_changes(&mpsc_receiver, start, &mut writer_stream)? {
             TickResult::TickEnd => {
-                send_diff_to_players();
+                game_manager.send_diff_to_players();
             }
             TickResult::Exit => {
                 println!("exiting...");
                 return Ok(());
             }
         }
-
     }
 }

@@ -25,7 +25,7 @@ response_value = snake_case / 1*DIGIT
     "command": <command_name>,
     "command_id": <command_id>,
     "arguments": {
-        <argument_name>: <argument_value>,
+        <argument_name>: <argument_value>
     }
 }
 ```
