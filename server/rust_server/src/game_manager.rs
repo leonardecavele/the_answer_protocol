@@ -49,12 +49,19 @@ impl GameManager {
         Option::None
     }
 
+    fn add_player_to_game(&mut self, player: Player) {
+        let player_name = player.get_name().to_string();
+        let player_id = player.get_id();
+        self.players.insert(player_id, player);
+        self.players_by_name.insert(player_name, player_id);
+    }
+
     fn create_new_player(&mut self, name: String)
     {
         let player_id = self.next_player_id;
-        let player = Player::new(name, player_id);
+        let player = Player::new(name.clone(), player_id);
 
-        self.players.insert(player_id, player);
+        self.add_player_to_game(player);
         self.next_player_id += 1;
     }
 

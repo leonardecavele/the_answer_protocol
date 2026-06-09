@@ -43,11 +43,11 @@ impl GameManager {
         // let arguments = json_object["arguments"];
         match command_name {
             "CONNECT" => {
-                let error_code = self.init_player(player_name.to_string());
+                let error_type = self.init_player(player_name.to_string());
                 return object!{
                     "player": player_name,
                     "command_id": command_id,
-                    "error_code":error_code.code(),
+                    "error_code": error_type.code(),
                     "value": ""
                 }.dump();
             }
