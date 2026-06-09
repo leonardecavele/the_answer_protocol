@@ -1,10 +1,14 @@
-use api_client::APIClient;
+use api_client::client::APIClient;
+use std::process::exit;
 
 pub enum Command {
     Quit,
 }
 
-const SERVER_ADDRESS: &str = "127.0.0.1:3000";
+// const SERVER_ADDRESS: &str = "127.0.0.1:3000";
+const SERVER_ADDRESS: &str = "10.14.4.3:38800";
+
+const PLAYER: &str = "Alice";
 
 #[tokio::main]
 async fn main() {
@@ -26,16 +30,18 @@ async fn main() {
         client.server.addr, client.server.protocol_version
     );
 
+    if let Err(e) = client.connect(PLAYER.to_string()).await {
+        eprintln!("Fail to connect player: {}", e);
+        exit(1);
+    }
+
+    println!("Connected to the server as {}", PLAYER);
+
     // client
     //     .on_event(|message| {
     //         println!("New Event {:?}", message);
     //     })
     //     .await;
 
-    loop {
-        // match rx.recv().await {
-        //     Some(Command::Quit) => break,
-        //     None => {}
-        // }
-    }
+    loop {}
 }
