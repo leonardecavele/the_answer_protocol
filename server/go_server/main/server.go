@@ -1,35 +1,64 @@
 package main
 
 import (
-	"fmt"
+	"bufio"
 	"net"
 	"os"
+	"strconv"
+	"strings"
 )
 
 import (
-	error "go_server/error"
+	"go_server/client_conn"
+	"go_server/config"
+	"go_server/error"
+	"go_server/logger"
 )
 
 func main() {
+	//rustServer := rust_conn.ConnectToRust(config.RustServerIP + ":" + strconv.Itoa(config.RustServerPort))
+	//defer rustServer.Conn.Close()
+	//go rustServer.Read()
 
-	rust_server := connect_to_rust("127.0.0.1:38801")
-	defer rust_server.conn.Close()
-	go rust_server.read_loop()
-
-	listener, err := net.Listen("tcp", ":38800")
+	listener, err := net.Listen("tcp", ":"+strconv.Itoa(config.GoServerPort))
 	if err != nil {
 		os.Exit(int(error.ListenerError))
 	}
 	defer listener.Close()
-	fmt.Println("TCP server started on 38800")
 
-	for i := 0; true; i++ {
+	quit := make(chan struct{})
+
+	go func() {
+		scanner := bufio.NewScanner(os.Stdin)
+
+		for scanner.Scan() {
+			input := strings.ToLower(strings.TrimSpace(scanner.Text()))
+
+			if _, ok := config.QuitCommands[input]; ok {
+				close(quit)
+				listener.Close()
+				return
+			}
+		}
+	}()
+
+	logger.AppLogger.Info("TCP server started on " + strconv.Itoa(config.GoServerPort))
+
+	for {
 		conn, err := listener.Accept()
 		if err != nil {
-			fmt.Println("Accept error:", err)
-			continue
+			select {
+			case <-quit:
+				logger.AppLogger.Info("Server stopped.")
+				return
+			default:
+				logger.AppLogger.Error("Accept error:", err)
+				continue
+			}
 		}
 
-		go handle_client(conn, i, rust_server)
+		go client_conn.HandleClient(client_conn.NewClient(conn))
 	}
+
+	os.Exit(int(error.NoError))
 }
