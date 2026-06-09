@@ -1,6 +1,4 @@
-# ROOM MODEL
-
-## Json Room Format
+### Json Room Format
 
 ```json
 {
@@ -17,6 +15,60 @@
   "items": ["item.id1", "item.id2"],
   "npcs": ["npc.id1", "npc.id2"]
 }
+```
+
+### Json Inventory Format
+
+```json
+[
+  "item.herbs",
+  "item.loaf_bread",
+]
+```
+
+
+### Json Combat Result Format
+```json
+{
+  "attacker_hp": 80,
+  "target_hp": 15,
+  "damage": 10,
+  "status": "combat"
+}
+```
+
+### Json Status format
+```json
+{
+  "hp": 80,
+  "max_hp": 100,
+  "status": "healthy"
+}
+```
+
+### Json Quest Data Format
+```json
+{
+  "quest_id": "fetch_herbs",
+  "description": "Bring me 3 healing herbs",
+  "reward": "gold_coin",
+  "status": "available"
+}
+```
+
+### Json Quest List Format
+```json
+[
+  {
+    "quest_id": "fetch_herbs",
+    "status": "active",
+    "progress": "1/3"
+  },
+  {
+    "quest_id": "defeat_goblin",
+    "status": "completed"
+  }
+]
 ```
 
 ## User State (Server Side)
@@ -70,3 +122,5 @@ typedef enum e_state
 18 EMPTY
 19 EMPTY
 ```
+
+
