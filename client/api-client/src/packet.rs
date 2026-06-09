@@ -3,10 +3,6 @@ use std::fmt::{Display, Formatter};
 use std::io;
 use std::io::{Error, ErrorKind};
 
-pub trait FromPacket<T> {
-    fn parse(frame: Packet) -> io::Result<T>;
-}
-
 #[derive(Debug, PartialEq)]
 enum PacketType {
     Ok,
@@ -55,7 +51,8 @@ impl Packet {
                     return Err(Error::new(
                         ErrorKind::InvalidInput,
                         format!(
-                            "Invalid frame identifier. expected (OK, EVT, ERR), received '{}'",
+                            "Invalid frame identifier. \
+                            expected (OK, EVT, ERR), received '{}'",
                             x
                         ),
                     ));

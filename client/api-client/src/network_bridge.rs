@@ -1,5 +1,5 @@
-use futures::stream::StreamExt;
 use futures::SinkExt;
+use futures::stream::StreamExt;
 use tokio::net::TcpStream;
 use tokio::sync::mpsc::Receiver;
 use tokio_util::codec::{Framed, LinesCodec};
@@ -10,10 +10,7 @@ pub struct NetworkBridge {
 }
 
 impl NetworkBridge {
-    pub fn new(
-        socket: Framed<TcpStream, LinesCodec>,
-        rx: Receiver<String>,
-    ) -> NetworkBridge {
+    pub fn new(socket: Framed<TcpStream, LinesCodec>, rx: Receiver<String>) -> NetworkBridge {
         NetworkBridge { socket, rx }
     }
 
