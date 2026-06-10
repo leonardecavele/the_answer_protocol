@@ -1,0 +1,143 @@
+use crate::error::{TapError, TapResult};
+use crate::protocol::request::Request;
+use crate::protocol::response::{ServerResponse, ServerResponseOpcode};
+use futures::SinkExt;
+use futures::stream::StreamExt;
+use tokio::net::TcpStream;
+use tokio::sync::mpsc::Receiver;
+use tokio_util::codec::{Framed, LinesCodec, LinesCodecError};
+use tracing::{debug, error, info, warn};
+
+pub struct Bridge {
+    socket: Framed<TcpStream, LinesCodec>,
+    command_receiver: Receiver<Request>,
+    pending_request: Option<Request>,
+}
+
+impl Bridge {
+    pub fn new(
+        socket: Framed<TcpStream, LinesCodec>,
+        command_receiver: Receiver<Request>,
+    ) -> Bridge {
+        Bridge {
+            socket,
+            command_receiver,
+            pending_request: None,
+        }
+    }
+
+    pub async fn listen(
+        &mut self,
+        handshake_request: Request,
+        ready_transmitter: tokio::sync::oneshot::Sender<()>,
+    ) -> () {
+        self.pending_request = Some(handshake_request);
+        info!("bridge is now listening for incoming and outgoing packets");
+
+        let _ = ready_transmitter.send(());
+
+        loop {
+            tokio::select! {
+                // receive response from the server
+                frame = self.socket.next() => {
+                    match self.handle_incoming(frame).await {
+                        Ok(can_continue) => {
+                            if !can_continue {
+                                break;
+                            }
+                        },
+                        Err(e) => {
+                            error!("error handling incoming frame: {}", e);
+                            break;
+                        }
+                    }
+                },
+                // send response to the server
+                request = self.command_receiver.recv() => {
+                    if request.is_none() {
+                        return;
+                    }
+                    let request = request.unwrap();
+                    match self.handle_outgoing(request).await {
+                        Ok(can_continue) => {
+                            if !can_continue {
+                                break;
+                            }
+                        },
+                        Err(e) => {
+                            error!("error handling outgoing frame: {}", e);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        info!("network connection closed");
+    }
+
+    async fn handle_incoming(
+        &mut self,
+        frame: Option<Result<String, LinesCodecError>>,
+    ) -> TapResult<bool> {
+        if frame.is_none() {
+            return Ok(false);
+        }
+
+        match frame.unwrap() {
+            Ok(line) => {
+                debug!("receive response: {}", line);
+
+                match ServerResponse::try_from(line) {
+                    Ok(response) => {
+                        if response.opcode == ServerResponseOpcode::Evt {
+                            warn!("TODO: manage evt");
+                            return Ok(true);
+                        }
+
+                        if let Some(request) = self.pending_request.take() {
+                            request
+                                .forward_channel
+                                .send(response)
+                                .and(Ok(true))
+                                .map_err(|srv_response| {
+                                    TapError::Channel(format!(
+                                        "internal lost response {:?}",
+                                        srv_response
+                                    ))
+                                })
+                        } else {
+                            Ok(true)
+                        }
+                    }
+                    Err(e) => {
+                        error!("error parsing response: {}", e);
+                        Ok(true)
+                    }
+                }
+            }
+            Err(e) => {
+                error!("error reading from socket: {}", e);
+                Ok(true)
+            }
+        }
+    }
+
+    async fn handle_outgoing(&mut self, request: Request) -> TapResult<bool> {
+        if !self.pending_request.is_none() {
+            warn!("waiting for another request. Command dropped");
+            return Ok(true);
+        }
+
+        let command = request.command.clone();
+
+        self.pending_request = Some(request);
+        debug!("send request: '{}'", command.clone());
+
+        if let Err(e) = self.socket.send(command).await {
+            error!("error sending to socket: {}", e);
+        }
+
+        Ok(true)
+    }
+}

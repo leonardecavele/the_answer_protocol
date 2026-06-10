@@ -1,13 +1,10 @@
 [package]
-name = "rust_server"
+name = "tui"
 version = "0.1.0"
 edition = "2024"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-
-json = "0.12"
+api-client = { path = "../api-client" }
 time = { version = "0.3.47", features = ["formatting", "macros"] }
-tracing = "0.1.44"
+tokio = { version = "1.52.3", features = ["full"] }
 tracing-subscriber = { version = "0.3.23", features = ["env-filter", "local-time", "time"] }
