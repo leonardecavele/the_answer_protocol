@@ -16,6 +16,7 @@ import (
 	"go_server/config"
 	"go_server/error"
 	"go_server/logger"
+	"go_server/rust_conn"
 )
 
 func getServerIP() string {
@@ -51,9 +52,8 @@ func getServerIP() string {
 }
 
 func main() {
-	//rustServer := rust_conn.ConnectToRust(config.RustServerIP + ":" + strconv.Itoa(config.RustServerPort))
-	//defer rustServer.Conn.Close()
-	//go rustServer.Read()
+	rustServer := rust_conn.ConnectToRust(config.RustServerIP + ":" + strconv.Itoa(config.RustServerPort))
+	defer rustServer.Conn.Close()
 
 	listener, err := net.Listen("tcp", ":"+strconv.Itoa(config.GoServerPort))
 	if err != nil {
@@ -70,6 +70,7 @@ func main() {
 			listener.Close()
 		})
 	}
+	go rustServer.Read(stopServer)
 
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, os.Interrupt, syscall.SIGTERM)
@@ -108,7 +109,7 @@ func main() {
 			}
 		}
 
-		go client_conn.HandleClient(client_conn.NewClient(conn))
+		go client_conn.HandleClient(client_conn.NewClient(conn), rustServer)
 	}
 
 	os.Exit(int(error.NoError))

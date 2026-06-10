@@ -2,16 +2,18 @@ package client_conn
 
 import (
 	"errors"
+	"go_server/rust_conn"
 	"strings"
 )
 
-type handleTapCommandArgs func(args string, client *Client) (string, error)
+type handleTapCommandArgs func(args string, client *Client, rustServer *rust_conn.RustServer) (string, error)
 
 var tapCommands = map[string]handleTapCommandArgs{
 	"CONNECT": handleConnectCommand,
+	"LOOK":    handleLookCommand,
 }
 
-func handleConnectCommand(args string, client *Client) (string, error) {
+func handleConnectCommand(args string, client *Client, _ *rust_conn.RustServer) (string, error) {
 	isValidUsername := func(username string) bool {
 		if username == "" {
 			return false
@@ -44,4 +46,25 @@ func handleConnectCommand(args string, client *Client) (string, error) {
 	}
 
 	return responseConnected, nil
+}
+
+func handleLookCommand(args string, client *Client, rustServer *rust_conn.RustServer) (string, error) {
+	if args != "" {
+		return responseInvalidArguments, errInvalidArguments
+	}
+
+	command := rust_conn.RustCommand{
+		Player:    client.Username,
+		Command:   "LOOK",
+		Arguments: args,
+	}
+
+	if err := rustServer.WriteCommand(command); err != nil {
+		return "", err
+	}
+	if err := rustServer.ReadCommand(); err != nil {
+		return "", err
+	}
+
+	return "", nil
 }

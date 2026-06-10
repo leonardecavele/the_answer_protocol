@@ -15,12 +15,13 @@ var (
 // Error
 var (
 	// Command
-	responseCommandNotFound = "ERR 400 COMMAND_NOT_FOUND\n"
+	responseCommandNotFound  = "ERR 400 COMMAND_NOT_FOUND\n"
+	responseInvalidArguments = "ERR 200 PLACEHOLDER INVALID ARGUMENTS\n"
 
 	// Client username
 	responseInvalidUsername     = "ERR 6060 INVALID USERNAME PLACEHOLDER\n"
 	responseAlreadyConnected    = "ERR 1313 PLACEHOLDER ALREADY CONNECTED\n"
-	responseUsernameAlreadyUsed = "ERR 9090 PLACEHOLDER NAME TAKEN\n"
+	responseUsernameAlreadyUsed = "ERR 201 NAME IN USED\n"
 
 	// Room
 	responseRoomFull = "ERR 1292 PLACEHOLDER ROOM FULL\n"

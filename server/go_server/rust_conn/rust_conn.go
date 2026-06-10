@@ -2,7 +2,10 @@ package rust_conn
 
 import (
 	"bufio"
+	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"net"
 	"strings"
 	"time"
@@ -10,18 +13,19 @@ import (
 
 import (
 	"go_server/config"
+	"go_server/logger"
 )
 
 func ConnectToRust(addr string) *RustServer {
 	for {
 		conn, err := net.Dial("tcp", addr)
 		if err == nil {
-			fmt.Println("Connected to Rust server")
+			logger.AppLogger.Info("Connected to Rust server")
 			return &RustServer{Conn: conn}
 		}
 
-		fmt.Println("Waiting for Rust server:", err)
-		time.Sleep(time.Second)
+		logger.AppLogger.Info("Rust server unavailable at %s, retrying in %d seconds", addr, config.RustConnectionRetryDelay)
+		time.Sleep(time.Second * config.RustConnectionRetryDelay)
 	}
 }
 
@@ -33,18 +37,38 @@ func (rustServer *RustServer) Write(message string) error {
 	return err
 }
 
-func (rustServer *RustServer) Read() {
+func (rustServer *RustServer) WriteCommand(command any) error {
+	rustServer.PrintMutex.Lock()
+	defer rustServer.PrintMutex.Unlock()
+
+	message, err := json.Marshal(command)
+	if err != nil {
+		return err
+	}
+
+	_, err = fmt.Fprintf(rustServer.Conn, "%s\n", message)
+	if err == nil {
+		logger.AppLogger.Info("Rust Write: %s", message)
+	}
+	return err
+}
+
+func (rustServer *RustServer) Read(onClose func()) {
 	reader := bufio.NewReader(rustServer.Conn)
 
 	for {
 		message, err := reader.ReadString('\n')
 		if err != nil {
-			fmt.Println("Rust connection closed:", err)
+			if !errors.Is(err, io.EOF) {
+				logger.AppLogger.Error("Rust read error: %v", err)
+			}
+			if onClose != nil {
+				onClose()
+			}
 			return
 		}
 
 		message = strings.TrimSpace(message)
-		time := time.Now().Format(config.LogFormat)
-		fmt.Printf("[%v] Received %s from Rust\n", time, message)
+		logger.AppLogger.Info("Rust Read: %s", message)
 	}
 }

@@ -4,9 +4,10 @@ import "errors"
 
 var (
 	// Command
-	errEmptyCommand   = errors.New("empty command")
-	errInvalidCommand = errors.New("invalid command")
-	errUnknownCommand = errors.New("unknown command")
+	errEmptyCommand     = errors.New("empty command")
+	errInvalidCommand   = errors.New("invalid command")
+	errUnknownCommand   = errors.New("unknown command")
+	errInvalidArguments = errors.New("invalid arguments")
 
 	// Client username
 	errClientAlreadyHasUsername = errors.New("client already has username")

@@ -3,6 +3,7 @@ package client_conn
 import (
 	"bufio"
 	"errors"
+	"go_server/rust_conn"
 	"io"
 	"strings"
 )
@@ -29,7 +30,7 @@ func parseCommand(msg string) (string, string, error) {
 	return "", "", errUnknownCommand
 }
 
-func handleTapCommand(str string, client *Client) string {
+func handleTapCommand(str string, client *Client, rustServer *rust_conn.RustServer) string {
 	response := ""
 
 	cmd, args, err := parseCommand(str)
@@ -38,7 +39,7 @@ func handleTapCommand(str string, client *Client) string {
 		return response
 	}
 
-	response, err = tapCommands[cmd](args, client)
+	response, err = tapCommands[cmd](args, client, rustServer)
 	if err != nil {
 		return response
 	}
@@ -54,7 +55,7 @@ func handleTapCommand(str string, client *Client) string {
 	//}
 }
 
-func HandleClient(client *Client) { //, rustServer *rust_conn.RustServer) {
+func HandleClient(client *Client, rustServer *rust_conn.RustServer) {
 	defer client.EraseClient()
 
 	logger.AppLogger.Info("%s Connected", client.Id)
@@ -77,7 +78,7 @@ func HandleClient(client *Client) { //, rustServer *rust_conn.RustServer) {
 		}
 
 		logger.AppLogger.Info("%s Read: %s", client.Id, str)
-		response := handleTapCommand(str, client)
+		response := handleTapCommand(str, client, rustServer)
 		if _, err := client.Conn.Write([]byte(response)); err != nil {
 			logger.AppLogger.Error("%s Write error: %v\n", client.Id, err)
 			return
