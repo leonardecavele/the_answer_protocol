@@ -1,6 +1,6 @@
 use crate::error::{TapError, TapResult};
 use crate::protocol::request::Request;
-use crate::protocol::response::ServerResponse;
+use crate::protocol::response::{ServerResponse, ServerResponseOpcode};
 use futures::SinkExt;
 use futures::stream::StreamExt;
 use tokio::net::TcpStream;
@@ -90,6 +90,11 @@ impl Bridge {
 
                 match ServerResponse::try_from(line) {
                     Ok(response) => {
+                        if response.opcode == ServerResponseOpcode::Evt {
+                            warn!("TODO: manage evt");
+                            return Ok(true);
+                        }
+
                         if let Some(request) = self.pending_request.take() {
                             request
                                 .forward_channel
@@ -127,7 +132,7 @@ impl Bridge {
         let command = request.command.clone();
 
         self.pending_request = Some(request);
-        debug!("send request: {}", command.clone());
+        debug!("send request: '{}'", command.clone());
 
         if let Err(e) = self.socket.send(command).await {
             error!("error sending to socket: {}", e);

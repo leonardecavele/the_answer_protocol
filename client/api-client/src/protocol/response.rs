@@ -1,7 +1,7 @@
 use crate::error::{TapError, TapResult};
 use std::fmt::{Display, Formatter};
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum ServerResponseOpcode {
     Ok,
     Evt,
@@ -9,14 +9,18 @@ pub enum ServerResponseOpcode {
     Empty,
 }
 
-pub struct ServerErrorMessage;
-
-impl ServerErrorMessage {
-    pub fn from_code(code: i32) -> Option<String> {
-        match code {
-            201 => Some("Requested username already taken".to_string()),
-            _ => None,
-        }
+pub fn server_error_message_from_code(code: i32) -> String {
+    match code {
+        201 => String::from("username already taken"),
+        301 => String::from("no exit available in this direction"),
+        401 => String::from("player is not in a group"),
+        402 => String::from("player is already in a group"),
+        404 => String::from("item, inventory item, or NPC not found"),
+        405 => String::from("target NPC is not hostile"),
+        406 => String::from("no quest available"),
+        900 => String::from("connection failed"),
+        901 => String::from("send failed"),
+        _ => "unknown server error".to_string(),
     }
 }
 
@@ -31,7 +35,7 @@ impl Display for ServerResponseOpcode {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ServerResponse {
     pub raw: String,
     pub opcode: ServerResponseOpcode,
