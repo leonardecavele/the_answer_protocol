@@ -34,23 +34,48 @@ func (rustServer *RustServer) Write(message string) error {
 	defer rustServer.PrintMutex.Unlock()
 
 	_, err := fmt.Fprintf(rustServer.Conn, "%s\n", message)
+	if err == nil {
+		logger.AppLogger.Info("Rust Write: %s", message)
+	}
 	return err
 }
 
 func (rustServer *RustServer) WriteCommand(command any) error {
-	rustServer.PrintMutex.Lock()
-	defer rustServer.PrintMutex.Unlock()
-
 	message, err := json.Marshal(command)
 	if err != nil {
 		return err
 	}
 
-	_, err = fmt.Fprintf(rustServer.Conn, "%s\n", message)
-	if err == nil {
-		logger.AppLogger.Info("Rust Write: %s", message)
-	}
+	err = rustServer.Write(string(message))
 	return err
+}
+
+func ReadMessageAsEvent(message string) (EventFromRust, bool, error) {
+	var rustEvent EventFromRust
+
+	if err := json.Unmarshal([]byte(message), &rustEvent); err != nil {
+		return EventFromRust{}, false, err
+	}
+
+	if rustEvent.Player == "" || rustEvent.EventName == "" {
+		return EventFromRust{}, false, nil
+	}
+
+	return rustEvent, true, nil
+}
+
+func ReadMessageAsCommand(message string) (CommandFromRust, bool, error) {
+	var rustCommand CommandFromRust
+
+	if err := json.Unmarshal([]byte(message), &rustCommand); err != nil {
+		return CommandFromRust{}, false, err
+	}
+
+	if rustCommand.Player == "" || rustCommand.Command == "" {
+		return CommandFromRust{}, false, nil
+	}
+
+	return rustCommand, true, nil
 }
 
 func (rustServer *RustServer) Read(
@@ -75,24 +100,22 @@ func (rustServer *RustServer) Read(
 		message = strings.TrimRight(message, "\r\n")
 		logger.AppLogger.Info("Rust Read: %s", message)
 
-		var rustEvent EventFromRust
-		if err := json.Unmarshal([]byte(message), &rustEvent); err != nil {
+		rustEvent, ok, err := ReadMessageAsEvent(message)
+		if err != nil {
 			logger.AppLogger.Error("Rust invalid message: %v", err)
 			continue
 		}
-
-		if rustEvent.Player != "" && rustEvent.EventName != "" && routeEvent != nil {
+		if ok && routeEvent != nil {
 			routeEvent(rustEvent.Player, message)
 			continue
 		}
 
-		var rustCommand CommandFromRust
-		if err := json.Unmarshal([]byte(message), &rustCommand); err != nil {
+		rustCommand, ok, err := ReadMessageAsCommand(message)
+		if err != nil {
 			logger.AppLogger.Error("Rust invalid message: %v", err)
 			continue
 		}
-
-		if rustCommand.Player != "" && rustCommand.Command != "" && routeCommand != nil {
+		if ok && routeCommand != nil {
 			routeCommand(rustCommand.Player, message)
 		}
 	}
