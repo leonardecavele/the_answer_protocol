@@ -1,6 +1,7 @@
 package client_conn
 
 import (
+	"go_server/rust_conn"
 	"net"
 	"strings"
 	"sync"
@@ -37,16 +38,29 @@ func NewClient(conn net.Conn) *Client {
 	}
 }
 
-func (c *Client) EraseClient() {
+func (c *Client) EraseClient(rustServer *rust_conn.RustServer) error {
+	username := c.Username
+
 	c.EraseUsername()
-	c.Conn.Close()
+	closeErr := c.Conn.Close()
+
+	command := rust_conn.CommandToRust{
+		Player:    username,
+		Command:   "QUIT",
+		Arguments: "",
+	}
+
+	if err := rustServer.WriteCommand(command); err != nil {
+		return err
+	}
+	return closeErr
 }
 
 func (c *Client) Write(message string) error {
 	c.writeMutex.Lock()
 	defer c.writeMutex.Unlock()
 
-	_, err := c.Conn.Write([]byte(message))
+	_, err := c.Conn.Write([]byte(message + "\n"))
 	return err
 }
 
@@ -59,26 +73,26 @@ var room = Room{
 	clients: make(map[string]*Client, config.RoomSize),
 }
 
-func (c *Client) SetUsername(username string) error {
+func (c *Client) SetUsername(username string) string {
 	room.mutex.Lock()
 	defer room.mutex.Unlock()
 
 	if c.State == AUTHENTICATED {
-		return errClientAlreadyHasUsername
+		return responseAlreadyConnected
 	}
 
 	if len(room.clients) >= config.RoomSize {
-		return errRoomFull
+		return responseRoomFull
 	}
 
 	if _, ok := room.clients[username]; ok {
-		return errUsernameAlreadyUsed
+		return responseUsernameAlreadyUsed
 	}
 	c.Username = username
 	c.State = AUTHENTICATED
 	room.clients[username] = c
 
-	return nil
+	return ""
 }
 
 func (c *Client) EraseUsername() {

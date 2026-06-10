@@ -12,36 +12,35 @@ import (
 	"go_server/logger"
 )
 
-func parseCommand(msg string) (string, string, error) {
+func parseCommand(msg string) (string, string, string) {
 	msg = strings.TrimRight(msg, "\r\n")
 
 	if msg == "" {
-		return "", "", errEmptyCommand
+		return "", "", responseEmptyCommand
 	}
 
 	command, args, _ := strings.Cut(msg, " ")
 	if _, ok := tapCommands[command]; ok {
-		return command, args, nil
+		return command, args, ""
 	}
 
-	return "", "", errUnknownCommand
+	return "", "", responseCommandNotFound
 }
 
-func handleTapCommand(str string, client *Client, rustServer *rust_conn.RustServer) string {
+func handleTapCommand(str string, client *Client, rustServer *rust_conn.RustServer) (string, error) {
 	response := ""
 
-	cmd, args, err := parseCommand(str)
-	if err != nil {
-		response = responseCommandNotFound
-		return response
+	cmd, args, response := parseCommand(str)
+	if response != "" {
+		return response, nil
 	}
 
-	response, err = tapCommands[cmd](args, client, rustServer)
+	response, err := tapCommands[cmd](args, client, rustServer)
 	if err != nil {
-		return response
+		return "", err
 	}
 
-	return response
+	return response, nil
 }
 
 func handleClientEvents(client *Client, done <-chan struct{}) {
@@ -50,18 +49,24 @@ func handleClientEvents(client *Client, done <-chan struct{}) {
 		case <-done:
 			return
 		case event := <-client.eventChan:
-			response := event + "\n"
-			if err := client.Write("EVT " + string(response)); err != nil {
+			if err := client.Write("EVT " + string(event)); err != nil {
 				logger.AppLogger.Error("%s Write error: %v\n", client.Id, err)
 				return
 			}
-			logger.AppLogger.Info("%s Client Write: %s", client.Id, response)
+			logger.AppLogger.Info("%s Client Write: %s\n", client.Id, event)
 		}
 	}
 }
 
-func HandleClient(client *Client, rustServer *rust_conn.RustServer) {
-	defer client.EraseClient()
+func HandleClient(client *Client, rustServer *rust_conn.RustServer, OnError func()) {
+	defer func() {
+		if err := client.EraseClient(rustServer); err != nil {
+			logger.AppLogger.Error("%s Erase client error: %v\n", client.Id, err)
+			if OnError != nil {
+				OnError()
+			}
+		}
+	}()
 
 	stopListeningEvents := make(chan struct{})
 	defer close(stopListeningEvents)
@@ -88,9 +93,17 @@ func HandleClient(client *Client, rustServer *rust_conn.RustServer) {
 		}
 
 		logger.AppLogger.Info("%s Client Read: %s", client.Id, str)
-		response := handleTapCommand(str, client, rustServer)
+		response, err := handleTapCommand(str, client, rustServer)
+		if err != nil {
+			if OnError != nil {
+				OnError()
+			}
+		}
 		if response == "" {
 			continue
+		}
+		if response == responseBye {
+			return
 		}
 		if err := client.Write(response); err != nil {
 			logger.AppLogger.Error("%s Write error: %v\n", client.Id, err)

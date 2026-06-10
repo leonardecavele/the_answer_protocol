@@ -121,7 +121,7 @@ func main() {
 			}
 		}
 
-		go client_conn.HandleClient(client_conn.NewClient(conn), rustServer)
+		go client_conn.HandleClient(client_conn.NewClient(conn), rustServer, stopServer)
 	}
 
 	os.Exit(int(error.NoError))

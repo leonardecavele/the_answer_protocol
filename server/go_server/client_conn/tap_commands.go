@@ -1,7 +1,6 @@
 package client_conn
 
 import (
-	"errors"
 	"go_server/rust_conn"
 	"strings"
 )
@@ -11,9 +10,10 @@ type handleTapCommandArgs func(args string, client *Client, rustServer *rust_con
 var tapCommands = map[string]handleTapCommandArgs{
 	"CONNECT": handleConnectCommand,
 	"LOOK":    handleLookCommand,
+	"QUIT":    handleQuitCommand,
 }
 
-func handleConnectCommand(args string, client *Client, _ *rust_conn.RustServer) (string, error) {
+func handleConnectCommand(args string, client *Client, rustServer *rust_conn.RustServer) (string, error) {
 	isValidUsername := func(username string) bool {
 		if username == "" {
 			return false
@@ -29,19 +29,20 @@ func handleConnectCommand(args string, client *Client, _ *rust_conn.RustServer) 
 	}
 
 	if !isValidUsername(args) {
-		return responseInvalidUsername, errInvalidUsername
+		return responseInvalidUsername, nil
 	}
 
-	err := client.SetUsername(strings.ToUpper(args))
-	if err != nil {
-		switch {
-		case errors.Is(err, errClientAlreadyHasUsername):
-			return responseAlreadyConnected, err
-		case errors.Is(err, errRoomFull):
-			return responseRoomFull, err
-		case errors.Is(err, errUsernameAlreadyUsed):
-			return responseUsernameAlreadyUsed, err
-		}
+	if response := client.SetUsername(strings.ToUpper(args)); response != "" {
+		return response, nil
+	}
+
+	command := rust_conn.CommandToRust{
+		Player:    client.Username,
+		Command:   "CONNECT",
+		Arguments: args,
+	}
+
+	if err := rustServer.WriteCommand(command); err != nil {
 		return "", err
 	}
 
@@ -50,10 +51,10 @@ func handleConnectCommand(args string, client *Client, _ *rust_conn.RustServer) 
 
 func handleLookCommand(args string, client *Client, rustServer *rust_conn.RustServer) (string, error) {
 	if client.Username == "" {
-		return responseNotConnected, errNotConnected
+		return responseNotConnected, nil
 	}
 	if args != "" {
-		return responseInvalidArguments, errInvalidArguments
+		return responseInvalidArguments, nil
 	}
 
 	command := rust_conn.CommandToRust{
@@ -66,5 +67,26 @@ func handleLookCommand(args string, client *Client, rustServer *rust_conn.RustSe
 		return "", err
 	}
 
-	return "OK " + client.ReadCommand() + "\n", nil
+	return "OK " + client.ReadCommand(), nil
+}
+
+func handleQuitCommand(args string, client *Client, rustServer *rust_conn.RustServer) (string, error) {
+	if client.Username == "" {
+		return responseNotConnected, nil
+	}
+	if args != "" {
+		return responseInvalidArguments, nil
+	}
+
+	command := rust_conn.CommandToRust{
+		Player:    client.Username,
+		Command:   "QUIT",
+		Arguments: args,
+	}
+
+	if err := rustServer.WriteCommand(command); err != nil {
+		return "", err
+	}
+
+	return responseBye, nil
 }
