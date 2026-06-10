@@ -4,8 +4,11 @@ import (
 	"bufio"
 	"net"
 	"os"
+	"os/signal"
 	"strconv"
 	"strings"
+	"sync"
+	"syscall"
 )
 
 import (
@@ -59,6 +62,23 @@ func main() {
 	defer listener.Close()
 
 	quit := make(chan struct{})
+	var stopOnce sync.Once
+
+	stopServer := func() {
+		stopOnce.Do(func() {
+			close(quit)
+			listener.Close()
+		})
+	}
+
+	signals := make(chan os.Signal, 1)
+	signal.Notify(signals, os.Interrupt, syscall.SIGTERM)
+	defer signal.Stop(signals)
+
+	go func() {
+		<-signals
+		stopServer()
+	}()
 
 	go func() {
 		scanner := bufio.NewScanner(os.Stdin)
@@ -67,8 +87,7 @@ func main() {
 			input := strings.ToLower(strings.TrimSpace(scanner.Text()))
 
 			if _, ok := config.QuitCommands[input]; ok {
-				close(quit)
-				listener.Close()
+				stopServer()
 				return
 			}
 		}

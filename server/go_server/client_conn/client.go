@@ -9,16 +9,25 @@ import (
 	"go_server/config"
 )
 
+type ClientState string
+
+const (
+	CONNECTED     ClientState = "CONNECTED"
+	AUTHENTICATED ClientState = "AUTHENTICATED"
+)
+
 type Client struct {
 	Conn     net.Conn
 	Id       string
 	Username string
+	State    ClientState
 }
 
 func NewClient(conn net.Conn) *Client {
 	return &Client{
-		Conn: conn,
-		Id:   conn.RemoteAddr().String(),
+		Conn:  conn,
+		Id:    conn.RemoteAddr().String(),
+		State: CONNECTED,
 	}
 }
 
@@ -40,7 +49,7 @@ func (c *Client) SetUsername(username string) error {
 	room.mutex.Lock()
 	defer room.mutex.Unlock()
 
-	if c.Username != "" {
+	if c.State == AUTHENTICATED {
 		return errClientAlreadyHasUsername
 	}
 
@@ -53,6 +62,7 @@ func (c *Client) SetUsername(username string) error {
 	}
 
 	c.Username = username
+	c.State = AUTHENTICATED
 	room.clients[username] = c
 
 	return nil
@@ -60,8 +70,10 @@ func (c *Client) SetUsername(username string) error {
 
 func (c *Client) EraseUsername() {
 	room.mutex.Lock()
-	if c.Username != "" {
+	if c.State == AUTHENTICATED {
 		delete(room.clients, c.Username)
 	}
+	c.Username = ""
+	c.State = CONNECTED
 	room.mutex.Unlock()
 }
