@@ -6,7 +6,7 @@ use crate::constantes::{ErrorCode};
 pub struct GameManager {
     players: HashMap<PlayerId, Player>,
     players_by_name: HashMap<String, PlayerId>,
-    groups: GroupManager,
+    pub groups: GroupManager,
     next_player_id: PlayerCount
 }
 
