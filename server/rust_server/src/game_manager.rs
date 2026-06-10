@@ -1,10 +1,12 @@
 use std::collections::HashMap;
 use crate::player::{Player, PlayerId, PlayerCount};
+use crate::groups::{GroupManager};
 use crate::constantes::{ErrorCode};
 
 pub struct GameManager {
     players: HashMap<PlayerId, Player>,
     players_by_name: HashMap<String, PlayerId>,
+    groups: GroupManager,
     next_player_id: PlayerCount
 }
 
@@ -13,9 +15,11 @@ impl GameManager {
         let mut manager = Self {
             players: HashMap::new(),
             players_by_name: HashMap::new(),
+            groups: GroupManager::new(),
             next_player_id: 0,
         };
         manager.next_player_id = manager.restore_next_player_id();
+    
         return manager;
     }
 

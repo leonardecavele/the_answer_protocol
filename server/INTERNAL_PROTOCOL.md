@@ -22,8 +22,7 @@ response_value = snake_case / 1*DIGIT
 ```json
 {
     "player": <player_name>,
-    "command": <command_name>,
-    "command_id": <command_id>,
+    "command_name": <command_name>,
     "arguments": {
         <argument_name>: <argument_value>
     }
@@ -152,7 +151,7 @@ response_value = snake_case / 1*DIGIT
 ```json
 {
     "player": <player_name>,
-    "command_id": <command_id>,
+    "command_name": <command_id>,
     "error_code": <error_code>,
     "value": <response_value>
 }

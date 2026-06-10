@@ -39,14 +39,12 @@ impl GameManager {
         let json_object = json::parse(&msg).unwrap();
         let player_name = json_object["player"].as_str().unwrap();
         let command_name = json_object["command"].as_str().unwrap();
-        let command_id = json_object["command_id"].as_str().unwrap();
         // let arguments = json_object["arguments"];
         match command_name {
             "CONNECT" => {
                 let error_type = self.connect_player(player_name.to_string());
                 return object!{
                     "player": player_name,
-                    "command_id": command_id,
                     "error_code": error_type.code(),
                     "value": ""
                 }.dump();
@@ -68,7 +66,6 @@ impl GameManager {
                 };
                 return object!{
                     "player": player_name,
-                    "command_id": command_id,
                     "error_code": ErrorCode::NoError.code(),
                     "value": harcoded_room.dump()
                 }.dump();
@@ -78,7 +75,6 @@ impl GameManager {
                 let error_type = self.disconnect_player(player_name.to_string());
                 return object!{
                     "player": player_name,
-                    "command_id": command_id,
                     "error_code": error_type.code(),
                     "value": ""
                 }.dump();
@@ -87,7 +83,6 @@ impl GameManager {
             "WHO" => {
                 return object!{
                     "player": player_name,
-                    "command_id": command_id,
                     "error_code": ErrorCode::NoError.code(),
                     "value": self.get_nb_players()
                 }.dump();

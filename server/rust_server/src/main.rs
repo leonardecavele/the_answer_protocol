@@ -25,7 +25,7 @@ fn start_reader_thread(reader_stream: TcpStream, mpsc_sender: mpsc::Sender<Strin
 }
 
 fn main() -> std::io::Result<()> {
-    let listener = TcpListener::bind("127.0.0.1:38801")?;
+    let listener = TcpListener::bind("0.0.0.0:38801")?;
 
     println!("Rust server started on 38801");
 
