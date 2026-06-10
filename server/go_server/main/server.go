@@ -70,7 +70,7 @@ func main() {
 			listener.Close()
 		})
 	}
-	go rustServer.Read(stopServer)
+	go rustServer.Read(stopServer, client_conn.RouteCommand, client_conn.RouteEvent)
 
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, os.Interrupt, syscall.SIGTERM)

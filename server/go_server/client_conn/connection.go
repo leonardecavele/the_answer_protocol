@@ -19,10 +19,7 @@ func parseCommand(msg string) (string, string, error) {
 		return "", "", errEmptyCommand
 	}
 
-	command, args, found := strings.Cut(msg, " ")
-	if !found {
-		return "", "", errInvalidCommand
-	}
+	command, args, _ := strings.Cut(msg, " ")
 	if _, ok := tapCommands[command]; ok {
 		return command, args, nil
 	}
@@ -45,27 +42,40 @@ func handleTapCommand(str string, client *Client, rustServer *rust_conn.RustServ
 	}
 
 	return response
+}
 
-	//fmt.Printf("[%v] Received PING from client %d\n", time.Now().Format(config.LogFormat), i)
-	//fmt.Printf("[%v] Sending PING to Rust\n", time.Now().Format(config.LogFormat))
-	//err = rustServer.Write("PING")
-	//if err != nil {
-	//	fmt.Println("Rust send error:", err)
-	//	return
-	//}
+func handleClientEvents(client *Client, done <-chan struct{}) {
+	for {
+		select {
+		case <-done:
+			return
+		case event := <-client.eventChan:
+			response := event + "\n"
+			if err := client.Write(response); err != nil {
+				logger.AppLogger.Error("%s Write error: %v\n", client.Id, err)
+				return
+			}
+			logger.AppLogger.Info("%s Client Write: %s", client.Id, response)
+		}
+	}
 }
 
 func HandleClient(client *Client, rustServer *rust_conn.RustServer) {
 	defer client.EraseClient()
 
+	done := make(chan struct{})
+	defer close(done)
+
 	logger.AppLogger.Info("%s Connected", client.Id)
 	defer logger.AppLogger.Info("%s Disconnected", client.Id)
 
-	if _, err := client.Conn.Write([]byte(responseHello)); err != nil {
+	if err := client.Write(responseHello); err != nil {
 		logger.AppLogger.Error("%s Write error: %v\n", client.Id, err)
 		return
 	}
-	logger.AppLogger.Info("%s Write: %s", client.Id, responseHello)
+	logger.AppLogger.Info("%s Client Write: %s", client.Id, responseHello)
+
+	go handleClientEvents(client, done)
 
 	reader := bufio.NewReader(client.Conn)
 	for {
@@ -77,12 +87,15 @@ func HandleClient(client *Client, rustServer *rust_conn.RustServer) {
 			return
 		}
 
-		logger.AppLogger.Info("%s Read: %s", client.Id, str)
+		logger.AppLogger.Info("%s Client Read: %s", client.Id, str)
 		response := handleTapCommand(str, client, rustServer)
-		if _, err := client.Conn.Write([]byte(response)); err != nil {
+		if response == "" {
+			continue
+		}
+		if err := client.Write(response); err != nil {
 			logger.AppLogger.Error("%s Write error: %v\n", client.Id, err)
 			return
 		}
-		logger.AppLogger.Info("%s Write: %s", client.Id, response)
+		logger.AppLogger.Info("%s Client Write: %s", client.Id, response)
 	}
 }

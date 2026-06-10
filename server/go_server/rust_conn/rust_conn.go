@@ -53,7 +53,11 @@ func (rustServer *RustServer) WriteCommand(command any) error {
 	return err
 }
 
-func (rustServer *RustServer) Read(onClose func()) {
+func (rustServer *RustServer) Read(
+	onClose func(),
+	routeCommand func(username string, command string) bool,
+	routeEvent func(username string, event string) bool,
+) {
 	reader := bufio.NewReader(rustServer.Conn)
 
 	for {
@@ -68,7 +72,28 @@ func (rustServer *RustServer) Read(onClose func()) {
 			return
 		}
 
-		message = strings.TrimSpace(message)
+		message = strings.TrimRight(message, "\r\n")
 		logger.AppLogger.Info("Rust Read: %s", message)
+
+		var rustEvent EventFromRust
+		if err := json.Unmarshal([]byte(message), &rustEvent); err != nil {
+			logger.AppLogger.Error("Rust invalid message: %v", err)
+			continue
+		}
+
+		if rustEvent.Player != "" && rustEvent.EventName != "" && routeEvent != nil {
+			routeEvent(rustEvent.Player, message)
+			continue
+		}
+
+		var rustCommand CommandFromRust
+		if err := json.Unmarshal([]byte(message), &rustCommand); err != nil {
+			logger.AppLogger.Error("Rust invalid message: %v", err)
+			continue
+		}
+
+		if rustCommand.Player != "" && rustCommand.Command != "" && routeCommand != nil {
+			routeCommand(rustCommand.Player, message)
+		}
 	}
 }

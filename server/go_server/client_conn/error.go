@@ -3,9 +3,11 @@ package client_conn
 import "errors"
 
 var (
+	// Network
+	errNotConnected = errors.New("not connected")
+
 	// Command
 	errEmptyCommand     = errors.New("empty command")
-	errInvalidCommand   = errors.New("invalid command")
 	errUnknownCommand   = errors.New("unknown command")
 	errInvalidArguments = errors.New("invalid arguments")
 

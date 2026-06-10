@@ -49,11 +49,14 @@ func handleConnectCommand(args string, client *Client, _ *rust_conn.RustServer) 
 }
 
 func handleLookCommand(args string, client *Client, rustServer *rust_conn.RustServer) (string, error) {
+	if client.Username == "" {
+		return responseNotConnected, errNotConnected
+	}
 	if args != "" {
 		return responseInvalidArguments, errInvalidArguments
 	}
 
-	command := rust_conn.RustCommand{
+	command := rust_conn.CommandToRust{
 		Player:    client.Username,
 		Command:   "LOOK",
 		Arguments: args,
@@ -62,9 +65,6 @@ func handleLookCommand(args string, client *Client, rustServer *rust_conn.RustSe
 	if err := rustServer.WriteCommand(command); err != nil {
 		return "", err
 	}
-	if err := rustServer.ReadCommand(); err != nil {
-		return "", err
-	}
 
-	return "", nil
+	return "OK " + client.ReadCommand() + "\n", nil
 }

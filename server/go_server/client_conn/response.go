@@ -14,8 +14,11 @@ var (
 
 // Error
 var (
+	//Connection
+	responseNotConnected = "ERR 211 NOT CONNECTED\n"
+
 	// Command
-	responseCommandNotFound  = "ERR 400 COMMAND_NOT_FOUND\n"
+	responseCommandNotFound  = "ERR 404 COMMAND_NOT_FOUND\n"
 	responseInvalidArguments = "ERR 200 PLACEHOLDER INVALID ARGUMENTS\n"
 
 	// Client username
