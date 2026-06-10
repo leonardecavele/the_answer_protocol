@@ -3,13 +3,14 @@ use std::process::exit;
 use time::macros::format_description;
 use tracing_subscriber::EnvFilter;
 use tracing_subscriber::fmt::time::LocalTime;
+use api_client::protocol::command::CommandResult;
 
 pub enum Command {
     Quit,
 }
 
-const SERVER_ADDRESS: &str = "127.0.0.1:3000";
-// const SERVER_ADDRESS: &str = "10.14.4.3:38800";
+// const SERVER_ADDRESS: &str = "127.0.0.1:3000";
+const SERVER_ADDRESS: &str = "10.12.10.5:38800";
 
 const PLAYER: &str = "Alice";
 
@@ -35,6 +36,24 @@ async fn main() {
             return;
         }
     };
+
+    match client.connect(PLAYER.to_string()).await {
+        Ok(result) => {
+            match result {
+                CommandResult::Success { data, .. } => {
+                    println!("Connected to the server as {}.", data.player_name);
+                },
+                CommandResult::Error { message, .. } => {
+                    println!("{}", message);
+                }
+            }
+        },
+        Err(e) => {
+            eprintln!("Fail to connect player: {}", e);
+            client.close();
+            exit(1);
+        }
+    }
 
     if let Err(e) = client.connect(PLAYER.to_string()).await {
         eprintln!("Fail to connect player: {}", e);

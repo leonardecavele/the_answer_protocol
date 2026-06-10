@@ -9,6 +9,17 @@ pub enum ServerResponseOpcode {
     Empty,
 }
 
+pub struct ServerErrorMessage;
+
+impl ServerErrorMessage {
+    pub fn from_code(code: i32) -> Option<String> {
+        match code {
+            201 => Some("Requested username already taken".to_string()),
+            _ => None,
+        }
+    }
+}
+
 impl Display for ServerResponseOpcode {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {

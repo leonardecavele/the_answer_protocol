@@ -1,10 +1,10 @@
 use crate::error::{TapError, TapResult};
 use crate::network::bridge::Bridge;
-use crate::protocol::command::Command;
-use crate::protocol::command::connect::ConnectCommand;
+use crate::protocol::command::connect::{ConnectCommand, ConnectServerResponseData};
+use crate::protocol::command::{Command, CommandResult};
 use crate::protocol::handshake::HandshakeServerResponse;
 use crate::protocol::request::Request;
-use crate::protocol::response::ServerResponse;
+use crate::protocol::response::{ServerResponse, ServerResponseOpcode};
 use tokio::net::{TcpStream, ToSocketAddrs};
 use tokio::sync::{mpsc, oneshot};
 use tokio::task::JoinHandle;
@@ -93,7 +93,7 @@ impl APIClient {
         HandshakeServerResponse::try_from(response)
     }
 
-    async fn request<C: Command>(&self, command: C) -> TapResult<C::Response> {
+    async fn request<C: Command>(&self, command: C) -> TapResult<CommandResult<C::ResponseData>> {
         let payload = command.create_command(&self.server)?;
 
         let (request, response_receiver) = Request::new(payload);
@@ -108,22 +108,28 @@ impl APIClient {
             .await
             .map_err(|e| TapError::Channel(format!("[client] recv request error: {}", e)))?;
 
-        command.parse_response(&self.server, response)
+        if response.opcode == ServerResponseOpcode::Ok {
+            command.parse_response_ok(&self.server, response)
+        } else {
+            Ok(CommandResult::error_from_response(response))
+        }
     }
 }
 
 impl APIClient {
-    pub async fn connect(&self, player_name: String) -> TapResult<()> {
+    pub async fn connect(
+        &self,
+        player_name: String,
+    ) -> TapResult<CommandResult<ConnectServerResponseData>> {
         debug!("sending connect request for player: {}", player_name);
 
-        self.request(ConnectCommand {
-            player_name: player_name.clone(),
-        })
-        .await?;
+        let response = self
+            .request(ConnectCommand {
+                player_name: player_name.clone(),
+            })
+            .await?;
 
-        info!("player {} connected successfully", player_name);
-
-        Ok(())
+        Ok(response)
     }
 
     pub fn close(&self) {

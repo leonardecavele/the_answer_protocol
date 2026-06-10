@@ -1,16 +1,18 @@
 use crate::client::ServerInfo;
 use crate::error::{TapError, TapResult};
-use crate::protocol::command::Command;
+use crate::protocol::command::{Command, CommandResult};
 use crate::protocol::response::{ServerResponse, ServerResponseOpcode};
 
 pub struct ConnectCommand {
     pub player_name: String,
 }
 
-pub struct ConnectServerResponse;
+pub struct ConnectServerResponseData {
+    pub player_name: String,
+}
 
 impl Command for ConnectCommand {
-    type Response = ConnectServerResponse;
+    type ResponseData = ConnectServerResponseData;
 
     fn create_command(&self, server_info: &ServerInfo) -> TapResult<String> {
         match server_info.protocol_version {
@@ -22,21 +24,14 @@ impl Command for ConnectCommand {
         }
     }
 
-    fn parse_response(
+    fn parse_response_ok(
         &self,
         server_info: &ServerInfo,
         response: ServerResponse,
-    ) -> TapResult<Self::Response> {
+    ) -> TapResult<CommandResult<Self::ResponseData>> {
         match server_info.protocol_version {
             1 => {
-                if response.opcode != ServerResponseOpcode::Ok {
-                    return Err(TapError::ProtocolInvalidOpcode(
-                        ServerResponseOpcode::Ok.to_string(),
-                        response.opcode.to_string(),
-                    ));
-                }
-
-                if let Some(arguments) = response.arguments {
+                if let Some(arguments) = response.arguments.clone() {
                     if arguments.len() != 1 || arguments[0] != "connected" {
                         return Err(TapError::ProtocolInvalidArguments(
                             "OK connected".to_string(),
@@ -44,7 +39,12 @@ impl Command for ConnectCommand {
                         ));
                     }
 
-                    Ok(ConnectServerResponse)
+                    Ok(CommandResult::Success {
+                        data: ConnectServerResponseData {
+                            player_name: self.player_name.clone(),
+                        },
+                        response,
+                    })
                 } else {
                     Err(TapError::ProtocolInvalidArguments(
                         "OK connected".to_string(),
@@ -52,10 +52,10 @@ impl Command for ConnectCommand {
                     ))
                 }
             }
-            v => todo!(
-                "[response connect] Server version {} is not supported yet",
-                v
-            ),
+            v => Ok(CommandResult::Error {
+                message: "server version {} is not supported yet".to_string(),
+                response,
+            }),
         }
     }
 }
