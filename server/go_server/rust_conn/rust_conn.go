@@ -60,6 +60,26 @@ func (rustServer *RustServer) WriteCommand(command any) error {
 	return err
 }
 
+func ReadMessageAsEvents(message string) ([]EventFromRust, bool, error) {
+	var rustEvents []EventFromRust
+
+	if err := json.Unmarshal([]byte(message), &rustEvents); err != nil {
+		return nil, false, nil
+	}
+
+	if len(rustEvents) == 0 {
+		return nil, false, nil
+	}
+
+	for _, rustEvent := range rustEvents {
+		if rustEvent.Player == "" || rustEvent.EventName == "" {
+			return nil, false, nil
+		}
+	}
+
+	return rustEvents, true, nil
+}
+
 func ReadMessageAsEvent(message string) (EventFromRust, bool, error) {
 	var rustEvent EventFromRust
 
@@ -115,6 +135,27 @@ func (rustServer *RustServer) Read(
 
 		message = strings.TrimRight(message, "\r\n")
 		logger.AppLogger.Info("Rust Read: %s", message)
+
+		if message == config.RustConfirmationMessage {
+			continue
+		}
+
+		rustEvents, ok, err := ReadMessageAsEvents(message)
+		if err != nil {
+			logger.AppLogger.Error("Rust invalid message: %v", err)
+			continue
+		}
+		if ok && routeEvent != nil {
+			for _, rustEvent := range rustEvents {
+				eventMessage, err := json.Marshal(rustEvent)
+				if err != nil {
+					logger.AppLogger.Error("Rust invalid event: %v", err)
+					continue
+				}
+				routeEvent(rustEvent.Player, string(eventMessage))
+			}
+			continue
+		}
 
 		rustEvent, ok, err := ReadMessageAsEvent(message)
 		if err != nil {

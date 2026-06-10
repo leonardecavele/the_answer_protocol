@@ -70,22 +70,12 @@ func handleLookCommand(args string, client *Client, rustServer *rust_conn.RustSe
 	return "OK " + client.ReadCommand(), nil
 }
 
-func handleQuitCommand(args string, client *Client, rustServer *rust_conn.RustServer) (string, error) {
+func handleQuitCommand(args string, client *Client, _ *rust_conn.RustServer) (string, error) {
 	if client.Username == "" {
 		return responseNotConnected, nil
 	}
 	if args != "" {
 		return responseInvalidArguments, nil
-	}
-
-	command := rust_conn.CommandToRust{
-		Player:    client.Username,
-		Command:   "QUIT",
-		Arguments: args,
-	}
-
-	if err := rustServer.WriteCommand(command); err != nil {
-		return "", err
 	}
 
 	return responseBye, nil

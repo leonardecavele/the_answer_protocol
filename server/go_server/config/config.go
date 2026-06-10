@@ -16,7 +16,9 @@ const (
 
 	ProtocolVersion = 1
 
-	RoomSize = 2
+	RoomSize = 20
 
-	RustConnectionRetryDelay = 5
+	RustConnectionRetryDelay = 1
+
+	RustConfirmationMessage = "Duly noted."
 )

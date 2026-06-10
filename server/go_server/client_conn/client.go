@@ -44,14 +44,16 @@ func (c *Client) EraseClient(rustServer *rust_conn.RustServer) error {
 	c.EraseUsername()
 	closeErr := c.Conn.Close()
 
-	command := rust_conn.CommandToRust{
-		Player:    username,
-		Command:   "QUIT",
-		Arguments: "",
-	}
+	if c.State == AUTHENTICATED {
+		command := rust_conn.CommandToRust{
+			Player:    username,
+			Command:   "QUIT",
+			Arguments: "",
+		}
 
-	if err := rustServer.WriteCommand(command); err != nil {
-		return err
+		if err := rustServer.WriteCommand(command); err != nil {
+			return err
+		}
 	}
 	return closeErr
 }
@@ -100,8 +102,6 @@ func (c *Client) EraseUsername() {
 	if c.State == AUTHENTICATED {
 		delete(room.clients, c.Username)
 	}
-	c.Username = ""
-	c.State = CONNECTED
 	room.mutex.Unlock()
 }
 

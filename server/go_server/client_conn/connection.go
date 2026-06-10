@@ -102,11 +102,11 @@ func HandleClient(client *Client, rustServer *rust_conn.RustServer, OnError func
 		if response == "" {
 			continue
 		}
-		if response == responseBye {
-			return
-		}
 		if err := client.Write(response); err != nil {
 			logger.AppLogger.Error("%s Write error: %v\n", client.Id, err)
+			return
+		}
+		if response == responseBye {
 			return
 		}
 		logger.AppLogger.Info("%s Client Write: %s", client.Id, response)
