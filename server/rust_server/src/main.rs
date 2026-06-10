@@ -43,7 +43,8 @@ fn main() -> std::io::Result<()> {
     println!("Rust server started on 38801");
 
     let (mut writer_stream, addr) = listener.accept()?;
-
+    writer_stream.set_nodelay(true)?;
+    
     println!("Go connected: {}", addr);
 
     let reader_stream = writer_stream.try_clone()?;
