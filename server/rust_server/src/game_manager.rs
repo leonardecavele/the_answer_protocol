@@ -31,7 +31,7 @@ impl GameManager {
 
         let player = match self.players.get_mut(&player_id) {
             Some(player) => player,
-            None => return false,
+            _none => return false,
         };
 
 
@@ -65,7 +65,7 @@ impl GameManager {
         self.next_player_id += 1;
     }
 
-    pub fn init_player(&mut self, name: String) -> ErrorCode {
+    pub fn connect_player(&mut self, name: String) -> ErrorCode {
         // get the data of this player from the database and add the player to the game
         // init an empty save if the player never played before
         if self.players_by_name.contains_key(&name) {
@@ -73,8 +73,23 @@ impl GameManager {
         }
         match self.try_restore_player_save() {
             Some(_player) => return ErrorCode::NoError,
-            None => self.create_new_player(name),
+            _none => self.create_new_player(name),
         }
         return ErrorCode::NoError;
+    }
+
+    pub fn disconnect_player(&mut self, name: String) -> ErrorCode {
+        if !self.players_by_name.contains_key(&name) {
+            return ErrorCode::NoSuchUser;
+        }
+        let player_id = self.players_by_name.get(&name).unwrap();
+        self.players.remove(player_id);
+        self.players_by_name.remove(&name);
+        return ErrorCode::NoError;
+    }
+
+
+    pub fn get_nb_players(&self) -> usize {
+        return self.players.len();
     }
 }

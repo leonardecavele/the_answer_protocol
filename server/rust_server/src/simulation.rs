@@ -1,5 +1,5 @@
 use std::sync::mpsc;
-use crate::constantes::{TICK_TIME, TickResult};
+use crate::constantes::{TICK_TIME, TickResult, ErrorCode};
 use std::time::Instant;
 use std::io::Write;
 use json::object;
@@ -43,7 +43,7 @@ impl GameManager {
         // let arguments = json_object["arguments"];
         match command_name {
             "CONNECT" => {
-                let error_type = self.init_player(player_name.to_string());
+                let error_type = self.connect_player(player_name.to_string());
                 return object!{
                     "player": player_name,
                     "command_id": command_id,
@@ -51,11 +51,47 @@ impl GameManager {
                     "value": ""
                 }.dump();
             }
-            // "LOOK" => {},
+            "LOOK" => {
+                let harcoded_room = object!{
+                    "room": {
+                        "id": "room.identifier",
+                        "name": "Room Display Name",
+                        "description": "Room description text",
+                        "exits": {
+                        "north": "room.north_id",
+                        "south": "room.south_id"
+                        }
+                    },
+                    "players": ["username1", "username2"],
+                    "items": ["item.id1", "item.id2"],
+                    "npcs": ["npc.id1", "npc.id2"]
+                };
+                return object!{
+                    "player": player_name,
+                    "command_id": command_id,
+                    "error_code": ErrorCode::NoError.code(),
+                    "value": harcoded_room.dump()
+                }.dump();
+            },
             // "MOVE" => {},
-            // "QUIT" => {},
+            "QUIT" => {
+                let error_type = self.disconnect_player(player_name.to_string());
+                return object!{
+                    "player": player_name,
+                    "command_id": command_id,
+                    "error_code": error_type.code(),
+                    "value": ""
+                }.dump();
+            },
             // "CHAT" => {},
-            // "WHO" => {},
+            "WHO" => {
+                return object!{
+                    "player": player_name,
+                    "command_id": command_id,
+                    "error_code": ErrorCode::NoError.code(),
+                    "value": self.get_nb_players()
+                }.dump();
+            },
             // "GROUP CREATE" => {},
             // "GROUP INVITE" => {},
             // "GROUP JOIN" => {},
