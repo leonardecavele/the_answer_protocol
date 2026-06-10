@@ -1,5 +1,6 @@
 use crate::game_manager::{GameManager};
 use crate::player::PlayerId;
+use crate::constantes::ErrorCode;
 use std::collections::HashMap;
 pub type GroupId = u32;
 
@@ -50,6 +51,12 @@ impl GroupManager {
 
 impl GameManager {
     pub fn create_group(&mut self, group_leader: PlayerId) -> ErrorCode {
-        self.groups.add_group(group_leader);
+        let player = self.get_players().get(&group_leader).unwrap();
+        
+        if player.get_group_id().is_some() {
+            return ErrorCode::AlreadyInGroup;
+        }
+        self.get_groups().add_group(group_leader);
+        return ErrorCode::NoError;
     }
 }

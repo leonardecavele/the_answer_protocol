@@ -5,6 +5,9 @@ use std::net::{TcpListener, TcpStream};
 use std::thread;
 use std::time::Instant;
 use std::sync::mpsc;
+use time::macros::format_description;
+use tracing_subscriber::fmt::time::LocalTime;
+use tracing_subscriber::EnvFilter;
 
 fn start_reader_thread(reader_stream: TcpStream, mpsc_sender: mpsc::Sender<String>) {
     thread::spawn(move || {
@@ -25,6 +28,16 @@ fn start_reader_thread(reader_stream: TcpStream, mpsc_sender: mpsc::Sender<Strin
 }
 
 fn main() -> std::io::Result<()> {
+    let time_format = format_description!("[hour]:[minute]:[second]");
+    let timer = LocalTime::new(time_format);
+
+    tracing_subscriber::fmt()
+        .with_env_filter(
+            EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info")),
+        )
+        .with_timer(timer)
+        .init();
+
     let listener = TcpListener::bind("0.0.0.0:38801")?;
 
     println!("Rust server started on 38801");
@@ -41,7 +54,7 @@ fn main() -> std::io::Result<()> {
     // the receover now reads the sent message and sends PONG back to the go server
     start_reader_thread(reader_stream, mpsc_sender);
     let mut game_manager = GameManager::new();
-    loop {     
+    loop { 
         let start = Instant::now(); // this tick time start
         game_manager.update_game_state();
 

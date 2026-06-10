@@ -6,7 +6,7 @@ use crate::constantes::{ErrorCode};
 pub struct GameManager {
     players: HashMap<PlayerId, Player>,
     players_by_name: HashMap<String, PlayerId>,
-    pub groups: GroupManager,
+    groups: GroupManager,
     next_player_id: PlayerCount
 }
 
@@ -23,6 +23,13 @@ impl GameManager {
         return manager;
     }
 
+    pub fn get_players(&self) -> &HashMap<PlayerId, Player> {
+        return &self.players;
+    }
+
+    pub fn get_groups(&mut self) -> &mut GroupManager {
+        return &mut self.groups;
+    }
     fn restore_next_player_id(&mut self) -> PlayerId {
         return 0;
     }
@@ -33,7 +40,7 @@ impl GameManager {
             return false;
         }
 
-        let player = match self.players.get_mut(&player_id) {
+        let player= match self.players.get_mut(&player_id) {
             Some(player) => player,
             _none => return false,
         };

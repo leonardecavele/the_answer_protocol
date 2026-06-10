@@ -151,7 +151,7 @@ response_value = snake_case / 1*DIGIT
 ```json
 {
     "player": <player_name>,
-    "command_name": <command_id>,
+    "command": <command_name>,
     "error_code": <error_code>,
     "value": <response_value>
 }
@@ -241,3 +241,18 @@ response_value = snake_case / 1*DIGIT
 
 ### ``value`` for ``QUESTS`` command
 (See [Json Quest List Format in README.md](README.md#json-quest-list-format) for details on the quest-list-json structure) 
+
+
+
+## Rust -> Go Events
+
+
+#### Json format:
+```json
+{
+    "player": <player_name>,
+    "event_name": <event_name>,
+    "value": <response_value>
+}
+```
+
