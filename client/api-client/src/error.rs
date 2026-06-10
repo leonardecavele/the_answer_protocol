@@ -8,8 +8,8 @@ pub enum TapError {
     #[error("network codec error: {0}")]
     Codec(#[from] tokio_util::codec::LinesCodecError),
 
-    #[error("packet parsing error: {0}")]
-    PacketParse(String),
+    #[error("server response parsing error: {0}")]
+    ServerResponseParse(String),
 
     #[error("protocol error: {0}")]
     Protocol(String),

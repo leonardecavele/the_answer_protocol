@@ -1,3 +1,4 @@
 pub mod command;
-pub mod envelope;
-pub mod packet;
+pub mod handshake;
+pub mod request;
+pub mod response;

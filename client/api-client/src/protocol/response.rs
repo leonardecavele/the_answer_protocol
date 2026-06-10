@@ -1,18 +1,15 @@
-pub mod connect;
-pub mod handshake;
-
 use crate::error::{TapError, TapResult};
 use std::fmt::{Display, Formatter};
 
 #[derive(Debug, PartialEq)]
-enum PacketOpcode {
+pub enum ServerResponseOpcode {
     Ok,
     Evt,
     Err,
     Empty,
 }
 
-impl Display for PacketOpcode {
+impl Display for ServerResponseOpcode {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Ok => write!(f, "OK"),
@@ -24,34 +21,34 @@ impl Display for PacketOpcode {
 }
 
 #[derive(Debug)]
-pub struct Packet {
-    raw: String,
-    opcode: PacketOpcode,
-    arguments: Option<Vec<String>>,
+pub struct ServerResponse {
+    pub raw: String,
+    pub opcode: ServerResponseOpcode,
+    pub arguments: Option<Vec<String>>,
 }
 
-impl TryFrom<String> for Packet {
+impl TryFrom<String> for ServerResponse {
     type Error = TapError;
 
-    fn try_from(frame: String) -> TapResult<Packet> {
+    fn try_from(frame: String) -> TapResult<ServerResponse> {
         let raw_frame = frame.trim().to_owned();
         let frame = frame.trim().to_owned();
 
         if frame.is_empty() {
-            return Ok(Packet {
+            return Ok(ServerResponse {
                 raw: raw_frame,
-                opcode: PacketOpcode::Empty,
+                opcode: ServerResponseOpcode::Empty,
                 arguments: None,
             });
         }
 
-        let frame_type: PacketOpcode = match frame.split(' ').nth(0) {
+        let frame_type: ServerResponseOpcode = match frame.split(' ').nth(0) {
             Some(x) => match x {
-                "OK" => PacketOpcode::Ok,
-                "EVT" => PacketOpcode::Evt,
-                "ERR" => PacketOpcode::Err,
+                "OK" => ServerResponseOpcode::Ok,
+                "EVT" => ServerResponseOpcode::Evt,
+                "ERR" => ServerResponseOpcode::Err,
                 _ => {
-                    return Err(TapError::PacketParse(format!(
+                    return Err(TapError::ServerResponseParse(format!(
                         "Invalid frame identifier. \
                             expected (OK, EVT, ERR), received '{}'",
                         x
@@ -59,7 +56,7 @@ impl TryFrom<String> for Packet {
                 }
             },
             None => {
-                return Err(TapError::PacketParse("invalid frame".to_string()));
+                return Err(TapError::ServerResponseParse("invalid frame".to_string()));
             }
         };
 
@@ -69,7 +66,7 @@ impl TryFrom<String> for Packet {
             .map(str::to_owned)
             .collect::<Vec<String>>();
 
-        Ok(Packet {
+        Ok(ServerResponse {
             raw: raw_frame,
             opcode: frame_type,
             arguments: (!arguments.is_empty()).then_some(arguments),

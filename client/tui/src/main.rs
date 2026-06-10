@@ -38,7 +38,7 @@ async fn main() {
 
     if let Err(e) = client.connect(PLAYER.to_string()).await {
         eprintln!("Fail to connect player: {}", e);
-        client.exit();
+        client.close();
         exit(1);
     }
 

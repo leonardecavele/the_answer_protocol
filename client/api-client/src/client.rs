@@ -1,10 +1,10 @@
 use crate::error::{TapError, TapResult};
 use crate::network::bridge::Bridge;
-use crate::protocol::command::{Command, connect};
-use crate::protocol::envelope::Envelope;
-use crate::protocol::packet::Packet;
-use crate::protocol::packet::connect::ConnectPacket;
-use crate::protocol::packet::handshake::HandshakePacket;
+use crate::protocol::command::Command;
+use crate::protocol::command::connect::ConnectCommand;
+use crate::protocol::handshake::HandshakeServerResponse;
+use crate::protocol::request::Request;
+use crate::protocol::response::ServerResponse;
 use tokio::net::{TcpStream, ToSocketAddrs};
 use tokio::sync::{mpsc, oneshot};
 use tokio::task::JoinHandle;
@@ -23,27 +23,8 @@ pub struct APIClient {
 }
 
 struct Connection {
-    bridge_handle: JoinHandle<()>,
-    sender: mpsc::Sender<Envelope>,
-}
-
-impl Connection {
-    async fn send(&self, command: Command) -> TapResult<Packet> {
-        let (tx, rx) = oneshot::channel::<Packet>();
-
-        let envelope = Envelope {
-            command,
-            tx: Some(tx),
-        };
-
-        self.sender
-            .send(envelope)
-            .await
-            .map_err(|e| TapError::Channel(format!("[client] send command error: {}", e)))?;
-
-        rx.await
-            .map_err(|e| TapError::Channel(format!("[client] recv command error: {}", e)))
-    }
+    bridge_thread: JoinHandle<()>,
+    request_transmitter: mpsc::Sender<Request>,
 }
 
 impl APIClient {
@@ -51,16 +32,13 @@ impl APIClient {
         let (socket, server_addr) = Self::connect_tcp(addr).await?;
         info!("successfully connected to TCP socket at {}", server_addr);
 
-        let (tx, rx) = mpsc::channel::<Envelope>(1024);
-        let (handshake_tx, handshake_rx) = oneshot::channel::<Packet>();
+        let (request_transmitter, request_receiver) = mpsc::channel::<Request>(1024);
+        let (handshake_request, handshake_receiver) = Request::handshake();
 
-        let (bridge_ready_rx, bridge_join_handle) = Self::spawn_bridge(socket, rx, handshake_tx);
-        if let Err(e) = bridge_ready_rx.await {
-            return Err(TapError::ThreadPanic(e.to_string()));
-        }
+        let bridge_thread = Self::start_bridge(socket, handshake_request, request_receiver).await?;
 
         debug!("awaiting server handshake...");
-        let handshake = Self::await_handshake(handshake_rx).await?;
+        let handshake = Self::await_handshake(handshake_receiver).await?;
         info!(
             "handshake successful, protocol version: {}",
             handshake.server_protocol_version
@@ -72,8 +50,8 @@ impl APIClient {
                 protocol_version: handshake.server_protocol_version,
             },
             conn: Connection {
-                bridge_handle: bridge_join_handle,
-                sender: tx,
+                bridge_thread,
+                request_transmitter,
             },
         })
     }
@@ -87,43 +65,68 @@ impl APIClient {
         Ok((socket, addr))
     }
 
-    fn spawn_bridge(
+    async fn start_bridge(
         socket: Framed<TcpStream, LinesCodec>,
-        rx: mpsc::Receiver<Envelope>,
-        handshake_tx: oneshot::Sender<Packet>,
-    ) -> (oneshot::Receiver<()>, JoinHandle<()>) {
-        let (ready_tx, ready_rx) = oneshot::channel::<()>();
+        handshake_request: Request,
+        command_receiver: mpsc::Receiver<Request>,
+    ) -> TapResult<JoinHandle<()>> {
+        let (ready_transmitter, ready_receiver) = oneshot::channel::<()>();
 
-        let join_handle = tokio::spawn(async move {
-            let mut bridge = Bridge::new(socket, rx);
-            bridge.listen(handshake_tx, ready_tx).await;
+        let bridge_thread = tokio::spawn(async move {
+            let mut bridge = Bridge::new(socket, command_receiver);
+            bridge.listen(handshake_request, ready_transmitter).await;
         });
 
-        (ready_rx, join_handle)
+        ready_receiver
+            .await
+            .map_err(|e| TapError::ThreadPanic(e.to_string()))?;
+
+        Ok(bridge_thread)
     }
 
     async fn await_handshake(
-        handshake_rx: oneshot::Receiver<Packet>,
-    ) -> TapResult<HandshakePacket> {
-        let packet = handshake_rx.await.map_err(|_| TapError::Disconnected)?;
-        HandshakePacket::try_from(packet)
+        handshake_receiver: oneshot::Receiver<ServerResponse>,
+    ) -> TapResult<HandshakeServerResponse> {
+        let response = handshake_receiver
+            .await
+            .map_err(|_| TapError::Disconnected)?;
+        HandshakeServerResponse::try_from(response)
+    }
+
+    async fn request<C: Command>(&self, command: C) -> TapResult<C::Response> {
+        let payload = command.create_command(&self.server)?;
+
+        let (request, response_receiver) = Request::new(payload);
+
+        self.conn
+            .request_transmitter
+            .send(request)
+            .await
+            .map_err(|e| TapError::Channel(format!("[client] send request error: {}", e)))?;
+
+        let response = response_receiver
+            .await
+            .map_err(|e| TapError::Channel(format!("[client] recv request error: {}", e)))?;
+
+        command.parse_response(&self.server, response)
     }
 }
 
 impl APIClient {
-    pub fn exit(&self) {
-        self.conn.bridge_handle.abort();
-    }
-
     pub async fn connect(&self, player_name: String) -> TapResult<()> {
-        let command = connect::create_command_connect(&self.server, player_name.clone())?;
+        debug!("sending connect request for player: {}", player_name);
 
-        debug!("sending connect command for player: {}", player_name);
-        let packet = self.conn.send(command).await?;
+        self.request(ConnectCommand {
+            player_name: player_name.clone(),
+        })
+        .await?;
 
-        let _ = ConnectPacket::parse(&self.server, packet)?;
         info!("player {} connected successfully", player_name);
 
         Ok(())
+    }
+
+    pub fn close(&self) {
+        self.conn.bridge_thread.abort();
     }
 }
