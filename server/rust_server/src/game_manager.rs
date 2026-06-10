@@ -1,8 +1,7 @@
 use std::collections::HashMap;
-use crate::player::{Player, PlayerId, PlayerCount};
+use crate::player::{Player, PlayerCount, PlayerId};
 use crate::groups::{GroupManager};
-use crate::constantes::{ErrorCode};
-
+use tracing::{error};
 pub struct GameManager {
     players: HashMap<PlayerId, Player>,
     players_by_name: HashMap<String, PlayerId>,
@@ -27,9 +26,14 @@ impl GameManager {
         return &self.players;
     }
 
+    pub fn get_players_by_names(&self) -> &HashMap<String, PlayerId> {
+        return &self.players_by_name;
+    }
+
     pub fn get_groups(&mut self) -> &mut GroupManager {
         return &mut self.groups;
     }
+
     fn restore_next_player_id(&mut self) -> PlayerId {
         return 0;
     }
@@ -56,7 +60,7 @@ impl GameManager {
 
     fn try_restore_player_save(&mut self) -> Option<Player> 
     {
-        // &mut self, name: String
+        // &mut self, name: String  
         Option::None
     }
 
@@ -76,29 +80,24 @@ impl GameManager {
         self.next_player_id += 1;
     }
 
-    pub fn connect_player(&mut self, name: String) -> ErrorCode {
+    pub fn connect_player(&mut self, name: String) {
         // get the data of this player from the database and add the player to the game
         // init an empty save if the player never played before
-        if self.players_by_name.contains_key(&name) {
-            return ErrorCode::NameInUse
-        }
         match self.try_restore_player_save() {
-            Some(_player) => return ErrorCode::NoError,
+            Some(_player) => return,
             _none => self.create_new_player(name),
         }
-        return ErrorCode::NoError;
     }
 
-    pub fn disconnect_player(&mut self, name: String) -> ErrorCode {
-        if !self.players_by_name.contains_key(&name) {
-            return ErrorCode::NoSuchUser;
+    pub fn disconnect_player(&mut self, name: String){
+        let player_id_wrapped = self.players_by_name.get(&name);
+        if player_id_wrapped.is_none() {
+            error!("disconnect player: player not found");
         }
-        let player_id = self.players_by_name.get(&name).unwrap();
+        let player_id = player_id_wrapped.unwrap();
         self.players.remove(player_id);
         self.players_by_name.remove(&name);
-        return ErrorCode::NoError;
     }
-
 
     pub fn get_nb_players(&self) -> usize {
         return self.players.len();

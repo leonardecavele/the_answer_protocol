@@ -54,9 +54,9 @@ fn main() -> std::io::Result<()> {
     // the receover now reads the sent message and sends PONG back to the go server
     start_reader_thread(reader_stream, mpsc_sender);
     let mut game_manager = GameManager::new();
-    loop { 
+    loop {
         let start = Instant::now(); // this tick time start
-        game_manager.update_game_state();
+        game_manager.update_game_state(&mut writer_stream)?;
 
         match game_manager.apply_players_changes(&mpsc_receiver, start, &mut writer_stream)? {
             TickResult::TickEnd => {

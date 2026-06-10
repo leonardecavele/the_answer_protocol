@@ -1,0 +1,2004 @@
+Rust server started on 38801
+Go connected: 10.12.10.5:47956
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:52[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:53[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:54[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:55[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:56[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:57[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:58[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:32:59[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:00[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:01[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m sent event
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
+[2m17:33:02[0m [32m INFO[0m [2mrust_server::simulation[0m[2m:[0m received message: LOOK
