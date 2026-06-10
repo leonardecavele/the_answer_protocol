@@ -26,16 +26,22 @@ func handleConnectCommand(args string, client *Client) (string, error) {
 		return true
 	}
 
-	if strings.Contains(args, " ") || !isValidUsername(args) {
-		// TODO (edit response according to protocol)
-		return "ERR 6060 INVALID USERNAME PLACEHOLDER\n", errors.New("invalid username")
+	if !isValidUsername(args) {
+		return responseInvalidUsername, errInvalidUsername
 	}
 
-	response, err := client.SetUsername(strings.ToUpper(args))
+	err := client.SetUsername(strings.ToUpper(args))
 	if err != nil {
-		// TODO (edit response according to protocol)
-		return response, errors.New("username taken")
+		switch {
+		case errors.Is(err, errClientAlreadyHasUsername):
+			return responseAlreadyConnected, err
+		case errors.Is(err, errRoomFull):
+			return responseRoomFull, err
+		case errors.Is(err, errUsernameAlreadyUsed):
+			return responseUsernameAlreadyUsed, err
+		}
+		return "", err
 	}
 
-	return "OK connected\n", nil
+	return responseConnected, nil
 }

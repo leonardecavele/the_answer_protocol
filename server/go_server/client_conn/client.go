@@ -1,7 +1,6 @@
 package client_conn
 
 import (
-	"errors"
 	"net"
 	"sync"
 )
@@ -37,26 +36,26 @@ var room = Room{
 	clients: make(map[string]*Client, config.RoomSize),
 }
 
-func (c *Client) SetUsername(username string) (string, error) {
+func (c *Client) SetUsername(username string) error {
 	room.mutex.Lock()
 	defer room.mutex.Unlock()
 
 	if c.Username != "" {
-		return "ERR 1313 PLACEHOLDER ALREADY CONNECTED\n", errors.New("client already has username")
+		return errClientAlreadyHasUsername
 	}
 
 	if len(room.clients) >= config.RoomSize {
-		return "ERR 1292 PLACEHOLDER ROOM FULL\n", errors.New("room is full")
+		return errRoomFull
 	}
 
 	if _, ok := room.clients[username]; ok {
-		return "ERR 9090 PLACEHOLDER NAME TAKEN\n", errors.New("username already used")
+		return errUsernameAlreadyUsed
 	}
 
 	c.Username = username
 	room.clients[username] = c
 
-	return "", nil
+	return nil
 }
 
 func (c *Client) EraseUsername() {

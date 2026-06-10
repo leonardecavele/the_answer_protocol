@@ -4,12 +4,10 @@ import (
 	"bufio"
 	"errors"
 	"io"
-	"strconv"
 	"strings"
 )
 
 import (
-	"go_server/config"
 	"go_server/logger"
 )
 
@@ -17,18 +15,18 @@ func parseCommand(msg string) (string, string, error) {
 	msg = strings.TrimRight(msg, "\r\n")
 
 	if msg == "" {
-		return "", "", errors.New("empty command")
+		return "", "", errEmptyCommand
 	}
 
 	command, args, found := strings.Cut(msg, " ")
 	if !found {
-		return "", "", errors.New("invalid command")
+		return "", "", errInvalidCommand
 	}
 	if _, ok := tapCommands[command]; ok {
 		return command, args, nil
 	}
 
-	return "", "", errors.New("unknown command")
+	return "", "", errUnknownCommand
 }
 
 func handleTapCommand(str string, client *Client) string {
@@ -36,15 +34,12 @@ func handleTapCommand(str string, client *Client) string {
 
 	cmd, args, err := parseCommand(str)
 	if err != nil {
-		// TODO (edit response according to protocol)
-		response = "ERR 400 COMMAND_NOT_FOUND\n"
-		logger.AppLogger.Info("%s Invalid command: %v\n", client.Id, err)
+		response = responseCommandNotFound
 		return response
 	}
 
 	response, err = tapCommands[cmd](args, client)
 	if err != nil {
-		logger.AppLogger.Info("%s Invalid command: %v\n", client.Id, err)
 		return response
 	}
 
@@ -65,10 +60,11 @@ func HandleClient(client *Client) { //, rustServer *rust_conn.RustServer) {
 	logger.AppLogger.Info("%s Connected", client.Id)
 	defer logger.AppLogger.Info("%s Disconnected", client.Id)
 
-	if _, err := client.Conn.Write([]byte("OK hello proto=" + strconv.Itoa(config.ProtocolVersion) + "\n")); err != nil {
+	if _, err := client.Conn.Write([]byte(responseHello)); err != nil {
 		logger.AppLogger.Error("%s Write error: %v\n", client.Id, err)
 		return
 	}
+	logger.AppLogger.Info("%s Write: %s", client.Id, responseHello)
 
 	reader := bufio.NewReader(client.Conn)
 	for {
@@ -80,11 +76,12 @@ func HandleClient(client *Client) { //, rustServer *rust_conn.RustServer) {
 			return
 		}
 
-		logger.AppLogger.Info("%s Sent: %s", client.Id, str)
+		logger.AppLogger.Info("%s Read: %s", client.Id, str)
 		response := handleTapCommand(str, client)
 		if _, err := client.Conn.Write([]byte(response)); err != nil {
 			logger.AppLogger.Error("%s Write error: %v\n", client.Id, err)
 			return
 		}
+		logger.AppLogger.Info("%s Write: %s", client.Id, response)
 	}
 }

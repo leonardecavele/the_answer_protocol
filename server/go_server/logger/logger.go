@@ -3,12 +3,17 @@ package logger
 import (
 	"log"
 	"os"
+	"time"
+)
+
+import (
+	"go_server/config"
 )
 
 const (
-	colorRed    = "\033[31m"
-	colorYellow = "\033[33m"
-	colorReset  = "\033[0m"
+	colorRed   = "\033[31m"
+	colorGreen = "\033[32m"
+	colorReset = "\033[0m"
 )
 
 type Logger struct {
@@ -16,11 +21,11 @@ type Logger struct {
 }
 
 func (l Logger) Info(format string, v ...any) {
-	l.Printf(colorYellow+"INFO"+colorReset+" | "+format, v...)
+	l.Printf(time.Now().Format(config.LogFormat)+" "+colorGreen+"INFO"+colorReset+" "+format, v...)
 }
 
 func (l Logger) Error(format string, v ...any) {
-	l.Printf(colorRed+"ERROR"+colorReset+" | "+format, v...)
+	l.Printf(time.Now().Format(config.LogFormat)+" "+colorRed+"ERROR"+colorReset+" "+format, v...)
 }
 
 var AppLogger = Logger{log.New(os.Stdout, "", 0)}
