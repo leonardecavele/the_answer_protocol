@@ -1,5 +1,6 @@
 pub mod connect;
 pub mod look;
+pub mod quit;
 
 use crate::client::ServerInfo;
 use crate::protocol::response::{ServerResponse, server_error_message_from_code};

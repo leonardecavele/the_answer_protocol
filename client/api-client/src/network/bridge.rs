@@ -1,15 +1,18 @@
 use crate::error::{TapError, TapResult};
+use crate::protocol::event::Event;
 use crate::protocol::request::Request;
 use crate::protocol::response::{ServerResponse, ServerResponseOpcode};
 use futures::SinkExt;
 use futures::stream::StreamExt;
 use tokio::net::TcpStream;
-use tokio::sync::mpsc::Receiver;
+use tokio::sync::broadcast;
+use tokio::sync::mpsc::{Receiver, Sender};
 use tokio_util::codec::{Framed, LinesCodec, LinesCodecError};
 use tracing::{debug, error, info, warn};
 
 pub struct Bridge {
     socket: Framed<TcpStream, LinesCodec>,
+    event_transmitter: broadcast::Sender<ServerResponse>,
     command_receiver: Receiver<Request>,
     pending_request: Option<Request>,
 }
@@ -17,10 +20,12 @@ pub struct Bridge {
 impl Bridge {
     pub fn new(
         socket: Framed<TcpStream, LinesCodec>,
+        event_transmitter: broadcast::Sender<ServerResponse>,
         command_receiver: Receiver<Request>,
     ) -> Bridge {
         Bridge {
             socket,
+            event_transmitter,
             command_receiver,
             pending_request: None,
         }
@@ -48,15 +53,11 @@ impl Bridge {
                         },
                         Err(e) => {
                             error!("error handling incoming frame: {}", e);
-                            break;
                         }
                     }
                 },
                 // send response to the server
-                request = self.command_receiver.recv() => {
-                    if request.is_none() {
-                        return;
-                    }
+                request = self.command_receiver.recv(), if self.pending_request.is_none() => {
                     let request = request.unwrap();
                     match self.handle_outgoing(request).await {
                         Ok(can_continue) => {
@@ -66,7 +67,6 @@ impl Bridge {
                         },
                         Err(e) => {
                             error!("error handling outgoing frame: {}", e);
-                            break;
                         }
                     }
                 }
@@ -91,7 +91,9 @@ impl Bridge {
                 match ServerResponse::try_from(line) {
                     Ok(response) => {
                         if response.opcode == ServerResponseOpcode::Evt {
-                            warn!("TODO: manage evt");
+                            let _ = self.event_transmitter.send(response).map_err(|e| {
+                                TapError::Channel(format!("failed to forward event: {:?}", e))
+                            })?;
                             return Ok(true);
                         }
 

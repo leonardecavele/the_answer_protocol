@@ -1,18 +1,22 @@
 use api_client::client::APIClient;
 use api_client::protocol::command::CommandResult;
+use std::collections::HashMap;
+use std::env;
 use std::process::exit;
 use time::macros::format_description;
-use tracing_subscriber::EnvFilter;
+use tracing::{debug, info};
 use tracing_subscriber::fmt::time::LocalTime;
+use tracing_subscriber::EnvFilter;
 
 pub enum Command {
     Quit,
 }
 
 // const SERVER_ADDRESS: &str = "127.0.0.1:3000";
-const SERVER_ADDRESS: &str = "10.12.10.5:38800";
+const SERVER_ADDRESS: &str = "10.11.11.2:38800";
 
-const PLAYER: &str = "Player";
+const PLAYER: &str = "Gabin";
+// const PLAYER: &str = "Aymeric";
 
 #[tokio::main]
 async fn main() {
@@ -34,8 +38,6 @@ async fn main() {
     //         println!("New Event {:?}", message);
     //     })
     //     .await;
-
-    loop {}
 }
 
 #[allow(dead_code)]
@@ -98,7 +100,7 @@ async fn test_multiple_connections() {
 
 #[allow(dead_code)]
 async fn test_single_connection() {
-    let client = match APIClient::new(SERVER_ADDRESS).await {
+    let mut client = match APIClient::new(SERVER_ADDRESS).await {
         Ok(client) => client,
         Err(e) => {
             eprintln!(
@@ -109,7 +111,11 @@ async fn test_single_connection() {
         }
     };
 
-    let player = PLAYER.to_string();
+    client.subscribe_events(|event| {
+        info!("[new event] : {:?}", event.arguments)
+    });
+
+    let player = env::var("PLAYER").ok().unwrap_or_else(|| PLAYER.to_string());
 
     match client.connect(player).await {
         Ok(result) => match result {
@@ -127,19 +133,26 @@ async fn test_single_connection() {
         }
     }
 
-    match client.look().await {
-        Ok(result) => match result {
-            CommandResult::Success { data } => {
-                println!("Look response: {}", data.json_data);
+    // client.quit().await;
+
+    for i in 0..10000 {
+        match client.look().await {
+            Ok(result) => match result {
+                CommandResult::Success { data } => {
+                    // debug!("Look response: {}", data.json_data);
+                }
+                CommandResult::Error { message } => {
+                    debug!("[tui] {}", message);
+                }
+            },
+            Err(e) => {
+                eprintln!("Fail to look: {}", e);
+                client.close();
+                exit(1);
             }
-            CommandResult::Error { message } => {
-                println!("[tui] {}", message);
-            }
-        },
-        Err(e) => {
-            eprintln!("Fail to look: {}", e);
-            client.close();
-            exit(1);
         }
+        info!("loop {}", i);
     }
+
+    client.quit().await;
 }

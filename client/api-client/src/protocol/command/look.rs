@@ -27,7 +27,7 @@ impl Command for LookCommand {
     ) -> CommandResult<Self::ResponseData> {
         match server_info.protocol_version {
             1 => {
-                if let Some(arguments) = response.arguments.clone() {
+                if let Some(arguments) = response.arguments {
                     if arguments.len() < 2 {
                         return CommandResult::Error {
                             message: "invalid arguments".to_string(),
