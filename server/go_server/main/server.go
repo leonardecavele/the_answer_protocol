@@ -51,26 +51,24 @@ func getServerIP() string {
 	return "127.0.0.1"
 }
 
+func shutdownServer(quit chan struct{}, listener net.Listener, stopOnce *sync.Once) {
+	stopOnce.Do(func() {
+		close(quit)
+		logger.AppLogger.Info("Server stopped.")
+		if listener != nil {
+			listener.Close()
+		}
+	})
+}
+
 func main() {
-	rustServer := rust_conn.ConnectToRust(config.RustServerIP + ":" + strconv.Itoa(config.RustServerPort))
-	defer rustServer.Conn.Close()
-
-	listener, err := net.Listen("tcp", ":"+strconv.Itoa(config.GoServerPort))
-	if err != nil {
-		os.Exit(int(error.ListenerError))
-	}
-	defer listener.Close()
-
 	quit := make(chan struct{})
 	var stopOnce sync.Once
+	var listener net.Listener
 
 	stopServer := func() {
-		stopOnce.Do(func() {
-			close(quit)
-			listener.Close()
-		})
+		shutdownServer(quit, listener, &stopOnce)
 	}
-	go rustServer.Read(stopServer, client_conn.RouteCommand, client_conn.RouteEvent)
 
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, os.Interrupt, syscall.SIGTERM)
@@ -94,6 +92,21 @@ func main() {
 		}
 	}()
 
+	rustServer := rust_conn.ConnectToRust(config.RustServerIP+":"+strconv.Itoa(config.RustServerPort), quit)
+	if rustServer == nil {
+		return
+	}
+	defer rustServer.Conn.Close()
+
+	newListener, listenErr := net.Listen("tcp", ":"+strconv.Itoa(config.GoServerPort))
+	if listenErr != nil {
+		os.Exit(int(error.ListenerError))
+	}
+	listener = newListener
+	defer listener.Close()
+
+	go rustServer.Read(quit, stopServer, client_conn.RouteCommand, client_conn.RouteEvent)
+
 	logger.AppLogger.Info("TCP server started on " + getServerIP() + ":" + strconv.Itoa(config.GoServerPort))
 
 	for {
@@ -101,7 +114,6 @@ func main() {
 		if err != nil {
 			select {
 			case <-quit:
-				logger.AppLogger.Info("Server stopped.")
 				return
 			default:
 				logger.AppLogger.Error("Accept error:", err)

@@ -16,8 +16,14 @@ import (
 	"go_server/logger"
 )
 
-func ConnectToRust(addr string) *RustServer {
+func ConnectToRust(addr string, quit <-chan struct{}) *RustServer {
 	for {
+		select {
+		case <-quit:
+			return nil
+		default:
+		}
+
 		conn, err := net.Dial("tcp", addr)
 		if err == nil {
 			logger.AppLogger.Info("Connected to Rust server")
@@ -25,7 +31,11 @@ func ConnectToRust(addr string) *RustServer {
 		}
 
 		logger.AppLogger.Info("Rust server unavailable at %s, retrying in %d seconds", addr, config.RustConnectionRetryDelay)
-		time.Sleep(time.Second * config.RustConnectionRetryDelay)
+		select {
+		case <-quit:
+			return nil
+		case <-time.After(time.Second * config.RustConnectionRetryDelay):
+		}
 	}
 }
 
@@ -79,6 +89,7 @@ func ReadMessageAsCommand(message string) (CommandFromRust, bool, error) {
 }
 
 func (rustServer *RustServer) Read(
+	quit <-chan struct{},
 	onClose func(),
 	routeCommand func(username string, command string) bool,
 	routeEvent func(username string, event string) bool,
@@ -88,6 +99,11 @@ func (rustServer *RustServer) Read(
 	for {
 		message, err := reader.ReadString('\n')
 		if err != nil {
+			select {
+			case <-quit:
+				return
+			default:
+			}
 			if !errors.Is(err, io.EOF) {
 				logger.AppLogger.Error("Rust read error: %v", err)
 			}

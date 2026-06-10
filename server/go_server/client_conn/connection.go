@@ -51,7 +51,7 @@ func handleClientEvents(client *Client, done <-chan struct{}) {
 			return
 		case event := <-client.eventChan:
 			response := event + "\n"
-			if err := client.Write(response); err != nil {
+			if err := client.Write("EVT " + string(response)); err != nil {
 				logger.AppLogger.Error("%s Write error: %v\n", client.Id, err)
 				return
 			}
@@ -63,19 +63,19 @@ func handleClientEvents(client *Client, done <-chan struct{}) {
 func HandleClient(client *Client, rustServer *rust_conn.RustServer) {
 	defer client.EraseClient()
 
-	done := make(chan struct{})
-	defer close(done)
+	stopListeningEvents := make(chan struct{})
+	defer close(stopListeningEvents)
 
 	logger.AppLogger.Info("%s Connected", client.Id)
 	defer logger.AppLogger.Info("%s Disconnected", client.Id)
 
 	if err := client.Write(responseHello); err != nil {
-		logger.AppLogger.Error("%s Write error: %v\n", client.Id, err)
+		logger.AppLogger.Error("%s Client Write Error: %v\n", client.Id, err)
 		return
 	}
 	logger.AppLogger.Info("%s Client Write: %s", client.Id, responseHello)
 
-	go handleClientEvents(client, done)
+	go handleClientEvents(client, stopListeningEvents)
 
 	reader := bufio.NewReader(client.Conn)
 	for {
