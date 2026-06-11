@@ -3,7 +3,7 @@ package client_conn
 import (
 	"bufio"
 	"errors"
-	"go_server/rust_conn"
+	"go_server/game_conn"
 	"io"
 	"strings"
 )
@@ -27,7 +27,7 @@ func parseCommand(msg string) (string, string, string) {
 	return "", "", responseCommandNotFound
 }
 
-func handleTapCommand(str string, client *Client, rustServer *rust_conn.RustServerManager) (string, error) {
+func handleTapCommand(str string, client *Client, gameServer *game_conn.GameServerManager) (string, error) {
 	response := ""
 
 	cmd, args, response := parseCommand(str)
@@ -35,7 +35,7 @@ func handleTapCommand(str string, client *Client, rustServer *rust_conn.RustServ
 		return response, nil
 	}
 
-	response, err := tapCommands[cmd](args, client, rustServer)
+	response, err := tapCommands[cmd](args, client, gameServer)
 	if err != nil {
 		return "", err
 	}
@@ -58,9 +58,9 @@ func handleClientEvents(client *Client, done <-chan struct{}) {
 	}
 }
 
-func HandleClient(client *Client, rustServer *rust_conn.RustServerManager) {
+func HandleClient(client *Client, gameServer *game_conn.GameServerManager) {
 	defer func() {
-		if err := client.EraseClient(rustServer); err != nil {
+		if err := client.EraseClient(gameServer); err != nil {
 			logger.AppLogger.Error("%s Erase client error: %v\n", client.Id, err)
 		}
 	}()
@@ -90,10 +90,10 @@ func HandleClient(client *Client, rustServer *rust_conn.RustServerManager) {
 		}
 
 		logger.AppLogger.Info("%s Client Read: %s", client.Id, str)
-		response, err := handleTapCommand(str, client, rustServer)
+		response, err := handleTapCommand(str, client, gameServer)
 		if err != nil {
 			logger.AppLogger.Error("%s Command error: %v\n", client.Id, err)
-			response = responseRustServerShutdown
+			response = responseGameServerShutdown
 		}
 		if response == "" {
 			continue

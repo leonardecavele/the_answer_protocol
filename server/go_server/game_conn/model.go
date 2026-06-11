@@ -1,4 +1,4 @@
-package rust_conn
+package game_conn
 
 import (
 	"bufio"
@@ -6,26 +6,26 @@ import (
 	"sync"
 )
 
-type RustServer struct {
+type GameServer struct {
 	Conn       net.Conn
 	Writer     *bufio.Writer
 	PrintMutex sync.Mutex
 }
 
-type CommandToRust struct {
+type CommandToGameServer struct {
 	Player    string `json:"player"`
 	Command   string `json:"command"`
 	Arguments string `json:"arguments"`
 }
 
-type CommandFromRust struct {
+type CommandFromGameServer struct {
 	Player    string `json:"player"`
 	Command   string `json:"command"`
 	ErrorCode int    `json:"error_code"`
 	Value     string `json:"value"`
 }
 
-type EventFromRust struct {
+type EventFromGameServer struct {
 	Player    string `json:"player"`
 	EventName string `json:"event_name"`
 	Value     string `json:"value"`

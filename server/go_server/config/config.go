@@ -9,16 +9,16 @@ var QuitCommands = map[string]struct{}{
 const (
 	LogFormat = "15:04:05.000000"
 
-	RustServerIP = "localhost"
+	GameServerIP = "localhost"
 
 	GoServerPort   = 38800
-	RustServerPort = 38801
+	GameServerPort = 38801
 
 	ProtocolVersion = 1
 
 	RoomSize = 20
 
-	RustConnectionRetryDelay = 5
+	GameConnectionRetryDelay = 5
 
-	RustConfirmationMessage = "Duly noted."
+	GameConfirmationMessage = "Duly noted."
 )

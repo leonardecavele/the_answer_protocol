@@ -15,8 +15,8 @@ import (
 	"go_server/client_conn"
 	"go_server/config"
 	serverError "go_server/error"
+	"go_server/game_conn"
 	"go_server/logger"
-	"go_server/rust_conn"
 )
 
 func shutdownServer(quit chan struct{}, listener net.Listener, stopOnce *sync.Once) {
@@ -56,11 +56,11 @@ func main() {
 		}
 	}()
 
-	rustServerManager := &rust_conn.RustServerManager{}
+	gameServerManager := &game_conn.GameServerManager{}
 
-	go rustServerManager.HandleRustServer(
+	go gameServerManager.HandleGameServer(
 		quit,
-		client_conn.ReconnectPlayersToRust,
+		client_conn.ReconnectPlayersToGameServer,
 		client_conn.RouteCommand,
 		client_conn.RouteEvent,
 	)
@@ -85,7 +85,7 @@ func main() {
 			}
 		}
 
-		go client_conn.HandleClient(client_conn.NewClient(conn), rustServerManager)
+		go client_conn.HandleClient(client_conn.NewClient(conn), gameServerManager)
 	}
 
 	os.Exit(int(serverError.NoError))

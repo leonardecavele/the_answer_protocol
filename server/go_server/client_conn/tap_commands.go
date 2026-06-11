@@ -2,11 +2,11 @@ package client_conn
 
 import (
 	"errors"
-	"go_server/rust_conn"
+	"go_server/game_conn"
 	"strings"
 )
 
-type handleTapCommandArgs func(args string, client *Client, rustServer *rust_conn.RustServerManager) (string, error)
+type handleTapCommandArgs func(args string, client *Client, gameServer *game_conn.GameServerManager) (string, error)
 
 var tapCommands = map[string]handleTapCommandArgs{
 	// CORE
@@ -35,7 +35,7 @@ var tapCommands = map[string]handleTapCommandArgs{
 
 // CORE
 
-func handleConnectCommand(args string, client *Client, rustServer *rust_conn.RustServerManager) (string, error) {
+func handleConnectCommand(args string, client *Client, gameServer *game_conn.GameServerManager) (string, error) {
 	isValidUsername := func(username string) bool {
 		if username == "" {
 			return false
@@ -58,22 +58,22 @@ func handleConnectCommand(args string, client *Client, rustServer *rust_conn.Rus
 		return response, nil
 	}
 
-	command := rust_conn.CommandToRust{
+	command := game_conn.CommandToGameServer{
 		Player:    client.Username,
 		Command:   "CONNECT",
 		Arguments: args,
 	}
 
-	if err := rustServer.WriteCommand(command); err != nil && !errors.Is(err, rust_conn.ErrRustServerNotConnected) {
+	if err := gameServer.WriteCommand(command); err != nil && !errors.Is(err, game_conn.ErrGameServerNotConnected) {
 		return "", err
 	}
 
 	return responseConnected, nil
 }
 
-func handleLookCommand(args string, client *Client, rustServer *rust_conn.RustServerManager) (string, error) {
-	if !rustServer.IsConnected() {
-		return responseRustServerShutdown, nil
+func handleLookCommand(args string, client *Client, gameServer *game_conn.GameServerManager) (string, error) {
+	if !gameServer.IsConnected() {
+		return responseGameServerShutdown, nil
 	}
 
 	if client.State != AUTHENTICATED {
@@ -83,24 +83,24 @@ func handleLookCommand(args string, client *Client, rustServer *rust_conn.RustSe
 		return responseInvalidArguments, nil
 	}
 
-	command := rust_conn.CommandToRust{
+	command := game_conn.CommandToGameServer{
 		Player:    client.Username,
 		Command:   "LOOK",
 		Arguments: args,
 	}
 
-	if err := rustServer.WriteCommand(command); err != nil {
+	if err := gameServer.WriteCommand(command); err != nil {
 		return "", err
 	}
 
 	return "OK " + client.ReadCommand(), nil
 }
 
-func handleMoveCommand(args string, client *Client, _ *rust_conn.RustServerManager) (string, error) {
+func handleMoveCommand(args string, client *Client, _ *game_conn.GameServerManager) (string, error) {
 	return "", nil
 }
 
-func handleQuitCommand(args string, client *Client, _ *rust_conn.RustServerManager) (string, error) {
+func handleQuitCommand(args string, client *Client, _ *game_conn.GameServerManager) (string, error) {
 	if args != "" {
 		return responseInvalidArguments, nil
 	}
@@ -110,63 +110,63 @@ func handleQuitCommand(args string, client *Client, _ *rust_conn.RustServerManag
 
 // COMMUNICATION
 
-func handleChatCommand(args string, client *Client, _ *rust_conn.RustServerManager) (string, error) {
+func handleChatCommand(args string, client *Client, _ *game_conn.GameServerManager) (string, error) {
 	return "", nil
 }
 
-func handleWhoCommand(args string, client *Client, _ *rust_conn.RustServerManager) (string, error) {
+func handleWhoCommand(args string, client *Client, _ *game_conn.GameServerManager) (string, error) {
 	return "", nil
 }
 
 // GROUP
 
 // issue because of SPACE
-func handleGroupCreateCommand(args string, client *Client, _ *rust_conn.RustServerManager) (string, error) {
+func handleGroupCreateCommand(args string, client *Client, _ *game_conn.GameServerManager) (string, error) {
 	return "", nil
 }
 
-func handleGroupInviteCommand(args string, client *Client, _ *rust_conn.RustServerManager) (string, error) {
+func handleGroupInviteCommand(args string, client *Client, _ *game_conn.GameServerManager) (string, error) {
 	return "", nil
 }
 
-func handleGroupJoinCommand(args string, client *Client, _ *rust_conn.RustServerManager) (string, error) {
+func handleGroupJoinCommand(args string, client *Client, _ *game_conn.GameServerManager) (string, error) {
 	return "", nil
 }
 
-func handleGroupLeaveCommand(args string, client *Client, _ *rust_conn.RustServerManager) (string, error) {
+func handleGroupLeaveCommand(args string, client *Client, _ *game_conn.GameServerManager) (string, error) {
 	return "", nil
 }
 
 // RESOURCE INTERACTION
 
-func handleTakeCommand(args string, client *Client, _ *rust_conn.RustServerManager) (string, error) {
+func handleTakeCommand(args string, client *Client, _ *game_conn.GameServerManager) (string, error) {
 	return "", nil
 }
 
-func handleDropCommand(args string, client *Client, _ *rust_conn.RustServerManager) (string, error) {
+func handleDropCommand(args string, client *Client, _ *game_conn.GameServerManager) (string, error) {
 	return "", nil
 }
 
-func handleInventoryCommand(args string, client *Client, _ *rust_conn.RustServerManager) (string, error) {
+func handleInventoryCommand(args string, client *Client, _ *game_conn.GameServerManager) (string, error) {
 	return "", nil
 }
 
-func handleTalkCommand(args string, client *Client, _ *rust_conn.RustServerManager) (string, error) {
+func handleTalkCommand(args string, client *Client, _ *game_conn.GameServerManager) (string, error) {
 	return "", nil
 }
 
-func handleAttackCommand(args string, client *Client, _ *rust_conn.RustServerManager) (string, error) {
+func handleAttackCommand(args string, client *Client, _ *game_conn.GameServerManager) (string, error) {
 	return "", nil
 }
 
-func handleStatusCommand(args string, client *Client, _ *rust_conn.RustServerManager) (string, error) {
+func handleStatusCommand(args string, client *Client, _ *game_conn.GameServerManager) (string, error) {
 	return "", nil
 }
 
-func handleQuestCommand(args string, client *Client, _ *rust_conn.RustServerManager) (string, error) {
+func handleQuestCommand(args string, client *Client, _ *game_conn.GameServerManager) (string, error) {
 	return "", nil
 }
 
-func handleQuestsCommand(args string, client *Client, _ *rust_conn.RustServerManager) (string, error) {
+func handleQuestsCommand(args string, client *Client, _ *game_conn.GameServerManager) (string, error) {
 	return "", nil
 }

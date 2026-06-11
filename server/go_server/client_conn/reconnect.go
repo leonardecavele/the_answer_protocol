@@ -1,22 +1,22 @@
 package client_conn
 
 import (
+	"go_server/game_conn"
 	"go_server/logger"
-	"go_server/rust_conn"
 )
 
-func ReconnectPlayersToRust(rustServer *rust_conn.RustServerManager) error {
+func ReconnectPlayersToGameServer(gameServer *game_conn.GameServerManager) error {
 	for _, username := range ConnectedUsernames() {
-		command := rust_conn.CommandToRust{
+		command := game_conn.CommandToGameServer{
 			Player:    username,
 			Command:   "CONNECT",
 			Arguments: username,
 		}
 
-		if err := rustServer.WriteCommand(command); err != nil {
+		if err := gameServer.WriteCommand(command); err != nil {
 			return err
 		}
-		logger.AppLogger.Info("Reconnected %s to Rust server", username)
+		logger.AppLogger.Info("Reconnected %s to Game server", username)
 	}
 
 	return nil

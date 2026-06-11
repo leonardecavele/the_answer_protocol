@@ -2,7 +2,7 @@ package client_conn
 
 import (
 	"errors"
-	"go_server/rust_conn"
+	"go_server/game_conn"
 	"net"
 	"strings"
 	"sync"
@@ -39,7 +39,7 @@ func NewClient(conn net.Conn) *Client {
 	}
 }
 
-func (c *Client) EraseClient(rustServer *rust_conn.RustServerManager) error {
+func (c *Client) EraseClient(gameServer *game_conn.GameServerManager) error {
 	username := c.Username
 	state := c.State
 
@@ -47,13 +47,13 @@ func (c *Client) EraseClient(rustServer *rust_conn.RustServerManager) error {
 	closeErr := c.Conn.Close()
 
 	if state == AUTHENTICATED {
-		command := rust_conn.CommandToRust{
+		command := game_conn.CommandToGameServer{
 			Player:    username,
 			Command:   "QUIT",
 			Arguments: "",
 		}
 
-		if err := rustServer.WriteCommand(command); err != nil && !errors.Is(err, rust_conn.ErrRustServerNotConnected) {
+		if err := gameServer.WriteCommand(command); err != nil && !errors.Is(err, game_conn.ErrGameServerNotConnected) {
 			return err
 		}
 	}

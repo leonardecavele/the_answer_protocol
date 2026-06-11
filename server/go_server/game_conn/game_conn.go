@@ -1,0 +1,222 @@
+package game_conn
+
+import (
+	"bufio"
+	"encoding/json"
+	"errors"
+	"io"
+	"net"
+	"strings"
+	"time"
+)
+
+import (
+	"go_server/config"
+	"go_server/logger"
+)
+
+func dialGameServer(addr string, quit <-chan struct{}) net.Conn {
+	for {
+		select {
+		case <-quit:
+			return nil
+		default:
+		}
+
+		conn, err := net.Dial("tcp", addr)
+		if err == nil {
+			logger.AppLogger.Info("Connected to Game server")
+			return conn
+		}
+
+		logger.AppLogger.Info("Game server unavailable at %s, retrying in %d seconds", addr, config.GameConnectionRetryDelay)
+		select {
+		case <-quit:
+			return nil
+		case <-time.After(time.Second * config.GameConnectionRetryDelay):
+		}
+	}
+}
+
+func ConnectToGameServer(addr string, quit <-chan struct{}) *GameServer {
+	conn := dialGameServer(addr, quit)
+	if conn == nil {
+		return nil
+	}
+
+	return &GameServer{
+		Conn:   conn,
+		Writer: bufio.NewWriter(conn),
+	}
+}
+
+func (gameServer *GameServer) currentConn() net.Conn {
+	gameServer.PrintMutex.Lock()
+	defer gameServer.PrintMutex.Unlock()
+
+	return gameServer.Conn
+}
+
+func (gameServer *GameServer) Close() error {
+	gameServer.PrintMutex.Lock()
+	conn := gameServer.Conn
+	gameServer.Conn = nil
+	gameServer.Writer = nil
+	gameServer.PrintMutex.Unlock()
+
+	if conn == nil {
+		return nil
+	}
+	return conn.Close()
+}
+
+func (gameServer *GameServer) Write(message string) error {
+	gameServer.PrintMutex.Lock()
+	defer gameServer.PrintMutex.Unlock()
+
+	if gameServer.Writer == nil {
+		return errors.New("game server not connected")
+	}
+
+	if _, err := gameServer.Writer.WriteString(message); err != nil {
+		return err
+	}
+	if err := gameServer.Writer.WriteByte('\n'); err != nil {
+		return err
+	}
+	if err := gameServer.Writer.Flush(); err != nil {
+		return err
+	}
+
+	logger.AppLogger.Info("Game server write: %s", message)
+	return nil
+}
+
+func (gameServer *GameServer) WriteCommand(command any) error {
+	message, err := json.Marshal(command)
+	if err != nil {
+		return err
+	}
+
+	err = gameServer.Write(string(message))
+	return err
+}
+
+func ReadMessageAsEvents(message string) ([]EventFromGameServer, bool, error) {
+	var gameEvents []EventFromGameServer
+
+	if err := json.Unmarshal([]byte(message), &gameEvents); err != nil {
+		return nil, false, nil
+	}
+
+	if len(gameEvents) == 0 {
+		return nil, false, nil
+	}
+
+	for _, gameEvent := range gameEvents {
+		if gameEvent.Player == "" || gameEvent.EventName == "" {
+			return nil, false, nil
+		}
+	}
+
+	return gameEvents, true, nil
+}
+
+func ReadMessageAsEvent(message string) (EventFromGameServer, bool, error) {
+	var gameEvent EventFromGameServer
+
+	if err := json.Unmarshal([]byte(message), &gameEvent); err != nil {
+		return EventFromGameServer{}, false, err
+	}
+
+	if gameEvent.Player == "" || gameEvent.EventName == "" {
+		return EventFromGameServer{}, false, nil
+	}
+
+	return gameEvent, true, nil
+}
+
+func ReadMessageAsCommand(message string) (CommandFromGameServer, bool, error) {
+	var gameCommand CommandFromGameServer
+
+	if err := json.Unmarshal([]byte(message), &gameCommand); err != nil {
+		return CommandFromGameServer{}, false, err
+	}
+
+	if gameCommand.Player == "" || gameCommand.Command == "" {
+		return CommandFromGameServer{}, false, nil
+	}
+
+	return gameCommand, true, nil
+}
+
+func (gameServer *GameServer) Read(
+	quit <-chan struct{},
+	routeCommand func(username string, command string) bool,
+	routeEvent func(username string, event string) bool,
+) {
+	conn := gameServer.currentConn()
+	if conn == nil {
+		return
+	}
+
+	reader := bufio.NewReader(conn)
+	for {
+		message, err := reader.ReadString('\n')
+		if err != nil {
+			select {
+			case <-quit:
+				return
+			default:
+			}
+			if !errors.Is(err, io.EOF) {
+				logger.AppLogger.Error("Game server read error: %v", err)
+			}
+			logger.AppLogger.Info("Game server disconnected")
+			return
+		}
+
+		message = strings.TrimRight(message, "\r\n")
+		logger.AppLogger.Info("Game server read: %s", message)
+
+		if message == config.GameConfirmationMessage {
+			continue
+		}
+
+		gameEvents, ok, err := ReadMessageAsEvents(message)
+		if err != nil {
+			logger.AppLogger.Error("Game server invalid message: %v", err)
+			continue
+		}
+		if ok && routeEvent != nil {
+			for _, gameEvent := range gameEvents {
+				eventMessage, err := json.Marshal(gameEvent)
+				if err != nil {
+					logger.AppLogger.Error("Game server invalid event: %v", err)
+					continue
+				}
+				routeEvent(gameEvent.Player, string(eventMessage))
+			}
+			continue
+		}
+
+		gameEvent, ok, err := ReadMessageAsEvent(message)
+		if err != nil {
+			logger.AppLogger.Error("Game server invalid message: %v", err)
+			continue
+		}
+		if ok && routeEvent != nil {
+			routeEvent(gameEvent.Player, message)
+			continue
+		}
+
+		gameCommand, ok, err := ReadMessageAsCommand(message)
+		if err != nil {
+			logger.AppLogger.Error("Game server invalid message: %v", err)
+			continue
+		}
+		if ok && routeCommand != nil {
+			routeCommand(gameCommand.Player, message)
+		}
+	}
+}
