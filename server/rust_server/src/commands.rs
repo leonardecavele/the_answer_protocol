@@ -8,7 +8,6 @@ impl GameManager {
             /*
             read the message, simulate the corresponding action and return the response
             */
-            info!("received message: {}", msg);
 
             let json = json::parse(&msg);
             
@@ -27,10 +26,14 @@ impl GameManager {
                 error!("invalid json: {}", msg);
             }
             let command_name = json_object["command"].as_str().unwrap();
-            // let arguments = json_object["arguments"].unwrap();
+            let arguments = &json_object["arguments"];
 
 
-            info!("received command: {} from player: {}", command_name, player_name);
+            info!("received command {} from player {}", command_name, player_name);
+            if !arguments.is_null() {
+                info!("with arguments {}", arguments);
+            }
+        
             match command_name {
                 "CONNECT" => {
                     self.connect_player(player_name.to_string());
@@ -83,14 +86,48 @@ impl GameManager {
                         "value": ""
                     }.dump()
                 },
-                // "GROUP INVITE" => {
-                //     let player_to_invite: String = arguments["username"].as_str().unwrap().to_string();
+                "GROUP INVITE" => {
+                    let player_to_invite: String = arguments["username"].as_str().unwrap().to_string();
 
+                    let mut base_response = object!{
+                        "player": player_name,
+                        "command": command_name,
+                        "error_code": ErrorCode::NoError.code(),
+                        "value": ""
+                    };
                     
-                //                     {
-                //     "username": <username>
-                // }
-                // },
+                    // remove when the go server will checks this
+                    if !self.get_players_by_names().contains_key(&player_to_invite) {
+                        let _ = base_response.insert("error_code", ErrorCode::NoSuchUser.code());
+                        return base_response.dump();
+                    }
+                    
+
+                    let player_id: PlayerId = *self.get_players_by_names().get(&player_to_invite).unwrap();
+                    let player_group_id = self.get_players().get(&player_id).unwrap().get_group_id();
+                    if player_group_id.is_some() {
+                        let _ = base_response.insert("error_code", ErrorCode::AlreadyInGroup.code());
+                        return base_response.dump();
+                    }
+
+                    let leader_id: PlayerId = *self.get_players_by_names().get(player_name).unwrap();
+                    let leader_group_id_wrapped = self.get_players().get(&leader_id).unwrap().get_group_id();
+                    if leader_group_id_wrapped.is_none() {
+                        let _ = base_response.insert("error_code", ErrorCode::NotInGroup.code());
+                        return base_response.dump();
+                    }
+
+                    let leader_group_id = leader_group_id_wrapped.unwrap();
+                    let group_leader_id = self.all_groups().get_group(leader_group_id).unwrap().get_leader();
+                    if group_leader_id != leader_id {
+                        let _ = base_response.insert("error_code", ErrorCode::NotGroupLeader.code());
+                        return base_response.dump();
+                    }
+
+
+                    // self.add_pending_invitation(leader_id, player_id)
+                    return base_response.dump();
+                },
                 // "GROUP JOIN" => {},
                 // "GROUP LEAVE" => {},
                 // "TAKE" => {},

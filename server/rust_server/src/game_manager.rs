@@ -30,7 +30,7 @@ impl GameManager {
         return &self.players_by_name;
     }
 
-    pub fn get_groups(&mut self) -> &mut GroupManager {
+    pub fn all_groups(&mut self) -> &mut GroupManager {
         return &mut self.groups;
     }
 

@@ -18,6 +18,7 @@ pub enum ErrorCode {
     AlreadyConnected,
     InvalidScope,
     NotInGroup,
+    NotGroupLeader,
     AlreadyInGroup,
     NoSuchUser,
     NotInvited,
@@ -42,7 +43,7 @@ impl ErrorCode {
             Self::AlreadyConnected | Self::InvalidScope => 400,
             Self::NotInGroup => 401,
             Self::AlreadyInGroup => 402,
-            Self::NoSuchUser | Self::NotInvited => 403,
+            Self::NoSuchUser | Self::NotInvited | Self::NotGroupLeader => 403,
             Self::ItemNotFound 
             | Self::ItemNotInInventory 
             | Self::NpcNotFound 
