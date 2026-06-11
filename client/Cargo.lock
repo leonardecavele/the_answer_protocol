@@ -596,6 +596,7 @@ dependencies = [
  "api-client",
  "time",
  "tokio",
+ "tracing",
  "tracing-subscriber",
 ]
 

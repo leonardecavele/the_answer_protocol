@@ -1,11 +1,14 @@
 pub mod connect;
 pub mod look;
+pub mod quit;
 
 use crate::client::ServerInfo;
 use crate::protocol::response::{ServerResponse, server_error_message_from_code};
 
 pub trait Command {
     type ResponseData;
+
+    // fn command_label() -> &'static str;
 
     fn create_command(&self, server_info: &ServerInfo) -> CreateCommandResult;
 

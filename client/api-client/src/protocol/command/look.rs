@@ -11,6 +11,10 @@ pub struct LookServerResponseData {
 impl Command for LookCommand {
     type ResponseData = LookServerResponseData;
 
+    // fn command_label() -> &'static str {
+    //     "Look"
+    // }
+
     fn create_command(&self, server_info: &ServerInfo) -> CreateCommandResult {
         match server_info.protocol_version {
             1 => CreateCommandResult::Success {
@@ -27,7 +31,7 @@ impl Command for LookCommand {
     ) -> CommandResult<Self::ResponseData> {
         match server_info.protocol_version {
             1 => {
-                if let Some(arguments) = response.arguments.clone() {
+                if let Some(arguments) = response.arguments {
                     if arguments.len() < 2 {
                         return CommandResult::Error {
                             message: "invalid arguments".to_string(),
