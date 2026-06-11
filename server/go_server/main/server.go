@@ -14,7 +14,7 @@ import (
 import (
 	"go_server/client_conn"
 	"go_server/config"
-	"go_server/error"
+	serverError "go_server/error"
 	"go_server/logger"
 	"go_server/rust_conn"
 )
@@ -92,6 +92,23 @@ func (store *rustServerStore) Clear(rustServer *rust_conn.RustServer) {
 	store.mutex.Unlock()
 }
 
+func reconnectPlayersToRust(rustServer *rust_conn.RustServer) error {
+	for _, username := range client_conn.ConnectedUsernames() {
+		command := rust_conn.CommandToRust{
+			Player:    username,
+			Command:   "CONNECT",
+			Arguments: username,
+		}
+
+		if err := rustServer.WriteCommand(command); err != nil {
+			return err
+		}
+		logger.AppLogger.Info("Reconnected %s to Rust server", username)
+	}
+
+	return nil
+}
+
 func manageRustConnection(quit <-chan struct{}, store *rustServerStore) {
 	addr := config.RustServerIP + ":" + strconv.Itoa(config.RustServerPort)
 
@@ -105,6 +122,12 @@ func manageRustConnection(quit <-chan struct{}, store *rustServerStore) {
 		rustServer := rust_conn.ConnectToRust(addr, quit)
 		if rustServer == nil {
 			return
+		}
+
+		if err := reconnectPlayersToRust(rustServer); err != nil {
+			logger.AppLogger.Error("Rust players reconnect error: %v", err)
+			_ = rustServer.Close()
+			continue
 		}
 
 		store.Set(rustServer)
@@ -169,7 +192,7 @@ func main() {
 
 	newListener, listenErr := net.Listen("tcp", ":"+strconv.Itoa(config.GoServerPort))
 	if listenErr != nil {
-		os.Exit(int(error.ListenerError))
+		os.Exit(int(serverError.ListenerError))
 	}
 	listener = newListener
 	defer listener.Close()
@@ -191,5 +214,5 @@ func main() {
 		go client_conn.HandleClient(client_conn.NewClient(conn), rustServers.Get)
 	}
 
-	os.Exit(int(error.NoError))
+	os.Exit(int(serverError.NoError))
 }

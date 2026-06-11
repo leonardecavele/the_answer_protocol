@@ -105,6 +105,18 @@ func (c *Client) EraseUsername() {
 	room.mutex.Unlock()
 }
 
+func ConnectedUsernames() []string {
+	room.mutex.Lock()
+	defer room.mutex.Unlock()
+
+	usernames := make([]string, 0, len(room.clients))
+	for username := range room.clients {
+		usernames = append(usernames, username)
+	}
+
+	return usernames
+}
+
 func (c *Client) ReadEvent() string {
 	return <-c.eventChan
 }
