@@ -3,84 +3,66 @@ pub mod look;
 pub mod quit;
 
 use crate::client::ServerInfo;
+use crate::error::CommandError;
 use crate::protocol::response::{ServerResponse, server_error_message_from_code};
 
 pub trait Command {
     type ResponseData;
 
-    // fn command_label() -> &'static str;
+    fn create_command(&self, server_info: &ServerInfo) -> Result<String, CommandError>;
 
-    fn create_command(&self, server_info: &ServerInfo) -> CreateCommandResult;
-
-    fn parse_response_ok(
+    fn parse_response(
         &self,
         server_info: &ServerInfo,
         response: ServerResponse,
-    ) -> CommandResult<Self::ResponseData>;
+    ) -> Result<Self::ResponseData, CommandError>;
 }
 
-pub enum CreateCommandResult {
-    Success { raw_command: String },
-    Error { message: String },
-}
-
-impl CreateCommandResult {
-    pub fn server_version_not_implemented_yet(version: u32) -> CreateCommandResult {
-        CreateCommandResult::Error {
-            message: format!("server version {} is not supported yet", version),
+impl CommandError {
+    pub fn from_response(response: ServerResponse) -> Self {
+        if response.arguments.is_empty() {
+            return CommandError {
+                code: None,
+                message: "failed to retrieve explicit error details from the server".to_string(),
+            };
         }
-    }
-}
 
-pub enum CommandResult<T> {
-    Success { data: T },
-    Error { message: String },
-}
-
-impl<T> CommandResult<T> {
-    pub fn error_from_response(response: ServerResponse) -> CommandResult<T> {
-        let parsed_arguments = response.arguments.as_ref().and_then(|arguments| {
-            if arguments.is_empty() {
-                None
-            } else {
-                let code = arguments[0].parse::<i32>().ok();
-                let details = if arguments.len() > 1 {
-                    Some(arguments[1..].join(" "))
-                } else {
-                    None
-                };
-                Some((code, details))
-            }
-        });
-
-        let message: String = match parsed_arguments {
-            Some((Some(code), details)) => {
-                let message = server_error_message_from_code(code);
-
-                match details {
-                    Some(details) => {
-                        format!("{} (code: {}): {}", message, code, details)
-                    }
-                    None => {
-                        format!("{} (code: {})", message, code)
-                    }
-                }
-            }
-            Some((None, Some(details))) => {
-                format!(
-                    "server returned an invalid error code format. raw details: {}",
-                    details
-                )
-            }
-            _ => "failed to retrieve explicit error details from the server".to_string(),
+        let code = response.arguments[0].parse::<i32>().ok();
+        let details = if response.arguments.len() > 1 {
+            Some(response.arguments[1..].join(" "))
+        } else {
+            None
         };
 
-        CommandResult::Error { message }
+        match (code, details) {
+            (Some(code), details) => {
+                let mut message = server_error_message_from_code(code);
+                if let Some(details) = details {
+                    message = format!("{}: {}", message, details);
+                }
+                CommandError {
+                    code: Some(code),
+                    message,
+                }
+            }
+            (None, Some(details)) => CommandError {
+                code: None,
+                message: format!(
+                    "server returned an invalid error code format. raw details: {}",
+                    details
+                ),
+            },
+            _ => CommandError {
+                code: None,
+                message: "failed to retrieve explicit error details from the server".to_string(),
+            },
+        }
     }
 
-    pub fn server_version_not_implemented_yet(version: u32) -> CommandResult<T> {
-        CommandResult::Error {
-            message: format!("server version {} is not supported yet", version),
+    pub fn version_not_implemented(version: u32) -> Self {
+        CommandError {
+            code: None,
+            message: String::from(format!("server version {} is not supported yet", version)),
         }
     }
 }

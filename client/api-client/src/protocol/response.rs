@@ -1,4 +1,4 @@
-use crate::error::{TapError, TapResult};
+use crate::error::ProtocolError;
 use std::fmt::{Display, Formatter};
 
 #[derive(Debug, PartialEq, Clone)]
@@ -39,13 +39,13 @@ impl Display for Opcode {
 pub struct ServerResponse {
     pub raw: String,
     pub opcode: Opcode,
-    pub arguments: Option<Vec<String>>,
+    pub arguments: Vec<String>,
 }
 
 impl TryFrom<String> for ServerResponse {
-    type Error = TapError;
+    type Error = ProtocolError;
 
-    fn try_from(frame: String) -> TapResult<ServerResponse> {
+    fn try_from(frame: String) -> Result<ServerResponse, ProtocolError> {
         let raw_frame = frame.trim().to_owned();
         let frame = frame.trim().to_owned();
 
@@ -53,25 +53,26 @@ impl TryFrom<String> for ServerResponse {
             return Ok(ServerResponse {
                 raw: raw_frame,
                 opcode: Opcode::Empty,
-                arguments: None,
+                arguments: vec![],
             });
         }
 
-        let frame_type: Opcode = match frame.split(' ').nth(0) {
+        let opcode: Opcode = match frame.split(' ').nth(0) {
             Some(x) => match x {
                 "OK" => Opcode::Ok,
                 "EVT" => Opcode::Evt,
                 "ERR" => Opcode::Err,
                 _ => {
-                    return Err(TapError::ServerResponseParse(format!(
-                        "Invalid frame identifier. \
-                            expected (OK, EVT, ERR), received '{}'",
-                        x
-                    )));
+                    return Err(ProtocolError::InvalidOpcode {
+                        expected: "(OK, EVT, ERR)".to_string(),
+                        received: x.to_string(),
+                    });
                 }
             },
             None => {
-                return Err(TapError::ServerResponseParse("invalid frame".to_string()));
+                return Err(ProtocolError::Parse(
+                    "invalid frame: missing opcode".to_string(),
+                ));
             }
         };
 
@@ -83,8 +84,8 @@ impl TryFrom<String> for ServerResponse {
 
         Ok(ServerResponse {
             raw: raw_frame,
-            opcode: frame_type,
-            arguments: (!arguments.is_empty()).then_some(arguments),
+            opcode,
+            arguments,
         })
     }
 }

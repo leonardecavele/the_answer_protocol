@@ -1,20 +1,18 @@
 use api_client::client::APIClient;
-use api_client::protocol::command::CommandResult;
-use std::collections::HashMap;
 use std::env;
 use std::process::exit;
 use std::time::Instant;
 use time::macros::format_description;
-use tracing::{debug, info};
-use tracing_subscriber::fmt::time::LocalTime;
+use tracing::{error, info};
 use tracing_subscriber::EnvFilter;
+use tracing_subscriber::fmt::time::LocalTime;
 
 pub enum Command {
     Quit,
 }
 
 // const SERVER_ADDRESS: &str = "127.0.0.1:3000";
-const SERVER_ADDRESS: &str = "10.14.8.5:38800";
+const SERVER_ADDRESS: &str = "127.0.0.1:38800";
 
 const PLAYER: &str = "DefaultPlayer";
 
@@ -35,7 +33,9 @@ async fn main() {
 }
 
 fn get_player_name(suffix: Option<String>) -> String {
-    let player = env::var("PLAYER").ok().unwrap_or_else(|| PLAYER.to_string());
+    let player = env::var("PLAYER")
+        .ok()
+        .unwrap_or_else(|| PLAYER.to_string());
     match suffix {
         Some(v) => String::from(format!("{}_{}", player, v)),
         None => player,
@@ -47,115 +47,70 @@ async fn test_multiple_connections() {
     let mut clients: Vec<APIClient> = vec![];
 
     for i in 0..3 {
-        let client = match APIClient::new(SERVER_ADDRESS).await {
+        let player = get_player_name(Some(i.to_string()));
+
+        let mut client = match APIClient::new(SERVER_ADDRESS).await {
             Ok(client) => client,
             Err(e) => {
                 eprintln!(
-                    "Couldn't connect to the server ({}): {}. Exit.",
+                    "couldn't connect to the server ({}): {}. Exit.",
                     SERVER_ADDRESS, e
                 );
                 return;
             }
         };
 
-        let player = get_player_name(Some(i.to_string()));
+        let player_name = player.clone();
+        client
+            .on_event(move |event| info!("[new event for {}]: {:?}", player_name, event.arguments));
 
-        match client.connect(player).await {
-            Ok(result) => match result {
-                CommandResult::Success { data } => {
-                    println!("Connected to the server as {}.", data.player_name);
-                }
-                CommandResult::Error { message } => {
-                    println!("[tui] {}", message);
-                }
-            },
-            Err(e) => {
-                eprintln!("Fail to connect player: {}", e);
-                client.close();
-                exit(1);
-            }
+        if !player_connect(&mut client, player).await {
+            exit(1);
         }
-
-        match client.look().await {
-            Ok(result) => match result {
-                CommandResult::Success { data } => {
-                    println!("Look response: {}", data.json_data);
-                }
-                CommandResult::Error { message } => {
-                    println!("[tui] {}", message);
-                }
-            },
-            Err(e) => {
-                eprintln!("Fail to look: {}", e);
-                client.close();
-                exit(1);
-            }
+        if !player_look(&mut client).await {
+            exit(1);
         }
 
         clients.push(client);
     }
 
     for client in clients {
-        client.close()
+        client.quit().await;
     }
 }
 
 #[allow(dead_code)]
 async fn test_single_connection() {
+    let player = get_player_name(None);
+
     let mut client = match APIClient::new(SERVER_ADDRESS).await {
         Ok(client) => client,
         Err(e) => {
-            eprintln!(
-                "Couldn't connect to the server ({}): {}. Exit.",
+            error!(
+                "couldn't connect to the server ({}): {}. Exit.",
                 SERVER_ADDRESS, e
             );
             return;
         }
     };
 
-    client.on_event(|event| {
-        info!("[new event] : {:?}", event.arguments)
-    });
+    let player_name = player.clone();
+    client.on_event(move |event| info!("[new event for {}]: {:?}", player_name, event.arguments));
 
-    let player = get_player_name(None);
-
-    match client.connect(player).await {
-        Ok(result) => match result {
-            CommandResult::Success { data } => {
-                println!("Connected to the server as {}.", data.player_name);
-            }
-            CommandResult::Error { message } => {
-                println!("[tui] {}", message);
-            }
-        },
-        Err(e) => {
-            eprintln!("Fail to connect player: {}", e);
-            client.close();
-            exit(1);
-        }
+    if !player_connect(&mut client, player).await {
+        exit(1);
     }
 
-    // client.quit().await;
-
     let iterations = 10000;
-    info!("Démarrage du benchmark pour {} requêtes LOOK...", iterations);
+    info!(
+        "Démarrage du benchmark pour {} requêtes LOOK...",
+        iterations
+    );
     let start_time = Instant::now();
 
     for i in 0..10000 {
-        match client.look().await {
-            Ok(result) => match result {
-                CommandResult::Success { data } => {
-                    debug!("Look response: {}", data.json_data);
-                }
-                CommandResult::Error { message } => {
-                    debug!("[tui] {}", message);
-                }
-            },
-            Err(e) => {
-                eprintln!("Fail to look: {}", e);
-                client.close();
-                exit(1);
-            }
+        if !player_look(&mut client).await {
+            exit(1);
         }
         info!("loop {}", i);
     }
@@ -170,4 +125,38 @@ async fn test_single_connection() {
     );
 
     client.quit().await;
+}
+
+async fn player_connect(client: &mut APIClient, player: String) -> bool {
+    match client.connect(player).await {
+        Ok(Ok(response)) => {
+            println!("connected to the server as {}.", response.player_name);
+            true
+        }
+        Ok(Err(e)) => {
+            error!("{}", e);
+            true
+        }
+        Err(e) => {
+            error!("fail to connect player: {}", e);
+            false
+        }
+    }
+}
+
+async fn player_look(client: &mut APIClient) -> bool {
+    match client.look().await {
+        Ok(Ok(response)) => {
+            println!("look response: {}.", response.json_data);
+            true
+        }
+        Ok(Err(e)) => {
+            error!("{}", e);
+            true
+        }
+        Err(e) => {
+            eprintln!("fail to look: {}", e);
+            false
+        }
+    }
 }

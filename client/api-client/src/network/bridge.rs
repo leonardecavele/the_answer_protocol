@@ -1,11 +1,11 @@
-use crate::error::{TapError, TapResult};
+use crate::error::{InternalError, NetworkError, TapError};
 use crate::protocol::request::Request;
-use crate::protocol::response::{ServerResponse, Opcode};
+use crate::protocol::response::{Opcode, ServerResponse};
 use futures::SinkExt;
 use futures::stream::StreamExt;
 use tokio::net::TcpStream;
 use tokio::sync::broadcast;
-use tokio::sync::mpsc::{Receiver, Sender};
+use tokio::sync::mpsc::Receiver;
 use tokio_util::codec::{Framed, LinesCodec, LinesCodecError};
 use tracing::{debug, error, info, warn};
 
@@ -78,65 +78,70 @@ impl Bridge {
     async fn handle_incoming(
         &mut self,
         frame: Option<Result<String, LinesCodecError>>,
-    ) -> TapResult<bool> {
-        if frame.is_none() {
-            return Ok(false);
-        }
+    ) -> Result<bool, TapError> {
+        let frame_result = match frame {
+            Some(f) => f,
+            None => return Ok(false),
+        };
 
-        match frame.unwrap() {
+        match frame_result {
             Ok(line) => {
                 debug!("receive response: {}", line);
+                let response = ServerResponse::try_from(line)?;
 
-                match ServerResponse::try_from(line) {
-                    Ok(response) => {
-                        if response.opcode == Opcode::Evt {
-                            let _ = self.event_transmitter.send(response).map_err(|e| {
-                                TapError::Channel(format!("failed to forward event: {:?}", e))
-                            })?;
-                            return Ok(true);
-                        }
+                if response.opcode == Opcode::Evt {
+                    let _ = self.event_transmitter.send(response).map_err(|_| {
+                        InternalError::ChannelPanic(
+                            "event channel is closed, nowhere to send the event".to_string(),
+                        )
+                    })?;
 
-                        if let Some(request) = self.pending_request.take() {
-                            request
-                                .reply_to
-                                .send(response)
-                                .and(Ok(true))
-                                .map_err(|srv_response| {
-                                    TapError::Channel(format!(
-                                        "internal lost response {:?}",
-                                        srv_response
-                                    ))
-                                })
-                        } else {
-                            Ok(true)
-                        }
-                    }
-                    Err(e) => {
-                        error!("error parsing response: {}", e);
-                        Ok(true)
-                    }
+                    return Ok(true);
+                }
+
+                if let Some(request) = self.pending_request.take() {
+                    let result = request.reply_to.send(response).map(|_| true).map_err(|_| {
+                        InternalError::ChannelPanic(
+                            "the requester dropped the receiver \
+                                        before getting the response"
+                                .to_string(),
+                        )
+                    })?;
+
+                    Ok(result)
+                } else {
+                    error!(
+                        "received unexpected response \
+                                from server while no request was pending"
+                    );
+
+                    Ok(true)
                 }
             }
-            Err(e) => {
-                error!("error reading from socket: {}", e);
-                Ok(true)
+            Err(codec_error) => {
+                error!("fatal network read error: {}", codec_error);
+                Err(NetworkError::Codec(codec_error).into())
             }
         }
     }
 
-    async fn handle_outgoing(&mut self, request: Request) -> TapResult<bool> {
-        if !self.pending_request.is_none() {
-            warn!("waiting for another request. Command dropped");
+    async fn handle_outgoing(&mut self, request: Request) -> Result<bool, TapError> {
+        if self.pending_request.is_some() {
+            warn!(
+                "a request is already pending. Dropping the new command: '{}'",
+                request.raw_command
+            );
             return Ok(true);
         }
 
-        let command = request.command.clone();
-
+        let raw_command = request.raw_command.clone();
         self.pending_request = Some(request);
-        debug!("send request: '{}'", command.clone());
 
-        if let Err(e) = self.socket.send(command).await {
-            error!("error sending to socket: {}", e);
+        debug!("send request: '{}'", raw_command.clone());
+
+        if let Err(codec_error) = self.socket.send(raw_command).await {
+            error!("fatal network write error: {}", codec_error);
+            return Err(NetworkError::Codec(codec_error).into());
         }
 
         Ok(true)

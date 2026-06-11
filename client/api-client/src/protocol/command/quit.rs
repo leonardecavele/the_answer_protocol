@@ -1,5 +1,6 @@
 use crate::client::ServerInfo;
-use crate::protocol::command::{Command, CommandResult, CreateCommandResult};
+use crate::error::CommandError;
+use crate::protocol::command::Command;
 use crate::protocol::response::ServerResponse;
 
 pub struct QuitCommand;
@@ -9,39 +10,30 @@ pub struct QuitResponse;
 impl Command for QuitCommand {
     type ResponseData = QuitResponse;
 
-    fn create_command(&self, server_info: &ServerInfo) -> CreateCommandResult {
+    fn create_command(&self, server_info: &ServerInfo) -> Result<String, CommandError> {
         match server_info.protocol_version {
-            1 => CreateCommandResult::Success {
-                raw_command: "QUIT".to_string(),
-            },
-            v => CreateCommandResult::server_version_not_implemented_yet(v),
+            1 => Ok("QUIT".to_string()),
+            v => Err(CommandError::version_not_implemented(v)),
         }
     }
 
-    fn parse_response_ok(
+    fn parse_response(
         &self,
         server_info: &ServerInfo,
         response: ServerResponse,
-    ) -> CommandResult<Self::ResponseData> {
+    ) -> Result<Self::ResponseData, CommandError> {
         match server_info.protocol_version {
             1 => {
-                if let Some(arguments) = response.arguments {
-                    if arguments.len() < 1 || arguments[0] != "bye" {
-                        return CommandResult::Error {
-                            message: "invalid arguments".to_string(),
-                        };
-                    }
-
-                    CommandResult::Success {
-                        data: QuitResponse,
-                    }
-                } else {
-                    CommandResult::Error {
-                        message: "missing arguments".to_string(),
-                    }
+                if response.arguments.len() < 1 || response.arguments[0] != "bye" {
+                    return Err(CommandError {
+                        code: None,
+                        message: "invalid arguments".to_string(),
+                    });
                 }
+
+                Ok(QuitResponse)
             }
-            v => CommandResult::server_version_not_implemented_yet(v),
+            v => Err(CommandError::version_not_implemented(v)),
         }
     }
 }

@@ -1,5 +1,6 @@
 use crate::client::ServerInfo;
-use crate::protocol::command::{Command, CommandResult, CreateCommandResult};
+use crate::error::CommandError;
+use crate::protocol::command::Command;
 use crate::protocol::response::ServerResponse;
 
 pub struct LookCommand;
@@ -11,47 +12,34 @@ pub struct LookResponse {
 impl Command for LookCommand {
     type ResponseData = LookResponse;
 
-    // fn command_label() -> &'static str {
-    //     "Look"
-    // }
-
-    fn create_command(&self, server_info: &ServerInfo) -> CreateCommandResult {
+    fn create_command(&self, server_info: &ServerInfo) -> Result<String, CommandError> {
         match server_info.protocol_version {
-            1 => CreateCommandResult::Success {
-                raw_command: "LOOK".to_string(),
-            },
-            v => CreateCommandResult::server_version_not_implemented_yet(v),
+            1 => Ok("LOOK".to_string()),
+            v => Err(CommandError::version_not_implemented(v)),
         }
     }
 
-    fn parse_response_ok(
+    fn parse_response(
         &self,
         server_info: &ServerInfo,
         response: ServerResponse,
-    ) -> CommandResult<Self::ResponseData> {
+    ) -> Result<Self::ResponseData, CommandError> {
         match server_info.protocol_version {
             1 => {
-                if let Some(arguments) = response.arguments {
-                    if arguments.len() < 2 {
-                        return CommandResult::Error {
-                            message: "invalid arguments".to_string(),
-                        };
-                    }
-
-                    // TD: create HELPER to parse JSON data: arguments[1..].join(" ")
-
-                    CommandResult::Success {
-                        data: LookResponse {
-                            json_data: arguments[1..].join(" "),
-                        },
-                    }
-                } else {
-                    CommandResult::Error {
-                        message: "missing arguments".to_string(),
-                    }
+                if response.arguments.len() < 2 {
+                    return Err(CommandError {
+                        code: None,
+                        message: "invalid arguments".to_string(),
+                    });
                 }
+
+                // TD: create HELPER to parse JSON data: arguments[1..].join(" ")
+
+                Ok(LookResponse {
+                    json_data: response.arguments[1..].join(" "),
+                })
             }
-            v => CommandResult::server_version_not_implemented_yet(v),
+            v => Err(CommandError::version_not_implemented(v)),
         }
     }
 }

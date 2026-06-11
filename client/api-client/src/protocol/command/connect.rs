@@ -1,5 +1,6 @@
 use crate::client::ServerInfo;
-use crate::protocol::command::{Command, CommandResult, CreateCommandResult};
+use crate::error::CommandError;
+use crate::protocol::command::Command;
 use crate::protocol::response::ServerResponse;
 
 pub struct ConnectCommand {
@@ -13,41 +14,31 @@ pub struct ConnectResponse {
 impl Command for ConnectCommand {
     type ResponseData = ConnectResponse;
 
-    fn create_command(&self, server_info: &ServerInfo) -> CreateCommandResult {
+    fn create_command(&self, server_info: &ServerInfo) -> Result<String, CommandError> {
         match server_info.protocol_version {
-            1 => CreateCommandResult::Success {
-                raw_command: format!("CONNECT {}", self.player_name),
-            },
-            v => CreateCommandResult::server_version_not_implemented_yet(v),
+            1 => Ok(format!("CONNECT {}", self.player_name)),
+            v => Err(CommandError::version_not_implemented(v)),
         }
     }
 
-    fn parse_response_ok(
+    fn parse_response(
         &self,
         server_info: &ServerInfo,
         response: ServerResponse,
-    ) -> CommandResult<Self::ResponseData> {
+    ) -> Result<Self::ResponseData, CommandError> {
         match server_info.protocol_version {
             1 => {
-                if let Some(arguments) = response.arguments {
-                    if arguments.len() != 1 || arguments[0] != "connected" {
-                        return CommandResult::Error {
-                            message: "invalid arguments".to_string(),
-                        };
-                    }
-
-                    CommandResult::Success {
-                        data: ConnectResponse {
-                            player_name: self.player_name.clone(),
-                        },
-                    }
-                } else {
-                    CommandResult::Error {
-                        message: "missing arguments".to_string(),
-                    }
+                if response.arguments.len() != 1 || response.arguments[0] != "connected" {
+                    return Err(CommandError {
+                        code: None,
+                        message: "invalid arguments".to_string(),
+                    });
                 }
+                Ok(ConnectResponse {
+                    player_name: self.player_name.clone(),
+                })
             }
-            v => CommandResult::server_version_not_implemented_yet(v),
+            v => Err(CommandError::version_not_implemented(v)),
         }
     }
 }

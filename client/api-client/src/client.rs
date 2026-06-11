@@ -1,21 +1,21 @@
-use crate::error::{TapError, TapResult};
+use crate::error::{CommandError, InternalError, NetworkError, TapError};
 use crate::network::bridge::Bridge;
+use crate::protocol::command::Command;
 use crate::protocol::command::connect::{ConnectCommand, ConnectResponse};
 use crate::protocol::command::look::{LookCommand, LookResponse};
-use crate::protocol::command::quit::{QuitCommand, QuitResponse};
-use crate::protocol::command::{Command, CommandResult, CreateCommandResult};
+use crate::protocol::command::quit::QuitCommand;
 use crate::protocol::handshake::HandshakeResponse;
 use crate::protocol::request::Request;
-use crate::protocol::response::{ServerResponse, Opcode};
+use crate::protocol::response::{Opcode, ServerResponse};
 use std::fmt::Display;
-use std::process::exit;
+use std::process::abort;
 use std::time::Duration;
 use tokio::net::{TcpStream, ToSocketAddrs};
 use tokio::sync::{broadcast, mpsc, oneshot};
 use tokio::task::JoinHandle;
 use tokio::time::timeout;
 use tokio_util::codec::{Framed, LinesCodec};
-use tracing::{debug, info, warn};
+use tracing::{Event, debug, info, warn};
 
 #[derive(Debug)]
 pub struct ServerInfo {
@@ -25,32 +25,32 @@ pub struct ServerInfo {
 
 pub struct APIClient {
     pub server: ServerInfo,
-    conn: Connection,
+    bridge: BridgeState,
 }
 
-struct Connection {
-    handler: JoinHandle<()>,
-    sender: mpsc::Sender<Request>,
-    event_manager: EventManager,
+struct BridgeState {
+    bridge_task: JoinHandle<()>,
+    command_sender: mpsc::Sender<Request>,
+    event_dispatcher: EventDispatcher,
 }
 
-struct EventManager {
-    sender: broadcast::Sender<ServerResponse>,
-    handlers: Vec<JoinHandle<()>>,
+struct EventDispatcher {
+    broadcast_sender: broadcast::Sender<ServerResponse>,
+    subscriber_tasks: Vec<JoinHandle<()>>,
 }
 
 impl APIClient {
-    pub async fn new<A>(addr: A) -> TapResult<APIClient>
+    pub async fn new<A>(addr: A) -> Result<APIClient, TapError>
     where
         A: ToSocketAddrs + Clone + Display,
     {
         let (socket, server_addr) = Self::connect_tcp(addr).await?;
         info!("successfully connected to TCP socket at {}", server_addr);
 
-        let (request_sender, request_receiver) = mpsc::channel::<Request>(2048);
-        let (event_sender, _) = broadcast::channel::<ServerResponse>(2048);
-        let (handshake_request, handshake_receiver) = Request::handshake();
+        let (request_sender, request_receiver) = mpsc::channel::<Request>(65536);
+        let (event_sender, _) = broadcast::channel::<ServerResponse>(65536);
 
+        let (handshake_request, handshake_receiver) = Request::handshake();
         let bridge_handler = Self::start_bridge(
             socket,
             handshake_request,
@@ -71,12 +71,12 @@ impl APIClient {
                 addr: server_addr,
                 protocol_version: handshake.server_protocol_version,
             },
-            conn: Connection {
-                handler: bridge_handler,
-                sender: request_sender,
-                event_manager: EventManager {
-                    sender: event_sender,
-                    handlers: vec![],
+            bridge: BridgeState {
+                bridge_task: bridge_handler,
+                command_sender: request_sender,
+                event_dispatcher: EventDispatcher {
+                    broadcast_sender: event_sender,
+                    subscriber_tasks: vec![],
                 },
             },
         })
@@ -84,7 +84,7 @@ impl APIClient {
 
     async fn connect_tcp<A: ToSocketAddrs + Clone + Display>(
         addr: A,
-    ) -> TapResult<(Framed<TcpStream, LinesCodec>, String)>
+    ) -> Result<(Framed<TcpStream, LinesCodec>, String), NetworkError>
     where
         A: ToSocketAddrs + Clone + Display,
     {
@@ -104,9 +104,9 @@ impl APIClient {
                     let socket = Framed::new(stream, LinesCodec::new_with_max_length(65536));
                     return Ok((socket, peer_addr));
                 }
-                Ok(Err(e)) => {
+                Ok(Err(_)) => {
                     if attempt >= max_attempt {
-                        return Err(TapError::Io(e));
+                        return Err(NetworkError::ConnectionMaxRetry);
                     }
                     info!(
                         "failed to connect to {}, retrying in {} milliseconds..",
@@ -115,10 +115,7 @@ impl APIClient {
                 }
                 Err(_) => {
                     if attempt >= max_attempt {
-                        return Err(TapError::Io(std::io::Error::new(
-                            std::io::ErrorKind::TimedOut,
-                            "connection timed out",
-                        )));
+                        return Err(NetworkError::ConnectionTimeout);
                     }
                     info!(
                         "connection to {} timed out, retrying in {} milliseconds..",
@@ -127,10 +124,10 @@ impl APIClient {
                 }
             }
 
-            tokio::time::sleep(tokio::time::Duration::from_millis(timeout_before_retry)).await;
+            tokio::time::sleep(Duration::from_millis(timeout_before_retry)).await;
         }
 
-        Err(TapError::Disconnected)
+        Err(NetworkError::Disconnected)
     }
 
     async fn start_bridge(
@@ -138,75 +135,97 @@ impl APIClient {
         handshake_request: Request,
         event_sender: broadcast::Sender<ServerResponse>,
         command_receiver: mpsc::Receiver<Request>,
-    ) -> TapResult<JoinHandle<()>> {
+    ) -> Result<JoinHandle<()>, InternalError> {
         let (ready_sender, ready_receiver) = oneshot::channel::<()>();
 
-        let bridge_handler = tokio::spawn(async move {
+        let bridge_task = tokio::spawn(async move {
             let mut bridge = Bridge::new(socket, event_sender, command_receiver);
             bridge.listen(handshake_request, ready_sender).await;
         });
 
-        ready_receiver
-            .await
-            .map_err(|e| TapError::ThreadPanic(e.to_string()))?;
+        ready_receiver.await.map_err(|e| {
+            InternalError::ThreadPanic(format!("bridge task panicked during initialization: {}", e))
+        })?;
 
-        Ok(bridge_handler)
+        Ok(bridge_task)
     }
 
     async fn await_handshake(
         handshake_receiver: oneshot::Receiver<ServerResponse>,
-    ) -> TapResult<HandshakeResponse> {
+    ) -> Result<HandshakeResponse, TapError> {
         let response = handshake_receiver
             .await
-            .map_err(|_| TapError::Disconnected)?;
-        HandshakeResponse::try_from(response)
+            .map_err(|_| NetworkError::Disconnected)?;
+        Ok(HandshakeResponse::try_from(response)?)
     }
 
-    async fn request<C: Command>(&self, command: C) -> TapResult<CommandResult<C::ResponseData>> {
-        let create_command_result = command.create_command(&self.server);
-
-        match create_command_result {
-            CreateCommandResult::Success { raw_command } => {
+    async fn request<C: Command>(
+        &self,
+        command: C,
+    ) -> Result<Result<C::ResponseData, CommandError>, TapError> {
+        match command.create_command(&self.server) {
+            Ok(raw_command) => {
                 let (request, response_receiver) = Request::new(raw_command);
 
-                self.conn
-                    .sender
+                self.bridge
+                    .command_sender
                     .send(request)
                     .await
                     .map_err(|e| {
-                        TapError::Channel(format!("[client] send request error: {}", e))
+                        InternalError::ChannelPanic(
+                            "failed to send command to the bridge task (task may have crashed)"
+                                .to_string(),
+                        )
                     })?;
 
                 let response = response_receiver.await.map_err(|e| {
-                    TapError::Channel(format!("[client] recv request error: {}", e))
+                    InternalError::ChannelPanic(
+                        "bridge task dropped the response channel without \
+                        replying (connection probably died)"
+                            .to_string(),
+                    )
                 })?;
 
                 if response.opcode == Opcode::Ok {
-                    Ok(command.parse_response_ok(&self.server, response))
+                    Ok(command.parse_response(&self.server, response))
                 } else {
-                    Ok(CommandResult::error_from_response(response))
+                    Ok(Err(CommandError::from_response(response)))
                 }
             }
-            CreateCommandResult::Error { message } => Ok(CommandResult::Error { message }),
+            Err(e) => Ok(Err(e)),
         }
     }
 }
 
-impl APIClient {
-    pub fn on_event(&mut self, handler: fn(ServerResponse) -> ()) {
-        let mut subscriber = self.conn.event_manager.sender.subscribe();
+impl Drop for APIClient {
+    fn drop(&mut self) {
+        self.bridge.bridge_task.abort();
+        for event_subscriber in self.bridge.event_dispatcher.subscriber_tasks.iter() {
+            event_subscriber.abort();
+        }
 
-        self.conn
-            .event_manager
-            .handlers
+        info!("APIClient dropped: background tasks aborted");
+    }
+}
+
+impl APIClient {
+    pub fn on_event<F>(&mut self, handler: F)
+    where
+        F: Fn(ServerResponse) + Send + 'static,
+    {
+        let mut subscriber = self.bridge.event_dispatcher.broadcast_sender.subscribe();
+
+        self.bridge
+            .event_dispatcher
+            .subscriber_tasks
             .push(tokio::spawn(async move {
                 loop {
                     match subscriber.recv().await {
                         Ok(event) => handler(event),
-                        Err(tokio::sync::broadcast::error::RecvError::Lagged(skipped)) => {
+                        Err(broadcast::error::RecvError::Lagged(skipped)) => {
                             warn!("lag.. {} events dropped", skipped);
                         }
-                        Err(tokio::sync::broadcast::error::RecvError::Closed) => break,
+                        Err(broadcast::error::RecvError::Closed) => break,
                     }
                 }
             }))
@@ -215,7 +234,7 @@ impl APIClient {
     pub async fn connect(
         &self,
         player_name: String,
-    ) -> TapResult<CommandResult<ConnectResponse>> {
+    ) -> Result<Result<ConnectResponse, CommandError>, TapError> {
         debug!("sending connect request for player: {}", player_name);
 
         let response = self.request(ConnectCommand { player_name }).await?;
@@ -223,7 +242,7 @@ impl APIClient {
         Ok(response)
     }
 
-    pub async fn look(&self) -> TapResult<CommandResult<LookResponse>> {
+    pub async fn look(&self) -> Result<Result<LookResponse, CommandError>, TapError> {
         debug!("sending look request");
 
         let response = self.request(LookCommand).await?;
@@ -235,16 +254,6 @@ impl APIClient {
         debug!("sending quit request");
 
         let _ = self.request(QuitCommand).await;
-        self.close()
-    }
-
-    pub fn close(self) {
-        self.conn.handler.abort();
-
-        for event_subscriber in self.conn.event_manager.handlers.iter() {
-            event_subscriber.abort()
-        }
-
-        info!("client connection terminated");
+        drop(self)
     }
 }
