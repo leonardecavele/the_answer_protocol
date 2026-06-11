@@ -23,6 +23,7 @@ impl ClientConnect {
     {
         let (socket, server_addr) = Self::connect_tcp(addr).await?;
         info!("successfully connected to TCP socket at {}", server_addr);
+
         let (request_sender, request_receiver) = mpsc::channel::<Request>(2048);
         let (event_broadcast_sender, _) = broadcast::channel::<ServerResponse>(2048);
         let (handshake_request, handshake_receiver) = Request::handshake();
@@ -33,6 +34,7 @@ impl ClientConnect {
             request_receiver,
         )
         .await?;
+
         debug!("awaiting server handshake...");
         let handshake = Self::await_handshake(handshake_receiver).await?;
         info!(
@@ -61,7 +63,8 @@ impl ClientConnect {
     {
         info!("try connection to server {}...", addr);
 
-        let max_attempt: u32 = u32::MAX;
+        // let max_attempt: u32 = u32::MAX;
+        let max_attempt: u32 = 3;
         let timeout_before_retry: u64 = 5;
 
         for attempt in 1..=max_attempt {
@@ -77,7 +80,9 @@ impl ClientConnect {
                 }
                 Ok(Err(_)) => {
                     if attempt >= max_attempt {
-                        return Err(NetworkError::ConnectionMaxRetry);
+                        return Err(NetworkError::ConnectionMaxRetry {
+                            addr: addr.to_string(),
+                        });
                     }
                     info!(
                         "failed to connect to {}, retrying in {} milliseconds..",
@@ -86,7 +91,9 @@ impl ClientConnect {
                 }
                 Err(_) => {
                     if attempt >= max_attempt {
-                        return Err(NetworkError::ConnectionMaxRetry);
+                        return Err(NetworkError::ConnectionMaxRetry {
+                            addr: addr.to_string(),
+                        });
                     }
                     info!(
                         "connection to {} timed out, retrying in {} milliseconds..",
@@ -98,7 +105,9 @@ impl ClientConnect {
             tokio::time::sleep(Duration::from_millis(timeout_before_retry)).await;
         }
 
-        Err(NetworkError::ConnectionTimeout)
+        Err(NetworkError::ConnectionTimeout {
+            addr: addr.to_string(),
+        })
     }
 
     async fn start_bridge(

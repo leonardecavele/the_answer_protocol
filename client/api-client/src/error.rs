@@ -56,11 +56,11 @@ pub enum NetworkError {
     #[error("codec error: {0}")]
     Codec(#[from] tokio_util::codec::LinesCodecError),
 
-    #[error("connection to server failed")]
-    ConnectionMaxRetry,
+    #[error("connection to {addr} failed. max attempt reached.")]
+    ConnectionMaxRetry { addr: String },
 
-    #[error("connection to server timed out")]
-    ConnectionTimeout,
+    #[error("connection to {addr} timed out")]
+    ConnectionTimeout { addr: String },
 
     #[error("connection disconnected unexpectedly")]
     Disconnected,

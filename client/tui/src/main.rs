@@ -1,20 +1,19 @@
 use api_client::client::Client;
+use api_client::client::connect::ClientConnect;
+use api_client::error::TapError;
 use std::env;
 use std::process::exit;
 use std::time::Instant;
 use time::macros::format_description;
 use tracing::{error, info};
-use tracing_subscriber::fmt::time::LocalTime;
 use tracing_subscriber::EnvFilter;
-use api_client::client::connect::ClientConnect;
+use tracing_subscriber::fmt::time::LocalTime;
 
 pub enum Command {
     Quit,
 }
 
-// const SERVER_ADDRESS: &str = "127.0.0.1:3000";
-const SERVER_ADDRESS: &str = "127.0.0.1:38800";
-
+const SERVER_ADDRESS: &str = "127.0.0.1:3000";
 const PLAYER: &str = "DefaultPlayer";
 
 #[tokio::main]
@@ -29,8 +28,12 @@ async fn main() {
         .with_timer(timer)
         .init();
 
-    test_single_connection().await;
-    // test_multiple_connections().await;
+    if let Err(e) = test_single_connection().await {
+        error!("{} (exiting)", e);
+    }
+    // if let Err(e) = test_multiple_connections().await {
+    //     error!("{} (exiting)", e);
+    // }
 }
 
 fn get_player_name(suffix: Option<String>) -> String {
@@ -44,33 +47,20 @@ fn get_player_name(suffix: Option<String>) -> String {
 }
 
 #[allow(dead_code)]
-async fn test_multiple_connections() {
+async fn test_multiple_connections() -> Result<(), TapError> {
     let mut clients: Vec<Client> = vec![];
 
     for i in 0..3 {
         let player = get_player_name(Some(i.to_string()));
 
-        let mut client = match ClientConnect::connect(SERVER_ADDRESS).await {
-            Ok(client) => client,
-            Err(e) => {
-                eprintln!(
-                    "couldn't connect to the server ({}): {}. Exit.",
-                    SERVER_ADDRESS, e
-                );
-                return;
-            }
-        };
+        let mut client = ClientConnect::connect(SERVER_ADDRESS).await?;
 
         let player_name = player.clone();
         client
             .on_event(move |event| info!("[new event for {}]: {:?}", player_name, event.arguments));
 
-        if !player_connect(&mut client, player).await {
-            exit(1);
-        }
-        if !player_look(&mut client).await {
-            exit(1);
-        }
+        player_connect(&mut client, player).await?;
+        player_look(&mut client).await?;
 
         clients.push(client);
     }
@@ -78,29 +68,20 @@ async fn test_multiple_connections() {
     for client in clients {
         client.quit().await;
     }
+
+    Ok(())
 }
 
 #[allow(dead_code)]
-async fn test_single_connection() {
+async fn test_single_connection() -> Result<(), TapError> {
     let player = get_player_name(None);
 
-    let mut client = match ClientConnect::connect(SERVER_ADDRESS).await {
-        Ok(client) => client,
-        Err(e) => {
-            error!(
-                "couldn't connect to the server ({}): {}. Exit.",
-                SERVER_ADDRESS, e
-            );
-            return;
-        }
-    };
+    let mut client = ClientConnect::connect(SERVER_ADDRESS).await?;
 
     let player_name = player.clone();
     client.on_event(move |event| info!("[new event for {}]: {:?}", player_name, event.arguments));
 
-    if !player_connect(&mut client, player).await {
-        exit(1);
-    }
+    player_connect(&mut client, player).await?;
 
     let iterations = 10000;
     info!(
@@ -110,9 +91,7 @@ async fn test_single_connection() {
     let start_time = Instant::now();
 
     for i in 0..200 {
-        if !player_look(&mut client).await {
-            exit(1);
-        }
+        player_look(&mut client).await?;
         info!("loop {}", i);
     }
 
@@ -126,38 +105,36 @@ async fn test_single_connection() {
     );
 
     client.quit().await;
+
+    Ok(())
 }
 
-async fn player_connect(client: &mut Client, player: String) -> bool {
-    match client.connect(player).await {
-        Ok(Ok(response)) => {
+async fn player_connect(client: &mut Client, player: String) -> Result<(), TapError> {
+    let result = client.connect(player).await?;
+
+    match result {
+        Ok(response) => {
             println!("connected to the server as {}.", response.player_name);
-            true
-        }
-        Ok(Err(e)) => {
-            error!("{}", e);
-            true
         }
         Err(e) => {
-            error!("fail to connect player: {}", e);
-            false
+            error!("{}", e);
         }
     }
+
+    Ok(())
 }
 
-async fn player_look(client: &mut Client) -> bool {
-    match client.look().await {
-        Ok(Ok(response)) => {
+async fn player_look(client: &mut Client) -> Result<(), TapError> {
+    let result = client.look().await?;
+
+    match result {
+        Ok(response) => {
             println!("look response: {}.", response.json_data);
-            true
-        }
-        Ok(Err(e)) => {
-            error!("{}", e);
-            true
         }
         Err(e) => {
-            eprintln!("fail to look: {}", e);
-            false
+            error!("{}", e);
         }
     }
+
+    Ok(())
 }
