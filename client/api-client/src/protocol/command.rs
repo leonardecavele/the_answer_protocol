@@ -4,7 +4,7 @@ pub mod quit;
 
 use crate::client::ServerInfo;
 use crate::error::CommandError;
-use crate::protocol::response::{ServerResponse, server_error_message_from_code};
+use crate::protocol::response::ServerResponse;
 
 pub trait Command {
     type ResponseData;
@@ -16,6 +16,8 @@ pub trait Command {
         server_info: &ServerInfo,
         response: ServerResponse,
     ) -> Result<Self::ResponseData, CommandError>;
+
+    fn refine_error(&self, _server_info: &ServerInfo, _error: &mut CommandError) {}
 }
 
 impl CommandError {
@@ -23,7 +25,7 @@ impl CommandError {
         if response.arguments.is_empty() {
             return CommandError {
                 code: None,
-                message: "failed to retrieve explicit error details from the server".to_string(),
+                message: CommandError::default_message_from_code(None),
             };
         }
 
@@ -34,12 +36,16 @@ impl CommandError {
             None
         };
 
+        let friendly_message = CommandError::default_message_from_code(code);
+
         match (code, details) {
             (Some(code), details) => {
-                let mut message = server_error_message_from_code(code);
+                let mut message = friendly_message;
+
                 if let Some(details) = details {
                     message = format!("{}: {}", message, details);
                 }
+
                 CommandError {
                     code: Some(code),
                     message,
@@ -47,14 +53,11 @@ impl CommandError {
             }
             (None, Some(details)) => CommandError {
                 code: None,
-                message: format!(
-                    "server returned an invalid error code format. raw details: {}",
-                    details
-                ),
+                message: format!("{}: {}", friendly_message, details),
             },
             _ => CommandError {
                 code: None,
-                message: "failed to retrieve explicit error details from the server".to_string(),
+                message: friendly_message,
             },
         }
     }

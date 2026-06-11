@@ -1,5 +1,6 @@
 use crate::error::ProtocolError;
 use std::fmt::{Display, Formatter};
+use std::str::FromStr;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Opcode {
@@ -9,21 +10,6 @@ pub enum Opcode {
     Empty,
 }
 
-pub fn server_error_message_from_code(code: i32) -> String {
-    match code {
-        201 => String::from("username already taken"),
-        301 => String::from("no exit available in this direction"),
-        401 => String::from("player is not in a group"),
-        402 => String::from("player is already in a group"),
-        404 => String::from("item, inventory item, or NPC not found"),
-        405 => String::from("target NPC is not hostile"),
-        406 => String::from("no quest available"),
-        900 => String::from("connection failed"),
-        901 => String::from("send failed"),
-        _ => "unknown server error".to_string(),
-    }
-}
-
 impl Display for Opcode {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -31,6 +17,22 @@ impl Display for Opcode {
             Self::Err => write!(f, "ERR"),
             Self::Evt => write!(f, "EVT"),
             Self::Empty => write!(f, "<EMPTY>"),
+        }
+    }
+}
+
+impl FromStr for Opcode {
+    type Err = ProtocolError;
+
+    fn from_str(s: &str) -> Result<Self, ProtocolError> {
+        match s {
+            "OK" => Ok(Opcode::Ok),
+            "EVT" => Ok(Opcode::Evt),
+            "ERR" => Ok(Opcode::Err),
+            _ => Err(ProtocolError::InvalidOpcode {
+                expected: "(OK, EVT, ERR)".to_string(),
+                received: s.to_string(),
+            }),
         }
     }
 }
@@ -46,44 +48,27 @@ impl TryFrom<String> for ServerResponse {
     type Error = ProtocolError;
 
     fn try_from(frame: String) -> Result<ServerResponse, ProtocolError> {
-        let raw_frame = frame.trim().to_owned();
-        let frame = frame.trim().to_owned();
+        let frame = frame.trim();
 
         if frame.is_empty() {
             return Ok(ServerResponse {
-                raw: raw_frame,
+                raw: String::new(),
                 opcode: Opcode::Empty,
                 arguments: vec![],
             });
         }
 
-        let opcode: Opcode = match frame.split(' ').nth(0) {
-            Some(x) => match x {
-                "OK" => Opcode::Ok,
-                "EVT" => Opcode::Evt,
-                "ERR" => Opcode::Err,
-                _ => {
-                    return Err(ProtocolError::InvalidOpcode {
-                        expected: "(OK, EVT, ERR)".to_string(),
-                        received: x.to_string(),
-                    });
-                }
-            },
-            None => {
-                return Err(ProtocolError::Parse(
-                    "invalid frame: missing opcode".to_string(),
-                ));
-            }
-        };
+        let mut parts = frame.split(" ");
 
-        let arguments: Vec<String> = frame
-            .split(" ")
-            .skip(1)
-            .map(str::to_owned)
-            .collect::<Vec<String>>();
+        let opcode_str = parts
+            .next()
+            .ok_or_else(|| ProtocolError::Parse("invalid frame: missing opcode".to_string()))?;
+
+        let opcode = Opcode::from_str(opcode_str)?;
+        let arguments: Vec<String> = parts.map(str::to_owned).collect::<Vec<String>>();
 
         Ok(ServerResponse {
-            raw: raw_frame,
+            raw: frame.to_string(),
             opcode,
             arguments,
         })

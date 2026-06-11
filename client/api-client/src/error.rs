@@ -16,6 +16,38 @@ impl std::fmt::Display for CommandError {
 }
 impl std::error::Error for CommandError {}
 
+impl CommandError {
+    pub fn with_message(&mut self, message: Option<String>) {
+        if let Some(m) = message {
+            self.message = m;
+        }
+    }
+
+    pub fn default_message_from_code(code_opt: Option<i32>) -> String {
+        let code = code_opt.unwrap_or(-1);
+
+        match code {
+            400 => String::from("bad request"),
+            401 => String::from("unauthorized"),
+            403 => String::from("forbidden"),
+            404 => String::from("not found"),
+            405 => String::from("method not allowed"),
+            406 => String::from("not acceptable"),
+            408 => String::from("request timeout"),
+            409 => String::from("conflict"),
+            410 => String::from("gone"),
+            422 => String::from("unprocessable entity"),
+            429 => String::from("too many requests"),
+            500 => String::from("internal server error"),
+            501 => String::from("not implemented"),
+            502 => String::from("bad gateway"),
+            503 => String::from("service unavailable"),
+            504 => String::from("gateway timeout"),
+            _ => "unknown server error".to_string(),
+        }
+    }
+}
+
 #[derive(Error, Debug)]
 pub enum NetworkError {
     #[error("I/O error: {0}")]

@@ -51,13 +51,21 @@ impl Bridge {
                             }
                         },
                         Err(e) => {
-                            error!("error handling incoming frame: {}", e);
+                            error!("{}", e);
+                            break;
                         }
                     }
                 },
                 // send response to the server
-                request = self.command_receiver.recv(), if self.pending_request.is_none() => {
-                    let request = request.unwrap();
+                request_opt = self.command_receiver.recv(), if self.pending_request.is_none() => {
+                    let request = match request_opt {
+                        Some(req) => req,
+                        None => {
+                            info!("command channel closed (client dropped), shutting down bridge");
+                            break;
+                        }
+                    };
+
                     match self.handle_outgoing(request).await {
                         Ok(can_continue) => {
                             if !can_continue {
@@ -65,7 +73,8 @@ impl Bridge {
                             }
                         },
                         Err(e) => {
-                            error!("error handling outgoing frame: {}", e);
+                            error!("{}", e);
+                            break;
                         }
                     }
                 }

@@ -41,4 +41,11 @@ impl Command for ConnectCommand {
             v => Err(CommandError::version_not_implemented(v)),
         }
     }
+
+    fn refine_error(&self, server_info: &ServerInfo, error: &mut CommandError) {
+        error.with_message(match (server_info.protocol_version, error.code) {
+            (1, Some(201)) => Some(format!("{} already taken", self.player_name)),
+            _ => None,
+        })
+    }
 }

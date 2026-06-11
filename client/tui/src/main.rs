@@ -1,11 +1,12 @@
-use api_client::client::APIClient;
+use api_client::client::Client;
 use std::env;
 use std::process::exit;
 use std::time::Instant;
 use time::macros::format_description;
 use tracing::{error, info};
-use tracing_subscriber::EnvFilter;
 use tracing_subscriber::fmt::time::LocalTime;
+use tracing_subscriber::EnvFilter;
+use api_client::client::connect::ClientConnect;
 
 pub enum Command {
     Quit,
@@ -44,12 +45,12 @@ fn get_player_name(suffix: Option<String>) -> String {
 
 #[allow(dead_code)]
 async fn test_multiple_connections() {
-    let mut clients: Vec<APIClient> = vec![];
+    let mut clients: Vec<Client> = vec![];
 
     for i in 0..3 {
         let player = get_player_name(Some(i.to_string()));
 
-        let mut client = match APIClient::new(SERVER_ADDRESS).await {
+        let mut client = match ClientConnect::connect(SERVER_ADDRESS).await {
             Ok(client) => client,
             Err(e) => {
                 eprintln!(
@@ -83,7 +84,7 @@ async fn test_multiple_connections() {
 async fn test_single_connection() {
     let player = get_player_name(None);
 
-    let mut client = match APIClient::new(SERVER_ADDRESS).await {
+    let mut client = match ClientConnect::connect(SERVER_ADDRESS).await {
         Ok(client) => client,
         Err(e) => {
             error!(
@@ -108,7 +109,7 @@ async fn test_single_connection() {
     );
     let start_time = Instant::now();
 
-    for i in 0..10000 {
+    for i in 0..200 {
         if !player_look(&mut client).await {
             exit(1);
         }
@@ -127,7 +128,7 @@ async fn test_single_connection() {
     client.quit().await;
 }
 
-async fn player_connect(client: &mut APIClient, player: String) -> bool {
+async fn player_connect(client: &mut Client, player: String) -> bool {
     match client.connect(player).await {
         Ok(Ok(response)) => {
             println!("connected to the server as {}.", response.player_name);
@@ -144,7 +145,7 @@ async fn player_connect(client: &mut APIClient, player: String) -> bool {
     }
 }
 
-async fn player_look(client: &mut APIClient) -> bool {
+async fn player_look(client: &mut Client) -> bool {
     match client.look().await {
         Ok(Ok(response)) => {
             println!("look response: {}.", response.json_data);
