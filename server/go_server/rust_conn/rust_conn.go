@@ -6,7 +6,6 @@ import (
 	"errors"
 	"io"
 	"net"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -56,41 +55,6 @@ func (rustServer *RustServer) currentConn() net.Conn {
 	defer rustServer.PrintMutex.Unlock()
 
 	return rustServer.Conn
-}
-
-func (rustServer *RustServer) replaceConn(conn net.Conn) {
-	rustServer.PrintMutex.Lock()
-	oldConn := rustServer.Conn
-	rustServer.Conn = conn
-	rustServer.Writer = bufio.NewWriter(conn)
-	rustServer.PrintMutex.Unlock()
-
-	if oldConn != nil {
-		_ = oldConn.Close()
-	}
-}
-
-func (rustServer *RustServer) disconnectConn(conn net.Conn) {
-	rustServer.PrintMutex.Lock()
-	if rustServer.Conn == conn {
-		rustServer.Conn = nil
-		rustServer.Writer = nil
-	}
-	rustServer.PrintMutex.Unlock()
-
-	if conn != nil {
-		_ = conn.Close()
-	}
-}
-
-func (rustServer *RustServer) reconnect(addr string, quit <-chan struct{}) bool {
-	conn := dialRust(addr, quit)
-	if conn == nil {
-		return false
-	}
-
-	rustServer.replaceConn(conn)
-	return true
 }
 
 func (rustServer *RustServer) Close() error {
@@ -191,79 +155,68 @@ func (rustServer *RustServer) Read(
 	routeCommand func(username string, command string) bool,
 	routeEvent func(username string, event string) bool,
 ) {
-	addr := config.RustServerIP + ":" + strconv.Itoa(config.RustServerPort)
+	conn := rustServer.currentConn()
+	if conn == nil {
+		return
+	}
 
+	reader := bufio.NewReader(conn)
 	for {
-		conn := rustServer.currentConn()
-		if conn == nil {
-			if !rustServer.reconnect(addr, quit) {
+		message, err := reader.ReadString('\n')
+		if err != nil {
+			select {
+			case <-quit:
 				return
+			default:
+			}
+			if !errors.Is(err, io.EOF) {
+				logger.AppLogger.Error("Rust read error: %v", err)
+			}
+			logger.AppLogger.Info("Rust server disconnected")
+			return
+		}
+
+		message = strings.TrimRight(message, "\r\n")
+		logger.AppLogger.Info("Rust Read: %s", message)
+
+		if message == config.RustConfirmationMessage {
+			continue
+		}
+
+		rustEvents, ok, err := ReadMessageAsEvents(message)
+		if err != nil {
+			logger.AppLogger.Error("Rust invalid message: %v", err)
+			continue
+		}
+		if ok && routeEvent != nil {
+			for _, rustEvent := range rustEvents {
+				eventMessage, err := json.Marshal(rustEvent)
+				if err != nil {
+					logger.AppLogger.Error("Rust invalid event: %v", err)
+					continue
+				}
+				routeEvent(rustEvent.Player, string(eventMessage))
 			}
 			continue
 		}
 
-		reader := bufio.NewReader(conn)
-		for {
-			message, err := reader.ReadString('\n')
-			if err != nil {
-				select {
-				case <-quit:
-					return
-				default:
-				}
-				if !errors.Is(err, io.EOF) {
-					logger.AppLogger.Error("Rust read error: %v", err)
-				}
-				logger.AppLogger.Info("Rust server disconnected, waiting for reconnect")
-				rustServer.disconnectConn(conn)
-				if !rustServer.reconnect(addr, quit) {
-					return
-				}
-				break
-			}
+		rustEvent, ok, err := ReadMessageAsEvent(message)
+		if err != nil {
+			logger.AppLogger.Error("Rust invalid message: %v", err)
+			continue
+		}
+		if ok && routeEvent != nil {
+			routeEvent(rustEvent.Player, message)
+			continue
+		}
 
-			message = strings.TrimRight(message, "\r\n")
-			logger.AppLogger.Info("Rust Read: %s", message)
-
-			if message == config.RustConfirmationMessage {
-				continue
-			}
-
-			rustEvents, ok, err := ReadMessageAsEvents(message)
-			if err != nil {
-				logger.AppLogger.Error("Rust invalid message: %v", err)
-				continue
-			}
-			if ok && routeEvent != nil {
-				for _, rustEvent := range rustEvents {
-					eventMessage, err := json.Marshal(rustEvent)
-					if err != nil {
-						logger.AppLogger.Error("Rust invalid event: %v", err)
-						continue
-					}
-					routeEvent(rustEvent.Player, string(eventMessage))
-				}
-				continue
-			}
-
-			rustEvent, ok, err := ReadMessageAsEvent(message)
-			if err != nil {
-				logger.AppLogger.Error("Rust invalid message: %v", err)
-				continue
-			}
-			if ok && routeEvent != nil {
-				routeEvent(rustEvent.Player, message)
-				continue
-			}
-
-			rustCommand, ok, err := ReadMessageAsCommand(message)
-			if err != nil {
-				logger.AppLogger.Error("Rust invalid message: %v", err)
-				continue
-			}
-			if ok && routeCommand != nil {
-				routeCommand(rustCommand.Player, message)
-			}
+		rustCommand, ok, err := ReadMessageAsCommand(message)
+		if err != nil {
+			logger.AppLogger.Error("Rust invalid message: %v", err)
+			continue
+		}
+		if ok && routeCommand != nil {
+			routeCommand(rustCommand.Player, message)
 		}
 	}
 }

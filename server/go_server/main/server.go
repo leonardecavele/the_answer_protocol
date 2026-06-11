@@ -61,10 +61,83 @@ func shutdownServer(quit chan struct{}, listener net.Listener, stopOnce *sync.On
 	})
 }
 
+type rustServerStore struct {
+	mutex sync.RWMutex
+	value *rust_conn.RustServer
+}
+
+func (store *rustServerStore) Get() *rust_conn.RustServer {
+	store.mutex.RLock()
+	defer store.mutex.RUnlock()
+
+	return store.value
+}
+
+func (store *rustServerStore) Set(rustServer *rust_conn.RustServer) {
+	store.mutex.Lock()
+	oldRustServer := store.value
+	store.value = rustServer
+	store.mutex.Unlock()
+
+	if oldRustServer != nil && oldRustServer != rustServer {
+		_ = oldRustServer.Close()
+	}
+}
+
+func (store *rustServerStore) Clear(rustServer *rust_conn.RustServer) {
+	store.mutex.Lock()
+	if store.value == rustServer {
+		store.value = nil
+	}
+	store.mutex.Unlock()
+}
+
+func manageRustConnection(quit <-chan struct{}, store *rustServerStore) {
+	addr := config.RustServerIP + ":" + strconv.Itoa(config.RustServerPort)
+
+	for {
+		select {
+		case <-quit:
+			return
+		default:
+		}
+
+		rustServer := rust_conn.ConnectToRust(addr, quit)
+		if rustServer == nil {
+			return
+		}
+
+		store.Set(rustServer)
+
+		stopClosingRust := make(chan struct{})
+		go func() {
+			select {
+			case <-quit:
+				_ = rustServer.Close()
+			case <-stopClosingRust:
+			}
+		}()
+
+		rustServer.Read(quit, client_conn.RouteCommand, client_conn.RouteEvent)
+		close(stopClosingRust)
+
+		store.Clear(rustServer)
+		_ = rustServer.Close()
+
+		select {
+		case <-quit:
+			return
+		default:
+		}
+		logger.AppLogger.Info("Waiting for Rust server reconnect")
+	}
+}
+
 func main() {
 	quit := make(chan struct{})
 	var stopOnce sync.Once
 	var listener net.Listener
+	rustServers := &rustServerStore{}
 
 	stopServer := func() {
 		shutdownServer(quit, listener, &stopOnce)
@@ -92,11 +165,7 @@ func main() {
 		}
 	}()
 
-	rustServer := rust_conn.ConnectToRust(config.RustServerIP+":"+strconv.Itoa(config.RustServerPort), quit)
-	if rustServer == nil {
-		return
-	}
-	defer rustServer.Close()
+	go manageRustConnection(quit, rustServers)
 
 	newListener, listenErr := net.Listen("tcp", ":"+strconv.Itoa(config.GoServerPort))
 	if listenErr != nil {
@@ -104,8 +173,6 @@ func main() {
 	}
 	listener = newListener
 	defer listener.Close()
-
-	go rustServer.Read(quit, client_conn.RouteCommand, client_conn.RouteEvent)
 
 	logger.AppLogger.Info("TCP server started on " + getServerIP() + ":" + strconv.Itoa(config.GoServerPort))
 
@@ -121,7 +188,7 @@ func main() {
 			}
 		}
 
-		go client_conn.HandleClient(client_conn.NewClient(conn), rustServer, nil)
+		go client_conn.HandleClient(client_conn.NewClient(conn), rustServers.Get)
 	}
 
 	os.Exit(int(error.NoError))

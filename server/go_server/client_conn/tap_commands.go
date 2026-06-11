@@ -32,6 +32,13 @@ var tapCommands = map[string]handleTapCommandArgs{
 	"QUESTS":    handleQuestsCommand,
 }
 
+func RustTryWriteCommand(command rust_conn.CommandToRust, rustServer *rust_conn.RustServer) error {
+	if rustServer == nil {
+		return nil
+	}
+	return rustServer.WriteCommand(command)
+}
+
 // CORE
 
 func handleConnectCommand(args string, client *Client, rustServer *rust_conn.RustServer) (string, error) {
@@ -63,7 +70,7 @@ func handleConnectCommand(args string, client *Client, rustServer *rust_conn.Rus
 		Arguments: args,
 	}
 
-	if err := rustServer.WriteCommand(command); err != nil {
+	if err := RustTryWriteCommand(command, rustServer); err != nil {
 		return "", err
 	}
 
@@ -71,7 +78,11 @@ func handleConnectCommand(args string, client *Client, rustServer *rust_conn.Rus
 }
 
 func handleLookCommand(args string, client *Client, rustServer *rust_conn.RustServer) (string, error) {
-	if client.Username == "" {
+	if rustServer == nil {
+		return responseRustServerShutdown, nil
+	}
+
+	if client.State != AUTHENTICATED {
 		return responseNotConnected, nil
 	}
 	if args != "" {
@@ -96,9 +107,6 @@ func handleMoveCommand(args string, client *Client, _ *rust_conn.RustServer) (st
 }
 
 func handleQuitCommand(args string, client *Client, _ *rust_conn.RustServer) (string, error) {
-	if client.Username == "" {
-		return responseNotConnected, nil
-	}
 	if args != "" {
 		return responseInvalidArguments, nil
 	}
@@ -118,6 +126,7 @@ func handleWhoCommand(args string, client *Client, _ *rust_conn.RustServer) (str
 
 // GROUP
 
+// issue because of SPACE
 func handleGroupCreateCommand(args string, client *Client, _ *rust_conn.RustServer) (string, error) {
 	return "", nil
 }

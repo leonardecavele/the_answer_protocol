@@ -9,7 +9,7 @@ var QuitCommands = map[string]struct{}{
 const (
 	LogFormat = "15:04:05.000000"
 
-	RustServerIP = "10.14.9.6"
+	RustServerIP = "localhost"
 
 	GoServerPort   = 38800
 	RustServerPort = 38801

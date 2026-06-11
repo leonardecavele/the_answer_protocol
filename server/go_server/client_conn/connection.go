@@ -28,10 +28,6 @@ func parseCommand(msg string) (string, string, string) {
 }
 
 func handleTapCommand(str string, client *Client, rustServer *rust_conn.RustServer) (string, error) {
-	if rustServer == nil {
-		return responseRustServerShutdown, nil
-	}
-
 	response := ""
 
 	cmd, args, response := parseCommand(str)
@@ -62,8 +58,12 @@ func handleClientEvents(client *Client, done <-chan struct{}) {
 	}
 }
 
-func HandleClient(client *Client, rustServer *rust_conn.RustServer, _ func()) {
+func HandleClient(client *Client, getRustServer func() *rust_conn.RustServer) {
 	defer func() {
+		var rustServer *rust_conn.RustServer
+		if getRustServer != nil {
+			rustServer = getRustServer()
+		}
 		if err := client.EraseClient(rustServer); err != nil {
 			logger.AppLogger.Error("%s Erase client error: %v\n", client.Id, err)
 		}
@@ -94,6 +94,10 @@ func HandleClient(client *Client, rustServer *rust_conn.RustServer, _ func()) {
 		}
 
 		logger.AppLogger.Info("%s Client Read: %s", client.Id, str)
+		var rustServer *rust_conn.RustServer
+		if getRustServer != nil {
+			rustServer = getRustServer()
+		}
 		response, err := handleTapCommand(str, client, rustServer)
 		if err != nil {
 			logger.AppLogger.Error("%s Command error: %v\n", client.Id, err)
