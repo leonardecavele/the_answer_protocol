@@ -1,5 +1,4 @@
 use crate::error::{TapError, TapResult};
-use crate::protocol::event::Event;
 use crate::protocol::request::Request;
 use crate::protocol::response::{ServerResponse, ServerResponseOpcode};
 use futures::SinkExt;

@@ -11,6 +11,10 @@ pub struct LookServerResponseData {
 impl Command for LookCommand {
     type ResponseData = LookServerResponseData;
 
+    // fn command_label() -> &'static str {
+    //     "Look"
+    // }
+
     fn create_command(&self, server_info: &ServerInfo) -> CreateCommandResult {
         match server_info.protocol_version {
             1 => CreateCommandResult::Success {

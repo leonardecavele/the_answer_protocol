@@ -3,6 +3,7 @@ use api_client::protocol::command::CommandResult;
 use std::collections::HashMap;
 use std::env;
 use std::process::exit;
+use std::time::Instant;
 use time::macros::format_description;
 use tracing::{debug, info};
 use tracing_subscriber::fmt::time::LocalTime;
@@ -13,14 +14,13 @@ pub enum Command {
 }
 
 // const SERVER_ADDRESS: &str = "127.0.0.1:3000";
-const SERVER_ADDRESS: &str = "10.11.11.2:38800";
+const SERVER_ADDRESS: &str = "10.14.8.5:38800";
 
-const PLAYER: &str = "Gabin";
-// const PLAYER: &str = "Aymeric";
+const PLAYER: &str = "DefaultPlayer";
 
 #[tokio::main]
 async fn main() {
-    let time_format = format_description!("[hour]:[minute]:[second]");
+    let time_format = format_description!("[hour]:[minute]:[second].[subsecond digits:6]");
     let timer = LocalTime::new(time_format);
 
     tracing_subscriber::fmt()
@@ -32,12 +32,14 @@ async fn main() {
 
     test_single_connection().await;
     // test_multiple_connections().await;
+}
 
-    // client
-    //     .on_event(|message| {
-    //         println!("New Event {:?}", message);
-    //     })
-    //     .await;
+fn get_player_name(suffix: Option<String>) -> String {
+    let player = env::var("PLAYER").ok().unwrap_or_else(|| PLAYER.to_string());
+    match suffix {
+        Some(v) => String::from(format!("{}_{}", player, v)),
+        None => player,
+    }
 }
 
 #[allow(dead_code)]
@@ -56,7 +58,7 @@ async fn test_multiple_connections() {
             }
         };
 
-        let player = format!("{}_{}", PLAYER, i);
+        let player = get_player_name(Some(i.to_string()));
 
         match client.connect(player).await {
             Ok(result) => match result {
@@ -111,11 +113,11 @@ async fn test_single_connection() {
         }
     };
 
-    client.subscribe_events(|event| {
+    client.on_event(|event| {
         info!("[new event] : {:?}", event.arguments)
     });
 
-    let player = env::var("PLAYER").ok().unwrap_or_else(|| PLAYER.to_string());
+    let player = get_player_name(None);
 
     match client.connect(player).await {
         Ok(result) => match result {
@@ -135,11 +137,15 @@ async fn test_single_connection() {
 
     // client.quit().await;
 
+    let iterations = 10000;
+    info!("Démarrage du benchmark pour {} requêtes LOOK...", iterations);
+    let start_time = Instant::now();
+
     for i in 0..10000 {
         match client.look().await {
             Ok(result) => match result {
                 CommandResult::Success { data } => {
-                    // debug!("Look response: {}", data.json_data);
+                    debug!("Look response: {}", data.json_data);
                 }
                 CommandResult::Error { message } => {
                     debug!("[tui] {}", message);
@@ -153,6 +159,15 @@ async fn test_single_connection() {
         }
         info!("loop {}", i);
     }
+
+    let duration = start_time.elapsed();
+
+    info!(
+        "Benchmark terminé : {} requêtes en {:.2?}. (Moyenne : {:.2?} / requête)",
+        iterations,
+        duration,
+        duration / iterations
+    );
 
     client.quit().await;
 }

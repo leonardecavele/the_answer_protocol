@@ -8,6 +8,8 @@ use crate::protocol::response::{ServerResponse, server_error_message_from_code};
 pub trait Command {
     type ResponseData;
 
+    // fn command_label() -> &'static str;
+
     fn create_command(&self, server_info: &ServerInfo) -> CreateCommandResult;
 
     fn parse_response_ok(

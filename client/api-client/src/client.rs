@@ -4,16 +4,16 @@ use crate::protocol::command::connect::{ConnectCommand, ConnectServerResponseDat
 use crate::protocol::command::look::{LookCommand, LookServerResponseData};
 use crate::protocol::command::quit::{QuitCommand, QuitServerResponseData};
 use crate::protocol::command::{Command, CommandResult, CreateCommandResult};
-use crate::protocol::event::Event;
 use crate::protocol::handshake::HandshakeServerResponse;
 use crate::protocol::request::Request;
 use crate::protocol::response::{ServerResponse, ServerResponseOpcode};
 use std::fmt::Display;
+use std::process::exit;
 use tokio::net::{TcpStream, ToSocketAddrs};
 use tokio::sync::{broadcast, mpsc, oneshot};
 use tokio::task::JoinHandle;
 use tokio_util::codec::{Framed, LinesCodec};
-use tracing::{debug, info};
+use tracing::{debug, info, warn};
 
 #[derive(Debug)]
 pub struct ServerInfo {
@@ -28,9 +28,13 @@ pub struct APIClient {
 
 struct Connection {
     bridge_thread: JoinHandle<()>,
-    event_subscriber_threads: Vec<JoinHandle<()>>,
     request_transmitter: mpsc::Sender<Request>,
-    event_transmitter: broadcast::Sender<ServerResponse>,
+    event: Event,
+}
+
+struct Event {
+    channel: broadcast::Sender<ServerResponse>,
+    subscriber_threads: Vec<JoinHandle<()>>,
 }
 
 impl APIClient {
@@ -68,8 +72,10 @@ impl APIClient {
             conn: Connection {
                 bridge_thread,
                 request_transmitter,
-                event_transmitter,
-                event_subscriber_threads: vec![],
+                event: Event {
+                    channel: event_transmitter,
+                    subscriber_threads: vec![],
+                },
             },
         })
     }
@@ -81,11 +87,12 @@ impl APIClient {
         A: ToSocketAddrs + Clone + Display,
     {
         let max_attempt: u32 = u32::MAX;
-        let timeout_before_retry: u64 = 1;
+        let timeout_before_retry: u64 = 10;
 
         for attempt in 1..=max_attempt {
             match TcpStream::connect(addr.clone()).await {
                 Ok(stream) => {
+                    stream.set_nodelay(true)?;
                     let peer_addr = stream.peer_addr()?.to_string();
                     let socket = Framed::new(stream, LinesCodec::new_with_max_length(65536)); // 64 Ko
                     return Ok((socket, peer_addr));
@@ -98,7 +105,7 @@ impl APIClient {
                         "({}/{}) failed to connect to {}, retriying in {} seconds..",
                         attempt, max_attempt, addr, timeout_before_retry
                     );
-                    tokio::time::sleep(tokio::time::Duration::from_secs(timeout_before_retry))
+                    tokio::time::sleep(tokio::time::Duration::from_millis(timeout_before_retry))
                         .await;
                 }
             }
@@ -167,17 +174,18 @@ impl APIClient {
 }
 
 impl APIClient {
-    pub fn subscribe_events(&mut self, handler: fn(ServerResponse) -> ()) {
-        let mut subscriber = self.conn.event_transmitter.subscribe();
+    pub fn on_event(&mut self, handler: fn(ServerResponse) -> ()) {
+        let mut subscriber = self.conn.event.channel.subscribe();
 
         self.conn
-            .event_subscriber_threads
+            .event
+            .subscriber_threads
             .push(tokio::spawn(async move {
                 loop {
                     match subscriber.recv().await {
                         Ok(event) => handler(event),
                         Err(tokio::sync::broadcast::error::RecvError::Lagged(skipped)) => {
-                            tracing::warn!("lag.. {} events dropped", skipped);
+                            warn!("lag.. {} events dropped", skipped);
                         }
                         Err(tokio::sync::broadcast::error::RecvError::Closed) => break,
                     }
@@ -191,11 +199,7 @@ impl APIClient {
     ) -> TapResult<CommandResult<ConnectServerResponseData>> {
         debug!("sending connect request for player: {}", player_name);
 
-        let response = self
-            .request(ConnectCommand {
-                player_name,
-            })
-            .await?;
+        let response = self.request(ConnectCommand { player_name }).await?;
 
         Ok(response)
     }
@@ -208,20 +212,20 @@ impl APIClient {
         Ok(response)
     }
 
-    pub async fn quit(&self) {
+    pub async fn quit(self) {
         debug!("sending quit request");
 
         let _ = self.request(QuitCommand).await;
         self.close()
     }
 
-    pub fn close(&self) {
+    pub fn close(self) {
         self.conn.bridge_thread.abort();
 
-        for event_subscriber in self.conn.event_subscriber_threads.iter().clone() {
+        for event_subscriber in self.conn.event.subscriber_threads.iter() {
             event_subscriber.abort()
         }
 
-        info!("close client connection");
+        info!("client connection terminated");
     }
 }
