@@ -18,7 +18,7 @@ const (
 
 	RoomSize = 20
 
-	RustConnectionRetryDelay = 1
+	RustConnectionRetryDelay = 5
 
 	RustConfirmationMessage = "Duly noted."
 )

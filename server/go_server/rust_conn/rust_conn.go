@@ -15,6 +15,8 @@ import (
 	"go_server/logger"
 )
 
+var ErrRustServerNotConnected = errors.New("rust server not connected")
+
 func dialRust(addr string, quit <-chan struct{}) net.Conn {
 	for {
 		select {
@@ -75,7 +77,7 @@ func (rustServer *RustServer) Write(message string) error {
 	defer rustServer.PrintMutex.Unlock()
 
 	if rustServer.Writer == nil {
-		return errors.New("rust server not connected")
+		return ErrRustServerNotConnected
 	}
 
 	if _, err := rustServer.Writer.WriteString(message); err != nil {
