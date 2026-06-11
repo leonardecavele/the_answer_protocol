@@ -66,8 +66,6 @@ impl GameManager {
                     self.disconnect_player(player_name.to_string());
                     return BASE_COMMAND_RESPONSE.to_string();
                 },
-
-                // "CHAT" => {},
                 "WHO" => {
                     return object!{
                         "player": player_name,
@@ -76,58 +74,11 @@ impl GameManager {
                         "value": self.get_nb_players()
                     }.dump();
                 },
-                "GROUP CREATE" => {
-                    let player_id: PlayerId = *self.get_players_by_names().get(player_name).unwrap();
-                    let error_type: ErrorCode = self.create_group(player_id);
-                    return object!{
-                        "player": player_name,
-                        "command": command_name,
-                        "error_code": error_type.code(),
-                        "value": ""
-                    }.dump()
-                },
-                "GROUP INVITE" => {
-                    let player_to_invite: String = arguments["username"].as_str().unwrap().to_string();
 
-                    let mut base_response = object!{
-                        "player": player_name,
-                        "command": command_name,
-                        "error_code": ErrorCode::NoError.code(),
-                        "value": ""
-                    };
-                     
-
-                    let player_id: PlayerId = *self.get_players_by_names().get(&player_to_invite).unwrap();
-                    let player_group_id = self.get_players().get(&player_id).unwrap().get_group_id();
-                    if player_group_id.is_some() {
-                        let _ = base_response.insert("error_code", ErrorCode::AlreadyInGroup.code());
-                        return base_response.dump();
-                    }
-
-                    let leader_id: PlayerId = *self.get_players_by_names().get(player_name).unwrap();
-                    let leader_group_id_wrapped = self.get_players().get(&leader_id).unwrap().get_group_id();
-                    if leader_group_id_wrapped.is_none() {
-                        let _ = base_response.insert("error_code", ErrorCode::NotInGroup.code());
-                        return base_response.dump();
-                    }
-
-                    let leader_group_id = leader_group_id_wrapped.unwrap();
-                    let group_leader_id = self.all_groups().get_group(leader_group_id).unwrap().get_leader();
-                    if group_leader_id != leader_id {
-                        let _ = base_response.insert("error_code", ErrorCode::NotGroupLeader.code());
-                        return base_response.dump();
-                    }
-
-
-                    // self.add_pending_invitation(leader_id, player_id)
-                    return base_response.dump();
-                },
-                // "GROUP JOIN" => {},
-                // "GROUP LEAVE" => {},
+                // "TALK" => {}
                 // "TAKE" => {},
                 // "DROP" => {},
                 // "INVENTORY" => {},
-                // "TALK" => {},
                 // "ATTACK" => {},
                 // "STATUS" => {},
                 // "QUEST" => {},

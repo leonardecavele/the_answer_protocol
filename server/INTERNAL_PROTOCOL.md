@@ -201,7 +201,9 @@ response_value = snake_case / 1*DIGIT
 
 ### ``value`` for ``GROUP INVITE`` command
 ```json
-    "value": ""
+    "value": {
+        
+    }
 ```
 
 ### ``value`` for ``GROUP JOIN`` command
