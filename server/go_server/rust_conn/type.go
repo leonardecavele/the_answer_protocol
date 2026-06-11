@@ -1,12 +1,14 @@
 package rust_conn
 
 import (
+	"bufio"
 	"net"
 	"sync"
 )
 
 type RustServer struct {
 	Conn       net.Conn
+	Writer     *bufio.Writer
 	PrintMutex sync.Mutex
 }
 

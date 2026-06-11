@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"net"
 	"strings"
@@ -27,7 +26,10 @@ func ConnectToRust(addr string, quit <-chan struct{}) *RustServer {
 		conn, err := net.Dial("tcp", addr)
 		if err == nil {
 			logger.AppLogger.Info("Connected to Rust server")
-			return &RustServer{Conn: conn}
+			return &RustServer{
+				Conn:   conn,
+				Writer: bufio.NewWriter(conn),
+			}
 		}
 
 		logger.AppLogger.Info("Rust server unavailable at %s, retrying in %d seconds", addr, config.RustConnectionRetryDelay)
@@ -43,11 +45,18 @@ func (rustServer *RustServer) Write(message string) error {
 	rustServer.PrintMutex.Lock()
 	defer rustServer.PrintMutex.Unlock()
 
-	_, err := fmt.Fprintf(rustServer.Conn, "%s\n", message)
-	if err == nil {
-		logger.AppLogger.Info("Rust Write: %s", message)
+	if _, err := rustServer.Writer.WriteString(message); err != nil {
+		return err
 	}
-	return err
+	if err := rustServer.Writer.WriteByte('\n'); err != nil {
+		return err
+	}
+	if err := rustServer.Writer.Flush(); err != nil {
+		return err
+	}
+
+	logger.AppLogger.Info("Rust Write: %s", message)
+	return nil
 }
 
 func (rustServer *RustServer) WriteCommand(command any) error {

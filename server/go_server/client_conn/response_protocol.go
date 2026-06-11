@@ -7,7 +7,7 @@ import (
 
 // Success
 var (
-	// Connection
+	// Connection.
 	responseHello     = "OK hello proto=" + strconv.Itoa(config.ProtocolVersion)
 	responseConnected = "OK connected"
 	responseBye       = "OK bye"
@@ -15,19 +15,34 @@ var (
 
 // Error
 var (
-	//Connection
-	responseNotConnected = "ERR 211 NOT CONNECTED"
+	// Client/session validation.
+	responseNotConnected     = "ERR 400 NOT_CONNECTED"
+	responseAlreadyConnected = "ERR 400 ALREADY_CONNECTED"
+	responseInvalidUsername  = "ERR 400 INVALID_USERNAME"
+	responseRoomFull         = "ERR 400 ROOM_FULL"
 
-	// Command
-	responseEmptyCommand     = "ERR 2929 empty command"
-	responseCommandNotFound  = "ERR 404 COMMAND_NOT_FOUND"
-	responseInvalidArguments = "ERR 200 PLACEHOLDER INVALID ARGUMENTS"
+	// Command validation.
+	responseEmptyCommand     = "ERR 400 EMPTY_COMMAND"
+	responseCommandNotFound  = "ERR 400 COMMAND_NOT_FOUND"
+	responseInvalidArguments = "ERR 400 INVALID_ARGUMENTS"
+	responseInvalidScope     = "ERR 400 INVALID_SCOPE"
 
-	// Client username
-	responseInvalidUsername     = "ERR 6060 INVALID USERNAME PLACEHOLDER"
-	responseAlreadyConnected    = "ERR 1313 PLACEHOLDER ALREADY CONNECTED"
-	responseUsernameAlreadyUsed = "ERR 201 NAME IN USED"
+	// RFC 42TAP standard errors.
+	responseUsernameAlreadyUsed = "ERR 201 NAME_IN_USE"
+	responseNoExit              = "ERR 301 NO_EXIT"
+	responseNotInGroup          = "ERR 401 NOT_IN_GROUP"
+	responseAlreadyInGroup      = "ERR 402 ALREADY_IN_GROUP"
+	responseItemNotFound        = "ERR 404 ITEM_NOT_FOUND"
+	responseItemNotInInventory  = "ERR 404 ITEM_NOT_IN_INVENTORY"
+	responseNpcNotFound         = "ERR 404 NPC_NOT_FOUND"
+	responseNpcNotHostile       = "ERR 405 NPC_NOT_HOSTILE"
+	responseNoQuestAvailable    = "ERR 406 NO_QUEST_AVAILABLE"
+	responseConnectionFailed    = "ERR 900 CONNECTION_FAILED"
+	responseSendFailed          = "ERR 901 SEND_FAILED"
 
-	// Room
-	responseRoomFull = "ERR 1292 PLACEHOLDER ROOM FULL"
+	// TAP documented extension errors.
+	responseNoSuchUser    = "ERR 403 NO_SUCH_USER"
+	responseNotInvited    = "ERR 403 NOT_INVITED"
+	responseGroupNotFound = "ERR 404 GROUP_NOT_FOUND"
+	responseNoSuchGroup   = "ERR 404 NO_SUCH_GROUP"
 )

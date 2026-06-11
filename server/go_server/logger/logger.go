@@ -1,13 +1,10 @@
 package logger
 
 import (
+	"go_server/config"
 	"log"
 	"os"
 	"time"
-)
-
-import (
-	"go_server/config"
 )
 
 const (
