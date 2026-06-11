@@ -1,8 +1,10 @@
 use std::time::Duration;
 
-pub const TICK_RATE: u16 = 48;
-pub const TICK_TIME: Duration = Duration::from_millis(1000 / TICK_RATE as u64);
 
+pub const TICK_TIME_AMPLIFICATION: u64 = 1;
+pub const TICK_RATE: u16 = 5; // 48
+pub const TICK_TIME: Duration = Duration::from_millis((1000 * TICK_TIME_AMPLIFICATION) / TICK_RATE as u64);
+pub const BASE_COMMAND_RESPONSE: &str = "Duly noted.";
 pub enum TickResult {
     TickEnd,
     Exit,
@@ -16,6 +18,7 @@ pub enum ErrorCode {
     AlreadyConnected,
     InvalidScope,
     NotInGroup,
+    NotGroupLeader,
     AlreadyInGroup,
     NoSuchUser,
     NotInvited,
@@ -40,7 +43,7 @@ impl ErrorCode {
             Self::AlreadyConnected | Self::InvalidScope => 400,
             Self::NotInGroup => 401,
             Self::AlreadyInGroup => 402,
-            Self::NoSuchUser | Self::NotInvited => 403,
+            Self::NoSuchUser | Self::NotInvited | Self::NotGroupLeader => 403,
             Self::ItemNotFound 
             | Self::ItemNotInInventory 
             | Self::NpcNotFound 

@@ -5,7 +5,7 @@ use std::collections::HashMap;
 pub type GroupId = u32;
 
 
-struct Group {
+pub struct Group {
     leader: PlayerId,
     id: GroupId,
     players: Vec<PlayerId>
@@ -17,6 +17,9 @@ impl Group {
     }
     pub fn get_id(&self) -> GroupId {
         self.id
+    }
+    pub fn get_leader(&self) -> PlayerId {
+        self.leader
     }
     pub fn add_player(&mut self, player_id: PlayerId) {
         /*
@@ -38,6 +41,9 @@ impl GroupManager {
             next_group_id: 0,
         };
     }
+    pub fn get_group(&self, group_id: GroupId) -> Option<&Group> {
+        self.groups.get(&group_id)
+    }
     fn add_group(&mut self, leader: PlayerId) {
         
         let group_id = self.next_group_id;
@@ -56,7 +62,7 @@ impl GameManager {
         if player.get_group_id().is_some() {
             return ErrorCode::AlreadyInGroup;
         }
-        self.get_groups().add_group(group_leader);
+        self.all_groups().add_group(group_leader);
         return ErrorCode::NoError;
     }
 }

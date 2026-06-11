@@ -28,7 +28,7 @@ fn start_reader_thread(reader_stream: TcpStream, mpsc_sender: mpsc::Sender<Strin
 }
 
 fn main() -> std::io::Result<()> {
-    let time_format = format_description!("[hour]:[minute]:[second]");
+    let time_format = format_description!("[hour]:[minute]:[second].[subsecond digits:6]");
     let timer = LocalTime::new(time_format);
 
     tracing_subscriber::fmt()
@@ -43,7 +43,8 @@ fn main() -> std::io::Result<()> {
     println!("Rust server started on 38801");
 
     let (mut writer_stream, addr) = listener.accept()?;
-
+    writer_stream.set_nodelay(true)?;
+    
     println!("Go connected: {}", addr);
 
     let reader_stream = writer_stream.try_clone()?;
@@ -54,9 +55,9 @@ fn main() -> std::io::Result<()> {
     // the receover now reads the sent message and sends PONG back to the go server
     start_reader_thread(reader_stream, mpsc_sender);
     let mut game_manager = GameManager::new();
-    loop { 
+    loop {
         let start = Instant::now(); // this tick time start
-        game_manager.update_game_state();
+        game_manager.update_game_state(&mut writer_stream)?;
 
         match game_manager.apply_players_changes(&mpsc_receiver, start, &mut writer_stream)? {
             TickResult::TickEnd => {

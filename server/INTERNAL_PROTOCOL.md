@@ -150,10 +150,14 @@ response_value = snake_case / 1*DIGIT
 
 ```json
 {
-    "player": <player_name>,
-    "command": <command_name>,
-    "error_code": <error_code>,
-    "value": <response_value>
+    "type": "command",
+    "data": {
+        "player": <player_name>,
+        "command": <command_name>,
+        "error_code": <error_code>,
+        "value": <response_value>
+    }
+
 }
 ```
 
@@ -190,7 +194,6 @@ response_value = snake_case / 1*DIGIT
 ```json
     "value": <player_server_count>
 ```
-
 ### ``value`` for ``GROUP CREATE`` command
 ```json
     "value": <group_id>
@@ -245,14 +248,15 @@ response_value = snake_case / 1*DIGIT
 
 
 ## Rust -> Go Events
-
-
 #### Json format:
+
+
 ```json
 {
     "player": <player_name>,
     "event_name": <event_name>,
     "value": <response_value>
+
 }
 ```
 

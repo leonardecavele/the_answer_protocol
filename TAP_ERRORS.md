@@ -57,6 +57,7 @@
 <a id="err-not-invited" href="TAP_ERRORS.md#err-not-invited">err-not-invited</a> = "ERR" SP "403" SP "NOT_INVITED" LF
 <a id="err-group-not-found" href="TAP_ERRORS.md#err-group-not-found">err-group-not-found</a> = "ERR" SP "404" SP "GROUP_NOT_FOUND" LF
 <a id="err-no-such-group" href="TAP_ERRORS.md#err-no-such-group">err-no-such-group</a> = "ERR" SP "404" SP "NO_SUCH_GROUP" LF
+<a id="err-not-group-leader" href="TAP_ERRORS.md#err-not-group-leader">err-not-group-leader</a> = "ERR" SP "403" SP "NOT_GROUP_LEADER" LF
 </code></pre>
 
 | Error | Meaning |
@@ -67,3 +68,4 @@
 | `ERR 403 NOT_INVITED` | Player tried to join a group without a valid invitation |
 | `ERR 404 GROUP_NOT_FOUND` | Target group does not exist anymore |
 | `ERR 404 NO_SUCH_GROUP` | Requested group does not exist |
+| `ERR 403 NOT_GROUP_LEADER` | Player must be the group leader to perform this action |

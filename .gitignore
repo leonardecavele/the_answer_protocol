@@ -1,3 +1,4 @@
 .idea
 *target*
 .codex
+*test_rust_server.py
