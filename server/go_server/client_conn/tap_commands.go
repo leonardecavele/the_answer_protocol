@@ -67,8 +67,6 @@ func handleLookCommand(args string, client *Client, rustServer *rust_conn.RustSe
 		return "", err
 	}
 
-	_ = client.ReadCommand()
-
 	return "OK " + client.ReadCommand(), nil
 }
 
