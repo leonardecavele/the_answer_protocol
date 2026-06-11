@@ -4,10 +4,10 @@ use crate::protocol::response::ServerResponse;
 
 pub struct QuitCommand;
 
-pub struct QuitServerResponseData;
+pub struct QuitResponse;
 
 impl Command for QuitCommand {
-    type ResponseData = QuitServerResponseData;
+    type ResponseData = QuitResponse;
 
     fn create_command(&self, server_info: &ServerInfo) -> CreateCommandResult {
         match server_info.protocol_version {
@@ -33,7 +33,7 @@ impl Command for QuitCommand {
                     }
 
                     CommandResult::Success {
-                        data: QuitServerResponseData,
+                        data: QuitResponse,
                     }
                 } else {
                     CommandResult::Error {

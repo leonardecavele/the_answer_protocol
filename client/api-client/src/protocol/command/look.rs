@@ -4,12 +4,12 @@ use crate::protocol::response::ServerResponse;
 
 pub struct LookCommand;
 
-pub struct LookServerResponseData {
+pub struct LookResponse {
     pub json_data: String,
 }
 
 impl Command for LookCommand {
-    type ResponseData = LookServerResponseData;
+    type ResponseData = LookResponse;
 
     // fn command_label() -> &'static str {
     //     "Look"
@@ -41,7 +41,7 @@ impl Command for LookCommand {
                     // TD: create HELPER to parse JSON data: arguments[1..].join(" ")
 
                     CommandResult::Success {
-                        data: LookServerResponseData {
+                        data: LookResponse {
                             json_data: arguments[1..].join(" "),
                         },
                     }

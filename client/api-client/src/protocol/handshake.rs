@@ -1,5 +1,5 @@
 use crate::error::{TapError, TapResult};
-use crate::protocol::response::{ServerResponse, ServerResponseOpcode};
+use crate::protocol::response::{ServerResponse, Opcode};
 use regex::Regex;
 use std::sync::LazyLock;
 
@@ -7,17 +7,17 @@ static RE_TAP_HANDSHAKE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"OK hello proto=(?P<proto>\d+)").unwrap());
 
 #[derive(Debug)]
-pub struct HandshakeServerResponse {
+pub struct HandshakeResponse {
     pub server_protocol_version: u32,
 }
 
-impl TryFrom<ServerResponse> for HandshakeServerResponse {
+impl TryFrom<ServerResponse> for HandshakeResponse {
     type Error = TapError;
 
     fn try_from(server_response: ServerResponse) -> TapResult<Self> {
-        if server_response.opcode != ServerResponseOpcode::Ok {
+        if server_response.opcode != Opcode::Ok {
             return Err(TapError::ProtocolInvalidOpcode(
-                ServerResponseOpcode::Ok.to_string(),
+                Opcode::Ok.to_string(),
                 server_response.opcode.to_string(),
             ));
         }
@@ -62,7 +62,7 @@ impl TryFrom<ServerResponse> for HandshakeServerResponse {
                 ));
             }
 
-            Ok(HandshakeServerResponse {
+            Ok(HandshakeResponse {
                 server_protocol_version: server_protocol_version as u32,
             })
         } else {

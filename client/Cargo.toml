@@ -2,7 +2,6 @@
 members = [
     "api-client",
     "tui",
-    "gui",
-    "mock-server"
+    "gui"
 ]
 resolver = "3"

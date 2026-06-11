@@ -2,7 +2,7 @@ use crate::error::{TapError, TapResult};
 use std::fmt::{Display, Formatter};
 
 #[derive(Debug, PartialEq, Clone)]
-pub enum ServerResponseOpcode {
+pub enum Opcode {
     Ok,
     Evt,
     Err,
@@ -24,7 +24,7 @@ pub fn server_error_message_from_code(code: i32) -> String {
     }
 }
 
-impl Display for ServerResponseOpcode {
+impl Display for Opcode {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Ok => write!(f, "OK"),
@@ -38,7 +38,7 @@ impl Display for ServerResponseOpcode {
 #[derive(Debug, Clone)]
 pub struct ServerResponse {
     pub raw: String,
-    pub opcode: ServerResponseOpcode,
+    pub opcode: Opcode,
     pub arguments: Option<Vec<String>>,
 }
 
@@ -52,16 +52,16 @@ impl TryFrom<String> for ServerResponse {
         if frame.is_empty() {
             return Ok(ServerResponse {
                 raw: raw_frame,
-                opcode: ServerResponseOpcode::Empty,
+                opcode: Opcode::Empty,
                 arguments: None,
             });
         }
 
-        let frame_type: ServerResponseOpcode = match frame.split(' ').nth(0) {
+        let frame_type: Opcode = match frame.split(' ').nth(0) {
             Some(x) => match x {
-                "OK" => ServerResponseOpcode::Ok,
-                "EVT" => ServerResponseOpcode::Evt,
-                "ERR" => ServerResponseOpcode::Err,
+                "OK" => Opcode::Ok,
+                "EVT" => Opcode::Evt,
+                "ERR" => Opcode::Err,
                 _ => {
                     return Err(TapError::ServerResponseParse(format!(
                         "Invalid frame identifier. \

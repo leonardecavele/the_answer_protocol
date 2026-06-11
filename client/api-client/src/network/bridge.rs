@@ -1,6 +1,6 @@
 use crate::error::{TapError, TapResult};
 use crate::protocol::request::Request;
-use crate::protocol::response::{ServerResponse, ServerResponseOpcode};
+use crate::protocol::response::{ServerResponse, Opcode};
 use futures::SinkExt;
 use futures::stream::StreamExt;
 use tokio::net::TcpStream;
@@ -89,7 +89,7 @@ impl Bridge {
 
                 match ServerResponse::try_from(line) {
                     Ok(response) => {
-                        if response.opcode == ServerResponseOpcode::Evt {
+                        if response.opcode == Opcode::Evt {
                             let _ = self.event_transmitter.send(response).map_err(|e| {
                                 TapError::Channel(format!("failed to forward event: {:?}", e))
                             })?;
@@ -98,7 +98,7 @@ impl Bridge {
 
                         if let Some(request) = self.pending_request.take() {
                             request
-                                .forward_channel
+                                .reply_to
                                 .send(response)
                                 .and(Ok(true))
                                 .map_err(|srv_response| {

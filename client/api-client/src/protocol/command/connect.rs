@@ -6,12 +6,12 @@ pub struct ConnectCommand {
     pub player_name: String,
 }
 
-pub struct ConnectServerResponseData {
+pub struct ConnectResponse {
     pub player_name: String,
 }
 
 impl Command for ConnectCommand {
-    type ResponseData = ConnectServerResponseData;
+    type ResponseData = ConnectResponse;
 
     fn create_command(&self, server_info: &ServerInfo) -> CreateCommandResult {
         match server_info.protocol_version {
@@ -37,7 +37,7 @@ impl Command for ConnectCommand {
                     }
 
                     CommandResult::Success {
-                        data: ConnectServerResponseData {
+                        data: ConnectResponse {
                             player_name: self.player_name.clone(),
                         },
                     }
