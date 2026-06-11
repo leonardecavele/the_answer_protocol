@@ -96,7 +96,7 @@ func main() {
 	if rustServer == nil {
 		return
 	}
-	defer rustServer.Conn.Close()
+	defer rustServer.Close()
 
 	newListener, listenErr := net.Listen("tcp", ":"+strconv.Itoa(config.GoServerPort))
 	if listenErr != nil {
@@ -105,7 +105,7 @@ func main() {
 	listener = newListener
 	defer listener.Close()
 
-	go rustServer.Read(quit, stopServer, client_conn.RouteCommand, client_conn.RouteEvent)
+	go rustServer.Read(quit, client_conn.RouteCommand, client_conn.RouteEvent)
 
 	logger.AppLogger.Info("TCP server started on " + getServerIP() + ":" + strconv.Itoa(config.GoServerPort))
 
@@ -121,7 +121,7 @@ func main() {
 			}
 		}
 
-		go client_conn.HandleClient(client_conn.NewClient(conn), rustServer, stopServer)
+		go client_conn.HandleClient(client_conn.NewClient(conn), rustServer, nil)
 	}
 
 	os.Exit(int(error.NoError))

@@ -44,7 +44,7 @@ func (c *Client) EraseClient(rustServer *rust_conn.RustServer) error {
 	c.EraseUsername()
 	closeErr := c.Conn.Close()
 
-	if c.State == AUTHENTICATED {
+	if c.State == AUTHENTICATED && rustServer != nil {
 		command := rust_conn.CommandToRust{
 			Player:    username,
 			Command:   "QUIT",

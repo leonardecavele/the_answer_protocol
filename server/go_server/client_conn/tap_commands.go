@@ -8,10 +8,31 @@ import (
 type handleTapCommandArgs func(args string, client *Client, rustServer *rust_conn.RustServer) (string, error)
 
 var tapCommands = map[string]handleTapCommandArgs{
+	// CORE
 	"CONNECT": handleConnectCommand,
 	"LOOK":    handleLookCommand,
+	"MOVE":    handleMoveCommand,
 	"QUIT":    handleQuitCommand,
+	// COMMUNICATION
+	"CHAT": handleChatCommand,
+	"WHO":  handleWhoCommand,
+	// GROUP
+	"GROUP CREATE": handleGroupCreateCommand,
+	"GROUP INVITE": handleGroupInviteCommand,
+	"GROUP JOIN":   handleGroupJoinCommand,
+	"GROUP LEAVE":  handleGroupLeaveCommand,
+	// RESOURCE INTERACTION
+	"TAKE":      handleTakeCommand,
+	"DROP":      handleDropCommand,
+	"INVENTORY": handleInventoryCommand,
+	"TALK":      handleTalkCommand,
+	"ATTACK":    handleAttackCommand,
+	"STATUS":    handleStatusCommand,
+	"QUEST":     handleQuestCommand,
+	"QUESTS":    handleQuestsCommand,
 }
+
+// CORE
 
 func handleConnectCommand(args string, client *Client, rustServer *rust_conn.RustServer) (string, error) {
 	isValidUsername := func(username string) bool {
@@ -70,6 +91,10 @@ func handleLookCommand(args string, client *Client, rustServer *rust_conn.RustSe
 	return "OK " + client.ReadCommand(), nil
 }
 
+func handleMoveCommand(args string, client *Client, _ *rust_conn.RustServer) (string, error) {
+	return "", nil
+}
+
 func handleQuitCommand(args string, client *Client, _ *rust_conn.RustServer) (string, error) {
 	if client.Username == "" {
 		return responseNotConnected, nil
@@ -79,4 +104,66 @@ func handleQuitCommand(args string, client *Client, _ *rust_conn.RustServer) (st
 	}
 
 	return responseBye, nil
+}
+
+// COMMUNICATION
+
+func handleChatCommand(args string, client *Client, _ *rust_conn.RustServer) (string, error) {
+	return "", nil
+}
+
+func handleWhoCommand(args string, client *Client, _ *rust_conn.RustServer) (string, error) {
+	return "", nil
+}
+
+// GROUP
+
+func handleGroupCreateCommand(args string, client *Client, _ *rust_conn.RustServer) (string, error) {
+	return "", nil
+}
+
+func handleGroupInviteCommand(args string, client *Client, _ *rust_conn.RustServer) (string, error) {
+	return "", nil
+}
+
+func handleGroupJoinCommand(args string, client *Client, _ *rust_conn.RustServer) (string, error) {
+	return "", nil
+}
+
+func handleGroupLeaveCommand(args string, client *Client, _ *rust_conn.RustServer) (string, error) {
+	return "", nil
+}
+
+// RESOURCE INTERACTION
+
+func handleTakeCommand(args string, client *Client, _ *rust_conn.RustServer) (string, error) {
+	return "", nil
+}
+
+func handleDropCommand(args string, client *Client, _ *rust_conn.RustServer) (string, error) {
+	return "", nil
+}
+
+func handleInventoryCommand(args string, client *Client, _ *rust_conn.RustServer) (string, error) {
+	return "", nil
+}
+
+func handleTalkCommand(args string, client *Client, _ *rust_conn.RustServer) (string, error) {
+	return "", nil
+}
+
+func handleAttackCommand(args string, client *Client, _ *rust_conn.RustServer) (string, error) {
+	return "", nil
+}
+
+func handleStatusCommand(args string, client *Client, _ *rust_conn.RustServer) (string, error) {
+	return "", nil
+}
+
+func handleQuestCommand(args string, client *Client, _ *rust_conn.RustServer) (string, error) {
+	return "", nil
+}
+
+func handleQuestsCommand(args string, client *Client, _ *rust_conn.RustServer) (string, error) {
+	return "", nil
 }
