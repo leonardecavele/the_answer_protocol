@@ -95,13 +95,7 @@ impl GameManager {
                         "error_code": ErrorCode::NoError.code(),
                         "value": ""
                     };
-                    
-                    // remove when the go server will checks this
-                    if !self.get_players_by_names().contains_key(&player_to_invite) {
-                        let _ = base_response.insert("error_code", ErrorCode::NoSuchUser.code());
-                        return base_response.dump();
-                    }
-                    
+                     
 
                     let player_id: PlayerId = *self.get_players_by_names().get(&player_to_invite).unwrap();
                     let player_group_id = self.get_players().get(&player_id).unwrap().get_group_id();

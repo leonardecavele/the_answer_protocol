@@ -28,7 +28,7 @@ fn start_reader_thread(reader_stream: TcpStream, mpsc_sender: mpsc::Sender<Strin
 }
 
 fn main() -> std::io::Result<()> {
-    let time_format = format_description!("[hour]:[minute]:[second]");
+    let time_format = format_description!("[hour]:[minute]:[second].[subsecond digits:6]");
     let timer = LocalTime::new(time_format);
 
     tracing_subscriber::fmt()

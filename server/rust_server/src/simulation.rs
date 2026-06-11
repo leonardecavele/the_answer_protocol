@@ -26,6 +26,8 @@ impl GameManager {
         return Ok(TickResult::TickEnd);
     }
 
+    
+
     pub fn update_game_state(&mut self, writer_stream: &mut TcpStream) -> std::io::Result<()> {
         /*
         here we should update the game state ( npcs, monsters, mouvements, etc 
@@ -52,6 +54,7 @@ impl GameManager {
             return Ok(());
         }
         writer_stream.write_all((array.dump() + "\n").as_bytes())?;
+        
         info!("sent event");
         Ok(())
     }
