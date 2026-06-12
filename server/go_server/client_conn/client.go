@@ -4,12 +4,7 @@ import (
 	"errors"
 	"go_server/game_conn"
 	"net"
-	"strings"
 	"sync"
-)
-
-import (
-	"go_server/config"
 )
 
 type ClientState string
@@ -24,16 +19,18 @@ type Client struct {
 	Id          string
 	Username    string
 	State       ClientState
+	room        *Room
 	commandChan chan string
 	eventChan   chan string
 	writeMutex  sync.Mutex
 }
 
-func NewClient(conn net.Conn) *Client {
+func NewClient(conn net.Conn, room *Room) *Client {
 	return &Client{
 		Conn:        conn,
 		Id:          conn.RemoteAddr().String(),
 		State:       CONNECTED,
+		room:        room,
 		commandChan: make(chan string, 16),
 		eventChan:   make(chan string, 16),
 	}
@@ -68,55 +65,12 @@ func (c *Client) Write(message string) error {
 	return err
 }
 
-type Room struct {
-	clients map[string]*Client
-	mutex   sync.Mutex
-}
-
-var room = Room{
-	clients: make(map[string]*Client, config.RoomSize),
-}
-
 func (c *Client) SetUsername(username string) string {
-	room.mutex.Lock()
-	defer room.mutex.Unlock()
-
-	if c.State == AUTHENTICATED {
-		return responseAlreadyConnected
-	}
-
-	if len(room.clients) >= config.RoomSize {
-		return responseRoomFull
-	}
-
-	if _, ok := room.clients[username]; ok {
-		return responseUsernameAlreadyUsed
-	}
-	c.Username = username
-	c.State = AUTHENTICATED
-	room.clients[username] = c
-
-	return ""
+	return c.room.SetUsername(c, username)
 }
 
 func (c *Client) EraseUsername() {
-	room.mutex.Lock()
-	if c.State == AUTHENTICATED {
-		delete(room.clients, c.Username)
-	}
-	room.mutex.Unlock()
-}
-
-func ConnectedUsernames() []string {
-	room.mutex.Lock()
-	defer room.mutex.Unlock()
-
-	usernames := make([]string, 0, len(room.clients))
-	for username := range room.clients {
-		usernames = append(usernames, username)
-	}
-
-	return usernames
+	c.room.EraseUsername(c)
 }
 
 func (c *Client) ReadEvent() string {
@@ -125,30 +79,4 @@ func (c *Client) ReadEvent() string {
 
 func (c *Client) ReadCommand() string {
 	return <-c.commandChan
-}
-
-func RouteCommand(username string, command string) bool {
-	room.mutex.Lock()
-	client, ok := room.clients[strings.ToUpper(username)]
-	room.mutex.Unlock()
-
-	if !ok {
-		return false
-	}
-
-	client.commandChan <- command
-	return true
-}
-
-func RouteEvent(username string, event string) bool {
-	room.mutex.Lock()
-	client, ok := room.clients[strings.ToUpper(username)]
-	room.mutex.Unlock()
-
-	if !ok {
-		return false
-	}
-
-	client.eventChan <- event
-	return true
 }

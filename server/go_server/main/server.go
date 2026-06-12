@@ -57,12 +57,13 @@ func main() {
 	}()
 
 	gameServerManager := &game_conn.GameServerManager{}
+	room := client_conn.NewRoom()
 
 	go gameServerManager.HandleGameServer(
 		quit,
-		client_conn.ReconnectPlayersToGameServer,
-		client_conn.RouteCommand,
-		client_conn.RouteEvent,
+		room.ReconnectPlayersToGameServer,
+		room.RouteCommand,
+		room.RouteEvent,
 	)
 
 	listener, listenErr := net.Listen("tcp", ":"+strconv.Itoa(config.GoServerPort))
@@ -85,7 +86,7 @@ func main() {
 			}
 		}
 
-		go client_conn.HandleClient(client_conn.NewClient(conn), gameServerManager)
+		go client_conn.HandleClient(client_conn.NewClient(conn, room), gameServerManager)
 	}
 
 	os.Exit(int(serverError.NoError))

@@ -15,6 +15,8 @@ import (
 	"go_server/logger"
 )
 
+var ErrGameServerNotConnected = errors.New("game server not connected")
+
 func dialGameServer(addr string, quit <-chan struct{}) net.Conn {
 	for {
 		select {
