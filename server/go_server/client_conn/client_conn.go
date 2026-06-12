@@ -93,7 +93,7 @@ func HandleClient(client *Client, gameServer *game_conn.GameServerManager) {
 		response, err := handleTapCommand(str, client, gameServer)
 		if err != nil {
 			logger.AppLogger.Error("%s Command error: %v\n", client.Id, err)
-			response = responseGameServerShutdown
+			response = responseGameServerClosed
 		}
 		if response == "" {
 			continue

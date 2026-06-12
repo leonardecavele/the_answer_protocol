@@ -16,7 +16,7 @@ var (
 // Error
 var (
 	// Connection.
-	responseGameServerShutdown = "ERR 900 RUST_SERVER_SHUTDOWN"
+	responseGameServerClosed = "ERR 900 GAME_SERVER_CLOSE"
 
 	// Client/session validation.
 	responseNotConnected     = "ERR 400 NOT_CONNECTED"

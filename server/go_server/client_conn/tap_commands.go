@@ -14,14 +14,17 @@ var tapCommands = map[string]handleTapCommandArgs{
 	"LOOK":    handleLookCommand,
 	"MOVE":    handleMoveCommand,
 	"QUIT":    handleQuitCommand,
+
 	// COMMUNICATION
 	"CHAT": handleChatCommand,
 	"WHO":  handleWhoCommand,
+
 	// GROUP
 	"GROUP CREATE": handleGroupCreateCommand,
 	"GROUP INVITE": handleGroupInviteCommand,
 	"GROUP JOIN":   handleGroupJoinCommand,
 	"GROUP LEAVE":  handleGroupLeaveCommand,
+
 	// RESOURCE INTERACTION
 	"TAKE":      handleTakeCommand,
 	"DROP":      handleDropCommand,
@@ -73,7 +76,7 @@ func handleConnectCommand(args string, client *Client, gameServer *game_conn.Gam
 
 func handleLookCommand(args string, client *Client, gameServer *game_conn.GameServerManager) (string, error) {
 	if !gameServer.IsConnected() {
-		return responseGameServerShutdown, nil
+		return responseGameServerClosed, nil
 	}
 
 	if client.State != AUTHENTICATED {
