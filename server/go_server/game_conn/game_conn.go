@@ -75,7 +75,7 @@ func (gameServer *GameServer) Write(message string) error {
 	defer gameServer.PrintMutex.Unlock()
 
 	if gameServer.Writer == nil {
-		return errors.New("game server not connected")
+		return ErrGameServerNotConnected
 	}
 
 	if _, err := gameServer.Writer.WriteString(message); err != nil {
