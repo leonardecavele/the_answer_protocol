@@ -5,4 +5,5 @@ pub mod game_manager;
 pub mod player;
 pub mod groups;
 pub mod commands;
-pub mod Inventory;
+pub mod inventory;
+pub mod items;

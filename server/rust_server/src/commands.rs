@@ -2,7 +2,7 @@ use crate::game_manager::GameManager;
 use json::object;
 use tracing::{info, error};
 use crate::constantes::{ErrorCode, BASE_COMMAND_RESPONSE};
-use crate::player::PlayerId;
+
 impl GameManager {
     pub fn handle_message(&mut self, msg: String) -> String {
             /*
@@ -75,10 +75,18 @@ impl GameManager {
                     }.dump();
                 },
 
-                // "TALK" => {}
+                // "TALK" => {},
                 // "TAKE" => {},
                 // "DROP" => {},
-                // "INVENTORY" => {},
+                "INVENTORY" => {
+                    let inventory = self.get_player_inventory(player_name);
+                    return object! {
+                        "player": player_name,
+                        "command": command_name,
+                        "error_code": ErrorCode::NoError.code(),
+                        "value": inventory
+                    }.dump();
+                },
                 // "ATTACK" => {},
                 // "STATUS" => {},
                 // "QUEST" => {},
