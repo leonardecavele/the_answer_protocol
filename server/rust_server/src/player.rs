@@ -1,21 +1,26 @@
 use crate::groups::GroupId;
 use crate::inventory::Inventory;
-use std::collections::HashSet;
 use crate::items::ItemId;
+use std::collections::HashSet;
 
 pub type PlayerId = u32;
 pub type PlayerCount = u32;
 
 pub struct Player {
-    name: String, 
+    name: String,
     id: PlayerId,
     group_id: Option<GroupId>,
-    inventory: Inventory
+    inventory: Inventory,
 }
 
 impl Player {
     pub fn new(name: String, id: PlayerId) -> Self {
-        Self { name, id, group_id: None, inventory: Inventory::new() }
+        Self {
+            name,
+            id,
+            group_id: None,
+            inventory: Inventory::new(),
+        }
     }
     pub fn set_name(&mut self, new_name: String) {
         self.name = new_name;
@@ -31,5 +36,11 @@ impl Player {
     }
     pub fn get_items(&self) -> &HashSet<ItemId> {
         &self.inventory.get_items()
+    }
+    pub fn add_item(&mut self, item_id: ItemId) {
+        self.inventory.add_item(item_id);
+    }
+    pub fn remove_item(&mut self, item_id: ItemId) {
+        self.inventory.remove_item(item_id);
     }
 }

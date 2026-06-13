@@ -1,27 +1,35 @@
-use std::collections::HashMap;
+use crate::groups::GroupManager;
+use crate::items::{Item, ItemId};
 use crate::player::{Player, PlayerCount, PlayerId};
-use crate::groups::{GroupManager};
-use crate::items::{ItemId, Item};
-use tracing::{error};
-use json::{object};
+use json::object;
+use std::collections::HashMap;
+use tracing::error;
 pub struct GameManager {
     players: HashMap<PlayerId, Player>,
     players_by_name: HashMap<String, PlayerId>,
     groups: GroupManager,
     next_player_id: PlayerCount,
     next_item_id: ItemId,
-    all_items: HashMap<ItemId, Item>
+    pub all_items: HashMap<ItemId, Item>,
 }
 
 impl GameManager {
     pub fn new() -> Self {
+        let mut starting_items = HashMap::new();
+        let item = Item::new(
+            0,
+            "test sword".to_string(),
+            "A sword made for testing".to_string(),
+        );
+        starting_items.insert(0, item);
+
         let mut manager = Self {
             players: HashMap::new(),
             players_by_name: HashMap::new(),
             groups: GroupManager::new(),
             next_player_id: 0,
             next_item_id: 0,
-            all_items: HashMap::new()
+            all_items: starting_items,
         };
         manager.next_player_id = manager.restore_next_player_id();
         manager.next_item_id = manager.restore_next_item_id();
@@ -48,16 +56,14 @@ impl GameManager {
         return 0;
     }
     fn change_player_name(&mut self, player_id: PlayerId, new_name: String) -> bool {
-        
         if !self.players.contains_key(&player_id) {
             return false;
         }
 
-        let player= match self.players.get_mut(&player_id) {
+        let player = match self.players.get_mut(&player_id) {
             Some(player) => player,
             _none => return false,
         };
-
 
         self.players_by_name.remove(player.get_name());
         player.set_name(new_name.clone());
@@ -67,9 +73,8 @@ impl GameManager {
         return true;
     }
 
-    fn try_restore_player_save(&mut self) -> Option<Player> 
-    {
-        // &mut self, name: String  
+    fn try_restore_player_save(&mut self) -> Option<Player> {
+        // &mut self, name: String
         Option::None
     }
 
@@ -80,8 +85,7 @@ impl GameManager {
         self.players_by_name.insert(player_name, player_id);
     }
 
-    fn create_new_player(&mut self, name: String)
-    {
+    fn create_new_player(&mut self, name: String) {
         let player_id = self.next_player_id;
         let player = Player::new(name.clone(), player_id);
 
@@ -98,7 +102,7 @@ impl GameManager {
         }
     }
 
-    pub fn disconnect_player(&mut self, name: String){
+    pub fn disconnect_player(&mut self, name: String) {
         let player_id_wrapped = self.players_by_name.get(&name);
         if player_id_wrapped.is_none() {
             error!("disconnect player: player not found");
@@ -112,25 +116,32 @@ impl GameManager {
         return self.players.len();
     }
 
-
     pub fn get_item_name(&self, item_id: &ItemId) -> String {
         self.all_items.get(item_id).unwrap().get_name().to_string()
     }
 
-    pub fn get_player_inventory(&self, player_name: &str) -> String{
+    pub fn remove_item_from_player(&mut self, player_id: PlayerId, item_id: ItemId) {
+        let player = self.players.get_mut(&player_id).unwrap();
+        player.remove_item(item_id);
+    }
+
+    pub fn add_item_to_player(&mut self, player_id: PlayerId, item_id: ItemId) {
+        let player = self.players.get_mut(&player_id).unwrap();
+        player.add_item(item_id);
+    }
+
+    pub fn get_player_inventory_as_string(&self, player_name: &str) -> String {
         let player_id = self.players_by_name.get(player_name).unwrap();
         let player = self.players.get(player_id).unwrap();
 
-
-        let items: Vec<String> = player.get_items().iter().map(|item_id| {format!(
-                                                                                "item.{}.{}",
-                                                                                item_id,
-                                                                                self.get_item_name(item_id)
-                                                                            )
-                                                                }
-                                                            ).collect();
-        return object!{
+        let items: Vec<String> = player
+            .get_items()
+            .iter()
+            .map(|item_id| format!("item.{}.{}", item_id, self.get_item_name(item_id)))
+            .collect();
+        return object! {
             "items": items
-        }.dump();
+        }
+        .dump();
     }
 }
