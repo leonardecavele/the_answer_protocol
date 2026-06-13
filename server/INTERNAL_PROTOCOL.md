@@ -165,10 +165,7 @@ response_value = snake_case / 1*DIGIT
 
 ### ``value`` for ``CONNECT`` command
 ```json
-{
     "value": ""
-}
-
 ```
 
 ### ``value`` for ``LOOK`` command
@@ -192,7 +189,7 @@ response_value = snake_case / 1*DIGIT
 
 ### ``value`` for ``WHO`` command
 ```json
-    "value": <player_server_count>
+    "value": <server_player_count>
 ```
 ### ``value`` for ``GROUP CREATE`` command
 ```json
@@ -261,4 +258,3 @@ response_value = snake_case / 1*DIGIT
 
 }
 ```
-
