@@ -1,5 +1,6 @@
 use crate::groups::GroupId;
 use crate::inventory::Inventory;
+use crate::constantes::HARDCODED_PLAYER_ROOM;
 use crate::items::ItemId;
 use std::collections::HashSet;
 
@@ -11,6 +12,7 @@ pub struct Player {
     id: PlayerId,
     group_id: Option<GroupId>,
     inventory: Inventory,
+    current_room: String,
 }
 
 impl Player {
@@ -20,6 +22,7 @@ impl Player {
             id,
             group_id: None,
             inventory: Inventory::new(),
+            current_room: HARDCODED_PLAYER_ROOM.to_string(),
         }
     }
     pub fn set_name(&mut self, new_name: String) {
@@ -42,5 +45,8 @@ impl Player {
     }
     pub fn remove_item(&mut self, item_id: ItemId) {
         self.inventory.remove_item(item_id);
+    }
+    pub fn get_current_room(&self) -> &str {
+        &self.current_room
     }
 }

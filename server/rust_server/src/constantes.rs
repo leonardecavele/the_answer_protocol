@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-
+pub const HARDCODED_PLAYER_ROOM: &str = "room_test";
 pub const TICK_TIME_AMPLIFICATION: u64 = 1;
 pub const TICK_RATE: u16 = 5; // 48
 pub const TICK_TIME: Duration = Duration::from_millis((1000 * TICK_TIME_AMPLIFICATION) / TICK_RATE as u64);

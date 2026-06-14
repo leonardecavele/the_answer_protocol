@@ -42,7 +42,7 @@ fn main() -> std::io::Result<()> {
 
     println!("Rust server started on 38801");
 
-    let (mut writer_stream, addr) = listener.accept()?;
+    let (writer_stream, addr) = listener.accept()?;
     writer_stream.set_nodelay(true)?;
     
     println!("Go connected: {}", addr);
@@ -54,12 +54,12 @@ fn main() -> std::io::Result<()> {
     // first thread reads from the socket and sends the message to the receiver
     // the receover now reads the sent message and sends PONG back to the go server
     start_reader_thread(reader_stream, mpsc_sender);
-    let mut game_manager = GameManager::new();
+    let mut game_manager = GameManager::new(mpsc_receiver, writer_stream);
     loop {
         let start = Instant::now(); // this tick time start
-        game_manager.update_game_state(&mut writer_stream)?;
+        game_manager.update_game_state()?;
 
-        match game_manager.apply_players_changes(&mpsc_receiver, start, &mut writer_stream)? {
+        match game_manager.apply_players_changes(start)? {
             TickResult::TickEnd => {
                 game_manager.send_diff_to_players();
             }

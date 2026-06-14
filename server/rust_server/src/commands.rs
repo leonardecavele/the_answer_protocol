@@ -1,6 +1,7 @@
 use crate::constantes::{BASE_COMMAND_RESPONSE, ErrorCode};
 use crate::game_manager::GameManager;
 use crate::items::ItemId;
+use crate::room::Room;
 use json::object;
 use tracing::{error, info};
 
@@ -83,11 +84,16 @@ impl GameManager {
             // "TALK" => {},
             // TAKE format : item.global_id.item_type ( ex: "item.12.legendary sword")
             "TAKE" => {
-                let player_id = *self.get_players_by_names().get(player_name).unwrap();
+                let player = self.get_player_from_name(player_name).unwrap();
+                let player_id = player.get_id();
                 let item = arguments["item_id"].as_str().unwrap();
                 let item_id = item.split('.').nth(1).unwrap();
                 let item_id_int = item_id.parse::<ItemId>().unwrap();
-                if !self.all_items.contains_key(&item_id_int) {
+
+                let player_current_room = player.get_current_room();
+                let room: &Room = self.get_room(player_current_room).unwrap();
+                let room_name = room.get_name().to_string();
+                if !room.contains_item(item_id_int) {
                     return object! {
                         "player": player_name,
                         "command": command_name,
@@ -97,8 +103,7 @@ impl GameManager {
                     .dump();
                 }
 
-                // change this once rooms are done
-                self.all_items.remove(&item_id_int);
+                self.remove_item_from_room(&room_name, item_id_int);
                 self.add_item_to_player(player_id, item_id_int);
 
                 return object! {

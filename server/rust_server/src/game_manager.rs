@@ -1,27 +1,43 @@
 use crate::groups::GroupManager;
 use crate::items::{Item, ItemId};
 use crate::player::{Player, PlayerCount, PlayerId};
+use crate::room::Room;
+
 use json::object;
 use std::collections::HashMap;
+use std::io::Write;
+use std::net::TcpStream;
+use std::sync::mpsc;
 use tracing::error;
+
 pub struct GameManager {
     players: HashMap<PlayerId, Player>,
     players_by_name: HashMap<String, PlayerId>,
     groups: GroupManager,
     next_player_id: PlayerCount,
     next_item_id: ItemId,
-    pub all_items: HashMap<ItemId, Item>,
+    all_items: HashMap<ItemId, Item>,
+    all_rooms: HashMap<String, Room>,
+    mpsc_receiver: mpsc::Receiver<String>,
+    writer_stream: TcpStream,
 }
 
 impl GameManager {
-    pub fn new() -> Self {
+    pub fn new(mpsc_receiver: mpsc::Receiver<String>, writer_stream: TcpStream) -> Self {
         let mut starting_items = HashMap::new();
+        let item_id: ItemId = 0;
         let item = Item::new(
-            0,
+            item_id,
             "test sword".to_string(),
             "A sword made for testing".to_string(),
         );
-        starting_items.insert(0, item);
+
+        starting_items.insert(item_id, item);
+        let mut starting_rooms: HashMap<String, Room> = HashMap::new();
+        let room_name: String = "room_test".to_string();
+        let mut room = Room::new(room_name.clone());
+        room.add_item(item_id);
+        starting_rooms.insert(room_name, room);
 
         let mut manager = Self {
             players: HashMap::new(),
@@ -30,7 +46,11 @@ impl GameManager {
             next_player_id: 0,
             next_item_id: 0,
             all_items: starting_items,
+            all_rooms: starting_rooms,
+            mpsc_receiver,
+            writer_stream,
         };
+
         manager.next_player_id = manager.restore_next_player_id();
         manager.next_item_id = manager.restore_next_item_id();
         return manager;
@@ -40,8 +60,23 @@ impl GameManager {
         return &self.players;
     }
 
+    pub fn get_player(&self, player_id: PlayerId) -> Option<&Player> {
+        self.players.get(&player_id)
+    }
+
+    pub fn get_player_id(&self, player_name: &str) -> Option<&PlayerId> {
+        self.players_by_name.get(player_name)
+    }
     pub fn get_players_by_names(&self) -> &HashMap<String, PlayerId> {
         return &self.players_by_name;
+    }
+
+    pub fn get_player_from_name(&self, player_name: &str) -> Option<&Player> {
+        let player_id = self.get_player_id(player_name);
+        match player_id {
+            Some(player_id) => self.get_player(*player_id),
+            _none => None,
+        }
     }
 
     pub fn all_groups(&mut self) -> &mut GroupManager {
@@ -55,6 +90,10 @@ impl GameManager {
     fn restore_next_item_id(&self) -> ItemId {
         return 0;
     }
+    pub fn get_all_items(&mut self) -> &mut HashMap<ItemId, Item> {
+        return &mut self.all_items;
+    }
+
     fn change_player_name(&mut self, player_id: PlayerId, new_name: String) -> bool {
         if !self.players.contains_key(&player_id) {
             return false;
@@ -131,8 +170,7 @@ impl GameManager {
     }
 
     pub fn get_player_inventory_as_string(&self, player_name: &str) -> String {
-        let player_id = self.players_by_name.get(player_name).unwrap();
-        let player = self.players.get(player_id).unwrap();
+        let player = self.get_player_from_name(player_name).unwrap();
 
         let items: Vec<String> = player
             .get_items()
@@ -143,5 +181,31 @@ impl GameManager {
             "items": items
         }
         .dump();
+    }
+
+    fn add_room(&mut self, room_name: String) {
+        let room = Room::new(room_name.clone());
+        self.all_rooms.insert(room_name, room);
+    }
+
+    pub fn get_room(&self, room_name: &str) -> Option<&Room> {
+        self.all_rooms.get(room_name)
+    }
+
+    pub fn remove_item_from_room(&mut self, room_name: &str, item_id: ItemId) {
+        let room = self.all_rooms.get_mut(room_name).unwrap();
+        room.remove_item(item_id);
+    }
+
+    pub fn send_msg_to_client(&mut self, msg: String) -> std::io::Result<()> {
+        self.writer_stream.write_all(msg.as_bytes())?;
+        Ok(())
+    }
+
+    pub fn receive_data_timeout(
+        &mut self,
+        duration: std::time::Duration,
+    ) -> Result<String, std::sync::mpsc::RecvTimeoutError> {
+        return self.mpsc_receiver.recv_timeout(duration);
     }
 }
