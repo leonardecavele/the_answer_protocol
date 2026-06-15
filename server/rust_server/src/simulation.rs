@@ -1,6 +1,6 @@
 use crate::constantes::{TICK_TIME, TickResult};
 use crate::game_manager::GameManager;
-use json::{JsonValue, object};
+use json::{JsonValue, array, object};
 use std::sync::mpsc;
 use std::time::Instant;
 use tracing::info;
@@ -11,11 +11,10 @@ impl GameManager {
             if tick_timer.elapsed() >= TICK_TIME {
                 break;
             }
-            match self.receive_data_timeout(TICK_TIME - tick_timer.elapsed())
-            {
+            match self.receive_data_timeout(TICK_TIME - tick_timer.elapsed()) {
                 Ok(msg) => {
                     let command_response = self.handle_message(msg);
-                    self.send_msg_to_client(command_response + "\n")?;
+                    self.send_msg_to_client(command_response)?;
                 }
                 Err(mpsc::RecvTimeoutError::Timeout) => break,
                 Err(mpsc::RecvTimeoutError::Disconnected) => return Ok(TickResult::Exit),
@@ -33,23 +32,15 @@ impl GameManager {
 
         //hardcoded event for now :
 
-        let event_type = "partouze";
-        let mut all_events: Vec<JsonValue> = vec![];
-        for (player_name, _) in self.get_players_by_names() {
-            if player_name == "GABIN" || player_name == "AYMERIC" {
-                all_events.push(object! {
-                    "player": player_name.as_str(),
-                    "event_name": event_type,
-                    "value": ""
-                });
-            }
-        }
-        let array = JsonValue::Array(all_events);
-        if array.is_empty() {
-            return Ok(());
-        }
-        self.send_msg_to_client(array.dump() + "\n")?;
+        // let mut events = json::JsonValue::new_array();
+        let events = array![object! {
+            "player": "GABIN",
+            "emmited_by": "test",
+            "event_name": "CONNECT",
+            "data": ""
+        }];
 
+        self.send_msg_to_client(events.dump().to_string())?;
         info!("sent event");
         Ok(())
     }

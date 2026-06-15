@@ -155,7 +155,7 @@ response_value = snake_case / 1*DIGIT
         "player": <player_name>,
         "command": <command_name>,
         "error_code": <error_code>,
-        "value": <response_value>
+        "data": <response_value>
     }
 
 }
@@ -251,10 +251,11 @@ response_value = snake_case / 1*DIGIT
 
 
 ```json
-{
-    "player": <player_name>,
-    "event_name": <event_name>,
-    "value": <response_value>
-
-}
+[
+  {
+          "player": <player_name>,
+          "event_name": <command_name>,
+          "data": <response_value>
+  }
+]
 ```

@@ -69,3 +69,4 @@
 | `ERR 404 GROUP_NOT_FOUND` | Target group does not exist anymore |
 | `ERR 404 NO_SUCH_GROUP` | Requested group does not exist |
 | `ERR 403 NOT_GROUP_LEADER` | Player must be the group leader to perform this action |
+| `ERR 999 INVALID COMMAND` | The player sent an invalid command format   |

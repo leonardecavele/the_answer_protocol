@@ -1,7 +1,7 @@
 use crate::groups::GroupManager;
 use crate::items::{Item, ItemId};
 use crate::player::{Player, PlayerCount, PlayerId};
-use crate::room::Room;
+use crate::room::{Room, RoomName};
 
 use json::object;
 use std::collections::HashMap;
@@ -34,8 +34,8 @@ impl GameManager {
 
         starting_items.insert(item_id, item);
         let mut starting_rooms: HashMap<String, Room> = HashMap::new();
-        let room_name: String = "room_test".to_string();
-        let mut room = Room::new(room_name.clone());
+        let room_name: RoomName = "room_test".to_string();
+        let mut room = Room::new(room_name.clone(), HashMap::new());
         room.add_item(item_id);
         starting_rooms.insert(room_name, room);
 
@@ -183,7 +183,6 @@ impl GameManager {
         .dump();
     }
 
-
     pub fn get_room(&self, room_name: &str) -> Option<&Room> {
         self.all_rooms.get(room_name)
     }
@@ -199,7 +198,7 @@ impl GameManager {
     }
 
     pub fn send_msg_to_client(&mut self, msg: String) -> std::io::Result<()> {
-        self.writer_stream.write_all(msg.as_bytes())?;
+        self.writer_stream.write_all((msg + "\n").as_bytes())?;
         Ok(())
     }
 
@@ -213,5 +212,4 @@ impl GameManager {
     pub fn item_exists(&self, item_id: ItemId) -> bool {
         return self.all_items.contains_key(&item_id);
     }
-
 }

@@ -2,7 +2,7 @@ use crate::constantes::{BASE_COMMAND_RESPONSE, ErrorCode};
 use crate::game_manager::GameManager;
 use crate::items::ItemId;
 use crate::room::Room;
-use json::object;
+use json::{JsonValue, object};
 use tracing::{error, info};
 
 impl GameManager {
@@ -12,6 +12,16 @@ impl GameManager {
         return item_id_int;
     }
 
+    // fn json_error(json: Result<JsonValue, json::Error>) -> ErrorCode {
+    //     if json.is_err() {
+    //         error!("invalid json");
+    //         return ErrorCode::InvalidCommand;
+    //     }
+    //     let error_code = json["error"].as_str().unwrap();
+    //     // Some(format!("error: {}", error_code))
+
+    //     reut
+    // }
     pub fn handle_message(&mut self, msg: String) -> String {
         /*
         read the message, simulate the corresponding action and return the response
@@ -72,7 +82,9 @@ impl GameManager {
                 }
                 .dump();
             }
-            // "MOVE" => {},
+            // "MOVE" => {
+            //     let room_to_go = arguments[""]
+            // }
             "QUIT" => {
                 self.disconnect_player(player_name.to_string());
                 return BASE_COMMAND_RESPONSE.to_string();
