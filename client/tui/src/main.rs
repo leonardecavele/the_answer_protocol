@@ -1,19 +1,19 @@
-use api_client::client::Client;
 use api_client::client::connect::ClientConnect;
+use api_client::client::Client;
 use api_client::error::TapError;
 use std::env;
 use std::process::exit;
 use std::time::Instant;
 use time::macros::format_description;
 use tracing::{error, info};
-use tracing_subscriber::EnvFilter;
 use tracing_subscriber::fmt::time::LocalTime;
+use tracing_subscriber::EnvFilter;
 
 pub enum Command {
     Quit,
 }
 
-const SERVER_ADDRESS: &str = "127.0.0.1:3000";
+const SERVER_ADDRESS: &str = "127.0.0.1:38800";
 const PLAYER: &str = "DefaultPlayer";
 
 #[tokio::main]
@@ -90,7 +90,7 @@ async fn test_single_connection() -> Result<(), TapError> {
     );
     let start_time = Instant::now();
 
-    for i in 0..200 {
+    for i in 0..1 {
         player_look(&mut client).await?;
         info!("loop {}", i);
     }
@@ -103,8 +103,10 @@ async fn test_single_connection() -> Result<(), TapError> {
         duration,
         duration / iterations
     );
+    
+    loop {}
 
-    client.quit().await;
+    // client.quit().await;
 
     Ok(())
 }
@@ -129,7 +131,7 @@ async fn player_look(client: &mut Client) -> Result<(), TapError> {
 
     match result {
         Ok(response) => {
-            println!("look response: {}.", response.json_data);
+            println!("look response: {:?}.", response.value);
         }
         Err(e) => {
             error!("{}", e);

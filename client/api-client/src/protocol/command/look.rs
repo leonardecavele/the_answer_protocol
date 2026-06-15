@@ -2,11 +2,37 @@ use crate::client::ServerInfo;
 use crate::error::CommandError;
 use crate::protocol::command::Command;
 use crate::protocol::response::ServerResponse;
+use serde::{Deserialize, Serialize};
+use serde_with::json::JsonString;
+use serde_with::serde_as;
+use std::collections::HashMap;
 
 pub struct LookCommand;
 
+#[serde_as]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct LookResponse {
-    pub json_data: String,
+    pub player: String,
+    pub command: String,
+    pub error_code: u16,
+    #[serde_as(as = "JsonString")]
+    pub value: LookData,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct LookData {
+    pub room: LookRoom,
+    pub players: Vec<String>,
+    pub items: Vec<String>,
+    pub npcs: Vec<String>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct LookRoom {
+    pub id: String,
+    pub name: String,
+    pub description: String,
+    pub exits: HashMap<String, String>,
 }
 
 impl Command for LookCommand {
@@ -33,11 +59,11 @@ impl Command for LookCommand {
                     });
                 }
 
-                // TD: create HELPER to parse JSON data: arguments[1..].join(" ")
+                let look_response: LookResponse =
+                    serde_json::from_str(response.arguments.join("").as_str())
+                        .map_err(|e| CommandError::invalid_json_response(e))?;
 
-                Ok(LookResponse {
-                    json_data: response.arguments[1..].join(" "),
-                })
+                Ok(look_response)
             }
             v => Err(CommandError::version_not_implemented(v)),
         }

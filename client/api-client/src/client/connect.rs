@@ -65,7 +65,7 @@ impl ClientConnect {
 
         // let max_attempt: u32 = u32::MAX;
         let max_attempt: u32 = 3;
-        let timeout_before_retry: u64 = 5;
+        let timeout_before_retry_ms: u64 = 1000;
 
         for attempt in 1..=max_attempt {
             let connection_future = TcpStream::connect(addr.clone());
@@ -86,7 +86,7 @@ impl ClientConnect {
                     }
                     info!(
                         "failed to connect to {}, retrying in {} milliseconds..",
-                        addr, timeout_before_retry
+                        addr, timeout_before_retry_ms
                     );
                 }
                 Err(_) => {
@@ -97,12 +97,12 @@ impl ClientConnect {
                     }
                     info!(
                         "connection to {} timed out, retrying in {} milliseconds..",
-                        addr, timeout_before_retry
+                        addr, timeout_before_retry_ms
                     );
                 }
             }
 
-            tokio::time::sleep(Duration::from_millis(timeout_before_retry)).await;
+            tokio::time::sleep(Duration::from_millis(timeout_before_retry_ms)).await;
         }
 
         Err(NetworkError::ConnectionTimeout {

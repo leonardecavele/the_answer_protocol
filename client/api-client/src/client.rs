@@ -1,5 +1,5 @@
-pub mod api;
 pub mod connect;
+pub mod api;
 pub mod dispatcher;
 
 use crate::error::{CommandError, InternalError, TapError};
@@ -82,6 +82,6 @@ impl Drop for Client {
         self.bridge.bridge_task.abort();
         self.event_dispatcher.shutdown();
 
-        info!("APIClient dropped: background tasks aborted");
+        info!("Api client dropped :: background tasks properly stopped.");
     }
 }

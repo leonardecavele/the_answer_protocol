@@ -1,11 +1,31 @@
+use crate::error::CommandError;
+use crate::protocol::command::look::LookResponse;
 use crate::protocol::response::ServerResponse;
+use serde::{Deserialize, Serialize};
+use serde_with::DisplayFromStr;
+use serde_with::serde_as;
+use std::string::ToString;
 use tokio::sync::broadcast;
 use tokio::task::JoinHandle;
-use tracing::warn;
+use tracing::{info, warn};
 
 pub struct EventDispatcher {
     broadcast_sender: broadcast::Sender<ServerResponse>,
     subscriber_tasks: Vec<JoinHandle<()>>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(tag = "event_name", content = "value")]
+enum EventType {
+    NewPlayer(String),
+}
+
+#[serde_as]
+#[derive(Debug, Deserialize, Serialize)]
+pub struct Event {
+    player: String,
+    #[serde(flatten)]
+    event_name: EventType,
 }
 
 impl EventDispatcher {
@@ -25,7 +45,15 @@ impl EventDispatcher {
         let task = tokio::spawn(async move {
             loop {
                 match subscriber.recv().await {
-                    Ok(event) => handler(event),
+                    Ok(response) => {
+                        if let Ok(event) =
+                            serde_json::from_str::<Event>(response.arguments.join("").as_str())
+                        {
+                            info!("EVENT: {:?}", event);
+                        }
+                        info!("{:?}", serde_json::from_str::<Event>(response.arguments.join("").as_str()));
+                        handler(response)
+                    }
                     Err(broadcast::error::RecvError::Lagged(skipped)) => {
                         warn!("lag.. {} events dropped", skipped);
                     }
