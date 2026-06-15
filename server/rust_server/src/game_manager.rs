@@ -94,23 +94,23 @@ impl GameManager {
         return &mut self.all_items;
     }
 
-    fn change_player_name(&mut self, player_id: PlayerId, new_name: String) -> bool {
-        if !self.players.contains_key(&player_id) {
-            return false;
-        }
+    // fn change_player_name(&mut self, player_id: PlayerId, new_name: String) -> bool {
+    //     if !self.players.contains_key(&player_id) {
+    //         return false;
+    //     }
 
-        let player = match self.players.get_mut(&player_id) {
-            Some(player) => player,
-            _none => return false,
-        };
+    //     let player = match self.players.get_mut(&player_id) {
+    //         Some(player) => player,
+    //         _none => return false,
+    //     };
 
-        self.players_by_name.remove(player.get_name());
-        player.set_name(new_name.clone());
+    //     self.players_by_name.remove(player.get_name());
+    //     player.set_name(new_name.clone());
 
-        self.players_by_name.insert(new_name, player_id);
+    //     self.players_by_name.insert(new_name, player_id);
 
-        return true;
-    }
+    //     return true;
+    // }
 
     fn try_restore_player_save(&mut self) -> Option<Player> {
         // &mut self, name: String
@@ -183,10 +183,6 @@ impl GameManager {
         .dump();
     }
 
-    fn add_room(&mut self, room_name: String) {
-        let room = Room::new(room_name.clone());
-        self.all_rooms.insert(room_name, room);
-    }
 
     pub fn get_room(&self, room_name: &str) -> Option<&Room> {
         self.all_rooms.get(room_name)
@@ -195,6 +191,11 @@ impl GameManager {
     pub fn remove_item_from_room(&mut self, room_name: &str, item_id: ItemId) {
         let room = self.all_rooms.get_mut(room_name).unwrap();
         room.remove_item(item_id);
+    }
+
+    pub fn add_item_to_room(&mut self, room_name: &str, item_id: ItemId) {
+        let room = self.all_rooms.get_mut(room_name).unwrap();
+        room.add_item(item_id);
     }
 
     pub fn send_msg_to_client(&mut self, msg: String) -> std::io::Result<()> {
@@ -208,4 +209,9 @@ impl GameManager {
     ) -> Result<String, std::sync::mpsc::RecvTimeoutError> {
         return self.mpsc_receiver.recv_timeout(duration);
     }
+
+    pub fn item_exists(&self, item_id: ItemId) -> bool {
+        return self.all_items.contains_key(&item_id);
+    }
+
 }

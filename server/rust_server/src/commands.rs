@@ -6,6 +6,12 @@ use json::object;
 use tracing::{error, info};
 
 impl GameManager {
+    fn get_item_id_from_name(&self, item_name: &str) -> ItemId {
+        let item_id = item_name.split('.').nth(1).unwrap();
+        let item_id_int = item_id.parse::<ItemId>().unwrap();
+        return item_id_int;
+    }
+
     pub fn handle_message(&mut self, msg: String) -> String {
         /*
         read the message, simulate the corresponding action and return the response
@@ -87,13 +93,12 @@ impl GameManager {
                 let player = self.get_player_from_name(player_name).unwrap();
                 let player_id = player.get_id();
                 let item = arguments["item_id"].as_str().unwrap();
-                let item_id = item.split('.').nth(1).unwrap();
-                let item_id_int = item_id.parse::<ItemId>().unwrap();
+                let item_id = self.get_item_id_from_name(item);
 
                 let player_current_room = player.get_current_room();
                 let room: &Room = self.get_room(player_current_room).unwrap();
                 let room_name = room.get_name().to_string();
-                if !room.contains_item(item_id_int) {
+                if !room.contains_item(item_id) {
                     return object! {
                         "player": player_name,
                         "command": command_name,
@@ -103,8 +108,8 @@ impl GameManager {
                     .dump();
                 }
 
-                self.remove_item_from_room(&room_name, item_id_int);
-                self.add_item_to_player(player_id, item_id_int);
+                self.remove_item_from_room(&room_name, item_id);
+                self.add_item_to_player(player_id, item_id);
 
                 return object! {
                     "player": player_name,
@@ -114,7 +119,32 @@ impl GameManager {
                 }
                 .dump();
             }
-            // "DROP" => {},
+            "DROP" => {
+                let player = self.get_player_from_name(player_name).unwrap();
+                let player_id = player.get_id();
+                let item = arguments["item_id"].as_str().unwrap();
+                let item_id = self.get_item_id_from_name(item);
+                if !self.item_exists(item_id) {
+                    return object! {
+                        "player": player_name,
+                        "command": command_name,
+                        "error_code": ErrorCode::ItemNotInInventory.code(),
+                        "value": ""
+                    }
+                    .dump();
+                }
+
+                let room_name = player.get_current_room().to_string();
+                self.remove_item_from_player(player_id, item_id);
+                self.add_item_to_room(&room_name, item_id);
+                return object! {
+                    "player": player_name,
+                    "command": command_name,
+                    "error_code": ErrorCode::NoError.code(),
+                    "value": ""
+                }
+                .dump();
+            }
             "INVENTORY" => {
                 let inventory = self.get_player_inventory_as_string(player_name);
                 return object! {
