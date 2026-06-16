@@ -87,6 +87,19 @@ func (room *Room) RouteEvent(username string, event game_conn.EventFromGameServe
 	return true
 }
 
+func (room *Room) BroadcastEvent(event game_conn.EventFromGameServer) {
+	room.mutex.Lock()
+	clients := make([]*Client, 0, len(room.clients))
+	for _, client := range room.clients {
+		clients = append(clients, client)
+	}
+	room.mutex.Unlock()
+
+	for _, client := range clients {
+		client.eventChan <- event
+	}
+}
+
 func (room *Room) ReconnectPlayersToGameServer(gameServer *game_conn.GameServerManager) error {
 	for _, username := range room.ConnectedUsernames() {
 		command := game_conn.CommandToGameServer{

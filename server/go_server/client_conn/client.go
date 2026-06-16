@@ -19,6 +19,7 @@ type Client struct {
 	Id          string
 	Username    string
 	State       ClientState
+	group       *Group
 	room        *Room
 	commandChan chan game_conn.CommandFromGameServer
 	eventChan   chan game_conn.EventFromGameServer

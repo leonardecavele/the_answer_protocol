@@ -8,6 +8,7 @@ import (
 )
 
 type handleTapCommandArgs func(args string, client *Client, gameServer *game_conn.GameServerManager) (string, error)
+type handleChatScope func(client *Client, message string) string
 
 var tapCommands = map[string]handleTapCommandArgs{
 	// CORE
@@ -37,7 +38,25 @@ var tapCommands = map[string]handleTapCommandArgs{
 	"QUESTS":    handleQuestsCommand,
 }
 
+var chatScopes = map[string]handleChatScope{
+	"GLOBAL":  chatGlobalScope,
+	"ROOM":    chatRoomScope,
+	"GROUP":   chatGroupScope,
+	"PRIVATE": chatPrivateScope,
+}
+
 func handleGameCommandError(response game_conn.CommandFromGameServer) string {
+	if response.ErrorCode == 0 {
+		return ""
+	}
+
+	if strings.HasPrefix(response.Data, "ERR ") {
+		return response.Data
+	}
+	if response.Data != "" {
+		return fmt.Sprintf("ERR %03d %s", response.ErrorCode, response.Data)
+	}
+
 	switch response.ErrorCode {
 	case 201:
 		return responseUsernameAlreadyUsed
@@ -144,8 +163,77 @@ func handleQuitCommand(args string, client *Client, _ *game_conn.GameServerManag
 
 // COMMUNICATION
 
+func chatGroupScope(client *Client, message string) string {
+	if client.group == nil {
+		return responseNotInGroup
+	}
+
+	client.group.BroadcastEvent(game_conn.EventFromGameServer{
+		Player:    client.Username,
+		EventName: "GROUP CHAT",
+		Data:      client.Username + " " + message,
+	})
+	return "OK"
+}
+
+func chatGlobalScope(client *Client, message string) string {
+	client.room.BroadcastEvent(game_conn.EventFromGameServer{
+		Player:    client.Username,
+		EventName: "GLOBAL CHAT",
+		Data:      client.Username + " " + message,
+	})
+
+	return "OK"
+}
+
+func chatRoomScope(client *Client, message string) string {
+	//client.group.BroadcastEvent(game_conn.EventFromGameServer{
+	//	Player:    client.Username,
+	//	EventName: "GROUP CHAT",
+	//	Data:      client.Username + " " + message,
+	//})
+
+	return "NOT IMPLEMENTED YET"
+}
+
+func chatPrivateScope(client *Client, message string) string {
+	username, privateMessage, ok := strings.Cut(message, " ")
+	if !ok || username == "" || strings.TrimSpace(privateMessage) == "" {
+		return responseInvalidArguments
+	}
+
+	ok = client.room.RouteEvent(username, game_conn.EventFromGameServer{
+		Player:    client.Username,
+		EventName: "PRIVATE CHAT",
+		Data:      client.Username + " " + privateMessage,
+	})
+	if !ok {
+		return responseNoSuchUser
+	}
+
+	return "OK"
+}
+
 func handleChatCommand(args string, client *Client, _ *game_conn.GameServerManager) (string, error) {
-	return "", nil
+	if client.State != AUTHENTICATED {
+		return responseNotConnected, nil
+	}
+
+	scope, message, ok := strings.Cut(args, " ")
+	if !ok || scope == "" {
+		return responseInvalidArguments, nil
+	}
+
+	chatScopeHandler, ok := chatScopes[strings.ToUpper(scope)]
+	if !ok {
+		return responseInvalidScope, nil
+	}
+
+	if strings.TrimSpace(message) == "" {
+		return responseInvalidArguments, nil
+	}
+
+	return chatScopeHandler(client, message), nil
 }
 
 func handleWhoCommand(args string, client *Client, _ *game_conn.GameServerManager) (string, error) {
