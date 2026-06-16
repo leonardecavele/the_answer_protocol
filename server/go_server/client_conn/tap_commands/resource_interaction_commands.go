@@ -30,6 +30,7 @@ func handleStatusCommand(args string, client *session.Client, _ *game_conn.GameS
 }
 
 func handleQuestCommand(args string, client *session.Client, _ *game_conn.GameServerManager) (string, error) {
+	// grouped
 	return "", nil
 }
 

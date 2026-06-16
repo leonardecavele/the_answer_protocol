@@ -58,7 +58,9 @@ func (group *Group) BroadcastGroupEvent(event protocol.Event, excludedClient *Cl
 	group.mutex.Unlock()
 
 	for _, client := range clients {
-		client.eventChan <- event
+		clientEvent := event
+		clientEvent.Player = client.Username
+		client.eventChan <- clientEvent
 	}
 }
 
