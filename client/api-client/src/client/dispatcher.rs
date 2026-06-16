@@ -1,13 +1,13 @@
-use std::cmp::PartialEq;
-use std::collections::HashMap;
 use crate::error::CommandError;
 use crate::protocol::command::look::LookResponse;
 use crate::protocol::response::ServerResponse;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use serde_with::DisplayFromStr;
 use serde_with::serde_as;
+use std::cmp::PartialEq;
+use std::collections::HashMap;
 use std::string::ToString;
-use serde_json::Value;
 use tokio::sync::broadcast;
 use tokio::task::JoinHandle;
 use tracing::{error, info, warn};
@@ -17,20 +17,79 @@ pub struct EventDispatcher {
     subscriber_tasks: Vec<JoinHandle<()>>,
 }
 
-#[derive(Debug, Deserialize, Serialize, PartialEq)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-#[serde(tag = "event_name")]
-enum EventType {
-    NewPlayer,
+// #[derive(Debug, Deserialize, Serialize, PartialEq)]
+// #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+// #[serde(tag = "event_name")]
+// enum EventType {
+//     NewPlayer,
+// }
+//
+// #[serde_as]
+// #[derive(Debug, Deserialize, Serialize)]
+// pub struct Event {
+//     player: String,
+//     #[serde(flatten)]
+//     event_type: EventType,
+//     data: HashMap<String, Value>
+// }
+
+#[derive(Debug)]
+pub enum ServerEvent {
+    GlobalChat(GlobalChatEvent),
+    PrivateChat(PrivateChatEvent),
+    RoomPresence(RoomPresenceEvent),
+    Unknown(String),
 }
 
-#[serde_as]
-#[derive(Debug, Deserialize, Serialize)]
-pub struct Event {
-    player: String,
-    #[serde(flatten)]
-    event_type: EventType,
-    data: HashMap<String, Value>
+// Data for a global chat event
+#[derive(Debug)]
+pub struct GlobalChatEvent {
+    pub sender: String,
+    pub message: String,
+}
+
+#[derive(Debug)]
+pub struct PrivateChatEvent {
+    pub sender: String,
+    pub message: String,
+}
+
+// Data for a room presence event
+#[derive(Debug)]
+pub enum RoomPresenceAction {
+    Enter,
+    Leave,
+}
+
+#[derive(Debug)]
+pub struct RoomPresenceEvent {
+    pub action: RoomPresenceAction,
+}
+
+fn parse_event(response: ServerResponse) -> ServerEvent {
+    let arguments = response
+        .arguments
+        .iter()
+        .map(|s| s as &str)
+        .collect::<Vec<&str>>();
+
+    match arguments.as_slice() {
+        ["GLOBAL", "CHAT", sender, message @ ..] => ServerEvent::GlobalChat(GlobalChatEvent {
+            sender: sender.to_string(),
+            message: message.join(" "),
+        }),
+        ["PRIVATE", "CHAT", sender, message @ ..] => ServerEvent::PrivateChat(PrivateChatEvent {
+            sender: sender.to_string(),
+            message: message.join(" "),
+        }),
+        ["ROOM", "PRESENCE", "ENTER"] => ServerEvent::RoomPresence(RoomPresenceEvent {
+            action: RoomPresenceAction::Enter,
+        }),
+        ["ROOM", "PRESENCE", "LEAVE"] => ServerEvent::RoomPresence(RoomPresenceEvent {
+            action: RoomPresenceAction::Leave,
+        }),
+        _ => ServerEvent::Unknown(arguments.join(" ")),
+    }
 }
 
 impl EventDispatcher {
@@ -43,7 +102,7 @@ impl EventDispatcher {
 
     pub fn subscribe<F>(&mut self, handler: F)
     where
-        F: Fn(ServerResponse) + Send + 'static,
+        F: Fn(ServerEvent) + Send + 'static,
     {
         let mut subscriber = self.broadcast_sender.subscribe();
 
@@ -51,19 +110,8 @@ impl EventDispatcher {
             loop {
                 match subscriber.recv().await {
                     Ok(response) => {
-                        let event = match serde_json::from_str::<Event>(response.arguments.join("").as_str()) {
-                            Ok(event) => event,
-                            Err(e) => {
-                                error!("invalid event: {:?}", e);
-                                continue;
-                            }
-                        };
-                        info!("DATA = {:?}", event);
-
-                        if event.event_type == EventType::NewPlayer {
-                            info!("OUI c'est egal.");
-                        }
-                        handler(response)
+                        let event: ServerEvent = parse_event(response);
+                        handler(event)
                     }
                     Err(broadcast::error::RecvError::Lagged(skipped)) => {
                         warn!("lag.. {} events dropped", skipped);

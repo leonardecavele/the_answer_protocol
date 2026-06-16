@@ -1,6 +1,7 @@
 use crate::client::Client;
 use crate::error::{CommandError, TapError};
 use crate::protocol::command::connect::{ConnectCommand, ConnectResponse};
+use crate::protocol::command::global_chat::{GlobalChatCommand, GlobalChatResponse};
 use crate::protocol::command::look::{LookCommand, LookResponse};
 use crate::protocol::command::quit::QuitCommand;
 use tracing::debug;
@@ -21,6 +22,17 @@ impl Client {
         debug!("sending look request");
 
         let response = self.request(LookCommand).await?;
+
+        Ok(response)
+    }
+
+    pub async fn chat_global(
+        &self,
+        message: String,
+    ) -> Result<Result<GlobalChatResponse, CommandError>, TapError> {
+        debug!("sending look request");
+
+        let response = self.request(GlobalChatCommand { message }).await?;
 
         Ok(response)
     }

@@ -1,12 +1,12 @@
 pub mod connect;
+pub mod global_chat;
 pub mod look;
 pub mod quit;
 
-use std::fmt::format;
-use serde_json::Error;
 use crate::client::ServerInfo;
 use crate::error::CommandError;
 use crate::protocol::response::ServerResponse;
+use serde_json::Error;
 
 pub trait Command {
     type ResponseData;
@@ -70,7 +70,7 @@ impl CommandError {
             message: String::from(format!("server version {} is not supported yet", version)),
         }
     }
-    
+
     pub fn invalid_json_response(e: Error) -> Self {
         CommandError {
             code: None,

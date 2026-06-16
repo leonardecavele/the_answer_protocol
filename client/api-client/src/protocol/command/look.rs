@@ -12,15 +12,6 @@ pub struct LookCommand;
 #[serde_as]
 #[derive(Debug, Deserialize, Serialize)]
 pub struct LookResponse {
-    pub player: String,
-    pub command: String,
-    pub error_code: u16,
-    #[serde_as(as = "JsonString")]
-    pub value: LookData,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-pub struct LookData {
     pub room: LookRoom,
     pub players: Vec<String>,
     pub items: Vec<String>,

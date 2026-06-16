@@ -10,6 +10,7 @@ use dispatcher::EventDispatcher;
 use tokio::sync::mpsc;
 use tokio::task::JoinHandle;
 use tracing::info;
+use crate::client::dispatcher::ServerEvent;
 
 #[derive(Debug)]
 pub struct ServerInfo {
@@ -31,7 +32,7 @@ pub struct Client {
 impl Client {
     pub fn on_event<F>(&mut self, handler: F)
     where
-        F: Fn(ServerResponse) + Send + 'static,
+        F: Fn(ServerEvent) + Send + 'static,
     {
         self.event_dispatcher.subscribe(handler);
     }
