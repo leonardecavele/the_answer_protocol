@@ -1,4 +1,4 @@
-package client_conn
+package session
 
 import (
 	"errors"
@@ -71,6 +71,10 @@ func (c *Client) Write(message string) error {
 
 func (c *Client) ReadEvent() game_conn.EventFromGameServer {
 	return <-c.eventChan
+}
+
+func (c *Client) Events() <-chan game_conn.EventFromGameServer {
+	return c.eventChan
 }
 
 func (c *Client) ReadCommand() game_conn.CommandFromGameServer {

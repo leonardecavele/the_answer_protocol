@@ -1,8 +1,8 @@
-package main
+package helper
 
 import "net"
 
-func getServerIP() string {
+func GetServerIP() string {
 	interfaces, err := net.Interfaces()
 	if err != nil {
 		return "127.0.0.1"

@@ -16,7 +16,9 @@ import (
 	"go_server/config"
 	serverError "go_server/error"
 	"go_server/game_conn"
+	"go_server/helper"
 	"go_server/logger"
+	"go_server/session"
 )
 
 func shutdownServer(quit chan struct{}, listener net.Listener, stopOnce *sync.Once) {
@@ -57,7 +59,7 @@ func main() {
 	}()
 
 	gameServerManager := &game_conn.GameServerManager{}
-	room := client_conn.NewRoom()
+	room := session.NewRoom()
 
 	go gameServerManager.HandleGameServer(
 		quit,
@@ -72,7 +74,7 @@ func main() {
 	}
 	defer listener.Close()
 
-	logger.AppLogger.Info("TCP server started on " + getServerIP() + ":" + strconv.Itoa(config.GoServerPort))
+	logger.AppLogger.Info("TCP server started on " + helper.GetServerIP() + ":" + strconv.Itoa(config.GoServerPort))
 
 	for {
 		conn, err := listener.Accept()
@@ -86,7 +88,7 @@ func main() {
 			}
 		}
 
-		go client_conn.HandleClient(client_conn.NewClient(conn, room), gameServerManager)
+		go client_conn.HandleClient(session.NewClient(conn, room), gameServerManager)
 	}
 
 	os.Exit(int(serverError.NoError))

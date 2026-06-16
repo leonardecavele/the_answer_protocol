@@ -1,12 +1,13 @@
 package tap_commands
 
 import (
-	"go_server/client_conn"
 	"go_server/game_conn"
+	"go_server/protocol"
+	"go_server/session"
 	"strings"
 )
 
-type handleChatScope func(client *client_conn.Client, message string) string
+type handleChatScope func(client *session.Client, message string) string
 
 var chatScopes = map[string]handleChatScope{
 	"GLOBAL":  chatGlobalScope,
@@ -15,9 +16,9 @@ var chatScopes = map[string]handleChatScope{
 	"PRIVATE": chatPrivateScope,
 }
 
-func chatGroupScope(client *client_conn.Client, message string) string {
+func chatGroupScope(client *session.Client, message string) string {
 	if client.Group == nil {
-		return client_conn.ResponseNotInGroup
+		return protocol.ResponseNotInGroup
 	}
 
 	client.Group.BroadcastEvent(game_conn.EventFromGameServer{
@@ -28,7 +29,7 @@ func chatGroupScope(client *client_conn.Client, message string) string {
 	return "OK"
 }
 
-func chatGlobalScope(client *client_conn.Client, message string) string {
+func chatGlobalScope(client *session.Client, message string) string {
 	client.Room.BroadcastEvent(game_conn.EventFromGameServer{
 		Player:    client.Username,
 		EventName: "GLOBAL CHAT",
@@ -38,7 +39,7 @@ func chatGlobalScope(client *client_conn.Client, message string) string {
 	return "OK"
 }
 
-func chatRoomScope(client *client_conn.Client, message string) string {
+func chatRoomScope(client *session.Client, message string) string {
 	//client.group.BroadcastEvent(game_conn.EventFromGameServer{
 	//	Player:    client.Username,
 	//	EventName: "GROUP CHAT",
@@ -48,10 +49,10 @@ func chatRoomScope(client *client_conn.Client, message string) string {
 	return "NOT IMPLEMENTED YET"
 }
 
-func chatPrivateScope(client *client_conn.Client, message string) string {
+func chatPrivateScope(client *session.Client, message string) string {
 	username, privateMessage, ok := strings.Cut(message, " ")
 	if !ok || username == "" || strings.TrimSpace(privateMessage) == "" {
-		return client_conn.ResponseInvalidArguments
+		return protocol.ResponseInvalidArguments
 	}
 
 	ok = client.Room.RouteEvent(username, game_conn.EventFromGameServer{
@@ -60,34 +61,34 @@ func chatPrivateScope(client *client_conn.Client, message string) string {
 		Data:      client.Username + " " + privateMessage,
 	})
 	if !ok {
-		return client_conn.ResponseNoSuchUser
+		return protocol.ResponseNoSuchUser
 	}
 
 	return "OK"
 }
 
-func handleChatCommand(args string, client *client_conn.Client, _ *game_conn.GameServerManager) (string, error) {
-	if client.State != client_conn.AUTHENTICATED {
-		return client_conn.ResponseNotConnected, nil
+func handleChatCommand(args string, client *session.Client, _ *game_conn.GameServerManager) (string, error) {
+	if client.State != session.AUTHENTICATED {
+		return protocol.ResponseNotConnected, nil
 	}
 
 	scope, message, ok := strings.Cut(args, " ")
 	if !ok || scope == "" {
-		return client_conn.ResponseInvalidArguments, nil
+		return protocol.ResponseInvalidArguments, nil
 	}
 
 	chatScopeHandler, ok := chatScopes[strings.ToUpper(scope)]
 	if !ok {
-		return client_conn.ResponseInvalidScope, nil
+		return protocol.ResponseInvalidScope, nil
 	}
 
 	if strings.TrimSpace(message) == "" {
-		return client_conn.ResponseInvalidArguments, nil
+		return protocol.ResponseInvalidArguments, nil
 	}
 
 	return chatScopeHandler(client, message), nil
 }
 
-func handleWhoCommand(args string, client *client_conn.Client, _ *game_conn.GameServerManager) (string, error) {
+func handleWhoCommand(args string, client *session.Client, _ *game_conn.GameServerManager) (string, error) {
 	return "", nil
 }

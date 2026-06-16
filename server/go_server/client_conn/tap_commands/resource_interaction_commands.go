@@ -1,38 +1,38 @@
 package tap_commands
 
 import (
-	"go_server/client_conn"
 	"go_server/game_conn"
+	"go_server/session"
 )
 
-func handleTakeCommand(args string, client *client_conn.Client, _ *game_conn.GameServerManager) (string, error) {
+func handleTakeCommand(args string, client *session.Client, _ *game_conn.GameServerManager) (string, error) {
 	return "", nil
 }
 
-func handleDropCommand(args string, client *client_conn.Client, _ *game_conn.GameServerManager) (string, error) {
+func handleDropCommand(args string, client *session.Client, _ *game_conn.GameServerManager) (string, error) {
 	return "", nil
 }
 
-func handleInventoryCommand(args string, client *client_conn.Client, _ *game_conn.GameServerManager) (string, error) {
+func handleInventoryCommand(args string, client *session.Client, _ *game_conn.GameServerManager) (string, error) {
 	return "", nil
 }
 
-func handleTalkCommand(args string, client *client_conn.Client, _ *game_conn.GameServerManager) (string, error) {
+func handleTalkCommand(args string, client *session.Client, _ *game_conn.GameServerManager) (string, error) {
 	return "", nil
 }
 
-func handleAttackCommand(args string, client *client_conn.Client, _ *game_conn.GameServerManager) (string, error) {
+func handleAttackCommand(args string, client *session.Client, _ *game_conn.GameServerManager) (string, error) {
 	return "", nil
 }
 
-func handleStatusCommand(args string, client *client_conn.Client, _ *game_conn.GameServerManager) (string, error) {
+func handleStatusCommand(args string, client *session.Client, _ *game_conn.GameServerManager) (string, error) {
 	return "", nil
 }
 
-func handleQuestCommand(args string, client *client_conn.Client, _ *game_conn.GameServerManager) (string, error) {
+func handleQuestCommand(args string, client *session.Client, _ *game_conn.GameServerManager) (string, error) {
 	return "", nil
 }
 
-func handleQuestsCommand(args string, client *client_conn.Client, _ *game_conn.GameServerManager) (string, error) {
+func handleQuestsCommand(args string, client *session.Client, _ *game_conn.GameServerManager) (string, error) {
 	return "", nil
 }

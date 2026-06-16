@@ -2,12 +2,13 @@ package tap_commands
 
 import (
 	"errors"
-	"go_server/client_conn"
 	"go_server/game_conn"
+	"go_server/protocol"
+	"go_server/session"
 	"strings"
 )
 
-func handleConnectCommand(args string, client *client_conn.Client, gameServer *game_conn.GameServerManager) (string, error) {
+func handleConnectCommand(args string, client *session.Client, gameServer *game_conn.GameServerManager) (string, error) {
 	isValidUsername := func(username string) bool {
 		if username == "" {
 			return false
@@ -23,7 +24,7 @@ func handleConnectCommand(args string, client *client_conn.Client, gameServer *g
 	}
 
 	if !isValidUsername(args) {
-		return client_conn.ResponseInvalidUsername, nil
+		return protocol.ResponseInvalidUsername, nil
 	}
 
 	if response := client.Room.SetUsername(client, strings.ToUpper(args)); response != "" {
@@ -40,19 +41,19 @@ func handleConnectCommand(args string, client *client_conn.Client, gameServer *g
 		return "", err
 	}
 
-	return client_conn.ResponseConnected, nil
+	return protocol.ResponseConnected, nil
 }
 
-func handleLookCommand(args string, client *client_conn.Client, gameServer *game_conn.GameServerManager) (string, error) {
+func handleLookCommand(args string, client *session.Client, gameServer *game_conn.GameServerManager) (string, error) {
 	if !gameServer.IsConnected() {
-		return client_conn.ResponseGameServerClosed, nil
+		return protocol.ResponseGameServerClosed, nil
 	}
 
-	if client.State != client_conn.AUTHENTICATED {
-		return client_conn.ResponseNotConnected, nil
+	if client.State != session.AUTHENTICATED {
+		return protocol.ResponseNotConnected, nil
 	}
 	if args != "" {
-		return client_conn.ResponseInvalidArguments, nil
+		return protocol.ResponseInvalidArguments, nil
 	}
 
 	command := game_conn.CommandToGameServer{
@@ -73,14 +74,14 @@ func handleLookCommand(args string, client *client_conn.Client, gameServer *game
 	return "OK " + response.Data, nil
 }
 
-func handleMoveCommand(args string, client *client_conn.Client, _ *game_conn.GameServerManager) (string, error) {
+func handleMoveCommand(args string, client *session.Client, _ *game_conn.GameServerManager) (string, error) {
 	return "", nil
 }
 
-func handleQuitCommand(args string, client *client_conn.Client, _ *game_conn.GameServerManager) (string, error) {
+func handleQuitCommand(args string, client *session.Client, _ *game_conn.GameServerManager) (string, error) {
 	if args != "" {
-		return client_conn.ResponseInvalidArguments, nil
+		return protocol.ResponseInvalidArguments, nil
 	}
 
-	return client_conn.ResponseBye, nil
+	return protocol.ResponseBye, nil
 }

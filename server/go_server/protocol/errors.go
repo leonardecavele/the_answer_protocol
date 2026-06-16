@@ -1,19 +1,5 @@
-package client_conn
+package protocol
 
-import (
-	"go_server/config"
-	"strconv"
-)
-
-// Success
-var (
-	// Connection.
-	ResponseHello     = "OK hello proto=" + strconv.Itoa(config.ProtocolVersion)
-	ResponseConnected = "OK connected"
-	ResponseBye       = "OK bye"
-)
-
-// Error
 var (
 	// Connection.
 	ResponseGameServerClosed = "ERR 900 GAME_SERVER_CLOSE"
@@ -48,24 +34,4 @@ var (
 	ResponseNotInvited    = "ERR 403 NOT_INVITED"
 	ResponseGroupNotFound = "ERR 404 GROUP_NOT_FOUND"
 	ResponseNoSuchGroup   = "ERR 404 NO_SUCH_GROUP"
-)
-
-//events
-var (
-	// Room.
-	EventRoomPresenceEnter = "EVT ROOM PRESENCE ENTER <username>"
-	EventRoomPresenceLeave = "EVT ROOM PRESENCE LEAVE <username>"
-	EventRoomChat          = "EVT ROOM CHAT <username> <message>"
-
-	// Global.
-	EventGlobalChat = "EVT GLOBAL CHAT <username> <message>"
-
-	// Group.
-	EventGroupInvite = "EVT GROUP INVITE <leader>"
-	EventGroupJoin   = "EVT GROUP JOIN <username>"
-	EventGroupLeave  = "EVT GROUP LEAVE <username>"
-	EventGroupChat   = "EVT GROUP CHAT <username> <message>"
-
-	// Stats.
-	EventStatsPlayers = "EVT STATS players=<count>"
 )

@@ -2,11 +2,12 @@ package tap_commands
 
 import (
 	"fmt"
-	"go_server/client_conn"
 	"go_server/game_conn"
+	"go_server/protocol"
+	"go_server/session"
 )
 
-type handleTapCommandArgs func(args string, client *client_conn.Client, gameServer *game_conn.GameServerManager) (string, error)
+type handleTapCommandArgs func(args string, client *session.Client, gameServer *game_conn.GameServerManager) (string, error)
 
 var TapCommands = map[string]handleTapCommandArgs{
 	// CORE
@@ -36,23 +37,23 @@ var TapCommands = map[string]handleTapCommandArgs{
 func handleGameCommandError(response game_conn.CommandFromGameServer) string {
 	switch response.ErrorCode {
 	case 201:
-		return client_conn.ResponseUsernameAlreadyUsed
+		return protocol.ResponseUsernameAlreadyUsed
 	case 301:
-		return client_conn.ResponseNoExit
+		return protocol.ResponseNoExit
 	case 400:
-		return client_conn.ResponseInvalidArguments
+		return protocol.ResponseInvalidArguments
 	case 401:
-		return client_conn.ResponseNotInGroup
+		return protocol.ResponseNotInGroup
 	case 402:
-		return client_conn.ResponseAlreadyInGroup
+		return protocol.ResponseAlreadyInGroup
 	case 405:
-		return client_conn.ResponseNpcNotHostile
+		return protocol.ResponseNpcNotHostile
 	case 406:
-		return client_conn.ResponseNoQuestAvailable
+		return protocol.ResponseNoQuestAvailable
 	case 900:
-		return client_conn.ResponseConnectionFailed
+		return protocol.ResponseConnectionFailed
 	case 901:
-		return client_conn.ResponseSendFailed
+		return protocol.ResponseSendFailed
 	default:
 		return fmt.Sprintf("ERR %03d UNKNOWN_ERROR", response.ErrorCode)
 	}

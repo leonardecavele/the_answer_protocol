@@ -1,9 +1,10 @@
-package client_conn
+package session
 
 import (
 	"go_server/config"
 	"go_server/game_conn"
 	"go_server/logger"
+	"go_server/protocol"
 	"strings"
 	"sync"
 )
@@ -24,15 +25,15 @@ func (room *Room) SetUsername(client *Client, username string) string {
 	defer room.mutex.Unlock()
 
 	if client.State == AUTHENTICATED {
-		return responseAlreadyConnected
+		return protocol.ResponseAlreadyConnected
 	}
 
 	if len(room.clients) >= config.RoomSize {
-		return responseRoomFull
+		return protocol.ResponseRoomFull
 	}
 
 	if _, ok := room.clients[username]; ok {
-		return ResponseUsernameAlreadyUsed
+		return protocol.ResponseUsernameAlreadyUsed
 	}
 	client.Username = username
 	client.State = AUTHENTICATED

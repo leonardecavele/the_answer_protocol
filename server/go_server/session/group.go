@@ -1,10 +1,11 @@
-package client_conn
+package session
 
 import (
 	"crypto/rand"
 	"encoding/hex"
 	"go_server/config"
 	"go_server/game_conn"
+	"go_server/protocol"
 	"sync"
 )
 
@@ -70,16 +71,16 @@ func (group *Group) GroupedClients() []*Client {
 
 func (c *Client) JoinGroup(group *Group) string {
 	if c.Group != nil {
-		return responseAlreadyInGroup
+		return protocol.ResponseAlreadyInGroup
 	}
 	if group == nil {
-		return responseGroupNotFound
+		return protocol.ResponseGroupNotFound
 	}
 
 	group.mutex.Lock()
 	if group.clients == nil {
 		group.mutex.Unlock()
-		return responseGroupNotFound
+		return protocol.ResponseGroupNotFound
 	}
 	group.clients[c.Username] = c
 	group.mutex.Unlock()
@@ -102,7 +103,10 @@ func (c *Client) QuitGroup() {
 
 	group.mutex.Lock()
 	if c.Username == group.leader {
-		clients := c.Group.GroupedClients()
+		clients := make([]*Client, 0, len(group.clients))
+		for _, client := range group.clients {
+			clients = append(clients, client)
+		}
 		group.clients = nil
 		group.mutex.Unlock()
 
