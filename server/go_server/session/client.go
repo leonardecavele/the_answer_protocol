@@ -2,6 +2,7 @@ package session
 
 import (
 	"errors"
+	serverError "go_server/error"
 	"go_server/game_conn"
 	"net"
 	"sync"
@@ -54,7 +55,7 @@ func (c *Client) DeleteClient(gameServer *game_conn.GameServerManager) error {
 			Arguments: "",
 		}
 
-		if err := gameServer.WriteCommand(command); err != nil && !errors.Is(err, game_conn.ErrGameServerNotConnected) {
+		if err := gameServer.WriteCommand(command); err != nil && !errors.Is(err, serverError.ErrGameServerNotConnected) {
 			return err
 		}
 	}

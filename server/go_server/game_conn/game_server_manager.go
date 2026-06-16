@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"go_server/config"
+	serverError "go_server/error"
 	"go_server/logger"
 )
 
@@ -50,7 +51,7 @@ func (manager *GameServerManager) IsConnected() bool {
 func (manager *GameServerManager) Write(message string) error {
 	gameServer := manager.getGameServer()
 	if gameServer == nil {
-		return ErrGameServerNotConnected
+		return serverError.ErrGameServerNotConnected
 	}
 
 	return gameServer.Write(message)
@@ -59,7 +60,7 @@ func (manager *GameServerManager) Write(message string) error {
 func (manager *GameServerManager) WriteCommand(command any) error {
 	gameServer := manager.getGameServer()
 	if gameServer == nil {
-		return ErrGameServerNotConnected
+		return serverError.ErrGameServerNotConnected
 	}
 
 	return gameServer.WriteCommand(command)

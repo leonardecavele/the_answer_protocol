@@ -2,6 +2,7 @@ package tap_commands
 
 import (
 	"errors"
+	serverError "go_server/error"
 	"go_server/game_conn"
 	"go_server/protocol"
 	"go_server/session"
@@ -37,7 +38,7 @@ func handleConnectCommand(args string, client *session.Client, gameServer *game_
 		Arguments: args,
 	}
 
-	if err := gameServer.WriteCommand(command); err != nil && !errors.Is(err, game_conn.ErrGameServerNotConnected) {
+	if err := gameServer.WriteCommand(command); err != nil && !errors.Is(err, serverError.ErrGameServerNotConnected) {
 		return "", err
 	}
 

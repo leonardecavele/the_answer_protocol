@@ -7,10 +7,9 @@ import (
 	"io"
 	"net"
 	"strings"
-)
 
-import (
 	"go_server/config"
+	serverError "go_server/error"
 	"go_server/logger"
 )
 
@@ -39,7 +38,7 @@ func (gameServer *GameServer) Write(message string) error {
 	defer gameServer.PrintMutex.Unlock()
 
 	if gameServer.Writer == nil {
-		return ErrGameServerNotConnected
+		return serverError.ErrGameServerNotConnected
 	}
 
 	if _, err := gameServer.Writer.WriteString(message); err != nil {

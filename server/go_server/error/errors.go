@@ -1,4 +1,4 @@
-package game_conn
+package error
 
 import "errors"
 
