@@ -42,6 +42,14 @@ func handleConnectCommand(args string, client *session.Client, gameServer *game_
 		return "", err
 	}
 
+	client.Room.BroadcastEventExcept(
+		protocol.Event{
+			EventName: "CONNECT",
+			Data:      client.Username,
+		},
+		client,
+	)
+
 	return protocol.ResponseConnected, nil
 }
 
