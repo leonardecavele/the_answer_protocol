@@ -1,22 +1,28 @@
 package protocol
 
+// Connection
 var (
-	// Connection.
-	ResponseGameServerClosed = "ERR 900 GAME_SERVER_CLOSE"
+	ResponseGameServerClosed = "ERR 900 GAME_SERVER_UNAVAILABLE"
+)
 
-	// Client/session validation.
+// Client/session validation
+var (
 	ResponseNotConnected     = "ERR 400 NOT_CONNECTED"
 	ResponseAlreadyConnected = "ERR 400 ALREADY_CONNECTED"
 	ResponseInvalidUsername  = "ERR 400 INVALID_USERNAME"
 	ResponseRoomFull         = "ERR 400 ROOM_FULL"
+)
 
-	// Command validation.
+// Command validation
+var (
 	ResponseEmptyCommand     = "ERR 400 EMPTY_COMMAND"
 	ResponseCommandNotFound  = "ERR 400 COMMAND_NOT_FOUND"
 	ResponseInvalidArguments = "ERR 400 INVALID_ARGUMENTS"
 	ResponseInvalidScope     = "ERR 400 INVALID_SCOPE"
+)
 
-	// RFC 42TAP standard errors.
+// RFC 42TAP standard errors
+var (
 	ResponseUsernameAlreadyUsed = "ERR 201 NAME_IN_USE"
 	ResponseNoExit              = "ERR 301 NO_EXIT"
 	ResponseNotInGroup          = "ERR 401 NOT_IN_GROUP"
@@ -28,8 +34,10 @@ var (
 	ResponseNoQuestAvailable    = "ERR 406 NO_QUEST_AVAILABLE"
 	ResponseConnectionFailed    = "ERR 900 CONNECTION_FAILED"
 	ResponseSendFailed          = "ERR 901 SEND_FAILED"
+)
 
-	// TAP documented extension errors.
+// TAP documented extension errors
+var (
 	ResponseNoSuchUser    = "ERR 403 NO_SUCH_USER"
 	ResponseNotInvited    = "ERR 403 NOT_INVITED"
 	ResponseGroupNotFound = "ERR 404 GROUP_NOT_FOUND"
