@@ -57,6 +57,9 @@ func groupInvite(args string, client *session.Client, _ *game_conn.GameServerMan
 	if invitedClient.Group != nil {
 		return protocol.ResponseAlreadyInGroup, nil
 	}
+	if response := client.Group.Invite(invitedClient.Username); response != "" {
+		return response, nil
+	}
 
 	client.Room.RouteEvent(invitedClient.Username, game_conn.EventFromGameServer{
 		Player:    client.Username,
@@ -78,15 +81,15 @@ func groupJoin(args string, client *session.Client, _ *game_conn.GameServerManag
 		return protocol.ResponseAlreadyInGroup, nil
 	}
 
-	leader, ok := client.Room.GetClient(args)
+	groupMember, ok := client.Room.GetClient(args)
 	if !ok {
 		return protocol.ResponseNoSuchUser, nil
 	}
-	if leader.Group == nil {
+	if groupMember.Group == nil {
 		return protocol.ResponseGroupNotFound, nil
 	}
 
-	if response := client.JoinGroup(leader.Group); response != "" {
+	if response := client.JoinInvitedGroup(groupMember.Group); response != "" {
 		return response, nil
 	}
 	return "OK group=" + client.Group.Id, nil

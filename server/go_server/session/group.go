@@ -7,10 +7,12 @@ import (
 	"go_server/game_conn"
 	"go_server/protocol"
 	"sync"
+	"time"
 )
 
 type Group struct {
 	clients map[string]*Client
+	invites map[string]time.Time
 	mutex   sync.Mutex
 	Id      string
 	leader  string
@@ -19,6 +21,7 @@ type Group struct {
 func NewGroup(leader string) (*Group, error) {
 	group := Group{
 		clients: make(map[string]*Client, config.GroupSize),
+		invites: make(map[string]time.Time),
 		leader:  leader,
 	}
 
@@ -69,7 +72,36 @@ func (group *Group) GroupedClients() []*Client {
 	return clients
 }
 
+func (group *Group) Invite(username string) string {
+	group.mutex.Lock()
+	defer group.mutex.Unlock()
+
+	if group.clients == nil {
+		return protocol.ResponseGroupNotFound
+	}
+	if _, ok := group.clients[username]; ok {
+		return protocol.ResponseAlreadyInGroup
+	}
+	if len(group.clients) >= config.GroupSize {
+		return protocol.ResponseGroupFull
+	}
+
+	now := time.Now()
+	group.deleteExpiredInvites(now)
+	group.invites[username] = now.Add(config.GroupInviteTTL)
+
+	return ""
+}
+
 func (c *Client) JoinGroup(group *Group) string {
+	return c.joinGroup(group, false)
+}
+
+func (c *Client) JoinInvitedGroup(group *Group) string {
+	return c.joinGroup(group, true)
+}
+
+func (c *Client) joinGroup(group *Group, requireInvite bool) string {
 	if c.Group != nil {
 		return protocol.ResponseAlreadyInGroup
 	}
@@ -82,7 +114,20 @@ func (c *Client) JoinGroup(group *Group) string {
 		group.mutex.Unlock()
 		return protocol.ResponseGroupNotFound
 	}
+	if requireInvite {
+		expiresAt, ok := group.invites[c.Username]
+		if !ok || time.Now().After(expiresAt) {
+			delete(group.invites, c.Username)
+			group.mutex.Unlock()
+			return protocol.ResponseNotInvited
+		}
+	}
+	if len(group.clients) >= config.GroupSize {
+		group.mutex.Unlock()
+		return protocol.ResponseGroupFull
+	}
 	group.clients[c.Username] = c
+	delete(group.invites, c.Username)
 	group.mutex.Unlock()
 
 	c.Group = group
@@ -93,6 +138,14 @@ func (c *Client) JoinGroup(group *Group) string {
 	})
 
 	return ""
+}
+
+func (group *Group) deleteExpiredInvites(now time.Time) {
+	for username, expiresAt := range group.invites {
+		if now.After(expiresAt) {
+			delete(group.invites, username)
+		}
+	}
 }
 
 func (c *Client) QuitGroup() {

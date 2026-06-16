@@ -11,6 +11,7 @@ var (
 	ResponseAlreadyConnected = "ERR 400 ALREADY_CONNECTED"
 	ResponseInvalidUsername  = "ERR 400 INVALID_USERNAME"
 	ResponseRoomFull         = "ERR 400 ROOM_FULL"
+	ResponseGroupFull        = "ERR 400 GROUP_FULL"
 )
 
 // Command validation
