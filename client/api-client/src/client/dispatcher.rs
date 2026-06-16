@@ -1,3 +1,5 @@
+use std::cmp::PartialEq;
+use std::collections::HashMap;
 use crate::error::CommandError;
 use crate::protocol::command::look::LookResponse;
 use crate::protocol::response::ServerResponse;
@@ -5,19 +7,21 @@ use serde::{Deserialize, Serialize};
 use serde_with::DisplayFromStr;
 use serde_with::serde_as;
 use std::string::ToString;
+use serde_json::Value;
 use tokio::sync::broadcast;
 use tokio::task::JoinHandle;
-use tracing::{info, warn};
+use tracing::{error, info, warn};
 
 pub struct EventDispatcher {
     broadcast_sender: broadcast::Sender<ServerResponse>,
     subscriber_tasks: Vec<JoinHandle<()>>,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
-#[serde(tag = "event_name", content = "value")]
+#[derive(Debug, Deserialize, Serialize, PartialEq)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[serde(tag = "event_name")]
 enum EventType {
-    NewPlayer(String),
+    NewPlayer,
 }
 
 #[serde_as]
@@ -25,7 +29,8 @@ enum EventType {
 pub struct Event {
     player: String,
     #[serde(flatten)]
-    event_name: EventType,
+    event_type: EventType,
+    data: HashMap<String, Value>
 }
 
 impl EventDispatcher {
@@ -46,12 +51,18 @@ impl EventDispatcher {
             loop {
                 match subscriber.recv().await {
                     Ok(response) => {
-                        if let Ok(event) =
-                            serde_json::from_str::<Event>(response.arguments.join("").as_str())
-                        {
-                            info!("EVENT: {:?}", event);
+                        let event = match serde_json::from_str::<Event>(response.arguments.join("").as_str()) {
+                            Ok(event) => event,
+                            Err(e) => {
+                                error!("invalid event: {:?}", e);
+                                continue;
+                            }
+                        };
+                        info!("DATA = {:?}", event);
+
+                        if event.event_type == EventType::NewPlayer {
+                            info!("OUI c'est egal.");
                         }
-                        info!("{:?}", serde_json::from_str::<Event>(response.arguments.join("").as_str()));
                         handler(response)
                     }
                     Err(broadcast::error::RecvError::Lagged(skipped)) => {
