@@ -17,11 +17,11 @@ type Group struct {
 	leader  string
 }
 
-func NewGroup(leader string) (*Group, error) {
+func NewGroup(leader *Client) (*Group, error) {
 	group := Group{
 		clients: make(map[string]*Client, config.GroupSize),
 		invites: make(map[string]time.Time),
-		leader:  leader,
+		leader:  leader.Username,
 	}
 
 	id, err := group.newId()
@@ -29,6 +29,8 @@ func NewGroup(leader string) (*Group, error) {
 		return nil, err
 	}
 	group.Id = id
+	group.clients[leader.Username] = leader
+	leader.Group = &group
 
 	return &group, nil
 }
@@ -109,14 +111,6 @@ func (group *Group) Invite(username string) string {
 }
 
 func (c *Client) JoinGroup(group *Group) string {
-	return c.joinGroup(group, false)
-}
-
-func (c *Client) JoinInvitedGroup(group *Group) string {
-	return c.joinGroup(group, true)
-}
-
-func (c *Client) joinGroup(group *Group, requireInvite bool) string {
 	if c.Group != nil {
 		return protocol.ResponseAlreadyInGroup
 	}
@@ -129,13 +123,11 @@ func (c *Client) joinGroup(group *Group, requireInvite bool) string {
 		group.mutex.Unlock()
 		return protocol.ResponseGroupNotFound
 	}
-	if requireInvite {
-		expiresAt, ok := group.invites[c.Username]
-		if !ok || time.Now().After(expiresAt) {
-			delete(group.invites, c.Username)
-			group.mutex.Unlock()
-			return protocol.ResponseNotInvited
-		}
+	expiresAt, ok := group.invites[c.Username]
+	if !ok || time.Now().After(expiresAt) {
+		delete(group.invites, c.Username)
+		group.mutex.Unlock()
+		return protocol.ResponseNotInvited
 	}
 	if len(group.clients) >= config.GroupSize {
 		group.mutex.Unlock()
@@ -146,11 +138,14 @@ func (c *Client) joinGroup(group *Group, requireInvite bool) string {
 	group.mutex.Unlock()
 
 	c.Group = group
-	group.BroadcastEvent(protocol.Event{
-		Player:    c.Username,
-		EventName: "GROUP JOIN",
-		Data:      c.Username,
-	})
+	group.BroadcastEventExcept(
+		protocol.Event{
+			Player:    c.Username,
+			EventName: "GROUP JOIN",
+			Data:      c.Username,
+		},
+		c,
+	)
 
 	return ""
 }

@@ -28,14 +28,11 @@ func groupCreate(args string, client *session.Client, _ *game_conn.GameServerMan
 		return protocol.ResponseAlreadyInGroup, nil
 	}
 
-	group, err := session.NewGroup(client.Username)
+	group, err := session.NewGroup(client)
 	if err != nil {
 		return "", err
 	}
 
-	if response := client.JoinGroup(group); response != "" {
-		return response, nil
-	}
 	return "OK group=" + group.Id, nil
 }
 
@@ -89,7 +86,7 @@ func groupJoin(args string, client *session.Client, _ *game_conn.GameServerManag
 		return protocol.ResponseGroupNotFound, nil
 	}
 
-	if response := client.JoinInvitedGroup(groupMember.Group); response != "" {
+	if response := client.JoinGroup(groupMember.Group); response != "" {
 		return response, nil
 	}
 	return "OK group=" + client.Group.Id, nil
