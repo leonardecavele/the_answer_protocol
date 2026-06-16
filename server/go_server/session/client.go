@@ -46,6 +46,15 @@ func (c *Client) DeleteClient(gameServer *game_conn.GameServerManager) error {
 	if state == AUTHENTICATED && c.Group != nil {
 		c.QuitGroup()
 	}
+
+	c.Room.BroadcastEventExcept(
+		protocol.Event{
+			EventName: "QUIT",
+			Data:      c.Username,
+		},
+		c,
+	)
+
 	c.Room.DeleteUsername(c)
 	closeErr := c.Conn.Close()
 
