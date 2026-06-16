@@ -23,8 +23,8 @@ type Client struct {
 	State       ClientState
 	Group       *Group
 	Room        *Room
-	commandChan chan game_conn.CommandFromGameServer
-	eventChan   chan protocol.Event
+	CommandChan chan game_conn.CommandFromGameServer
+	EventChan   chan protocol.Event
 	writeMutex  sync.Mutex
 }
 
@@ -34,8 +34,8 @@ func NewClient(conn net.Conn, room *Room) *Client {
 		Id:          conn.RemoteAddr().String(),
 		State:       CONNECTED,
 		Room:        room,
-		commandChan: make(chan game_conn.CommandFromGameServer, 16),
-		eventChan:   make(chan protocol.Event, 16),
+		CommandChan: make(chan game_conn.CommandFromGameServer, 16),
+		EventChan:   make(chan protocol.Event, 16),
 	}
 }
 
@@ -72,13 +72,13 @@ func (c *Client) Write(message string) error {
 }
 
 func (c *Client) ReadEvent() protocol.Event {
-	return <-c.eventChan
+	return <-c.EventChan
 }
 
 func (c *Client) Events() <-chan protocol.Event {
-	return c.eventChan
+	return c.EventChan
 }
 
 func (c *Client) ReadCommand() game_conn.CommandFromGameServer {
-	return <-c.commandChan
+	return <-c.CommandChan
 }

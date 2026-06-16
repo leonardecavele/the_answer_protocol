@@ -42,15 +42,15 @@ func (group *Group) BroadcastEvent(event protocol.Event) {
 	group.mutex.Unlock()
 
 	for _, client := range clients {
-		client.eventChan <- event
+		client.EventChan <- event
 	}
 }
 
-func (group *Group) BroadcastGroupEvent(event protocol.Event, excludedClient *Client) {
+func (group *Group) BroadcastEventExcept(event protocol.Event, excepted *Client) {
 	group.mutex.Lock()
 	clients := make([]*Client, 0, len(group.clients))
 	for _, client := range group.clients {
-		if client == excludedClient {
+		if client == excepted {
 			continue
 		}
 		clients = append(clients, client)
@@ -58,9 +58,7 @@ func (group *Group) BroadcastGroupEvent(event protocol.Event, excludedClient *Cl
 	group.mutex.Unlock()
 
 	for _, client := range clients {
-		clientEvent := event
-		clientEvent.Player = client.Username
-		client.eventChan <- clientEvent
+		client.EventChan <- event
 	}
 }
 
@@ -183,7 +181,7 @@ func (c *Client) QuitGroup() {
 		for _, client := range clients {
 			client.Group = nil
 			if client != c {
-				client.eventChan <- protocol.Event{
+				client.EventChan <- protocol.Event{
 					Player:    c.Username,
 					EventName: "GROUP LEAVE",
 					Data:      c.Username,

@@ -85,7 +85,7 @@ func (room *Room) RouteCommand(username string, command game_conn.CommandFromGam
 		return false
 	}
 
-	client.commandChan <- command
+	client.CommandChan <- command
 	return true
 }
 
@@ -98,7 +98,7 @@ func (room *Room) RouteEvent(username string, event protocol.Event) bool {
 		return false
 	}
 
-	client.eventChan <- event
+	client.EventChan <- event
 	return true
 }
 
@@ -111,7 +111,23 @@ func (room *Room) BroadcastEvent(event protocol.Event) {
 	room.mutex.Unlock()
 
 	for _, client := range clients {
-		client.eventChan <- event
+		client.EventChan <- event
+	}
+}
+
+func (room *Room) BroadcastEventExcept(event protocol.Event, excepted *Client) {
+	room.mutex.Lock()
+	clients := make([]*Client, 0, len(room.clients))
+	for _, client := range room.clients {
+		if client == excepted {
+			continue
+		}
+		clients = append(clients, client)
+	}
+	room.mutex.Unlock()
+
+	for _, client := range clients {
+		client.EventChan <- event
 	}
 }
 

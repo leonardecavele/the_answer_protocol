@@ -84,6 +84,10 @@ func handleMoveCommand(args string, client *session.Client, gameServer *game_con
 		return protocol.ResponseGameServerClosed, nil
 	}
 
+	if strings.Contains(args, " ") {
+		return protocol.ResponseInvalidArguments, nil
+	}
+
 	command := game_conn.CommandToGameServer{
 		Player:    client.Username,
 		Command:   "MOVE",
@@ -99,12 +103,24 @@ func handleMoveCommand(args string, client *session.Client, gameServer *game_con
 		return errorResponse, nil
 	}
 
+	event := protocol.Event{
+		EventName: "MOVE",
+		Data:      args + " " + client.Username,
+	}
+
+	client.Room.BroadcastEventExcept(event, client)
+
 	if client.Group != nil {
-		event := protocol.Event{
-			EventName: "MOVE",
-			Data:      args,
+		clients := client.Group.GroupedClients()
+		for _, c := range clients {
+			if c == client {
+				continue
+			}
+			c.EventChan <- protocol.Event{
+				EventName: "MOVE",
+				Data:      args + " " + c.Username,
+			}
 		}
-		client.Group.BroadcastGroupEvent(event, client)
 	}
 
 	return "OK " + response.Data, nil
