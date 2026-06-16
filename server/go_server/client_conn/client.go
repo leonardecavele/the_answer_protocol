@@ -20,7 +20,7 @@ type Client struct {
 	Username    string
 	State       ClientState
 	room        *Room
-	commandChan chan string
+	commandChan chan game_conn.CommandFromGameServer
 	eventChan   chan game_conn.EventFromGameServer
 	writeMutex  sync.Mutex
 }
@@ -31,7 +31,7 @@ func NewClient(conn net.Conn, room *Room) *Client {
 		Id:          conn.RemoteAddr().String(),
 		State:       CONNECTED,
 		room:        room,
-		commandChan: make(chan string, 16),
+		commandChan: make(chan game_conn.CommandFromGameServer, 16),
 		eventChan:   make(chan game_conn.EventFromGameServer, 16),
 	}
 }
@@ -77,6 +77,6 @@ func (c *Client) ReadEvent() game_conn.EventFromGameServer {
 	return <-c.eventChan
 }
 
-func (c *Client) ReadCommand() string {
+func (c *Client) ReadCommand() game_conn.CommandFromGameServer {
 	return <-c.commandChan
 }

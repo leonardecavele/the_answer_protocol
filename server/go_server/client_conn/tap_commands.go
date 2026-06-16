@@ -1,7 +1,6 @@
 package client_conn
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"go_server/game_conn"
@@ -39,17 +38,6 @@ var tapCommands = map[string]handleTapCommandArgs{
 }
 
 func handleGameCommandError(response game_conn.CommandFromGameServer) string {
-	if response.ErrorCode == 0 {
-		return ""
-	}
-
-	if strings.HasPrefix(response.Data, "ERR ") {
-		return response.Data
-	}
-	if response.Data != "" {
-		return fmt.Sprintf("ERR %03d %s", response.ErrorCode, response.Data)
-	}
-
 	switch response.ErrorCode {
 	case 201:
 		return responseUsernameAlreadyUsed
@@ -134,11 +122,7 @@ func handleLookCommand(args string, client *Client, gameServer *game_conn.GameSe
 		return "", err
 	}
 
-	var response game_conn.CommandFromGameServer
-	if err := json.Unmarshal([]byte(client.ReadCommand()), &response); err != nil {
-		return "", err
-	}
-
+	response := client.ReadCommand()
 	if errorResponse := handleGameCommandError(response); errorResponse != "" {
 		return errorResponse, nil
 	}

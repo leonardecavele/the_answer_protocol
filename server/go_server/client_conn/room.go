@@ -61,7 +61,7 @@ func (room *Room) ConnectedUsernames() []string {
 	return usernames
 }
 
-func (room *Room) RouteCommand(username string, command string) bool {
+func (room *Room) RouteCommand(username string, command game_conn.CommandFromGameServer) bool {
 	room.mutex.Lock()
 	client, ok := room.clients[strings.ToUpper(username)]
 	room.mutex.Unlock()

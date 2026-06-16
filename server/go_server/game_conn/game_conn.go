@@ -152,7 +152,7 @@ func ReadMessageAsCommand(message string) (CommandFromGameServer, bool, error) {
 
 func (gameServer *GameServer) Read(
 	quit <-chan struct{},
-	routeCommand func(username string, command string) bool,
+	routeCommand func(username string, command CommandFromGameServer) bool,
 	routeEvent func(username string, event EventFromGameServer) bool,
 ) {
 	conn := gameServer.currentConn()
@@ -211,7 +211,7 @@ func (gameServer *GameServer) Read(
 			continue
 		}
 		if ok && routeCommand != nil {
-			routeCommand(gameCommand.Player, message)
+			routeCommand(gameCommand.Player, gameCommand)
 		}
 	}
 }
