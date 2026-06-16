@@ -46,17 +46,6 @@ var chatScopes = map[string]handleChatScope{
 }
 
 func handleGameCommandError(response game_conn.CommandFromGameServer) string {
-	if response.ErrorCode == 0 {
-		return ""
-	}
-
-	if strings.HasPrefix(response.Data, "ERR ") {
-		return response.Data
-	}
-	if response.Data != "" {
-		return fmt.Sprintf("ERR %03d %s", response.ErrorCode, response.Data)
-	}
-
 	switch response.ErrorCode {
 	case 201:
 		return responseUsernameAlreadyUsed
