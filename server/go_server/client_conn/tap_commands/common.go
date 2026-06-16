@@ -8,7 +8,7 @@ import (
 
 type handleTapCommandArgs func(args string, client *client_conn.Client, gameServer *game_conn.GameServerManager) (string, error)
 
-var tapCommands = map[string]handleTapCommandArgs{
+var TapCommands = map[string]handleTapCommandArgs{
 	// CORE
 	"CONNECT": handleConnectCommand,
 	"LOOK":    handleLookCommand,

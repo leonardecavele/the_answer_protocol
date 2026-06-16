@@ -15,15 +15,15 @@ func parseCommand(msg string) (string, string, string) {
 	msg = strings.TrimRight(msg, "\r\n")
 
 	if msg == "" {
-		return "", "", responseEmptyCommand
+		return "", "", ResponseEmptyCommand
 	}
 
 	command, args, _ := strings.Cut(msg, " ")
-	if _, ok := tap_commands.tapCommands[command]; ok {
+	if _, ok := tap_commands.TapCommands[command]; ok {
 		return command, args, ""
 	}
 
-	return "", "", responseCommandNotFound
+	return "", "", ResponseCommandNotFound
 }
 
 func handleTapCommand(str string, client *Client, gameServer *game_conn.GameServerManager) (string, error) {
@@ -34,7 +34,7 @@ func handleTapCommand(str string, client *Client, gameServer *game_conn.GameServ
 		return response, nil
 	}
 
-	response, err := tap_commands.tapCommands[cmd](args, client, gameServer)
+	response, err := tap_commands.TapCommands[cmd](args, client, gameServer)
 	if err != nil {
 		return "", err
 	}
@@ -96,11 +96,11 @@ func HandleClient(client *Client, gameServer *game_conn.GameServerManager) {
 	logger.AppLogger.Info("%s Connected", client.Id)
 	defer logger.AppLogger.Info("%s Disconnected", client.Id)
 
-	if err := client.Write(responseHello); err != nil {
+	if err := client.Write(ResponseHello); err != nil {
 		logger.AppLogger.Error("%s Client Write Error: %v\n", client.Id, err)
 		return
 	}
-	logger.AppLogger.Info("%s Client Write: %s", client.Id, responseHello)
+	logger.AppLogger.Info("%s Client Write: %s", client.Id, ResponseHello)
 
 	go handleClientEvents(client, stopListeningEvents)
 
@@ -118,7 +118,7 @@ func HandleClient(client *Client, gameServer *game_conn.GameServerManager) {
 		response, err := handleTapCommand(str, client, gameServer)
 		if err != nil {
 			logger.AppLogger.Error("%s Command error: %v\n", client.Id, err)
-			response = responseGameServerClosed
+			response = ResponseGameServerClosed
 		}
 		if response == "" {
 			continue
@@ -127,7 +127,7 @@ func HandleClient(client *Client, gameServer *game_conn.GameServerManager) {
 			logger.AppLogger.Error("%s Write error: %v\n", client.Id, err)
 			return
 		}
-		if response == responseBye {
+		if response == ResponseBye {
 			return
 		}
 		logger.AppLogger.Info("%s Client Write: %s", client.Id, response)
