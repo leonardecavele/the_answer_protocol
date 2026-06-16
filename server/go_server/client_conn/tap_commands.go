@@ -1,7 +1,9 @@
 package client_conn
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 	"go_server/game_conn"
 	"strings"
 )
@@ -34,6 +36,42 @@ var tapCommands = map[string]handleTapCommandArgs{
 	"STATUS":    handleStatusCommand,
 	"QUEST":     handleQuestCommand,
 	"QUESTS":    handleQuestsCommand,
+}
+
+func handleGameCommandError(response game_conn.CommandFromGameServer) string {
+	if response.ErrorCode == 0 {
+		return ""
+	}
+
+	if strings.HasPrefix(response.Data, "ERR ") {
+		return response.Data
+	}
+	if response.Data != "" {
+		return fmt.Sprintf("ERR %03d %s", response.ErrorCode, response.Data)
+	}
+
+	switch response.ErrorCode {
+	case 201:
+		return responseUsernameAlreadyUsed
+	case 301:
+		return responseNoExit
+	case 400:
+		return responseInvalidArguments
+	case 401:
+		return responseNotInGroup
+	case 402:
+		return responseAlreadyInGroup
+	case 405:
+		return responseNpcNotHostile
+	case 406:
+		return responseNoQuestAvailable
+	case 900:
+		return responseConnectionFailed
+	case 901:
+		return responseSendFailed
+	default:
+		return fmt.Sprintf("ERR %03d UNKNOWN_ERROR", response.ErrorCode)
+	}
 }
 
 // CORE
@@ -96,7 +134,16 @@ func handleLookCommand(args string, client *Client, gameServer *game_conn.GameSe
 		return "", err
 	}
 
-	return "OK " + client.ReadCommand(), nil
+	var response game_conn.CommandFromGameServer
+	if err := json.Unmarshal([]byte(client.ReadCommand()), &response); err != nil {
+		return "", err
+	}
+
+	if errorResponse := handleGameCommandError(response); errorResponse != "" {
+		return errorResponse, nil
+	}
+
+	return "OK " + response.Data, nil
 }
 
 func handleMoveCommand(args string, client *Client, _ *game_conn.GameServerManager) (string, error) {
