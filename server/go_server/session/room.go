@@ -85,7 +85,7 @@ func (room *Room) RouteCommand(username string, command game_conn.CommandFromGam
 		return false
 	}
 
-	client.CommandChan <- command
+	client.commandChan <- command
 	return true
 }
 
@@ -98,7 +98,7 @@ func (room *Room) RouteEvent(username string, event protocol.Event) bool {
 		return false
 	}
 
-	client.EventChan <- event
+	client.eventChan <- event
 	return true
 }
 
@@ -111,7 +111,7 @@ func (room *Room) BroadcastEvent(event protocol.Event) {
 	room.mutex.Unlock()
 
 	for _, client := range clients {
-		client.EventChan <- event
+		client.eventChan <- event
 	}
 }
 
@@ -127,19 +127,17 @@ func (room *Room) BroadcastEventExcept(event protocol.Event, excepted *Client) {
 	room.mutex.Unlock()
 
 	for _, client := range clients {
-		client.EventChan <- event
+		client.eventChan <- event
 	}
 }
 
 func (room *Room) ReconnectPlayersToGameServer(gameServer *game_conn.GameServerManager) error {
 	for _, username := range room.ConnectedUsernames() {
-		command := game_conn.CommandToGameServer{
+		if err := gameServer.WriteCommand(game_conn.CommandToGameServer{
 			Player:    username,
 			Command:   "CONNECT",
 			Arguments: username,
-		}
-
-		if err := gameServer.WriteCommand(command); err != nil {
+		}); err != nil {
 			return err
 		}
 		logger.AppLogger.Info("Reconnected %s to Game server", username)

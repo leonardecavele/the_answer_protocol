@@ -44,7 +44,7 @@ func (group *Group) BroadcastEvent(event protocol.Event) {
 	group.mutex.Unlock()
 
 	for _, client := range clients {
-		client.EventChan <- event
+		client.eventChan <- event
 	}
 }
 
@@ -60,7 +60,7 @@ func (group *Group) BroadcastEventExcept(event protocol.Event, excepted *Client)
 	group.mutex.Unlock()
 
 	for _, client := range clients {
-		client.EventChan <- event
+		client.eventChan <- event
 	}
 }
 
@@ -176,7 +176,7 @@ func (c *Client) QuitGroup() {
 		for _, client := range clients {
 			client.Group = nil
 			if client != c {
-				client.EventChan <- protocol.Event{
+				client.eventChan <- protocol.Event{
 					Player:    c.Username,
 					EventName: "GROUP LEAVE",
 					Data:      c.Username,

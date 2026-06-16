@@ -32,13 +32,11 @@ func handleConnectCommand(args string, client *session.Client, gameServer *game_
 		return response, nil
 	}
 
-	command := game_conn.CommandToGameServer{
+	if err := gameServer.WriteCommand(game_conn.CommandToGameServer{
 		Player:    client.Username,
 		Command:   "CONNECT",
 		Arguments: args,
-	}
-
-	if err := gameServer.WriteCommand(command); err != nil && !errors.Is(err, serverError.ErrGameServerNotConnected) {
+	}); err != nil && !errors.Is(err, serverError.ErrGameServerNotConnected) {
 		return "", err
 	}
 
@@ -65,13 +63,11 @@ func handleLookCommand(args string, client *session.Client, gameServer *game_con
 		return protocol.ResponseInvalidArguments, nil
 	}
 
-	command := game_conn.CommandToGameServer{
+	if err := gameServer.WriteCommand(game_conn.CommandToGameServer{
 		Player:    client.Username,
 		Command:   "LOOK",
 		Arguments: args,
-	}
-
-	if err := gameServer.WriteCommand(command); err != nil {
+	}); err != nil {
 		return "", err
 	}
 
@@ -96,13 +92,11 @@ func handleMoveCommand(args string, client *session.Client, gameServer *game_con
 		return protocol.ResponseInvalidArguments, nil
 	}
 
-	command := game_conn.CommandToGameServer{
+	if err := gameServer.WriteCommand(game_conn.CommandToGameServer{
 		Player:    client.Username,
 		Command:   "MOVE",
 		Arguments: args,
-	}
-
-	if err := gameServer.WriteCommand(command); err != nil {
+	}); err != nil {
 		return "", err
 	}
 
@@ -124,10 +118,10 @@ func handleMoveCommand(args string, client *session.Client, gameServer *game_con
 			if c == client {
 				continue
 			}
-			c.EventChan <- protocol.Event{
+			client.Room.RouteEvent(c.Username, protocol.Event{
 				EventName: "MOVE",
 				Data:      args + " " + c.Username,
-			}
+			})
 		}
 	}
 

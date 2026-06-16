@@ -23,8 +23,8 @@ type Client struct {
 	State       ClientState
 	Group       *Group
 	Room        *Room
-	CommandChan chan game_conn.CommandFromGameServer
-	EventChan   chan protocol.Event
+	commandChan chan game_conn.CommandFromGameServer
+	eventChan   chan protocol.Event
 	writeMutex  sync.Mutex
 }
 
@@ -34,8 +34,8 @@ func NewClient(conn net.Conn, room *Room) *Client {
 		Id:          conn.RemoteAddr().String(),
 		State:       CONNECTED,
 		Room:        room,
-		CommandChan: make(chan game_conn.CommandFromGameServer, 16),
-		EventChan:   make(chan protocol.Event, 16),
+		commandChan: make(chan game_conn.CommandFromGameServer, 16),
+		eventChan:   make(chan protocol.Event, 16),
 	}
 }
 
@@ -59,13 +59,11 @@ func (c *Client) DeleteClient(gameServer *game_conn.GameServerManager) error {
 	closeErr := c.Conn.Close()
 
 	if state == AUTHENTICATED {
-		command := game_conn.CommandToGameServer{
+		if err := gameServer.WriteCommand(game_conn.CommandToGameServer{
 			Player:    username,
 			Command:   "QUIT",
 			Arguments: "",
-		}
-
-		if err := gameServer.WriteCommand(command); err != nil && !errors.Is(err, serverError.ErrGameServerNotConnected) {
+		}); err != nil && !errors.Is(err, serverError.ErrGameServerNotConnected) {
 			return err
 		}
 	}
@@ -81,13 +79,13 @@ func (c *Client) Write(message string) error {
 }
 
 func (c *Client) ReadEvent() protocol.Event {
-	return <-c.EventChan
+	return <-c.eventChan
 }
 
 func (c *Client) Events() <-chan protocol.Event {
-	return c.EventChan
+	return c.eventChan
 }
 
 func (c *Client) ReadCommand() game_conn.CommandFromGameServer {
-	return <-c.CommandChan
+	return <-c.commandChan
 }
