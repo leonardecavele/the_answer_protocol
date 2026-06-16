@@ -4,15 +4,14 @@ import (
 	"bufio"
 	"encoding/json"
 	"errors"
-	"io"
-	"net"
-	"strings"
-	"sync"
-
 	"go_server/config"
 	serverError "go_server/error"
 	"go_server/logger"
 	"go_server/protocol"
+	"io"
+	"net"
+	"strings"
+	"sync"
 )
 
 type GameServer struct {

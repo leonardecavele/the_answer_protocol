@@ -100,7 +100,11 @@ func handleMoveCommand(args string, client *session.Client, gameServer *game_con
 	}
 
 	if client.Group != nil {
-		client.Group.BroadcastEventExcept(event, client)
+		event := protocol.Event{
+			EventName: "MOVE",
+			Data:      args,
+		}
+		client.Group.BroadcastGroupEvent(event, client)
 	}
 
 	return "OK " + response.Data, nil

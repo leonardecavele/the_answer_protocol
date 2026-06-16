@@ -3,14 +3,11 @@ package game_conn
 import (
 	"bufio"
 	"encoding/json"
+	"go_server/config"
+	"go_server/logger"
 	"go_server/protocol"
 	"net"
 	"time"
-)
-
-import (
-	"go_server/config"
-	"go_server/logger"
 )
 
 func dialGameServer(addr string, quit <-chan struct{}) net.Conn {

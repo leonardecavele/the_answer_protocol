@@ -1,6 +1,8 @@
 package helper
 
-import "net"
+import (
+	"net"
+)
 
 func GetServerIP() string {
 	interfaces, err := net.Interfaces()

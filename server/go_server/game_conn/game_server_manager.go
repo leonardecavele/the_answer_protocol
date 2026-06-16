@@ -1,13 +1,12 @@
 package game_conn
 
 import (
-	"go_server/protocol"
-	"strconv"
-	"sync"
-
 	"go_server/config"
 	serverError "go_server/error"
 	"go_server/logger"
+	"go_server/protocol"
+	"strconv"
+	"sync"
 )
 
 type GameServerManager struct {

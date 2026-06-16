@@ -4,7 +4,6 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"go_server/config"
-	"go_server/game_conn"
 	"go_server/protocol"
 	"sync"
 	"time"
@@ -34,7 +33,7 @@ func NewGroup(leader string) (*Group, error) {
 	return &group, nil
 }
 
-func (group *Group) BroadcastEvent(event game_conn.Event) {
+func (group *Group) BroadcastEvent(event protocol.Event) {
 	group.mutex.Lock()
 	clients := make([]*Client, 0, len(group.clients))
 	for _, client := range group.clients {
@@ -47,7 +46,7 @@ func (group *Group) BroadcastEvent(event game_conn.Event) {
 	}
 }
 
-func (group *Group) BroadcastEventExcept(event game_conn.Event, excludedClient *Client) {
+func (group *Group) BroadcastGroupEvent(event protocol.Event, excludedClient *Client) {
 	group.mutex.Lock()
 	clients := make([]*Client, 0, len(group.clients))
 	for _, client := range group.clients {
@@ -147,7 +146,7 @@ func (c *Client) joinGroup(group *Group, requireInvite bool) string {
 	group.mutex.Unlock()
 
 	c.Group = group
-	group.BroadcastEvent(game_conn.Event{
+	group.BroadcastEvent(protocol.Event{
 		Player:    c.Username,
 		EventName: "GROUP JOIN",
 		Data:      c.Username,
@@ -182,7 +181,7 @@ func (c *Client) QuitGroup() {
 		for _, client := range clients {
 			client.Group = nil
 			if client != c {
-				client.eventChan <- game_conn.Event{
+				client.eventChan <- protocol.Event{
 					Player:    c.Username,
 					EventName: "GROUP LEAVE",
 					Data:      c.Username,
@@ -201,7 +200,7 @@ func (c *Client) QuitGroup() {
 
 	c.Group = nil
 	if !isEmpty {
-		group.BroadcastEvent(game_conn.Event{
+		group.BroadcastEvent(protocol.Event{
 			Player:    c.Username,
 			EventName: "GROUP LEAVE",
 			Data:      c.Username,

@@ -22,7 +22,7 @@ func chatGroupScope(client *session.Client, message string) string {
 		return protocol.ResponseNotInGroup
 	}
 
-	client.Group.BroadcastEvent(game_conn.Event{
+	client.Group.BroadcastEvent(protocol.Event{
 		Player:    client.Username,
 		EventName: "GROUP CHAT",
 		Data:      client.Username + " " + message,
@@ -31,7 +31,7 @@ func chatGroupScope(client *session.Client, message string) string {
 }
 
 func chatGlobalScope(client *session.Client, message string) string {
-	client.Room.BroadcastEvent(game_conn.Event{
+	client.Room.BroadcastEvent(protocol.Event{
 		Player:    client.Username,
 		EventName: "GLOBAL CHAT",
 		Data:      client.Username + " " + message,
@@ -41,7 +41,7 @@ func chatGlobalScope(client *session.Client, message string) string {
 }
 
 func chatRoomScope(client *session.Client, message string) string {
-	//client.group.BroadcastEvent(game_conn.Event{
+	//client.group.BroadcastEvent(protocol.Event{
 	//	Player:    client.Username,
 	//	EventName: "GROUP CHAT",
 	//	Data:      client.Username + " " + message,
@@ -56,7 +56,7 @@ func chatPrivateScope(client *session.Client, message string) string {
 		return protocol.ResponseInvalidArguments
 	}
 
-	ok = client.Room.RouteEvent(username, game_conn.Event{
+	ok = client.Room.RouteEvent(username, protocol.Event{
 		Player:    client.Username,
 		EventName: "PRIVATE CHAT",
 		Data:      client.Username + " " + privateMessage,

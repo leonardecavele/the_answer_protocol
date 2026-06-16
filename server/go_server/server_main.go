@@ -2,16 +2,6 @@ package main
 
 import (
 	"bufio"
-	"net"
-	"os"
-	"os/signal"
-	"strconv"
-	"strings"
-	"sync"
-	"syscall"
-)
-
-import (
 	"go_server/client_conn"
 	"go_server/config"
 	serverError "go_server/error"
@@ -19,6 +9,13 @@ import (
 	"go_server/helper"
 	"go_server/logger"
 	"go_server/session"
+	"net"
+	"os"
+	"os/signal"
+	"strconv"
+	"strings"
+	"sync"
+	"syscall"
 )
 
 func shutdownServer(quit chan struct{}, listener net.Listener, stopOnce *sync.Once) {
