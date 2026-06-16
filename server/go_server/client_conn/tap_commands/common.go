@@ -9,21 +9,23 @@ import (
 
 type handleTapCommandArgs func(args string, client *session.Client, gameServer *game_conn.GameServerManager) (string, error)
 
-var TapCommands = map[string]handleTapCommandArgs{
-	// CORE
+var coreTapCommands = map[string]handleTapCommandArgs{
 	"CONNECT": handleConnectCommand,
 	"LOOK":    handleLookCommand,
 	"MOVE":    handleMoveCommand,
 	"QUIT":    handleQuitCommand,
+}
 
-	// COMMUNICATION
+var communicationTapCommands = map[string]handleTapCommandArgs{
 	"CHAT": handleChatCommand,
 	"WHO":  handleWhoCommand,
+}
 
-	// GROUP
+var groupTapCommands = map[string]handleTapCommandArgs{
 	"GROUP": handleGroupCommand,
+}
 
-	// RESOURCE INTERACTION
+var resourceInteractionTapCommands = map[string]handleTapCommandArgs{
 	"TAKE":      handleTakeCommand,
 	"DROP":      handleDropCommand,
 	"INVENTORY": handleInventoryCommand,
@@ -33,6 +35,24 @@ var TapCommands = map[string]handleTapCommandArgs{
 	"QUEST":     handleQuestCommand,
 	"QUESTS":    handleQuestsCommand,
 }
+
+var TapCommands = func(commandGroups ...map[string]handleTapCommandArgs) map[string]handleTapCommandArgs {
+	commands := make(map[string]handleTapCommandArgs)
+	for _, commandGroup := range commandGroups {
+		for command, handler := range commandGroup {
+			if _, ok := commands[command]; ok {
+				panic(fmt.Sprintf("duplicate tap command %q", command))
+			}
+			commands[command] = handler
+		}
+	}
+	return commands
+}(
+	coreTapCommands,
+	communicationTapCommands,
+	groupTapCommands,
+	resourceInteractionTapCommands,
+)
 
 func handleGameCommandError(response game_conn.CommandFromGameServer) string {
 	switch response.ErrorCode {
