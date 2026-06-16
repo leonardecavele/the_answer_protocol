@@ -8,7 +8,6 @@ import (
 )
 
 type handleTapCommandArgs func(args string, client *Client, gameServer *game_conn.GameServerManager) (string, error)
-type handleChatScope func(client *Client, message string) string
 
 var tapCommands = map[string]handleTapCommandArgs{
 	// CORE
@@ -22,10 +21,7 @@ var tapCommands = map[string]handleTapCommandArgs{
 	"WHO":  handleWhoCommand,
 
 	// GROUP
-	"GROUP CREATE": handleGroupCreateCommand,
-	"GROUP INVITE": handleGroupInviteCommand,
-	"GROUP JOIN":   handleGroupJoinCommand,
-	"GROUP LEAVE":  handleGroupLeaveCommand,
+	"GROUP": handleGroupCommand,
 
 	// RESOURCE INTERACTION
 	"TAKE":      handleTakeCommand,
@@ -36,13 +32,6 @@ var tapCommands = map[string]handleTapCommandArgs{
 	"STATUS":    handleStatusCommand,
 	"QUEST":     handleQuestCommand,
 	"QUESTS":    handleQuestsCommand,
-}
-
-var chatScopes = map[string]handleChatScope{
-	"GLOBAL":  chatGlobalScope,
-	"ROOM":    chatRoomScope,
-	"GROUP":   chatGroupScope,
-	"PRIVATE": chatPrivateScope,
 }
 
 func handleGameCommandError(response game_conn.CommandFromGameServer) string {
@@ -152,6 +141,15 @@ func handleQuitCommand(args string, client *Client, _ *game_conn.GameServerManag
 
 // COMMUNICATION
 
+type handleChatScope func(client *Client, message string) string
+
+var chatScopes = map[string]handleChatScope{
+	"GLOBAL":  chatGlobalScope,
+	"ROOM":    chatRoomScope,
+	"GROUP":   chatGroupScope,
+	"PRIVATE": chatPrivateScope,
+}
+
 func chatGroupScope(client *Client, message string) string {
 	if client.group == nil {
 		return responseNotInGroup
@@ -231,21 +229,43 @@ func handleWhoCommand(args string, client *Client, _ *game_conn.GameServerManage
 
 // GROUP
 
-// issue because of SPACE
-func handleGroupCreateCommand(args string, client *Client, _ *game_conn.GameServerManager) (string, error) {
+type handleGroup = handleTapCommandArgs
+
+var groupCommands = map[string]handleGroup{
+	"CREATE": groupCreate,
+	"INVITE": groupInvite,
+	"JOIN":   groupJoin,
+	"LEAVE":  groupLeave,
+}
+
+func groupCreate(args string, client *Client, _ *game_conn.GameServerManager) (string, error) {
 	return "", nil
 }
 
-func handleGroupInviteCommand(args string, client *Client, _ *game_conn.GameServerManager) (string, error) {
+func groupInvite(args string, client *Client, _ *game_conn.GameServerManager) (string, error) {
 	return "", nil
 }
 
-func handleGroupJoinCommand(args string, client *Client, _ *game_conn.GameServerManager) (string, error) {
+func groupJoin(args string, client *Client, _ *game_conn.GameServerManager) (string, error) {
 	return "", nil
 }
 
-func handleGroupLeaveCommand(args string, client *Client, _ *game_conn.GameServerManager) (string, error) {
+func groupLeave(args string, client *Client, _ *game_conn.GameServerManager) (string, error) {
 	return "", nil
+}
+
+func handleGroupCommand(args string, client *Client, gameServer *game_conn.GameServerManager) (string, error) {
+	subCommand, subArgs, _ := strings.Cut(args, " ")
+	if subCommand == "" {
+		return responseInvalidArguments, nil
+	}
+
+	subCommandHandler, ok := groupCommands[strings.ToUpper(subCommand)]
+	if !ok {
+		return responseCommandNotFound, nil
+	}
+
+	return subCommandHandler(subArgs, client, gameServer)
 }
 
 // RESOURCE INTERACTION

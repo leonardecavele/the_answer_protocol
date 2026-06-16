@@ -16,7 +16,8 @@ const (
 
 	ProtocolVersion = 1
 
-	RoomSize = 20
+	RoomSize  = 20
+	GroupSize = 3
 
 	GameConnectionRetryDelay = 5
 
