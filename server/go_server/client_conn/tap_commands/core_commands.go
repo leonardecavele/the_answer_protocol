@@ -84,10 +84,29 @@ func handleMoveCommand(args string, client *session.Client, gameServer *game_con
 		return protocol.ResponseGameServerClosed, nil
 	}
 
-	return "", nil
+	command := game_conn.CommandToGameServer{
+		Player:    client.Username,
+		Command:   "MOVE",
+		Arguments: args,
+	}
+
+	if err := gameServer.WriteCommand(command); err != nil {
+		return "", err
+	}
+
+	response := client.ReadCommand()
+	if errorResponse := handleGameCommandError(response); errorResponse != "" {
+		return errorResponse, nil
+	}
+
+	if client.Group != nil {
+		client.Group.BroadcastEventExcept(event, client)
+	}
+
+	return "OK " + response.Data, nil
 }
 
-func handleQuitCommand(args string, client *session.Client, _ *game_conn.GameServerManager) (string, error) {
+func handleQuitCommand(args string, _ *session.Client, _ *game_conn.GameServerManager) (string, error) {
 	if args != "" {
 		return protocol.ResponseInvalidArguments, nil
 	}

@@ -61,7 +61,7 @@ func groupInvite(args string, client *session.Client, _ *game_conn.GameServerMan
 		return response, nil
 	}
 
-	client.Room.RouteEvent(invitedClient.Username, game_conn.EventFromGameServer{
+	client.Room.RouteEvent(invitedClient.Username, game_conn.Event{
 		Player:    client.Username,
 		EventName: "GROUP INVITE",
 		Data:      client.Username,

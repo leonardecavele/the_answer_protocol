@@ -34,10 +34,26 @@ func NewGroup(leader string) (*Group, error) {
 	return &group, nil
 }
 
-func (group *Group) BroadcastEvent(event game_conn.EventFromGameServer) {
+func (group *Group) BroadcastEvent(event game_conn.Event) {
 	group.mutex.Lock()
 	clients := make([]*Client, 0, len(group.clients))
 	for _, client := range group.clients {
+		clients = append(clients, client)
+	}
+	group.mutex.Unlock()
+
+	for _, client := range clients {
+		client.eventChan <- event
+	}
+}
+
+func (group *Group) BroadcastEventExcept(event game_conn.Event, excludedClient *Client) {
+	group.mutex.Lock()
+	clients := make([]*Client, 0, len(group.clients))
+	for _, client := range group.clients {
+		if client == excludedClient {
+			continue
+		}
 		clients = append(clients, client)
 	}
 	group.mutex.Unlock()
@@ -131,7 +147,7 @@ func (c *Client) joinGroup(group *Group, requireInvite bool) string {
 	group.mutex.Unlock()
 
 	c.Group = group
-	group.BroadcastEvent(game_conn.EventFromGameServer{
+	group.BroadcastEvent(game_conn.Event{
 		Player:    c.Username,
 		EventName: "GROUP JOIN",
 		Data:      c.Username,
@@ -166,7 +182,7 @@ func (c *Client) QuitGroup() {
 		for _, client := range clients {
 			client.Group = nil
 			if client != c {
-				client.eventChan <- game_conn.EventFromGameServer{
+				client.eventChan <- game_conn.Event{
 					Player:    c.Username,
 					EventName: "GROUP LEAVE",
 					Data:      c.Username,
@@ -185,7 +201,7 @@ func (c *Client) QuitGroup() {
 
 	c.Group = nil
 	if !isEmpty {
-		group.BroadcastEvent(game_conn.EventFromGameServer{
+		group.BroadcastEvent(game_conn.Event{
 			Player:    c.Username,
 			EventName: "GROUP LEAVE",
 			Data:      c.Username,

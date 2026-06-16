@@ -23,7 +23,7 @@ type Client struct {
 	Group       *Group
 	Room        *Room
 	commandChan chan game_conn.CommandFromGameServer
-	eventChan   chan game_conn.EventFromGameServer
+	eventChan   chan game_conn.Event
 	writeMutex  sync.Mutex
 }
 
@@ -34,7 +34,7 @@ func NewClient(conn net.Conn, room *Room) *Client {
 		State:       CONNECTED,
 		Room:        room,
 		commandChan: make(chan game_conn.CommandFromGameServer, 16),
-		eventChan:   make(chan game_conn.EventFromGameServer, 16),
+		eventChan:   make(chan game_conn.Event, 16),
 	}
 }
 
@@ -70,11 +70,11 @@ func (c *Client) Write(message string) error {
 	return err
 }
 
-func (c *Client) ReadEvent() game_conn.EventFromGameServer {
+func (c *Client) ReadEvent() game_conn.Event {
 	return <-c.eventChan
 }
 
-func (c *Client) Events() <-chan game_conn.EventFromGameServer {
+func (c *Client) Events() <-chan game_conn.Event {
 	return c.eventChan
 }
 

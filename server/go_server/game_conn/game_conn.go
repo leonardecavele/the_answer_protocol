@@ -3,6 +3,7 @@ package game_conn
 import (
 	"bufio"
 	"encoding/json"
+	"go_server/protocol"
 	"net"
 	"time"
 )
@@ -47,8 +48,8 @@ func ConnectToGameServer(addr string, quit <-chan struct{}) *GameServer {
 	}
 }
 
-func ReadMessageAsEvents(message string) ([]EventFromGameServer, bool, error) {
-	var gameEvents []EventFromGameServer
+func ReadMessageAsEvents(message string) ([]protocol.Event, bool, error) {
+	var gameEvents []protocol.Event
 
 	if err := json.Unmarshal([]byte(message), &gameEvents); err != nil {
 		return nil, false, nil
@@ -67,15 +68,15 @@ func ReadMessageAsEvents(message string) ([]EventFromGameServer, bool, error) {
 	return gameEvents, true, nil
 }
 
-func ReadMessageAsEvent(message string) (EventFromGameServer, bool, error) {
-	var gameEvent EventFromGameServer
+func ReadMessageAsEvent(message string) (protocol.Event, bool, error) {
+	var gameEvent protocol.Event
 
 	if err := json.Unmarshal([]byte(message), &gameEvent); err != nil {
-		return EventFromGameServer{}, false, err
+		return protocol.Event{}, false, err
 	}
 
 	if gameEvent.Player == "" || gameEvent.EventName == "" {
-		return EventFromGameServer{}, false, nil
+		return protocol.Event{}, false, nil
 	}
 
 	return gameEvent, true, nil

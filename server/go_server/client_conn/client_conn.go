@@ -44,7 +44,7 @@ func handleTapCommand(str string, client *session.Client, gameServer *game_conn.
 	return response, nil
 }
 
-func formatClientEvent(event game_conn.EventFromGameServer) (string, error) {
+func formatClientEvent(event game_conn.Event) (string, error) {
 	message := "EVT " + event.EventName
 	if event.Data == nil {
 		return message, nil

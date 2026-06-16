@@ -7,11 +7,19 @@ import (
 	"io"
 	"net"
 	"strings"
+	"sync"
 
 	"go_server/config"
 	serverError "go_server/error"
 	"go_server/logger"
+	"go_server/protocol"
 )
+
+type GameServer struct {
+	Conn       net.Conn
+	Writer     *bufio.Writer
+	PrintMutex sync.Mutex
+}
 
 func (gameServer *GameServer) currentConn() net.Conn {
 	gameServer.PrintMutex.Lock()
@@ -68,7 +76,7 @@ func (gameServer *GameServer) WriteCommand(command any) error {
 func (gameServer *GameServer) Read(
 	quit <-chan struct{},
 	routeCommand func(username string, command CommandFromGameServer) bool,
-	routeEvent func(username string, event EventFromGameServer) bool,
+	routeEvent func(username string, event protocol.Event) bool,
 ) {
 	conn := gameServer.currentConn()
 	if conn == nil {
