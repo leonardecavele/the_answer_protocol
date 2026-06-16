@@ -69,56 +69,6 @@ func (c *Client) Write(message string) error {
 	return err
 }
 
-func (c *Client) JoinGroup(group *Group) string {
-	if c.group != nil {
-		return responseAlreadyInGroup
-	}
-	if group == nil {
-		return responseGroupNotFound
-	}
-
-	group.mutex.Lock()
-	if group.clients == nil {
-		group.mutex.Unlock()
-		return responseGroupNotFound
-	}
-	group.clients[c.Username] = c
-	group.mutex.Unlock()
-
-	c.group = group
-	group.BroadcastEvent(game_conn.EventFromGameServer{
-		Player:    c.Username,
-		EventName: "GROUP JOIN",
-		Data:      c.Username,
-	})
-
-	return ""
-}
-
-func (c *Client) QuitGroup() {
-	group := c.group
-	if group == nil {
-		return
-	}
-
-	group.mutex.Lock()
-	delete(group.clients, c.Username)
-	isEmpty := len(group.clients) == 0
-	if isEmpty {
-		group.clients = nil
-	}
-	group.mutex.Unlock()
-
-	c.group = nil
-	if !isEmpty {
-		group.BroadcastEvent(game_conn.EventFromGameServer{
-			Player:    c.Username,
-			EventName: "GROUP LEAVE",
-			Data:      c.Username,
-		})
-	}
-}
-
 func (c *Client) ReadEvent() game_conn.EventFromGameServer {
 	return <-c.eventChan
 }
