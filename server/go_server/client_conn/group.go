@@ -11,7 +11,7 @@ import (
 type Group struct {
 	clients map[string]*Client
 	mutex   sync.Mutex
-	id      string
+	Id      string
 	leader  string
 }
 
@@ -25,7 +25,7 @@ func NewGroup(leader string) (*Group, error) {
 	if err != nil {
 		return nil, err
 	}
-	group.id = id
+	group.Id = id
 
 	return &group, nil
 }
@@ -69,7 +69,7 @@ func (group *Group) GroupedClients() []*Client {
 }
 
 func (c *Client) JoinGroup(group *Group) string {
-	if c.group != nil {
+	if c.Group != nil {
 		return responseAlreadyInGroup
 	}
 	if group == nil {
@@ -84,7 +84,7 @@ func (c *Client) JoinGroup(group *Group) string {
 	group.clients[c.Username] = c
 	group.mutex.Unlock()
 
-	c.group = group
+	c.Group = group
 	group.BroadcastEvent(game_conn.EventFromGameServer{
 		Player:    c.Username,
 		EventName: "GROUP JOIN",
@@ -95,19 +95,19 @@ func (c *Client) JoinGroup(group *Group) string {
 }
 
 func (c *Client) QuitGroup() {
-	group := c.group
+	group := c.Group
 	if group == nil {
 		return
 	}
 
 	group.mutex.Lock()
 	if c.Username == group.leader {
-		clients := c.group.GroupedClients()
+		clients := c.Group.GroupedClients()
 		group.clients = nil
 		group.mutex.Unlock()
 
 		for _, client := range clients {
-			client.group = nil
+			client.Group = nil
 			if client != c {
 				client.eventChan <- game_conn.EventFromGameServer{
 					Player:    c.Username,
@@ -126,7 +126,7 @@ func (c *Client) QuitGroup() {
 	}
 	group.mutex.Unlock()
 
-	c.group = nil
+	c.Group = nil
 	if !isEmpty {
 		group.BroadcastEvent(game_conn.EventFromGameServer{
 			Player:    c.Username,

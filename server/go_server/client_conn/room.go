@@ -32,7 +32,7 @@ func (room *Room) SetUsername(client *Client, username string) string {
 	}
 
 	if _, ok := room.clients[username]; ok {
-		return responseUsernameAlreadyUsed
+		return ResponseUsernameAlreadyUsed
 	}
 	client.Username = username
 	client.State = AUTHENTICATED

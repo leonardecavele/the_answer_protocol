@@ -19,8 +19,8 @@ type Client struct {
 	Id          string
 	Username    string
 	State       ClientState
-	group       *Group
-	room        *Room
+	Group       *Group
+	Room        *Room
 	commandChan chan game_conn.CommandFromGameServer
 	eventChan   chan game_conn.EventFromGameServer
 	writeMutex  sync.Mutex
@@ -31,7 +31,7 @@ func NewClient(conn net.Conn, room *Room) *Client {
 		Conn:        conn,
 		Id:          conn.RemoteAddr().String(),
 		State:       CONNECTED,
-		room:        room,
+		Room:        room,
 		commandChan: make(chan game_conn.CommandFromGameServer, 16),
 		eventChan:   make(chan game_conn.EventFromGameServer, 16),
 	}
@@ -41,10 +41,10 @@ func (c *Client) DeleteClient(gameServer *game_conn.GameServerManager) error {
 	username := c.Username
 	state := c.State
 
-	if state == AUTHENTICATED && c.group != nil {
+	if state == AUTHENTICATED && c.Group != nil {
 		c.QuitGroup()
 	}
-	c.room.DeleteUsername(c)
+	c.Room.DeleteUsername(c)
 	closeErr := c.Conn.Close()
 
 	if state == AUTHENTICATED {

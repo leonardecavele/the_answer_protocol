@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"errors"
+	"go_server/client_conn/tap_commands"
 	"go_server/game_conn"
 	"go_server/logger"
 	"io"
@@ -18,7 +19,7 @@ func parseCommand(msg string) (string, string, string) {
 	}
 
 	command, args, _ := strings.Cut(msg, " ")
-	if _, ok := tapCommands[command]; ok {
+	if _, ok := tap_commands.tapCommands[command]; ok {
 		return command, args, ""
 	}
 
@@ -33,7 +34,7 @@ func handleTapCommand(str string, client *Client, gameServer *game_conn.GameServ
 		return response, nil
 	}
 
-	response, err := tapCommands[cmd](args, client, gameServer)
+	response, err := tap_commands.tapCommands[cmd](args, client, gameServer)
 	if err != nil {
 		return "", err
 	}
