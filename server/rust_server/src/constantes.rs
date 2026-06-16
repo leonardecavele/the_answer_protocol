@@ -11,7 +11,7 @@ pub enum TickResult {
     Exit,
 }
 
-pub type ExitDir = String;
+pub type Direction = String;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ErrorCode {

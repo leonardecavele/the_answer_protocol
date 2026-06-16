@@ -1,4 +1,4 @@
-use crate::constantes::ExitDir;
+use crate::constantes::Direction;
 use crate::inventory::Inventory;
 use crate::items::ItemId;
 use std::collections::HashMap;
@@ -7,18 +7,18 @@ pub type RoomName = String;
 pub struct Room {
     name: String,
     all_items: Inventory,
-    exits: HashMap<ExitDir, RoomName>,
+    exits: HashMap<Direction, RoomName>,
 }
 
 impl Room {
-    pub fn new(name: String, exits: HashMap<ExitDir, RoomName>) -> Self {
+    pub fn new(name: String, exits: HashMap<Direction, RoomName>) -> Self {
         Self {
             name,
             all_items: Inventory::new(),
             exits,
         }
     }
-    pub fn has_exit(&self, dir: ExitDir) -> bool {
+    pub fn has_exit(&self, dir: Direction) -> bool {
         self.exits.contains_key(&dir)
     }
     pub fn add_item(&mut self, item_id: ItemId) {
@@ -32,5 +32,8 @@ impl Room {
     }
     pub fn get_name(&self) -> &str {
         &self.name
+    }
+    pub fn get_neighbor_room_name(&self, dir: &Direction) -> Option<&RoomName> {
+        self.exits.get(dir)
     }
 }

@@ -1,3 +1,4 @@
+use crate::constantes::Direction;
 use crate::groups::GroupManager;
 use crate::items::{Item, ItemId};
 use crate::player::{Player, PlayerCount, PlayerId};
@@ -75,6 +76,14 @@ impl GameManager {
         let player_id = self.get_player_id(player_name);
         match player_id {
             Some(player_id) => self.get_player(*player_id),
+            _none => None,
+        }
+    }
+
+    pub fn get_mut_player_from_name(&mut self, player_name: &str) -> Option<&mut Player> {
+        let player_id = self.get_player_id(player_name).copied();
+        match player_id {
+            Some(player_id) => self.players.get_mut(&player_id),
             _none => None,
         }
     }
@@ -211,5 +220,17 @@ impl GameManager {
 
     pub fn item_exists(&self, item_id: ItemId) -> bool {
         return self.all_items.contains_key(&item_id);
+    }
+
+    pub fn get_neighbor_room_name(
+        &self,
+        room_name: &str,
+        direction: &Direction,
+    ) -> Option<&RoomName> {
+        let room = self.get_room(room_name);
+        match room {
+            Some(room) => room.get_neighbor_room_name(direction),
+            _none => None,
+        }
     }
 }

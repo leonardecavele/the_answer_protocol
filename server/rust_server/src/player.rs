@@ -2,6 +2,7 @@ use crate::groups::GroupId;
 use crate::inventory::Inventory;
 use crate::constantes::HARDCODED_PLAYER_ROOM;
 use crate::items::ItemId;
+use crate::room::RoomName;
 use std::collections::HashSet;
 
 pub type PlayerId = u32;
@@ -48,5 +49,8 @@ impl Player {
     }
     pub fn get_current_room(&self) -> &str {
         &self.current_room
+    }
+    pub fn move_to_room(&mut self, room: &RoomName) {
+        self.current_room = room.clone();
     }
 }
