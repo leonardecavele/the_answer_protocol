@@ -22,11 +22,11 @@ type CommandFromGameServer struct {
 	Player    string `json:"player"`
 	Command   string `json:"command"`
 	ErrorCode int    `json:"error_code"`
-	Value     string `json:"value"`
+	Data      string `json:"data"`
 }
 
 type EventFromGameServer struct {
 	Player    string `json:"player"`
 	EventName string `json:"event_name"`
-	Value     string `json:"value"`
+	Data      any    `json:"data"`
 }

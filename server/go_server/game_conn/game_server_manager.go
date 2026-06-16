@@ -69,7 +69,7 @@ func (manager *GameServerManager) HandleGameServer(
 	quit <-chan struct{},
 	reconnectPlayers func(*GameServerManager) error,
 	routeCommand func(username string, command string) bool,
-	routeEvent func(username string, event string) bool,
+	routeEvent func(username string, event EventFromGameServer) bool,
 ) {
 	addr := config.GameServerIP + ":" + strconv.Itoa(config.GameServerPort)
 

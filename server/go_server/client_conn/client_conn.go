@@ -2,14 +2,12 @@ package client_conn
 
 import (
 	"bufio"
+	"encoding/json"
 	"errors"
 	"go_server/game_conn"
+	"go_server/logger"
 	"io"
 	"strings"
-)
-
-import (
-	"go_server/logger"
 )
 
 func parseCommand(msg string) (string, string, string) {
@@ -43,17 +41,43 @@ func handleTapCommand(str string, client *Client, gameServer *game_conn.GameServ
 	return response, nil
 }
 
+func formatClientEvent(event game_conn.EventFromGameServer) (string, error) {
+	message := "EVT " + event.EventName
+	if event.Data == nil {
+		return message, nil
+	}
+
+	data, ok := event.Data.(string)
+	if !ok {
+		dataBytes, err := json.Marshal(event.Data)
+		if err != nil {
+			return "", err
+		}
+		data = string(dataBytes)
+	}
+
+	if data == "" {
+		return message, nil
+	}
+	return message + " " + data, nil
+}
+
 func handleClientEvents(client *Client, done <-chan struct{}) {
 	for {
 		select {
 		case <-done:
 			return
 		case event := <-client.eventChan:
-			if err := client.Write("EVT " + string(event)); err != nil {
+			message, err := formatClientEvent(event)
+			if err != nil {
+				logger.AppLogger.Error("%s Invalid event: %v\n", client.Id, err)
+				return
+			}
+			if err := client.Write(message); err != nil {
 				logger.AppLogger.Error("%s Write error: %v\n", client.Id, err)
 				return
 			}
-			logger.AppLogger.Info("%s Client Write: %s\n", client.Id, event)
+			logger.AppLogger.Info("%s Client Write: %s\n", client.Id, message)
 		}
 	}
 }

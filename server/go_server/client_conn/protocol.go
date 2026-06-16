@@ -49,3 +49,23 @@ var (
 	responseGroupNotFound = "ERR 404 GROUP_NOT_FOUND"
 	responseNoSuchGroup   = "ERR 404 NO_SUCH_GROUP"
 )
+
+//events
+var (
+	// Room.
+	eventRoomPresenceEnter = "EVT ROOM PRESENCE ENTER <username>"
+	eventRoomPresenceLeave = "EVT ROOM PRESENCE LEAVE <username>"
+	eventRoomChat          = "EVT ROOM CHAT <username> <message>"
+
+	// Global.
+	eventGlobalChat = "EVT GLOBAL CHAT <username> <message>"
+
+	// Group.
+	eventGroupInvite = "EVT GROUP INVITE <leader>"
+	eventGroupJoin   = "EVT GROUP JOIN <username>"
+	eventGroupLeave  = "EVT GROUP LEAVE <username>"
+	eventGroupChat   = "EVT GROUP CHAT <username> <message>"
+
+	// Stats.
+	eventStatsPlayers = "EVT STATS players=<count>"
+)

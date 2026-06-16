@@ -21,7 +21,7 @@ type Client struct {
 	State       ClientState
 	room        *Room
 	commandChan chan string
-	eventChan   chan string
+	eventChan   chan game_conn.EventFromGameServer
 	writeMutex  sync.Mutex
 }
 
@@ -32,7 +32,7 @@ func NewClient(conn net.Conn, room *Room) *Client {
 		State:       CONNECTED,
 		room:        room,
 		commandChan: make(chan string, 16),
-		eventChan:   make(chan string, 16),
+		eventChan:   make(chan game_conn.EventFromGameServer, 16),
 	}
 }
 
@@ -73,7 +73,7 @@ func (c *Client) EraseUsername() {
 	c.room.EraseUsername(c)
 }
 
-func (c *Client) ReadEvent() string {
+func (c *Client) ReadEvent() game_conn.EventFromGameServer {
 	return <-c.eventChan
 }
 

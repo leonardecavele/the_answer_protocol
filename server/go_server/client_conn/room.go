@@ -74,7 +74,7 @@ func (room *Room) RouteCommand(username string, command string) bool {
 	return true
 }
 
-func (room *Room) RouteEvent(username string, event string) bool {
+func (room *Room) RouteEvent(username string, event game_conn.EventFromGameServer) bool {
 	room.mutex.Lock()
 	client, ok := room.clients[strings.ToUpper(username)]
 	room.mutex.Unlock()

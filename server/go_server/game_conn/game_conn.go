@@ -153,7 +153,7 @@ func ReadMessageAsCommand(message string) (CommandFromGameServer, bool, error) {
 func (gameServer *GameServer) Read(
 	quit <-chan struct{},
 	routeCommand func(username string, command string) bool,
-	routeEvent func(username string, event string) bool,
+	routeEvent func(username string, event EventFromGameServer) bool,
 ) {
 	conn := gameServer.currentConn()
 	if conn == nil {
@@ -190,12 +190,7 @@ func (gameServer *GameServer) Read(
 		}
 		if ok && routeEvent != nil {
 			for _, gameEvent := range gameEvents {
-				eventMessage, err := json.Marshal(gameEvent)
-				if err != nil {
-					logger.AppLogger.Error("Game server invalid event: %v", err)
-					continue
-				}
-				routeEvent(gameEvent.Player, string(eventMessage))
+				routeEvent(gameEvent.Player, gameEvent)
 			}
 			continue
 		}
@@ -206,7 +201,7 @@ func (gameServer *GameServer) Read(
 			continue
 		}
 		if ok && routeEvent != nil {
-			routeEvent(gameEvent.Player, message)
+			routeEvent(gameEvent.Player, gameEvent)
 			continue
 		}
 
