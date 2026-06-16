@@ -22,20 +22,26 @@ func chatGroupScope(client *session.Client, message string) string {
 		return protocol.ResponseNotInGroup
 	}
 
-	client.Group.BroadcastEvent(protocol.Event{
-		Player:    client.Username,
-		EventName: "GROUP CHAT",
-		Data:      client.Username + " " + message,
-	})
+	client.Group.BroadcastEventExcept(
+		protocol.Event{
+			Player:    client.Username,
+			EventName: "GROUP CHAT",
+			Data:      client.Username + " " + message,
+		},
+		client,
+	)
 	return "OK"
 }
 
 func chatGlobalScope(client *session.Client, message string) string {
-	client.Room.BroadcastEvent(protocol.Event{
-		Player:    client.Username,
-		EventName: "GLOBAL CHAT",
-		Data:      client.Username + " " + message,
-	})
+	client.Room.BroadcastEventExcept(
+		protocol.Event{
+			Player:    client.Username,
+			EventName: "GLOBAL CHAT",
+			Data:      client.Username + " " + message,
+		},
+		client,
+	)
 
 	return "OK"
 }
