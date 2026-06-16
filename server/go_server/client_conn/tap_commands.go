@@ -80,7 +80,7 @@ func handleConnectCommand(args string, client *Client, gameServer *game_conn.Gam
 		return responseInvalidUsername, nil
 	}
 
-	if response := client.SetUsername(strings.ToUpper(args)); response != "" {
+	if response := client.room.SetUsername(client, strings.ToUpper(args)); response != "" {
 		return response, nil
 	}
 
@@ -236,22 +236,97 @@ var groupCommands = map[string]handleGroup{
 	"INVITE": groupInvite,
 	"JOIN":   groupJoin,
 	"LEAVE":  groupLeave,
+	"QUIT":   groupLeave,
 }
 
 func groupCreate(args string, client *Client, _ *game_conn.GameServerManager) (string, error) {
-	return "", nil
+	if client.State != AUTHENTICATED {
+		return responseNotConnected, nil
+	}
+	if args != "" {
+		return responseInvalidArguments, nil
+	}
+	if client.group != nil {
+		return responseAlreadyInGroup, nil
+	}
+
+	group, err := NewGroup()
+	if err != nil {
+		return "", err
+	}
+
+	if response := client.JoinGroup(group); response != "" {
+		return response, nil
+	}
+	return "OK group=" + group.id, nil
 }
 
 func groupInvite(args string, client *Client, _ *game_conn.GameServerManager) (string, error) {
-	return "", nil
+	if client.State != AUTHENTICATED {
+		return responseNotConnected, nil
+	}
+	if args == "" || strings.Contains(args, " ") {
+		return responseInvalidArguments, nil
+	}
+	if client.group == nil {
+		return responseNotInGroup, nil
+	}
+
+	invitedClient, ok := client.room.GetClient(args)
+	if !ok {
+		return responseNoSuchUser, nil
+	}
+	if invitedClient.group != nil {
+		return responseAlreadyInGroup, nil
+	}
+
+	client.room.RouteEvent(invitedClient.Username, game_conn.EventFromGameServer{
+		Player:    client.Username,
+		EventName: "GROUP INVITE",
+		Data:      client.Username,
+	})
+
+	return "OK", nil
 }
 
 func groupJoin(args string, client *Client, _ *game_conn.GameServerManager) (string, error) {
-	return "", nil
+	if client.State != AUTHENTICATED {
+		return responseNotConnected, nil
+	}
+	if args == "" || strings.Contains(args, " ") {
+		return responseInvalidArguments, nil
+	}
+	if client.group != nil {
+		return responseAlreadyInGroup, nil
+	}
+
+	leader, ok := client.room.GetClient(args)
+	if !ok {
+		return responseNoSuchUser, nil
+	}
+	if leader.group == nil {
+		return responseGroupNotFound, nil
+	}
+
+	if response := client.JoinGroup(leader.group); response != "" {
+		return response, nil
+	}
+	return "OK group=" + client.group.id, nil
 }
 
 func groupLeave(args string, client *Client, _ *game_conn.GameServerManager) (string, error) {
-	return "", nil
+	if client.State != AUTHENTICATED {
+		return responseNotConnected, nil
+	}
+	if args != "" {
+		return responseInvalidArguments, nil
+	}
+	if client.group == nil {
+		return responseNotInGroup, nil
+	}
+
+	client.QuitGroup()
+	return "OK", nil
 }
 
 func handleGroupCommand(args string, client *Client, gameServer *game_conn.GameServerManager) (string, error) {

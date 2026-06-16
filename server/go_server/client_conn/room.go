@@ -41,7 +41,7 @@ func (room *Room) SetUsername(client *Client, username string) string {
 	return ""
 }
 
-func (room *Room) EraseUsername(client *Client) {
+func (room *Room) DeleteUsername(client *Client) {
 	room.mutex.Lock()
 	if client.State == AUTHENTICATED {
 		delete(room.clients, client.Username)
@@ -59,6 +59,14 @@ func (room *Room) ConnectedUsernames() []string {
 	}
 
 	return usernames
+}
+
+func (room *Room) GetClient(username string) (*Client, bool) {
+	room.mutex.Lock()
+	client, ok := room.clients[strings.ToUpper(username)]
+	room.mutex.Unlock()
+
+	return client, ok
 }
 
 func (room *Room) RouteCommand(username string, command game_conn.CommandFromGameServer) bool {

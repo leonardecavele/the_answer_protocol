@@ -84,7 +84,7 @@ func handleClientEvents(client *Client, done <-chan struct{}) {
 
 func HandleClient(client *Client, gameServer *game_conn.GameServerManager) {
 	defer func() {
-		if err := client.EraseClient(gameServer); err != nil {
+		if err := client.DeleteClient(gameServer); err != nil {
 			logger.AppLogger.Error("%s Erase client error: %v\n", client.Id, err)
 		}
 	}()
