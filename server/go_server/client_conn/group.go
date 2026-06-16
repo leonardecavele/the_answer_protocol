@@ -12,11 +12,13 @@ type Group struct {
 	clients map[string]*Client
 	mutex   sync.Mutex
 	id      string
+	leader  string
 }
 
-func NewGroup() (*Group, error) {
+func NewGroup(leader string) (*Group, error) {
 	group := Group{
 		clients: make(map[string]*Client, config.GroupSize),
+		leader:  leader,
 	}
 
 	id, err := group.newId()
@@ -54,16 +56,16 @@ func (group *Group) newId() (string, error) {
 	return hex.EncodeToString(bytes), nil
 }
 
-func (group *Group) ConnectedUsernames() []string {
+func (group *Group) GroupedClients() []*Client {
 	group.mutex.Lock()
 	defer group.mutex.Unlock()
 
-	usernames := make([]string, 0, len(group.clients))
-	for username := range group.clients {
-		usernames = append(usernames, username)
+	clients := make([]*Client, 0, len(group.clients))
+	for _, client := range group.clients {
+		clients = append(clients, client)
 	}
 
-	return usernames
+	return clients
 }
 
 func (c *Client) JoinGroup(group *Group) string {
@@ -99,6 +101,24 @@ func (c *Client) QuitGroup() {
 	}
 
 	group.mutex.Lock()
+	if c.Username == group.leader {
+		clients := c.group.GroupedClients()
+		group.clients = nil
+		group.mutex.Unlock()
+
+		for _, client := range clients {
+			client.group = nil
+			if client != c {
+				client.eventChan <- game_conn.EventFromGameServer{
+					Player:    c.Username,
+					EventName: "GROUP LEAVE",
+					Data:      c.Username,
+				}
+			}
+		}
+		return
+	}
+
 	delete(group.clients, c.Username)
 	isEmpty := len(group.clients) == 0
 	if isEmpty {

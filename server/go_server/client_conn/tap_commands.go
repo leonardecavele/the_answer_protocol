@@ -250,7 +250,7 @@ func groupCreate(args string, client *Client, _ *game_conn.GameServerManager) (s
 		return responseAlreadyInGroup, nil
 	}
 
-	group, err := NewGroup()
+	group, err := NewGroup(client.Username)
 	if err != nil {
 		return "", err
 	}

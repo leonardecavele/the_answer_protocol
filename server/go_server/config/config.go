@@ -19,7 +19,7 @@ const (
 	RoomSize  = 20
 	GroupSize = 3
 
-	GameConnectionRetryDelay = 5
+	GameConnectionRetryDelay = 30
 
 	GameConfirmationMessage = "Duly noted."
 )
