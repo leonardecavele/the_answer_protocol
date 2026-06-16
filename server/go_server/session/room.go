@@ -62,6 +62,12 @@ func (room *Room) ConnectedUsernames() []string {
 	return usernames
 }
 
+func (room *Room) Count() int {
+	room.mutex.Lock()
+	defer room.mutex.Unlock()
+	return len(room.clients)
+}
+
 func (room *Room) GetClient(username string) (*Client, bool) {
 	room.mutex.Lock()
 	client, ok := room.clients[strings.ToUpper(username)]

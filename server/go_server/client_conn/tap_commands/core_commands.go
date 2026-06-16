@@ -75,7 +75,15 @@ func handleLookCommand(args string, client *session.Client, gameServer *game_con
 	return "OK " + response.Data, nil
 }
 
-func handleMoveCommand(args string, client *session.Client, _ *game_conn.GameServerManager) (string, error) {
+func handleMoveCommand(args string, client *session.Client, gameServer *game_conn.GameServerManager) (string, error) {
+	if client.State != session.AUTHENTICATED {
+		return protocol.ResponseNotConnected, nil
+	}
+
+	if !gameServer.IsConnected() {
+		return protocol.ResponseGameServerClosed, nil
+	}
+
 	return "", nil
 }
 

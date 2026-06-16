@@ -4,6 +4,7 @@ import (
 	"go_server/game_conn"
 	"go_server/protocol"
 	"go_server/session"
+	"strconv"
 	"strings"
 )
 
@@ -90,5 +91,13 @@ func handleChatCommand(args string, client *session.Client, _ *game_conn.GameSer
 }
 
 func handleWhoCommand(args string, client *session.Client, _ *game_conn.GameServerManager) (string, error) {
-	return "", nil
+	if client.State != session.AUTHENTICATED {
+		return protocol.ResponseNotConnected, nil
+	}
+
+	if args != "" {
+		return protocol.ResponseInvalidArguments, nil
+	}
+
+	return "OK " + "players=" + strconv.Itoa(client.Room.Count()), nil
 }
