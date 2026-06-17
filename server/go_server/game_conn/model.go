@@ -3,7 +3,7 @@ package game_conn
 type CommandToGameServer struct {
 	Player    string `json:"player"`
 	Command   string `json:"command"`
-	Arguments string `json:"arguments"`
+	Arguments string `json:"data"`
 }
 
 type CommandFromGameServer struct {
