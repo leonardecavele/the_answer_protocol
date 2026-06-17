@@ -37,8 +37,33 @@ func handleTakeCommand(args string, client *session.Client, gameServer *game_con
 	return "OK " + "taken=" + response.Data, nil
 }
 
-func handleDropCommand(args string, client *session.Client, _ *game_conn.GameServerManager) (string, error) {
-	return "", nil
+func handleDropCommand(args string, client *session.Client, gameServer *game_conn.GameServerManager) (string, error) {
+	if !gameServer.IsConnected() {
+		return protocol.ResponseGameServerClosed, nil
+	}
+
+	if client.State != session.AUTHENTICATED {
+		return protocol.ResponseNotConnected, nil
+	}
+
+	if strings.Contains(args, " ") || args == "" {
+		return protocol.ResponseInvalidArguments, nil
+	}
+
+	if err := gameServer.WriteCommand(game_conn.CommandToGameServer{
+		Player:    client.Username,
+		Command:   "DROP",
+		Arguments: args,
+	}); err != nil {
+		return "", err
+	}
+
+	response := client.ReadCommand()
+	if errorResponse := serverError.HandleGameCommandError(response.ErrorCode); errorResponse != "" {
+		return errorResponse, nil
+	}
+
+	return "OK " + "dropped=" + response.Data, nil
 }
 
 func handleInventoryCommand(args string, client *session.Client, _ *game_conn.GameServerManager) (string, error) {
