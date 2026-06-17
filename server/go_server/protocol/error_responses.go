@@ -10,32 +10,19 @@ func ResponseError(errorCode int, message string) string {
 	return fmt.Sprintf("ERR %03d %s", errorCode, message)
 }
 
-// Connection
 var (
-	ResponseGameServerClosed = ResponseError(serverError.GameServerClosedError, "GAME_SERVER_UNAVAILABLE")
-)
-
-// Client/session validation
-var (
-	ResponseNotConnected     = ResponseError(serverError.NotConnectedError, "NOT_CONNECTED")
-	ResponseAlreadyConnected = ResponseError(serverError.AlreadyConnectedError, "ALREADY_CONNECTED")
-	ResponseInvalidUsername  = ResponseError(serverError.InvalidUsernameError, "INVALID_USERNAME")
-	ResponseRoomFull         = ResponseError(serverError.RoomFullError, "ROOM_FULL")
-	ResponseGroupFull        = ResponseError(serverError.GroupFullError, "GROUP_FULL")
-)
-
-// Command validation
-var (
-	ResponseEmptyCommand     = ResponseError(serverError.EmptyCommandError, "EMPTY_COMMAND")
-	ResponseCommandNotFound  = ResponseError(serverError.CommandNotFoundError, "COMMAND_NOT_FOUND")
-	ResponseInvalidArguments = ResponseError(serverError.InvalidArgumentsError, "INVALID_ARGUMENTS")
-	ResponseInvalidScope     = ResponseError(serverError.InvalidScopeError, "INVALID_SCOPE")
-	ResponseInvalidQuestion  = ResponseError(serverError.InvalidQuestionError, "INVALID_QUESTION")
-	ResponseInvalidCommand   = ResponseError(serverError.InvalidCommandError, "INVALID_COMMAND")
-)
-
-// RFC 42TAP standard errors
-var (
+	ResponseGameServerClosed    = ResponseError(serverError.GameServerClosedError, "GAME_SERVER_UNAVAILABLE")
+	ResponseNotConnected        = ResponseError(serverError.NotConnectedError, "NOT_CONNECTED")
+	ResponseAlreadyConnected    = ResponseError(serverError.AlreadyConnectedError, "ALREADY_CONNECTED")
+	ResponseInvalidUsername     = ResponseError(serverError.InvalidUsernameError, "INVALID_USERNAME")
+	ResponseRoomFull            = ResponseError(serverError.RoomFullError, "ROOM_FULL")
+	ResponseGroupFull           = ResponseError(serverError.GroupFullError, "GROUP_FULL")
+	ResponseEmptyCommand        = ResponseError(serverError.EmptyCommandError, "EMPTY_COMMAND")
+	ResponseCommandNotFound     = ResponseError(serverError.CommandNotFoundError, "COMMAND_NOT_FOUND")
+	ResponseInvalidArguments    = ResponseError(serverError.InvalidArgumentsError, "INVALID_ARGUMENTS")
+	ResponseInvalidScope        = ResponseError(serverError.InvalidScopeError, "INVALID_SCOPE")
+	ResponseInvalidQuestion     = ResponseError(serverError.InvalidQuestionError, "INVALID_QUESTION")
+	ResponseInvalidCommand      = ResponseError(serverError.InvalidCommandError, "INVALID_COMMAND")
 	ResponseUsernameAlreadyUsed = ResponseError(serverError.NameInUseError, "NAME_IN_USE")
 	ResponseNoExit              = ResponseError(serverError.NoExitError, "NO_EXIT")
 	ResponseNotInGroup          = ResponseError(serverError.NotInGroupError, "NOT_IN_GROUP")
@@ -47,15 +34,11 @@ var (
 	ResponseNoQuestAvailable    = ResponseError(serverError.NoQuestAvailableError, "NO_QUEST_AVAILABLE")
 	ResponseConnectionFailed    = ResponseError(serverError.ConnectionFailedError, "CONNECTION_FAILED")
 	ResponseSendFailed          = ResponseError(serverError.SendFailedError, "SEND_FAILED")
-)
-
-// TAP documented extension errors
-var (
-	ResponseNoSuchUser     = ResponseError(serverError.NoSuchUserError, "NO_SUCH_USER")
-	ResponseNotInvited     = ResponseError(serverError.NotInvitedError, "NOT_INVITED")
-	ResponseNotGroupLeader = ResponseError(serverError.NotGroupLeaderError, "NOT_GROUP_LEADER")
-	ResponseGroupNotFound  = ResponseError(serverError.GroupNotFoundError, "GROUP_NOT_FOUND")
-	ResponseNoSuchGroup    = ResponseError(serverError.NoSuchGroupError, "NO_SUCH_GROUP")
+	ResponseNoSuchUser          = ResponseError(serverError.NoSuchUserError, "NO_SUCH_USER")
+	ResponseNotInvited          = ResponseError(serverError.NotInvitedError, "NOT_INVITED")
+	ResponseNotGroupLeader      = ResponseError(serverError.NotGroupLeaderError, "NOT_GROUP_LEADER")
+	ResponseGroupNotFound       = ResponseError(serverError.GroupNotFoundError, "GROUP_NOT_FOUND")
+	ResponseNoSuchGroup         = ResponseError(serverError.NoSuchGroupError, "NO_SUCH_GROUP")
 )
 
 var ErrorResponseByCommand = map[string]map[int]string{
@@ -204,7 +187,7 @@ var ErrorResponseByCommand = map[string]map[int]string{
 	},
 }
 
-func HandleGameCommandError(command string, errorCode int) string {
+func HandleCommandError(command string, errorCode int) string {
 	if responsesByCode, ok := ErrorResponseByCommand[strings.ToUpper(command)]; ok {
 		if response, ok := responsesByCode[errorCode]; ok {
 			return response
