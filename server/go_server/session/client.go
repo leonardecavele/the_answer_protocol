@@ -51,7 +51,6 @@ func (c *Client) DeleteClient(gameServer *game_conn.GameServerManager) error {
 		IgnoredPlayers: []string{username},
 		EmittedBy:      username,
 		EventName:      "QUIT",
-		Data:           username,
 	})
 
 	c.Room.DeleteUsername(c)

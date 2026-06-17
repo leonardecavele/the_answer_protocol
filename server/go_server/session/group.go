@@ -147,7 +147,6 @@ func (c *Client) JoinGroup(group *Group) string {
 		IgnoredPlayers: []string{c.Username},
 		EmittedBy:      c.Username,
 		EventName:      "GROUP JOIN",
-		Data:           c.Username,
 	})
 
 	return ""

@@ -44,7 +44,6 @@ func handleConnectCommand(args string, client *session.Client, gameServer *game_
 		IgnoredPlayers: []string{client.Username},
 		EmittedBy:      client.Username,
 		EventName:      "CONNECT",
-		Data:           client.Username,
 	})
 
 	return protocol.ResponseConnected, nil

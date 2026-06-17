@@ -28,7 +28,7 @@ func chatGroupScope(client *session.Client, message string, _ *game_conn.GameSer
 		IgnoredPlayers: []string{client.Username},
 		EmittedBy:      client.Username,
 		EventName:      "GROUP CHAT",
-		Data:           client.Username + " " + message,
+		Data:           message,
 	})
 	return "OK", nil
 }
@@ -38,7 +38,7 @@ func chatGlobalScope(client *session.Client, message string, _ *game_conn.GameSe
 		IgnoredPlayers: []string{client.Username},
 		EmittedBy:      client.Username,
 		EventName:      "GLOBAL CHAT",
-		Data:           client.Username + " " + message,
+		Data:           message,
 	})
 
 	return "OK", nil
@@ -80,7 +80,7 @@ func chatRoomScope(client *session.Client, message string, server *game_conn.Gam
 			IgnoredPlayers: []string{},
 			EmittedBy:      client.Username,
 			EventName:      "ROOM CHAT",
-			Data:           client.Username + " " + message,
+			Data:           message,
 		})
 	}
 
@@ -98,7 +98,7 @@ func chatPrivateScope(client *session.Client, message string, _ *game_conn.GameS
 		IgnoredPlayers: []string{},
 		EmittedBy:      client.Username,
 		EventName:      "PRIVATE CHAT",
-		Data:           client.Username + " " + privateMessage,
+		Data:           privateMessage,
 	})
 	if !ok {
 		return protocol.ResponseNoSuchUser, nil

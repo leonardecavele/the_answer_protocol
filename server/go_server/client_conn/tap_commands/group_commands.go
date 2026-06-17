@@ -63,7 +63,6 @@ func groupInvite(args string, client *session.Client, _ *game_conn.GameServerMan
 		IgnoredPlayers: []string{},
 		EmittedBy:      client.Username,
 		EventName:      "GROUP INVITE",
-		Data:           client.Username,
 	})
 
 	return "OK", nil
