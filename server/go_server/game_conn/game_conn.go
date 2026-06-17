@@ -49,7 +49,7 @@ func ConnectToGameServer(addr string, quit <-chan struct{}) *GameServer {
 	}
 }
 
-func ReadMessageAsEvents(message string) ([]protocol.Event, bool, error) {
+func ReadMessageAsEvent(message string) ([]protocol.Event, bool, error) {
 	var gameEvents []protocol.Event
 
 	if err := json.Unmarshal([]byte(message), &gameEvents); err != nil {
@@ -71,20 +71,6 @@ func ReadMessageAsEvents(message string) ([]protocol.Event, bool, error) {
 	}
 
 	return gameEvents, true, nil
-}
-
-func ReadMessageAsEvent(message string) (protocol.Event, bool, error) {
-	var gameEvent protocol.Event
-
-	if err := json.Unmarshal([]byte(message), &gameEvent); err != nil {
-		return protocol.Event{}, false, err
-	}
-
-	if gameEvent.Player == "" || gameEvent.EventName == "" {
-		return protocol.Event{}, false, nil
-	}
-
-	return gameEvent, true, nil
 }
 
 func ReadMessageAsCommand(message string) (CommandFromGameServer, bool, error) {
