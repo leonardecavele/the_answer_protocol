@@ -3,6 +3,7 @@ package game_conn
 import (
 	"go_server/config"
 	serverError "go_server/error"
+	"go_server/helper"
 	"go_server/logger"
 	"go_server/protocol"
 	"strconv"
@@ -10,8 +11,9 @@ import (
 )
 
 type GameServerManager struct {
-	mutex      sync.RWMutex
-	gameServer *GameServer
+	mutex           sync.RWMutex
+	gameServer      *GameServer
+	questionManager *QuestionManager
 }
 
 func (manager *GameServerManager) getGameServer() *GameServer {
@@ -48,6 +50,17 @@ func (manager *GameServerManager) IsConnected() bool {
 	return manager.getGameServer() != nil
 }
 
+func (manager *GameServerManager) resolveQuestion(answer AnswerFromGameServer) bool {
+	manager.mutex.Lock()
+	if manager.questionManager == nil {
+		manager.questionManager = NewQuestionManager()
+	}
+	questionManager := manager.questionManager
+	manager.mutex.Unlock()
+
+	return questionManager.Resolve(answer)
+}
+
 func (manager *GameServerManager) Write(message string) error {
 	gameServer := manager.getGameServer()
 	if gameServer == nil {
@@ -66,11 +79,50 @@ func (manager *GameServerManager) WriteCommand(command any) error {
 	return gameServer.WriteCommand(command)
 }
 
+func (manager *GameServerManager) WriteQuestion(question QuestionToGameServer) error {
+	gameServer := manager.getGameServer()
+	if gameServer == nil {
+		return serverError.ErrGameServerNotConnected
+	}
+
+	return gameServer.WriteQuestion(question)
+}
+
+func (manager *GameServerManager) AskQuestion(question QuestionToGameServer) (AnswerFromGameServer, error) {
+	if question.Id == "" {
+		id, err := helper.NewID()
+		if err != nil {
+			return AnswerFromGameServer{}, err
+		}
+		question.Id = id
+	}
+
+	manager.mutex.Lock()
+	if manager.questionManager == nil {
+		manager.questionManager = NewQuestionManager()
+	}
+	questionManager := manager.questionManager
+	manager.mutex.Unlock()
+
+	answerChan, err := questionManager.Subscribe(question.Id)
+	if err != nil {
+		return AnswerFromGameServer{}, err
+	}
+	defer questionManager.Unsubscribe(question.Id)
+
+	if err := manager.WriteQuestion(question); err != nil {
+		return AnswerFromGameServer{}, err
+	}
+
+	return <-answerChan, nil
+}
+
 func (manager *GameServerManager) HandleGameServer(
 	quit <-chan struct{},
 	reconnectPlayers func(*GameServerManager) error,
 	routeCommand func(username string, command CommandFromGameServer) bool,
 	routeEvent func(username string, event protocol.Event) bool,
+	broadcastEvent func(event protocol.Event),
 ) {
 	addr := config.GameServerIP + ":" + strconv.Itoa(config.GameServerPort)
 
@@ -106,7 +158,7 @@ func (manager *GameServerManager) HandleGameServer(
 			}
 		}()
 
-		gameServer.Read(quit, routeCommand, routeEvent)
+		gameServer.Read(quit, routeCommand, routeEvent, broadcastEvent, manager.resolveQuestion)
 		close(stopClosingGameServer)
 
 		manager.ClearServer(gameServer)

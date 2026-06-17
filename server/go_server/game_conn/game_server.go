@@ -72,10 +72,16 @@ func (gameServer *GameServer) WriteCommand(command any) error {
 	return err
 }
 
+func (gameServer *GameServer) WriteQuestion(question QuestionToGameServer) error {
+	return gameServer.WriteCommand(question)
+}
+
 func (gameServer *GameServer) Read(
 	quit <-chan struct{},
 	routeCommand func(username string, command CommandFromGameServer) bool,
 	routeEvent func(username string, event protocol.Event) bool,
+	broadcastEvent func(event protocol.Event),
+	answerQuestion func(answer AnswerFromGameServer) bool,
 ) {
 	conn := gameServer.currentConn()
 	if conn == nil {
@@ -105,25 +111,34 @@ func (gameServer *GameServer) Read(
 			continue
 		}
 
-		gameEvents, ok, err := ReadMessageAsEvents(message)
+		gameEvents, ok, err := ReadMessageAsEvent(message)
 		if err != nil {
 			logger.AppLogger.Error("Game server invalid message: %v", err)
 			continue
 		}
-		if ok && routeEvent != nil {
+		if ok && (routeEvent != nil || broadcastEvent != nil) {
 			for _, gameEvent := range gameEvents {
+				if gameEvent.Player == "*" && broadcastEvent != nil {
+					broadcastEvent(gameEvent)
+					continue
+				}
+				if routeEvent == nil {
+					continue
+				}
 				routeEvent(gameEvent.Player, gameEvent)
 			}
 			continue
 		}
 
-		gameEvent, ok, err := ReadMessageAsEvent(message)
+		gameAnswer, ok, err := ReadMessageAsQuestion(message)
 		if err != nil {
 			logger.AppLogger.Error("Game server invalid message: %v", err)
 			continue
 		}
-		if ok && routeEvent != nil {
-			routeEvent(gameEvent.Player, gameEvent)
+		if ok {
+			if answerQuestion != nil {
+				answerQuestion(gameAnswer)
+			}
 			continue
 		}
 

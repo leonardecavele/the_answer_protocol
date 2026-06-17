@@ -40,13 +40,13 @@ func handleConnectCommand(args string, client *session.Client, gameServer *game_
 		return "", err
 	}
 
-	client.Room.BroadcastEventExcept(
-		protocol.Event{
-			EventName: "CONNECT",
-			Data:      client.Username,
-		},
-		client,
-	)
+	client.Room.BroadcastEvent(protocol.Event{
+		Player:         "*",
+		IgnoredPlayers: []string{client.Username},
+		EmittedBy:      client.Username,
+		EventName:      "CONNECT",
+		Data:           client.Username,
+	})
 
 	return protocol.ResponseConnected, nil
 }
@@ -106,11 +106,14 @@ func handleMoveCommand(args string, client *session.Client, gameServer *game_con
 	}
 
 	event := protocol.Event{
-		EventName: "MOVE",
-		Data:      args + " " + client.Username,
+		Player:         "*",
+		IgnoredPlayers: []string{client.Username},
+		EmittedBy:      client.Username,
+		EventName:      "MOVE",
+		Data:           args + " " + client.Username,
 	}
 
-	client.Room.BroadcastEventExcept(event, client)
+	client.Room.BroadcastEvent(event)
 
 	if client.Group != nil {
 		clients := client.Group.GroupedClients()
@@ -119,8 +122,11 @@ func handleMoveCommand(args string, client *session.Client, gameServer *game_con
 				continue
 			}
 			client.Room.RouteEvent(c.Username, protocol.Event{
-				EventName: "MOVE",
-				Data:      args + " " + c.Username,
+				Player:         c.Username,
+				IgnoredPlayers: []string{},
+				EmittedBy:      client.Username,
+				EventName:      "MOVE",
+				Data:           args + " " + c.Username,
 			})
 		}
 	}

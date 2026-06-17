@@ -63,6 +63,7 @@ func main() {
 		room.ReconnectPlayersToGameServer,
 		room.RouteCommand,
 		room.RouteEvent,
+		room.BroadcastEvent,
 	)
 
 	listener, listenErr := net.Listen("tcp", ":"+strconv.Itoa(config.GoServerPort))
