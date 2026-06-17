@@ -160,13 +160,6 @@ func (c *Client) QuitGroup() {
 
 		for _, client := range clients {
 			client.Group = nil
-			if client != c {
-				client.eventChan <- protocol.Event{
-					EmittedBy: c.Username,
-					EventName: "GROUP LEAVE",
-					Data:      c.Username,
-				}
-			}
 		}
 		return
 	}
@@ -179,15 +172,4 @@ func (c *Client) QuitGroup() {
 	group.mutex.Unlock()
 
 	c.Group = nil
-	if !isEmpty {
-		group.BroadcastEvent(protocol.EventBatch{
-			Events: []protocol.Event{
-				{
-					EmittedBy: c.Username,
-					EventName: "GROUP LEAVE",
-					Data:      c.Username,
-				},
-			},
-		})
-	}
 }

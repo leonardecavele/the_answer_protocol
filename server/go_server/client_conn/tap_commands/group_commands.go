@@ -99,7 +99,17 @@ func groupLeave(args string, client *session.Client, gameServer *game_conn.GameS
 		return protocol.ResponseNotInGroup, nil
 	}
 
+	groupedClients := client.Group.GroupedClients()
 	client.QuitGroup()
+	for _, groupedClient := range groupedClients {
+		if groupedClient == client {
+			continue
+		}
+		client.Room.RouteEvent(groupedClient.Username, protocol.Event{
+			EmittedBy: client.Username,
+			EventName: "GROUP LEAVE",
+		})
+	}
 	return "OK", nil
 }
 
