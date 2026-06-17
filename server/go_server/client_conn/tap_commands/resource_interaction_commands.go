@@ -94,23 +94,145 @@ func handleInventoryCommand(args string, client *session.Client, gameServer *gam
 	return "OK " + response.Data, nil
 }
 
-func handleTalkCommand(args string, client *session.Client, _ *game_conn.GameServerManager) (string, error) {
-	return "", nil
+func handleTalkCommand(args string, client *session.Client, gameServer *game_conn.GameServerManager) (string, error) {
+	if !gameServer.IsConnected() {
+		return protocol.ResponseGameServerClosed, nil
+	}
+
+	if client.State != session.AUTHENTICATED {
+		return protocol.ResponseNotConnected, nil
+	}
+
+	if strings.Contains(args, " ") || args == "" {
+		return protocol.ResponseInvalidArguments, nil
+	}
+
+	if err := gameServer.WriteCommand(game_conn.CommandToGameServer{
+		Player:    client.Username,
+		Command:   "TALK",
+		Arguments: args,
+	}); err != nil {
+		return "", err
+	}
+
+	response := client.ReadCommand()
+	if errorResponse := serverError.HandleGameCommandError(response.ErrorCode); errorResponse != "" {
+		return errorResponse, nil
+	}
+
+	return "OK " + response.Data, nil
 }
 
-func handleAttackCommand(args string, client *session.Client, _ *game_conn.GameServerManager) (string, error) {
-	return "", nil
+func handleAttackCommand(args string, client *session.Client, gameServer *game_conn.GameServerManager) (string, error) {
+	if !gameServer.IsConnected() {
+		return protocol.ResponseGameServerClosed, nil
+	}
+
+	if client.State != session.AUTHENTICATED {
+		return protocol.ResponseNotConnected, nil
+	}
+
+	if strings.Contains(args, " ") || args == "" {
+		return protocol.ResponseInvalidArguments, nil
+	}
+
+	if err := gameServer.WriteCommand(game_conn.CommandToGameServer{
+		Player:    client.Username,
+		Command:   "ATTACK",
+		Arguments: args,
+	}); err != nil {
+		return "", err
+	}
+
+	response := client.ReadCommand()
+	if errorResponse := serverError.HandleGameCommandError(response.ErrorCode); errorResponse != "" {
+		return errorResponse, nil
+	}
+
+	return "OK " + response.Data, nil
 }
 
-func handleStatusCommand(args string, client *session.Client, _ *game_conn.GameServerManager) (string, error) {
-	return "", nil
+func handleStatusCommand(args string, client *session.Client, gameServer *game_conn.GameServerManager) (string, error) {
+	if !gameServer.IsConnected() {
+		return protocol.ResponseGameServerClosed, nil
+	}
+
+	if client.State != session.AUTHENTICATED {
+		return protocol.ResponseNotConnected, nil
+	}
+
+	if args != "" {
+		return protocol.ResponseInvalidArguments, nil
+	}
+
+	if err := gameServer.WriteCommand(game_conn.CommandToGameServer{
+		Player:  client.Username,
+		Command: "STATUS",
+	}); err != nil {
+		return "", err
+	}
+
+	response := client.ReadCommand()
+	if errorResponse := serverError.HandleGameCommandError(response.ErrorCode); errorResponse != "" {
+		return errorResponse, nil
+	}
+
+	return "OK " + response.Data, nil
 }
 
-func handleQuestCommand(args string, client *session.Client, _ *game_conn.GameServerManager) (string, error) {
-	// grouped
-	return "", nil
+func handleQuestCommand(args string, client *session.Client, gameServer *game_conn.GameServerManager) (string, error) {
+	if !gameServer.IsConnected() {
+		return protocol.ResponseGameServerClosed, nil
+	}
+
+	if client.State != session.AUTHENTICATED {
+		return protocol.ResponseNotConnected, nil
+	}
+
+	if strings.Contains(args, " ") || args == "" {
+		return protocol.ResponseInvalidArguments, nil
+	}
+
+	if err := gameServer.WriteCommand(game_conn.CommandToGameServer{
+		Player:    client.Username,
+		Command:   "QUEST",
+		Arguments: args,
+	}); err != nil {
+		return "", err
+	}
+
+	response := client.ReadCommand()
+	if errorResponse := serverError.HandleGameCommandError(response.ErrorCode); errorResponse != "" {
+		return errorResponse, nil
+	}
+
+	return "OK " + response.Data, nil
 }
 
-func handleQuestsCommand(args string, client *session.Client, _ *game_conn.GameServerManager) (string, error) {
-	return "", nil
+func handleQuestsCommand(args string, client *session.Client, gameServer *game_conn.GameServerManager) (string, error) {
+	if !gameServer.IsConnected() {
+		return protocol.ResponseGameServerClosed, nil
+	}
+
+	if client.State != session.AUTHENTICATED {
+		return protocol.ResponseNotConnected, nil
+	}
+
+	if args != "" {
+		return protocol.ResponseInvalidArguments, nil
+	}
+
+	if err := gameServer.WriteCommand(game_conn.CommandToGameServer{
+		Player:  client.Username,
+		Command: "QUESTS",
+	}); err != nil {
+		return "", err
+	}
+
+	response := client.ReadCommand()
+	if errorResponse := serverError.HandleGameCommandError(response.ErrorCode); errorResponse != "" {
+		return errorResponse, nil
+	}
+
+	return "OK " + response.Data, nil
 }
