@@ -62,7 +62,6 @@ func main() {
 		quit,
 		room.ReconnectPlayersToGameServer,
 		room.RouteCommand,
-		room.RouteEvent,
 		room.BroadcastEvent,
 	)
 

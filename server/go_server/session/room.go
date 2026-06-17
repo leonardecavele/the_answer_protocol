@@ -91,9 +91,6 @@ func (room *Room) RouteCommand(username string, command game_conn.CommandFromGam
 
 func (room *Room) RouteEvent(username string, event protocol.Event) bool {
 	username = strings.ToUpper(username)
-	if len(event.Players) == 0 {
-		event.Players = []string{username}
-	}
 
 	room.mutex.Lock()
 	client, ok := room.clients[username]
@@ -107,35 +104,23 @@ func (room *Room) RouteEvent(username string, event protocol.Event) bool {
 	return true
 }
 
-func (room *Room) BroadcastEvent(event protocol.Event) {
-	ignored := make(map[string]struct{}, len(event.IgnoredPlayers))
-	for _, username := range event.IgnoredPlayers {
-		ignored[strings.ToUpper(username)] = struct{}{}
+func (room *Room) BroadcastEvent(eventBatch protocol.EventBatch) {
+	ignored := make(map[string]struct{}, len(eventBatch.IgnoredPlayers))
+	for _, username := range eventBatch.IgnoredPlayers {
+		username = strings.ToUpper(strings.TrimSpace(username))
+		if username != "" {
+			ignored[username] = struct{}{}
+		}
 	}
 
+	target := strings.ToUpper(strings.TrimSpace(eventBatch.Player))
 	room.mutex.Lock()
 	clients := make([]*Client, 0, len(room.clients))
-	players := make([]string, 0, len(room.clients))
-	if len(event.Players) > 0 {
-		seen := make(map[string]struct{}, len(event.Players))
-		for _, username := range event.Players {
-			username = strings.ToUpper(strings.TrimSpace(username))
-			if username == "" {
-				continue
+	if target != "" {
+		if _, ok := ignored[target]; !ok {
+			if client, ok := room.clients[target]; ok {
+				clients = append(clients, client)
 			}
-			if _, ok := ignored[username]; ok {
-				continue
-			}
-			if _, ok := seen[username]; ok {
-				continue
-			}
-			client, ok := room.clients[username]
-			if !ok {
-				continue
-			}
-			seen[username] = struct{}{}
-			clients = append(clients, client)
-			players = append(players, username)
 		}
 	} else {
 		for username, client := range room.clients {
@@ -143,14 +128,14 @@ func (room *Room) BroadcastEvent(event protocol.Event) {
 				continue
 			}
 			clients = append(clients, client)
-			players = append(players, username)
 		}
 	}
 	room.mutex.Unlock()
 
-	event.Players = players
 	for _, client := range clients {
-		client.eventChan <- event
+		for _, event := range eventBatch.Events {
+			client.eventChan <- event
+		}
 	}
 }
 

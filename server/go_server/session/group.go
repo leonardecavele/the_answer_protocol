@@ -35,35 +35,23 @@ func NewGroup(leader *Client) (*Group, error) {
 	return &group, nil
 }
 
-func (group *Group) BroadcastEvent(event protocol.Event) {
-	ignored := make(map[string]struct{}, len(event.IgnoredPlayers))
-	for _, username := range event.IgnoredPlayers {
-		ignored[strings.ToUpper(username)] = struct{}{}
+func (group *Group) BroadcastEvent(eventBatch protocol.EventBatch) {
+	ignored := make(map[string]struct{}, len(eventBatch.IgnoredPlayers))
+	for _, username := range eventBatch.IgnoredPlayers {
+		username = strings.ToUpper(strings.TrimSpace(username))
+		if username != "" {
+			ignored[username] = struct{}{}
+		}
 	}
 
+	target := strings.ToUpper(strings.TrimSpace(eventBatch.Player))
 	group.mutex.Lock()
 	clients := make([]*Client, 0, len(group.clients))
-	players := make([]string, 0, len(group.clients))
-	if len(event.Players) > 0 {
-		seen := make(map[string]struct{}, len(event.Players))
-		for _, username := range event.Players {
-			username = strings.ToUpper(strings.TrimSpace(username))
-			if username == "" {
-				continue
+	if target != "" {
+		if _, ok := ignored[target]; !ok {
+			if client, ok := group.clients[target]; ok {
+				clients = append(clients, client)
 			}
-			if _, ok := ignored[username]; ok {
-				continue
-			}
-			if _, ok := seen[username]; ok {
-				continue
-			}
-			client, ok := group.clients[username]
-			if !ok {
-				continue
-			}
-			seen[username] = struct{}{}
-			clients = append(clients, client)
-			players = append(players, username)
 		}
 	} else {
 		for username, client := range group.clients {
@@ -71,14 +59,14 @@ func (group *Group) BroadcastEvent(event protocol.Event) {
 				continue
 			}
 			clients = append(clients, client)
-			players = append(players, username)
 		}
 	}
 	group.mutex.Unlock()
 
-	event.Players = players
 	for _, client := range clients {
-		client.eventChan <- event
+		for _, event := range eventBatch.Events {
+			client.eventChan <- event
+		}
 	}
 }
 
@@ -174,11 +162,9 @@ func (c *Client) QuitGroup() {
 			client.Group = nil
 			if client != c {
 				client.eventChan <- protocol.Event{
-					Players:        []string{client.Username},
-					IgnoredPlayers: []string{c.Username},
-					EmittedBy:      c.Username,
-					EventName:      "GROUP LEAVE",
-					Data:           c.Username,
+					EmittedBy: c.Username,
+					EventName: "GROUP LEAVE",
+					Data:      c.Username,
 				}
 			}
 		}
@@ -194,11 +180,14 @@ func (c *Client) QuitGroup() {
 
 	c.Group = nil
 	if !isEmpty {
-		group.BroadcastEvent(protocol.Event{
-			IgnoredPlayers: []string{},
-			EmittedBy:      c.Username,
-			EventName:      "GROUP LEAVE",
-			Data:           c.Username,
+		group.BroadcastEvent(protocol.EventBatch{
+			Events: []protocol.Event{
+				{
+					EmittedBy: c.Username,
+					EventName: "GROUP LEAVE",
+					Data:      c.Username,
+				},
+			},
 		})
 	}
 }

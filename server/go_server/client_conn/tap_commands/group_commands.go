@@ -53,10 +53,8 @@ func groupInvite(args string, client *session.Client, gameServer *game_conn.Game
 	}
 
 	client.Room.RouteEvent(invitedClient.Username, protocol.Event{
-		Players:        []string{invitedClient.Username},
-		IgnoredPlayers: []string{},
-		EmittedBy:      client.Username,
-		EventName:      "GROUP INVITE",
+		EmittedBy: client.Username,
+		EventName: "GROUP INVITE",
 	})
 
 	return "OK", nil
@@ -81,10 +79,14 @@ func groupJoin(args string, client *session.Client, gameServer *game_conn.GameSe
 	if response := client.JoinGroup(groupMember.Group); response != "" {
 		return response, nil
 	}
-	client.Group.BroadcastEvent(protocol.Event{
+	client.Group.BroadcastEvent(protocol.EventBatch{
 		IgnoredPlayers: []string{client.Username},
-		EmittedBy:      client.Username,
-		EventName:      "GROUP JOIN",
+		Events: []protocol.Event{
+			{
+				EmittedBy: client.Username,
+				EventName: "GROUP JOIN",
+			},
+		},
 	})
 	return "OK group=" + client.Group.Id, nil
 }

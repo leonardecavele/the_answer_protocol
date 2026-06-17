@@ -10,10 +10,6 @@ import (
 	"time"
 )
 
-func isValidEvent(event protocol.Event) bool {
-	return len(event.Players) > 0 && event.EventName != ""
-}
-
 func dialGameServer(addr string, quit <-chan struct{}) net.Conn {
 	for {
 		select {
@@ -49,7 +45,7 @@ func ConnectToGameServer(addr string, quit <-chan struct{}) *GameServer {
 	}
 }
 
-func ReadMessageAsQuestion(message string) (AnswerFromGameServer, bool, error) {
+func ReadMessageAsAnswer(message string) (AnswerFromGameServer, bool, error) {
 	var gameAnswer AnswerFromGameServer
 
 	if err := json.Unmarshal([]byte(message), &gameAnswer); err != nil {
@@ -63,38 +59,38 @@ func ReadMessageAsQuestion(message string) (AnswerFromGameServer, bool, error) {
 	return gameAnswer, true, nil
 }
 
-func ReadMessageAsEventList(message string) ([]protocol.Event, bool, error) {
-	var gameEvents []protocol.Event
+func ReadMessageAsEventBatchList(message string) ([]protocol.EventBatch, bool, error) {
+	var gameEventBatches []protocol.EventBatch
 
-	if err := json.Unmarshal([]byte(message), &gameEvents); err != nil {
+	if err := json.Unmarshal([]byte(message), &gameEventBatches); err != nil {
 		return nil, false, nil
 	}
 
-	if len(gameEvents) == 0 {
+	if len(gameEventBatches) == 0 {
 		return nil, false, nil
 	}
 
-	for _, gameEvent := range gameEvents {
-		if !isValidEvent(gameEvent) {
+	for _, gameEventBatch := range gameEventBatches {
+		if !gameEventBatch.IsValid() {
 			return nil, false, nil
 		}
 	}
 
-	return gameEvents, true, nil
+	return gameEventBatches, true, nil
 }
 
-func ReadMessageAsEvent(message string) (protocol.Event, bool, error) {
-	var gameEvent protocol.Event
+func ReadMessageAsEventBatch(message string) (protocol.EventBatch, bool, error) {
+	var gameEventBatch protocol.EventBatch
 
-	if err := json.Unmarshal([]byte(message), &gameEvent); err != nil {
-		return protocol.Event{}, false, nil
+	if err := json.Unmarshal([]byte(message), &gameEventBatch); err != nil {
+		return protocol.EventBatch{}, false, nil
 	}
 
-	if !isValidEvent(gameEvent) {
-		return protocol.Event{}, false, nil
+	if !gameEventBatch.IsValid() {
+		return protocol.EventBatch{}, false, nil
 	}
 
-	return gameEvent, true, nil
+	return gameEventBatch, true, nil
 }
 
 func ReadMessageAsCommand(message string) (CommandFromGameServer, bool, error) {

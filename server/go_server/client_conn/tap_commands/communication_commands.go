@@ -24,21 +24,29 @@ func chatGroupScope(client *session.Client, message string, _ *game_conn.GameSer
 		return protocol.ResponseNotInGroup, nil
 	}
 
-	client.Group.BroadcastEvent(protocol.Event{
+	client.Group.BroadcastEvent(protocol.EventBatch{
 		IgnoredPlayers: []string{client.Username},
-		EmittedBy:      client.Username,
-		EventName:      "GROUP CHAT",
-		Data:           message,
+		Events: []protocol.Event{
+			{
+				EmittedBy: client.Username,
+				EventName: "GROUP CHAT",
+				Data:      message,
+			},
+		},
 	})
 	return "OK", nil
 }
 
 func chatGlobalScope(client *session.Client, message string, _ *game_conn.GameServerManager) (string, error) {
-	client.Room.BroadcastEvent(protocol.Event{
+	client.Room.BroadcastEvent(protocol.EventBatch{
 		IgnoredPlayers: []string{client.Username},
-		EmittedBy:      client.Username,
-		EventName:      "GLOBAL CHAT",
-		Data:           message,
+		Events: []protocol.Event{
+			{
+				EmittedBy: client.Username,
+				EventName: "GLOBAL CHAT",
+				Data:      message,
+			},
+		},
 	})
 
 	return "OK", nil
@@ -76,11 +84,9 @@ func chatRoomScope(client *session.Client, message string, gameServer *game_conn
 		routed[username] = struct{}{}
 
 		client.Room.RouteEvent(username, protocol.Event{
-			Players:        []string{username},
-			IgnoredPlayers: []string{},
-			EmittedBy:      client.Username,
-			EventName:      "ROOM CHAT",
-			Data:           message,
+			EmittedBy: client.Username,
+			EventName: "ROOM CHAT",
+			Data:      message,
 		})
 	}
 
@@ -94,11 +100,9 @@ func chatPrivateScope(client *session.Client, message string, _ *game_conn.GameS
 	}
 
 	ok = client.Room.RouteEvent(username, protocol.Event{
-		Players:        []string{strings.ToUpper(username)},
-		IgnoredPlayers: []string{},
-		EmittedBy:      client.Username,
-		EventName:      "PRIVATE CHAT",
-		Data:           privateMessage,
+		EmittedBy: client.Username,
+		EventName: "PRIVATE CHAT",
+		Data:      privateMessage,
 	})
 	if !ok {
 		return protocol.ResponseNoSuchUser, nil

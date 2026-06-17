@@ -76,46 +76,10 @@ func (gameServer *GameServer) WriteQuestion(question QuestionToGameServer) error
 	return gameServer.WriteCommand(question)
 }
 
-func routeGameEvent(
-	gameEvent protocol.Event,
-	routeEvent func(username string, event protocol.Event) bool,
-) {
-	ignored := make(map[string]struct{}, len(gameEvent.IgnoredPlayers))
-	for _, username := range gameEvent.IgnoredPlayers {
-		ignored[strings.ToUpper(strings.TrimSpace(username))] = struct{}{}
-	}
-
-	routed := make(map[string]struct{}, len(gameEvent.Players))
-	targets := make([]string, 0, len(gameEvent.Players))
-	for _, username := range gameEvent.Players {
-		username = strings.ToUpper(strings.TrimSpace(username))
-		if username == "" || username == "*" {
-			continue
-		}
-		if _, ok := ignored[username]; ok {
-			continue
-		}
-		if _, ok := routed[username]; ok {
-			continue
-		}
-		routed[username] = struct{}{}
-
-		targets = append(targets, username)
-	}
-
-	gameEvent.Players = targets
-	for _, username := range targets {
-		if routeEvent != nil {
-			routeEvent(username, gameEvent)
-		}
-	}
-}
-
 func (gameServer *GameServer) Read(
 	quit <-chan struct{},
 	routeCommand func(username string, command CommandFromGameServer) bool,
-	routeEvent func(username string, event protocol.Event) bool,
-	broadcastEvent func(event protocol.Event),
+	broadcastEvent func(eventBatch protocol.EventBatch),
 	answerQuestion func(answer AnswerFromGameServer) bool,
 ) {
 	conn := gameServer.currentConn()
@@ -146,29 +110,33 @@ func (gameServer *GameServer) Read(
 			continue
 		}
 
-		gameEvents, ok, err := ReadMessageAsEventList(message)
+		gameEvents, ok, err := ReadMessageAsEventBatchList(message)
 		if err != nil {
 			logger.AppLogger.Error("Game server invalid message: %v", err)
 			continue
 		}
-		if ok && (routeEvent != nil || broadcastEvent != nil) {
-			for _, gameEvent := range gameEvents {
-				routeGameEvent(gameEvent, routeEvent)
+		if ok {
+			if broadcastEvent != nil {
+				for _, gameEvent := range gameEvents {
+					broadcastEvent(gameEvent)
+				}
 			}
 			continue
 		}
 
-		gameEvent, ok, err := ReadMessageAsEvent(message)
+		gameEvent, ok, err := ReadMessageAsEventBatch(message)
 		if err != nil {
 			logger.AppLogger.Error("Game server invalid message: %v", err)
 			continue
 		}
-		if ok && (routeEvent != nil || broadcastEvent != nil) {
-			routeGameEvent(gameEvent, routeEvent)
+		if ok {
+			if broadcastEvent != nil {
+				broadcastEvent(gameEvent)
+			}
 			continue
 		}
 
-		gameAnswer, ok, err := ReadMessageAsQuestion(message)
+		gameAnswer, ok, err := ReadMessageAsAnswer(message)
 		if err != nil {
 			logger.AppLogger.Error("Game server invalid message: %v", err)
 			continue
