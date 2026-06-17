@@ -44,34 +44,13 @@ func handleTapCommand(str string, client *session.Client, gameServer *game_conn.
 	return response, nil
 }
 
-func formatClientEvent(event protocol.Event) (string, error) {
-	message := "EVT " + event.EventName + " " + event.EmittedBy
-	if event.Data == nil {
-		return message, nil
-	}
-
-	data, ok := event.Data.(string)
-	if !ok {
-		dataBytes, err := json.Marshal(event.Data)
-		if err != nil {
-			return "", err
-		}
-		data = string(dataBytes)
-	}
-
-	if data == "" {
-		return message, nil
-	}
-	return message + " " + data, nil
-}
-
 func handleClientEvents(client *session.Client, done <-chan struct{}) {
 	for {
 		select {
 		case <-done:
 			return
 		case event := <-client.Events():
-			message, err := formatClientEvent(event)
+			message, err := protocol.FormatEvent(event)
 			if err != nil {
 				logger.AppLogger.Error("%s Invalid event: %v\n", client.Id, err)
 				return
