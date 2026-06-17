@@ -143,11 +143,6 @@ func (c *Client) JoinGroup(group *Group) string {
 	group.mutex.Unlock()
 
 	c.Group = group
-	group.BroadcastEvent(protocol.Event{
-		IgnoredPlayers: []string{c.Username},
-		EmittedBy:      c.Username,
-		EventName:      "GROUP JOIN",
-	})
 
 	return ""
 }

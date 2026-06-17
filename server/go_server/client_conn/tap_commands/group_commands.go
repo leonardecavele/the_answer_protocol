@@ -90,6 +90,11 @@ func groupJoin(args string, client *session.Client, _ *game_conn.GameServerManag
 	if response := client.JoinGroup(groupMember.Group); response != "" {
 		return response, nil
 	}
+	client.Group.BroadcastEvent(protocol.Event{
+		IgnoredPlayers: []string{client.Username},
+		EmittedBy:      client.Username,
+		EventName:      "GROUP JOIN",
+	})
 	return "OK group=" + client.Group.Id, nil
 }
 
