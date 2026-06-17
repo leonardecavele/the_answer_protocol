@@ -1,8 +1,11 @@
+use crate::client::event::{
+    ChatEventData, ChatScopeType, RoomPresenceAction, RoomPresenceData, ServerEvent,
+};
 use crate::error::{InternalError, NetworkError, TapError};
 use crate::protocol::request::Request;
 use crate::protocol::response::{Opcode, ServerResponse};
-use futures::SinkExt;
 use futures::stream::StreamExt;
+use futures::SinkExt;
 use tokio::net::TcpStream;
 use tokio::sync::broadcast;
 use tokio::sync::mpsc::Receiver;
@@ -11,7 +14,7 @@ use tracing::{debug, error, info, warn};
 
 pub struct Bridge {
     socket: Framed<TcpStream, LinesCodec>,
-    event_transmitter: broadcast::Sender<ServerResponse>,
+    event_transmitter: broadcast::Sender<ServerEvent>,
     command_receiver: Receiver<Request>,
     pending_request: Option<Request>,
 }
@@ -19,7 +22,7 @@ pub struct Bridge {
 impl Bridge {
     pub fn new(
         socket: Framed<TcpStream, LinesCodec>,
-        event_transmitter: broadcast::Sender<ServerResponse>,
+        event_transmitter: broadcast::Sender<ServerEvent>,
         command_receiver: Receiver<Request>,
     ) -> Bridge {
         Bridge {
@@ -99,7 +102,8 @@ impl Bridge {
                 let response = ServerResponse::try_from(line)?;
 
                 if response.opcode == Opcode::Evt {
-                    let _ = self.event_transmitter.send(response).map_err(|_| {
+                    let event = self.parse_event(response);
+                    let _ = self.event_transmitter.send(event).map_err(|_| {
                         InternalError::ChannelPanic(
                             "event channel is closed, nowhere to send the event".to_string(),
                         )
@@ -154,5 +158,43 @@ impl Bridge {
         }
 
         Ok(true)
+    }
+
+    fn parse_event(&mut self, response: ServerResponse) -> ServerEvent {
+        let arguments = response
+            .arguments
+            .as_slice()
+            .iter()
+            .map(|s| s as &str)
+            .collect::<Vec<&str>>();
+
+        match arguments.as_slice() {
+            ["CONNECT", name] => ServerEvent::Connect(name.to_string()),
+            ["QUIT", name] => ServerEvent::Quit(name.to_string()),
+            ["GLOBAL", "CHAT", sender, message @ ..] => ServerEvent::Chat(ChatEventData {
+                scope: ChatScopeType::Global,
+                sender: sender.to_string(),
+                message: message.join(" "),
+            }),
+            ["ROOM", "CHAT", sender, message @ ..] => ServerEvent::Chat(ChatEventData {
+                scope: ChatScopeType::Room,
+                sender: sender.to_string(),
+                message: message.join(" "),
+            }),
+            ["PRIVATE", "CHAT", sender, message @ ..] => ServerEvent::Chat(ChatEventData {
+                scope: ChatScopeType::Private,
+                sender: sender.to_string(),
+                message: message.join(" "),
+            }),
+            ["ROOM", "PRESENCE", "ENTER", name] => ServerEvent::RoomPresence(RoomPresenceData {
+                action: RoomPresenceAction::Enter,
+                name: name.to_string(),
+            }),
+            ["ROOM", "PRESENCE", "LEAVE", name] => ServerEvent::RoomPresence(RoomPresenceData {
+                action: RoomPresenceAction::Leave,
+                name: name.to_string(),
+            }),
+            _ => ServerEvent::Unknown(arguments.join(" ")),
+        }
     }
 }

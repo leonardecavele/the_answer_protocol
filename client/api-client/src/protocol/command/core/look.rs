@@ -9,7 +9,7 @@ use std::collections::HashMap;
 pub struct LookCommand;
 
 #[serde_as]
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct LookResponse {
     pub room: LookRoom,
     pub players: Vec<String>,
@@ -17,7 +17,7 @@ pub struct LookResponse {
     pub npcs: Vec<String>,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct LookRoom {
     pub id: String,
     pub name: String,

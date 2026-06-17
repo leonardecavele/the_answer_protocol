@@ -11,11 +11,28 @@ use event::EventDispatcher;
 use tokio::sync::mpsc::Sender;
 use tokio::task::JoinHandle;
 use tracing::info;
+use crate::protocol::command::core::look::LookResponse;
 
 #[derive(Debug)]
 pub struct ServerInfo {
     pub addr: String,
     pub protocol_version: u32,
+}
+
+pub struct GameInfo {
+    pub player_name: Option<String>,
+    pub room_id: Option<String>,
+    pub world: Option<LookResponse>
+}
+
+impl GameInfo {
+    pub fn new() -> Self {
+        GameInfo {
+            player_name: None,
+            room_id: None,
+            world: None
+        }
+    }
 }
 
 struct BridgeState {
@@ -25,6 +42,7 @@ struct BridgeState {
 
 pub struct Client {
     pub server: ServerInfo,
+    pub game: GameInfo,
     bridge: BridgeState,
     event_dispatcher: EventDispatcher,
 }
@@ -89,8 +107,6 @@ impl Client {
 impl Drop for Client {
     fn drop(&mut self) {
         self.bridge.bridge_task.abort();
-        self.event_dispatcher.shutdown();
-
         info!("Api client dropped :: background tasks properly stopped.");
     }
 }

@@ -57,7 +57,7 @@ async fn test_single_connection() -> Result<(), TapError> {
             info!("[event {:?}]: {:?}", data.scope, data.message);
         }
         ServerEvent::RoomPresence(data) => {
-            info!("[room presence event]: {:?}", data);
+            info!("[room presence event {:?}]: {:?}", data.action, data.name);
         }
         ServerEvent::Unknown(data) => {
             error!("[unknown event]: {:?}", data);
@@ -91,6 +91,8 @@ async fn test_single_connection() -> Result<(), TapError> {
             }
             ["look"] => {
                 let _ = client.look().await;
+
+                println!("[look {:?}] {:?}", client.game.player_name, client.game.world);
             }
             ["quit"] => {
                 client.quit().await;

@@ -1,31 +1,29 @@
-use crate::protocol::response::ServerResponse;
-use std::string::ToString;
 use tokio::sync::broadcast;
 use tokio::task::JoinHandle;
-use tracing::warn;
+use tracing::{debug, warn};
 
 pub struct EventDispatcher {
-    broadcast_sender: broadcast::Sender<ServerResponse>,
+    broadcast_sender: broadcast::Sender<ServerEvent>,
     subscriber_tasks: Vec<JoinHandle<()>>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ServerEvent {
     Connect(String),
     Quit(String),
     Chat(ChatEventData),
-    RoomPresence(RoomPresenceType),
+    RoomPresence(RoomPresenceData),
     Unknown(String),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ChatScopeType {
     Global,
     Room,
     Private,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ChatEventData {
     pub scope: ChatScopeType,
     pub sender: String,
@@ -33,45 +31,20 @@ pub struct ChatEventData {
 }
 
 // Data for a room presence event
-#[derive(Debug)]
-pub enum RoomPresenceType {
+#[derive(Debug, Clone)]
+pub enum RoomPresenceAction {
     Enter,
     Leave,
 }
 
-fn parse_event(response: ServerResponse) -> ServerEvent {
-    let arguments = response
-        .arguments
-        .iter()
-        .map(|s| s as &str)
-        .collect::<Vec<&str>>();
-
-    match arguments.as_slice() {
-        ["CONNECT", name] => ServerEvent::Connect(name.to_string()),
-        ["QUIT", name] => ServerEvent::Quit(name.to_string()),
-        ["GLOBAL", "CHAT", sender, message @ ..] => ServerEvent::Chat(ChatEventData {
-            scope: ChatScopeType::Global,
-            sender: sender.to_string(),
-            message: message.join(" "),
-        }),
-        ["ROOM", "CHAT", sender, message @ ..] => ServerEvent::Chat(ChatEventData {
-            scope: ChatScopeType::Room,
-            sender: sender.to_string(),
-            message: message.join(" "),
-        }),
-        ["PRIVATE", "CHAT", sender, message @ ..] => ServerEvent::Chat(ChatEventData {
-            scope: ChatScopeType::Private,
-            sender: sender.to_string(),
-            message: message.join(" "),
-        }),
-        ["ROOM", "PRESENCE", "ENTER"] => ServerEvent::RoomPresence(RoomPresenceType::Enter),
-        ["ROOM", "PRESENCE", "LEAVE"] => ServerEvent::RoomPresence(RoomPresenceType::Leave),
-        _ => ServerEvent::Unknown(arguments.join(" ")),
-    }
+#[derive(Debug, Clone)]
+pub struct RoomPresenceData {
+    pub action: RoomPresenceAction,
+    pub name: String,
 }
 
 impl EventDispatcher {
-    pub fn new(broadcast_sender: broadcast::Sender<ServerResponse>) -> Self {
+    pub fn new(broadcast_sender: broadcast::Sender<ServerEvent>) -> Self {
         Self {
             broadcast_sender,
             subscriber_tasks: vec![],
@@ -87,10 +60,7 @@ impl EventDispatcher {
         let task = tokio::spawn(async move {
             loop {
                 match subscriber.recv().await {
-                    Ok(response) => {
-                        let event: ServerEvent = parse_event(response);
-                        handler(event)
-                    }
+                    Ok(event) => handler(event),
                     Err(broadcast::error::RecvError::Lagged(skipped)) => {
                         warn!("lag.. {} events dropped", skipped);
                     }
@@ -101,8 +71,11 @@ impl EventDispatcher {
 
         self.subscriber_tasks.push(task);
     }
+}
 
-    pub fn shutdown(&mut self) {
+impl Drop for EventDispatcher {
+    fn drop(&mut self) {
+        debug!("dropping EventDispatcher");
         for task in self.subscriber_tasks.drain(..) {
             task.abort();
         }

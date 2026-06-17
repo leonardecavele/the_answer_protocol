@@ -1,5 +1,5 @@
-use crate::client::event::EventDispatcher;
-use crate::client::{BridgeState, Client, ServerInfo};
+use crate::client::event::{EventDispatcher, ServerEvent};
+use crate::client::{BridgeState, Client, GameInfo, ServerInfo};
 use crate::error::{InternalError, NetworkError, TapError};
 use crate::network::bridge::Bridge;
 use crate::protocol::handshake::HandshakeResponse;
@@ -25,7 +25,7 @@ impl ClientConnect {
         info!("successfully connected to TCP socket at {}", server_addr);
 
         let (request_sender, request_receiver) = mpsc::channel::<Request>(2048);
-        let (event_broadcast_sender, _) = broadcast::channel::<ServerResponse>(2048);
+        let (event_broadcast_sender, _) = broadcast::channel::<ServerEvent>(2048);
         let (handshake_request, handshake_receiver) = Request::handshake();
         let bridge_handler = Self::start_bridge(
             socket,
@@ -51,6 +51,7 @@ impl ClientConnect {
                 bridge_task: bridge_handler,
                 command_sender: request_sender,
             },
+            game: GameInfo::new(),
             event_dispatcher: EventDispatcher::new(event_broadcast_sender),
         };
 
@@ -115,7 +116,7 @@ impl ClientConnect {
     async fn start_bridge(
         socket: Framed<TcpStream, LinesCodec>,
         handshake_request: Request,
-        event_sender: broadcast::Sender<ServerResponse>,
+        event_sender: broadcast::Sender<ServerEvent>,
         command_receiver: mpsc::Receiver<Request>,
     ) -> Result<JoinHandle<()>, InternalError> {
         let (ready_sender, ready_receiver) = oneshot::channel::<()>();

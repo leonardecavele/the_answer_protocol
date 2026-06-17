@@ -7,24 +7,33 @@ use crate::protocol::command::communication::private_chat::{
 use crate::protocol::command::core::connect::{ConnectCommand, ConnectResponse};
 use crate::protocol::command::core::look::{LookCommand, LookResponse};
 use crate::protocol::command::core::quit::QuitCommand;
+use std::ops::Deref;
 use tracing::debug;
 
 impl Client {
     pub async fn connect(
-        &self,
+        &mut self,
         player_name: String,
     ) -> Result<Result<ConnectResponse, CommandError>, TapError> {
         debug!("sending connect request for player: {}", player_name);
 
         let response = self.request(ConnectCommand { player_name }).await?;
 
+        if let Ok(result) = &response {
+            self.game.player_name = Some(result.player_name.to_string());
+        }
+
         Ok(response)
     }
 
-    pub async fn look(&self) -> Result<Result<LookResponse, CommandError>, TapError> {
+    pub async fn look(&mut self) -> Result<Result<LookResponse, CommandError>, TapError> {
         debug!("sending look request");
 
         let response = self.request(LookCommand).await?;
+
+        if let Ok(result) = &response {
+            self.game.world = Some(result.clone());
+        }
 
         Ok(response)
     }
