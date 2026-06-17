@@ -49,6 +49,20 @@ func ConnectToGameServer(addr string, quit <-chan struct{}) *GameServer {
 	}
 }
 
+func ReadMessageAsQuestion(message string) (AnswerFromGameServer, bool, error) {
+	var gameAnswer AnswerFromGameServer
+
+	if err := json.Unmarshal([]byte(message), &gameAnswer); err != nil {
+		return AnswerFromGameServer{}, false, err
+	}
+
+	if gameAnswer.Question == "" || gameAnswer.Id == "" {
+		return AnswerFromGameServer{}, false, nil
+	}
+
+	return gameAnswer, true, nil
+}
+
 func ReadMessageAsEvent(message string) ([]protocol.Event, bool, error) {
 	var gameEvents []protocol.Event
 

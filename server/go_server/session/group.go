@@ -1,9 +1,8 @@
 package session
 
 import (
-	"crypto/rand"
-	"encoding/hex"
 	"go_server/config"
+	"go_server/helper"
 	"go_server/protocol"
 	"strings"
 	"sync"
@@ -25,7 +24,7 @@ func NewGroup(leader *Client) (*Group, error) {
 		leader:  leader.Username,
 	}
 
-	id, err := group.newId()
+	id, err := helper.NewID()
 	if err != nil {
 		return nil, err
 	}
@@ -55,19 +54,6 @@ func (group *Group) BroadcastEvent(event protocol.Event) {
 	for _, client := range clients {
 		client.eventChan <- event
 	}
-}
-
-func (group *Group) newId() (string, error) {
-	group.mutex.Lock()
-	defer group.mutex.Unlock()
-
-	bytes := make([]byte, 16)
-
-	if _, err := rand.Read(bytes); err != nil {
-		return "", err
-	}
-
-	return hex.EncodeToString(bytes), nil
 }
 
 func (group *Group) GroupedClients() []*Client {
