@@ -50,19 +50,15 @@ func (manager *GameServerManager) IsConnected() bool {
 	return manager.getGameServer() != nil
 }
 
-func (manager *GameServerManager) QuestionManager() *QuestionManager {
-	if manager == nil {
-		return nil
-	}
-
+func (manager *GameServerManager) resolveQuestion(answer AnswerFromGameServer) bool {
 	manager.mutex.Lock()
-	defer manager.mutex.Unlock()
-
 	if manager.questionManager == nil {
 		manager.questionManager = NewQuestionManager()
 	}
+	questionManager := manager.questionManager
+	manager.mutex.Unlock()
 
-	return manager.questionManager
+	return questionManager.Resolve(answer)
 }
 
 func (manager *GameServerManager) Write(message string) error {
@@ -101,7 +97,13 @@ func (manager *GameServerManager) AskQuestion(question QuestionToGameServer) (An
 		question.Id = id
 	}
 
-	questionManager := manager.QuestionManager()
+	manager.mutex.Lock()
+	if manager.questionManager == nil {
+		manager.questionManager = NewQuestionManager()
+	}
+	questionManager := manager.questionManager
+	manager.mutex.Unlock()
+
 	answerChan, err := questionManager.Subscribe(question.Id)
 	if err != nil {
 		return AnswerFromGameServer{}, err
@@ -156,7 +158,7 @@ func (manager *GameServerManager) HandleGameServer(
 			}
 		}()
 
-		gameServer.Read(quit, routeCommand, routeEvent, broadcastEvent, manager.QuestionManager().Resolve)
+		gameServer.Read(quit, routeCommand, routeEvent, broadcastEvent, manager.resolveQuestion)
 		close(stopClosingGameServer)
 
 		manager.ClearServer(gameServer)
