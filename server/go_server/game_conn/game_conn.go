@@ -63,15 +63,11 @@ func ReadMessageAsQuestion(message string) (AnswerFromGameServer, bool, error) {
 	return gameAnswer, true, nil
 }
 
-func ReadMessageAsEvent(message string) ([]protocol.Event, bool, error) {
+func ReadMessageAsEventList(message string) ([]protocol.Event, bool, error) {
 	var gameEvents []protocol.Event
 
 	if err := json.Unmarshal([]byte(message), &gameEvents); err != nil {
-		var gameEvent protocol.Event
-		if err := json.Unmarshal([]byte(message), &gameEvent); err != nil {
-			return nil, false, nil
-		}
-		gameEvents = []protocol.Event{gameEvent}
+		return nil, false, nil
 	}
 
 	if len(gameEvents) == 0 {
@@ -85,6 +81,20 @@ func ReadMessageAsEvent(message string) ([]protocol.Event, bool, error) {
 	}
 
 	return gameEvents, true, nil
+}
+
+func ReadMessageAsEvent(message string) (protocol.Event, bool, error) {
+	var gameEvent protocol.Event
+
+	if err := json.Unmarshal([]byte(message), &gameEvent); err != nil {
+		return protocol.Event{}, false, nil
+	}
+
+	if !isValidEvent(gameEvent) {
+		return protocol.Event{}, false, nil
+	}
+
+	return gameEvent, true, nil
 }
 
 func ReadMessageAsCommand(message string) (CommandFromGameServer, bool, error) {

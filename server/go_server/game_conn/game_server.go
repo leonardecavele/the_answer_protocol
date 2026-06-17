@@ -111,7 +111,7 @@ func (gameServer *GameServer) Read(
 			continue
 		}
 
-		gameEvents, ok, err := ReadMessageAsEvent(message)
+		gameEvents, ok, err := ReadMessageAsEventList(message)
 		if err != nil {
 			logger.AppLogger.Error("Game server invalid message: %v", err)
 			continue
@@ -125,6 +125,22 @@ func (gameServer *GameServer) Read(
 				if routeEvent == nil {
 					continue
 				}
+				routeEvent(gameEvent.Player, gameEvent)
+			}
+			continue
+		}
+
+		gameEvent, ok, err := ReadMessageAsEvent(message)
+		if err != nil {
+			logger.AppLogger.Error("Game server invalid message: %v", err)
+			continue
+		}
+		if ok && (routeEvent != nil || broadcastEvent != nil) {
+			if gameEvent.Player == "*" && broadcastEvent != nil {
+				broadcastEvent(gameEvent)
+				continue
+			}
+			if routeEvent != nil {
 				routeEvent(gameEvent.Player, gameEvent)
 			}
 			continue

@@ -105,29 +105,19 @@ func handleMoveCommand(args string, client *session.Client, gameServer *game_con
 		return errorResponse, nil
 	}
 
-	event := protocol.Event{
-		Player:         "*",
-		IgnoredPlayers: []string{client.Username},
-		EmittedBy:      client.Username,
-		EventName:      "MOVE",
-		Data:           args + " " + client.Username,
-	}
-
-	client.Room.BroadcastEvent(event)
-
 	if client.Group != nil {
 		clients := client.Group.GroupedClients()
 		for _, c := range clients {
 			if c == client {
 				continue
 			}
-			client.Room.RouteEvent(c.Username, protocol.Event{
-				Player:         c.Username,
-				IgnoredPlayers: []string{},
-				EmittedBy:      client.Username,
-				EventName:      "MOVE",
-				Data:           args + " " + c.Username,
-			})
+			if err := gameServer.WriteCommand(game_conn.CommandToGameServer{
+				Player:    c.Username,
+				Command:   "MOVE",
+				Arguments: args,
+			}); err != nil {
+				return "", err
+			}
 		}
 	}
 
