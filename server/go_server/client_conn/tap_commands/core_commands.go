@@ -50,15 +50,8 @@ func handleConnectCommand(args string, client *session.Client, gameServer *game_
 }
 
 func handleLookCommand(args string, client *session.Client, gameServer *game_conn.GameServerManager) (string, error) {
-	if !gameServer.IsConnected() {
-		return protocol.ResponseGameServerClosed, nil
-	}
-
-	if client.State != session.AUTHENTICATED {
-		return protocol.ResponseNotConnected, nil
-	}
-	if args != "" {
-		return protocol.ResponseInvalidArguments, nil
+	if response, err := isOk(args, client, gameServer, true, false); response != "" || err != nil {
+		return response, err
 	}
 
 	if err := gameServer.WriteCommand(game_conn.CommandToGameServer{
@@ -78,16 +71,8 @@ func handleLookCommand(args string, client *session.Client, gameServer *game_con
 }
 
 func handleMoveCommand(args string, client *session.Client, gameServer *game_conn.GameServerManager) (string, error) {
-	if client.State != session.AUTHENTICATED {
-		return protocol.ResponseNotConnected, nil
-	}
-
-	if !gameServer.IsConnected() {
-		return protocol.ResponseGameServerClosed, nil
-	}
-
-	if strings.Contains(args, " ") {
-		return protocol.ResponseInvalidArguments, nil
+	if response, err := isOk(args, client, gameServer, true, true); response != "" || err != nil {
+		return response, err
 	}
 
 	if err := gameServer.WriteCommand(game_conn.CommandToGameServer{
@@ -122,9 +107,9 @@ func handleMoveCommand(args string, client *session.Client, gameServer *game_con
 	return "OK " + response.Data, nil
 }
 
-func handleQuitCommand(args string, _ *session.Client, _ *game_conn.GameServerManager) (string, error) {
-	if args != "" {
-		return protocol.ResponseInvalidArguments, nil
+func handleQuitCommand(args string, client *session.Client, gameServer *game_conn.GameServerManager) (string, error) {
+	if response, err := isOk(args, client, gameServer, false, false); response != "" || err != nil {
+		return response, err
 	}
 
 	return protocol.ResponseBye, nil

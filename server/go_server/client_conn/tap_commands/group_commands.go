@@ -17,12 +17,9 @@ var groupCommands = map[string]handleGroup{
 	"QUIT":   groupLeave,
 }
 
-func groupCreate(args string, client *session.Client, _ *game_conn.GameServerManager) (string, error) {
-	if client.State != session.AUTHENTICATED {
-		return protocol.ResponseNotConnected, nil
-	}
-	if args != "" {
-		return protocol.ResponseInvalidArguments, nil
+func groupCreate(args string, client *session.Client, gameServer *game_conn.GameServerManager) (string, error) {
+	if response, err := isOk(args, client, gameServer, false, false); response != "" || err != nil {
+		return response, err
 	}
 	if client.Group != nil {
 		return protocol.ResponseAlreadyInGroup, nil
@@ -36,12 +33,9 @@ func groupCreate(args string, client *session.Client, _ *game_conn.GameServerMan
 	return "OK group=" + group.Id, nil
 }
 
-func groupInvite(args string, client *session.Client, _ *game_conn.GameServerManager) (string, error) {
-	if client.State != session.AUTHENTICATED {
-		return protocol.ResponseNotConnected, nil
-	}
-	if args == "" || strings.Contains(args, " ") {
-		return protocol.ResponseInvalidArguments, nil
+func groupInvite(args string, client *session.Client, gameServer *game_conn.GameServerManager) (string, error) {
+	if response, err := isOk(args, client, gameServer, false, true); response != "" || err != nil {
+		return response, err
 	}
 	if client.Group == nil {
 		return protocol.ResponseNotInGroup, nil
@@ -68,12 +62,9 @@ func groupInvite(args string, client *session.Client, _ *game_conn.GameServerMan
 	return "OK", nil
 }
 
-func groupJoin(args string, client *session.Client, _ *game_conn.GameServerManager) (string, error) {
-	if client.State != session.AUTHENTICATED {
-		return protocol.ResponseNotConnected, nil
-	}
-	if args == "" || strings.Contains(args, " ") {
-		return protocol.ResponseInvalidArguments, nil
+func groupJoin(args string, client *session.Client, gameServer *game_conn.GameServerManager) (string, error) {
+	if response, err := isOk(args, client, gameServer, false, true); response != "" || err != nil {
+		return response, err
 	}
 	if client.Group != nil {
 		return protocol.ResponseAlreadyInGroup, nil
@@ -98,12 +89,9 @@ func groupJoin(args string, client *session.Client, _ *game_conn.GameServerManag
 	return "OK group=" + client.Group.Id, nil
 }
 
-func groupLeave(args string, client *session.Client, _ *game_conn.GameServerManager) (string, error) {
-	if client.State != session.AUTHENTICATED {
-		return protocol.ResponseNotConnected, nil
-	}
-	if args != "" {
-		return protocol.ResponseInvalidArguments, nil
+func groupLeave(args string, client *session.Client, gameServer *game_conn.GameServerManager) (string, error) {
+	if response, err := isOk(args, client, gameServer, false, false); response != "" || err != nil {
+		return response, err
 	}
 	if client.Group == nil {
 		return protocol.ResponseNotInGroup, nil

@@ -3,22 +3,12 @@ package tap_commands
 import (
 	serverError "go_server/error"
 	"go_server/game_conn"
-	"go_server/protocol"
 	"go_server/session"
-	"strings"
 )
 
 func handleTakeCommand(args string, client *session.Client, gameServer *game_conn.GameServerManager) (string, error) {
-	if !gameServer.IsConnected() {
-		return protocol.ResponseGameServerClosed, nil
-	}
-
-	if client.State != session.AUTHENTICATED {
-		return protocol.ResponseNotConnected, nil
-	}
-
-	if strings.Contains(args, " ") || args == "" {
-		return protocol.ResponseInvalidArguments, nil
+	if response, err := isOk(args, client, gameServer, true, true); response != "" || err != nil {
+		return response, err
 	}
 
 	if err := gameServer.WriteCommand(game_conn.CommandToGameServer{
@@ -38,16 +28,8 @@ func handleTakeCommand(args string, client *session.Client, gameServer *game_con
 }
 
 func handleDropCommand(args string, client *session.Client, gameServer *game_conn.GameServerManager) (string, error) {
-	if !gameServer.IsConnected() {
-		return protocol.ResponseGameServerClosed, nil
-	}
-
-	if client.State != session.AUTHENTICATED {
-		return protocol.ResponseNotConnected, nil
-	}
-
-	if strings.Contains(args, " ") || args == "" {
-		return protocol.ResponseInvalidArguments, nil
+	if response, err := isOk(args, client, gameServer, true, true); response != "" || err != nil {
+		return response, err
 	}
 
 	if err := gameServer.WriteCommand(game_conn.CommandToGameServer{
@@ -67,16 +49,8 @@ func handleDropCommand(args string, client *session.Client, gameServer *game_con
 }
 
 func handleInventoryCommand(args string, client *session.Client, gameServer *game_conn.GameServerManager) (string, error) {
-	if !gameServer.IsConnected() {
-		return protocol.ResponseGameServerClosed, nil
-	}
-
-	if client.State != session.AUTHENTICATED {
-		return protocol.ResponseNotConnected, nil
-	}
-
-	if args != "" {
-		return protocol.ResponseInvalidArguments, nil
+	if response, err := isOk(args, client, gameServer, true, false); response != "" || err != nil {
+		return response, err
 	}
 
 	if err := gameServer.WriteCommand(game_conn.CommandToGameServer{
@@ -95,16 +69,8 @@ func handleInventoryCommand(args string, client *session.Client, gameServer *gam
 }
 
 func handleTalkCommand(args string, client *session.Client, gameServer *game_conn.GameServerManager) (string, error) {
-	if !gameServer.IsConnected() {
-		return protocol.ResponseGameServerClosed, nil
-	}
-
-	if client.State != session.AUTHENTICATED {
-		return protocol.ResponseNotConnected, nil
-	}
-
-	if strings.Contains(args, " ") || args == "" {
-		return protocol.ResponseInvalidArguments, nil
+	if response, err := isOk(args, client, gameServer, true, true); response != "" || err != nil {
+		return response, err
 	}
 
 	if err := gameServer.WriteCommand(game_conn.CommandToGameServer{
@@ -124,16 +90,8 @@ func handleTalkCommand(args string, client *session.Client, gameServer *game_con
 }
 
 func handleAttackCommand(args string, client *session.Client, gameServer *game_conn.GameServerManager) (string, error) {
-	if !gameServer.IsConnected() {
-		return protocol.ResponseGameServerClosed, nil
-	}
-
-	if client.State != session.AUTHENTICATED {
-		return protocol.ResponseNotConnected, nil
-	}
-
-	if strings.Contains(args, " ") || args == "" {
-		return protocol.ResponseInvalidArguments, nil
+	if response, err := isOk(args, client, gameServer, true, true); response != "" || err != nil {
+		return response, err
 	}
 
 	if err := gameServer.WriteCommand(game_conn.CommandToGameServer{
@@ -153,16 +111,8 @@ func handleAttackCommand(args string, client *session.Client, gameServer *game_c
 }
 
 func handleStatusCommand(args string, client *session.Client, gameServer *game_conn.GameServerManager) (string, error) {
-	if !gameServer.IsConnected() {
-		return protocol.ResponseGameServerClosed, nil
-	}
-
-	if client.State != session.AUTHENTICATED {
-		return protocol.ResponseNotConnected, nil
-	}
-
-	if args != "" {
-		return protocol.ResponseInvalidArguments, nil
+	if response, err := isOk(args, client, gameServer, true, false); response != "" || err != nil {
+		return response, err
 	}
 
 	if err := gameServer.WriteCommand(game_conn.CommandToGameServer{
@@ -181,16 +131,8 @@ func handleStatusCommand(args string, client *session.Client, gameServer *game_c
 }
 
 func handleQuestCommand(args string, client *session.Client, gameServer *game_conn.GameServerManager) (string, error) {
-	if !gameServer.IsConnected() {
-		return protocol.ResponseGameServerClosed, nil
-	}
-
-	if client.State != session.AUTHENTICATED {
-		return protocol.ResponseNotConnected, nil
-	}
-
-	if strings.Contains(args, " ") || args == "" {
-		return protocol.ResponseInvalidArguments, nil
+	if response, err := isOk(args, client, gameServer, true, true); response != "" || err != nil {
+		return response, err
 	}
 
 	if err := gameServer.WriteCommand(game_conn.CommandToGameServer{
@@ -210,16 +152,8 @@ func handleQuestCommand(args string, client *session.Client, gameServer *game_co
 }
 
 func handleQuestsCommand(args string, client *session.Client, gameServer *game_conn.GameServerManager) (string, error) {
-	if !gameServer.IsConnected() {
-		return protocol.ResponseGameServerClosed, nil
-	}
-
-	if client.State != session.AUTHENTICATED {
-		return protocol.ResponseNotConnected, nil
-	}
-
-	if args != "" {
-		return protocol.ResponseInvalidArguments, nil
+	if response, err := isOk(args, client, gameServer, true, false); response != "" || err != nil {
+		return response, err
 	}
 
 	if err := gameServer.WriteCommand(game_conn.CommandToGameServer{

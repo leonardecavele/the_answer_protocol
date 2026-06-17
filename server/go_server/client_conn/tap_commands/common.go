@@ -3,7 +3,9 @@ package tap_commands
 import (
 	"fmt"
 	"go_server/game_conn"
+	"go_server/protocol"
 	"go_server/session"
+	"strings"
 )
 
 type handleTapCommandArgs func(args string, client *session.Client, gameServer *game_conn.GameServerManager) (string, error)
@@ -52,3 +54,19 @@ var TapCommands = func(commandGroups ...map[string]handleTapCommandArgs) map[str
 	groupTapCommands,
 	resourceInteractionTapCommands,
 )
+
+func isOk(args string, client *session.Client, gameServer *game_conn.GameServerManager, needGameServer bool, hasArgs bool) (string, error) {
+	if needGameServer && !gameServer.IsConnected() {
+		return protocol.ResponseGameServerClosed, nil
+	}
+
+	if client.State != session.AUTHENTICATED {
+		return protocol.ResponseNotConnected, nil
+	}
+
+	if (hasArgs && (strings.Contains(args, " ") || args == "")) || (!hasArgs && args != "") {
+		return protocol.ResponseInvalidArguments, nil
+	}
+
+	return "", nil
+}

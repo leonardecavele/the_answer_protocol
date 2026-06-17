@@ -129,13 +129,9 @@ func handleChatCommand(args string, client *session.Client, gameServer *game_con
 	return chatScopeHandler(client, message, gameServer)
 }
 
-func handleWhoCommand(args string, client *session.Client, _ *game_conn.GameServerManager) (string, error) {
-	if client.State != session.AUTHENTICATED {
-		return protocol.ResponseNotConnected, nil
-	}
-
-	if args != "" {
-		return protocol.ResponseInvalidArguments, nil
+func handleWhoCommand(args string, client *session.Client, gameServer *game_conn.GameServerManager) (string, error) {
+	if response, err := isOk(args, client, gameServer, false, false); response != "" || err != nil {
+		return response, err
 	}
 
 	return "OK " + "players=" + strconv.Itoa(client.Room.Count()), nil
