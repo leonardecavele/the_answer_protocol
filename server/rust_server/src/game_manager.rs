@@ -10,6 +10,7 @@ use std::io::Write;
 use std::net::TcpStream;
 use std::sync::mpsc;
 use tracing::error;
+use json::JsonValue;
 
 pub struct GameManager {
     players: HashMap<PlayerId, Player>,
@@ -21,6 +22,7 @@ pub struct GameManager {
     all_rooms: HashMap<String, Room>,
     mpsc_receiver: mpsc::Receiver<String>,
     writer_stream: TcpStream,
+    tick_diff: JsonValue
 }
 
 impl GameManager {
@@ -50,6 +52,7 @@ impl GameManager {
             all_rooms: starting_rooms,
             mpsc_receiver,
             writer_stream,
+            tick_diff: JsonValue::new_array()
         };
 
         manager.next_player_id = manager.restore_next_player_id();
@@ -232,5 +235,31 @@ impl GameManager {
             Some(room) => room.get_neighbor_room_name(direction),
             _none => None,
         }
+    }
+
+    pub fn get_tick_diff(&self) -> &JsonValue
+    {
+        &self.tick_diff
+    }
+
+    pub fn add_diff_to_tick(&mut self, diff: JsonValue)
+    {
+        let _ = self.tick_diff.push(diff);
+    }
+
+    pub fn clear_diff(&mut self)
+    {
+        self.tick_diff = JsonValue::new_array();
+    }
+
+    pub fn get_all_players_at_room(&self, room_name: &str) -> Vec<String>
+    {
+        let mut players: Vec<String> = Vec::new(); 
+        for player in self.players.values(){
+            if player.get_current_room() == room_name{
+                players.push(player.get_name().to_string());
+            }
+        }
+        return players;
     }
 }

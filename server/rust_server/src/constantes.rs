@@ -35,6 +35,7 @@ pub enum ErrorCode {
     ConnectionFailed,
     SendFailed,
     InvalidCommand,
+    InvalidQuestion,
 }
 
 impl ErrorCode {
@@ -56,6 +57,7 @@ impl ErrorCode {
             Self::NoQuestAvailable => 406,
             Self::ConnectionFailed => 900,
             Self::SendFailed => 901,
+            Self::InvalidQuestion => 998,
             Self::InvalidCommand => 999,
         }
     }

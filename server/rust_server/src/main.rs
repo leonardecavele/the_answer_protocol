@@ -40,11 +40,11 @@ fn main() -> std::io::Result<()> {
         .with_timer(timer)
         .init();
     
-    let parser = Parser::new("npcs.json");
-
-    match parser.parse_npcs() {
-        Ok(vec) => {
-            info!("Successfully loaded {} NPCs.", vec.len());
+    let mut parser = Parser::new("npcs.json");
+    
+    match parser.parse_npcs(){
+        Ok(()) => {
+            info!("Successfully loaded {} NPCs.", parser.get_npcs().len());
         }
         Err(err) => {
             error!("Error parsing NPCs: {}", err);
@@ -77,7 +77,8 @@ fn main() -> std::io::Result<()> {
 
         match game_manager.apply_players_changes(start)? {
             TickResult::TickEnd => {
-                game_manager.send_diff_to_players();
+                game_manager.send_diff_to_players()?;
+                game_manager.clear_diff();
             }
             TickResult::Exit => {
                 println!("exiting...");

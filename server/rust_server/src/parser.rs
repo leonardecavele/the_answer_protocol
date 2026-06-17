@@ -2,17 +2,19 @@ use std::fs;
 use crate::npc::Npc;
 
 pub struct Parser {
+    ncps: Vec<Npc>,
     file_path: String,
 }
 
 impl Parser {
     pub fn new(file_path: &str) -> Self {
         Self {
+            ncps: Vec::new(),
             file_path: file_path.to_string(),
         }
     }
 
-    pub fn parse_npcs(&self) -> Result<Vec<Npc>, String> {
+    pub fn parse_npcs(&mut self) -> Result<(), String> {
         let content = fs::read_to_string(&self.file_path)
             .map_err(|e| format!("Failed to read file '{}': {}", self.file_path, e))?;
         
@@ -26,11 +28,18 @@ impl Parser {
                 if let Some(npc) = Npc::new(item) {
                     npcs.push(npc);
                 }
+                else {
+                    return Err("an invalid npc was found".to_string());
+                }
             }
         } else {
             return Err("JSON does not contain 'npcs' array".to_string());
         }
 
-        Ok(npcs)
+        self.ncps = npcs;
+        Ok(())
+    }
+    pub fn get_npcs(&self) -> &Vec<Npc> {
+        &self.ncps
     }
 }

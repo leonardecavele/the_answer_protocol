@@ -1,4 +1,5 @@
 use json::JsonValue;
+use tracing::error;
 
 use crate::constantes::{NPC_QUEST_GIVER, NPC_MOB, NPC_TALKER};
 
@@ -24,17 +25,21 @@ impl Npc {
         let id = json["id"].as_u32()?;
         let name = json["name"].as_str()?.to_string();
         let npc_type = json["npc_type"].as_u8()?;
+        if npc_type < 1 || npc_type > NPC_QUEST_GIVER + NPC_MOB + NPC_TALKER {
+            error!("invalid npc type: {}", npc_type);
+            return None;
+        }
         let hp = json["hp"].as_u32();
         let max_hp = json["max_hp"].as_u32();
         
         let dialogs = if json["dialogs"].is_array() && !json["dialogs"].is_empty() {
-            let mut d = Vec::new();
+            let mut dialogs = Vec::new();
             for item in json["dialogs"].members() {
-                if let Some(s) = item.as_str() {
-                    d.push(s.to_string());
+                if let Some(dialog) = item.as_str() {
+                    dialogs.push(dialog.to_string());
                 }
             }
-            Some(d)
+            Some(dialogs)
         } else {
             None
         };

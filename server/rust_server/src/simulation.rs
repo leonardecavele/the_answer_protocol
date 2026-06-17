@@ -34,11 +34,13 @@ impl GameManager {
 
         // let mut events = json::JsonValue::new_array();
         let events = array![object! {
-            "player": "GABIN",
-            "emmited_by": "test",
+            "player": "*",
+            "ignored_players": ["GABIN"],
+            "emmited_by": "GABIN",
             "event_name": "CONNECT",
             "data": ""
         }];
+
 
         self.send_msg_to_client(events.dump().to_string())?;
         info!("sent event");
