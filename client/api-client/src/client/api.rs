@@ -54,11 +54,8 @@ impl Client {
         &self,
         message: String,
     ) -> Result<Result<GlobalChatResponse, CommandError>, TapError> {
-        debug!("sending look request");
-
-        let response = self.request(GlobalChatCommand { message }).await?;
-
-        Ok(response)
+        debug!("sending global chat request");
+        self.request(GlobalChatCommand { message }).await
     }
 
     pub async fn chat_private(
@@ -66,19 +63,13 @@ impl Client {
         to: String,
         message: String,
     ) -> Result<Result<PrivateChatResponse, CommandError>, TapError> {
-        debug!("sending look request");
-
-        let response = self.request(PrivateChatCommand { to, message }).await?;
-
-        Ok(response)
+        debug!("sending private chat request");
+        self.request(PrivateChatCommand { to, message }).await
     }
 
     pub async fn who(&self) -> Result<Result<WhoResponse, CommandError>, TapError> {
         debug!("sending who request");
-
-        let response = self.request(WhoCommand).await?;
-
-        Ok(response)
+        self.request(WhoCommand).await
     }
 
     pub async fn group_create(&mut self) -> Result<Result<GroupCreateResponse, CommandError>, TapError> {
@@ -95,10 +86,7 @@ impl Client {
 
     pub async fn group_invite(&self, username: String) -> Result<Result<GroupInviteResponse, CommandError>, TapError> {
         debug!("sending group invite request");
-
-        let response = self.request(GroupInviteCommand { username }).await?;
-
-        Ok(response)
+        self.request(GroupInviteCommand { username }).await
     }
 
     pub async fn group_join(&mut self, leader_name: String) -> Result<Result<GroupJoinResponse, CommandError>, TapError> {
@@ -127,42 +115,42 @@ impl Client {
 
     pub async fn take(&self, item_identifier: String) -> Result<Result<TakeResponse, CommandError>, TapError> {
         debug!("sending take request");
-        Ok(self.request(TakeCommand { item_identifier }).await?)
+        self.request(TakeCommand { item_identifier }).await
     }
 
     pub async fn drop_item(&self, item_identifier: String) -> Result<Result<DropResponse, CommandError>, TapError> {
         debug!("sending drop request");
-        Ok(self.request(DropCommand { item_identifier }).await?)
+        self.request(DropCommand { item_identifier }).await
     }
 
     pub async fn inventory(&self) -> Result<Result<InventoryResponse, CommandError>, TapError> {
         debug!("sending inventory request");
-        Ok(self.request(InventoryCommand).await?)
+        self.request(InventoryCommand).await
     }
 
     pub async fn talk(&self, npc_name: String) -> Result<Result<TalkResponse, CommandError>, TapError> {
         debug!("sending talk request");
-        Ok(self.request(TalkCommand { npc_name }).await?)
+        self.request(TalkCommand { npc_name }).await
     }
 
     pub async fn attack(&self, npc_name: String) -> Result<Result<AttackResponse, CommandError>, TapError> {
         debug!("sending attack request");
-        Ok(self.request(AttackCommand { npc_name }).await?)
+        self.request(AttackCommand { npc_name }).await
     }
 
     pub async fn status(&self) -> Result<Result<StatusResponse, CommandError>, TapError> {
         debug!("sending status request");
-        Ok(self.request(StatusCommand).await?)
+        self.request(StatusCommand).await
     }
 
     pub async fn quest(&self, npc_name: String) -> Result<Result<QuestResponse, CommandError>, TapError> {
         debug!("sending quest request");
-        Ok(self.request(QuestCommand { npc_name }).await?)
+        self.request(QuestCommand { npc_name }).await
     }
 
     pub async fn quests(&self) -> Result<Result<QuestsResponse, CommandError>, TapError> {
         debug!("sending quests request");
-        Ok(self.request(QuestsCommand).await?)
+        self.request(QuestsCommand).await
     }
 
     pub async fn quit(self) {

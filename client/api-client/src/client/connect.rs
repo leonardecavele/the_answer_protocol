@@ -51,7 +51,7 @@ impl ClientConnect {
                 bridge_task: bridge_handler,
                 command_sender: request_sender,
             },
-            game: GameInfo::new(),
+            game: GameInfo::default(),
             event_dispatcher: EventDispatcher::new(event_broadcast_sender),
         };
 
