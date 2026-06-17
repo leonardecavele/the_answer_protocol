@@ -57,7 +57,7 @@ impl GroupManager {
 
 impl GameManager {
     pub fn create_group(&mut self, group_leader: PlayerId) -> ErrorCode {
-        let player = self.get_players().get(&group_leader).unwrap();
+        let player = self.get_player(group_leader).unwrap();
         
         if player.get_group_id().is_some() {
             return ErrorCode::AlreadyInGroup;
