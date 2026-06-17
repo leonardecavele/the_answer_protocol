@@ -1,12 +1,40 @@
 package tap_commands
 
 import (
+	serverError "go_server/error"
 	"go_server/game_conn"
+	"go_server/protocol"
 	"go_server/session"
+	"strings"
 )
 
-func handleTakeCommand(args string, client *session.Client, _ *game_conn.GameServerManager) (string, error) {
-	return "", nil
+func handleTakeCommand(args string, client *session.Client, server *game_conn.GameServerManager) (string, error) {
+	if !server.IsConnected() {
+		return protocol.ResponseGameServerClosed, nil
+	}
+
+	if client.State != session.AUTHENTICATED {
+		return protocol.ResponseNotConnected, nil
+	}
+
+	if strings.Contains(args, " ") || args == "" {
+		return protocol.ResponseInvalidArguments, nil
+	}
+
+	if err := server.WriteCommand(game_conn.CommandToGameServer{
+		Player:    client.Username,
+		Command:   "TAKE",
+		Arguments: args,
+	}); err != nil {
+		return "", err
+	}
+
+	response := client.ReadCommand()
+	if errorResponse := serverError.HandleGameCommandError(response.ErrorCode); errorResponse != "" {
+		return errorResponse, nil
+	}
+
+	return "OK " + "taken=" + response.Data, nil
 }
 
 func handleDropCommand(args string, client *session.Client, _ *game_conn.GameServerManager) (string, error) {
