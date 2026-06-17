@@ -8,7 +8,6 @@ use tracing::{error, info};
 use tracing_subscriber::fmt::time::LocalTime;
 use tracing_subscriber::EnvFilter;
 
-
 const LOCAL_SERVER_IP: &str = "127.0.0.1";
 const LOCAL_SERVER_PORT: &str = "38800";
 
@@ -102,36 +101,45 @@ async fn test_single_connection() -> Result<(), TapError> {
     let stdin = stdin();
     let input = &mut String::new();
 
+    let mut player_name = String::new();
+
     loop {
         if !client.is_connected() {
             break;
         }
 
         input.clear();
-        println!("(connect | chat_global | chat_private | look | who | group_create | group_invite | group_join | group_leave | take | drop | inventory | talk | attack | status | quest | quests | quit)");
+        println!(
+            "(connect | chat_global | chat_private | look | who | group_create | group_invite | group_join | group_leave | take | drop | inventory | talk | attack | status | quest | quests | quit)"
+        );
         print!("> ");
         let _ = io::stdout().flush();
         let _ = stdin.read_line(input);
 
         let _ = match input.trim().split(" ").collect::<Vec<&str>>().as_slice() {
             ["connect", name] => {
-                let result = client.connect(name.to_string()).await;
-                println!("[connect] {:?}", result);
+                let result = client.connect(name.to_string()).await?;
+                match result {
+                    Ok(response) => {
+                        player_name = response.player_name;
+                    },
+                    Err(error) => {
+                        error!("[connect error]: {}", error);
+                    }
+                };
+                println!("[connect] {:?}", player_name);
             }
             ["chat_global", message @ ..] => {
                 let result = client.chat_global(message.join(" ")).await;
                 println!("[chat_global] {:?}", result);
             }
             ["chat_private", to, message @ ..] => {
-                let result = client
-                    .chat_private(to.to_string(), message.join(" "))
-                    .await;
+                let result = client.chat_private(to.to_string(), message.join(" ")).await;
                 println!("[chat_private] {:?}", result);
             }
             ["look"] => {
-                let _ = client.look().await;
-
-                println!("[look {:?}] {:?}", client.game.player_name, client.game.world);
+                let result = client.look().await;
+                println!("[look {}] {:?}", player_name, result);
             }
             ["who"] => {
                 let result = client.who().await;

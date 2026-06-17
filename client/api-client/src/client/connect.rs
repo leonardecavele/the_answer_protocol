@@ -1,7 +1,7 @@
+use crate::client::bridge::Bridge;
 use crate::client::event::{EventDispatcher, ServerEvent};
-use crate::client::{BridgeState, Client, GameInfo, ServerInfo};
+use crate::client::{BridgeHandle, Client, ServerInfo};
 use crate::error::{InternalError, NetworkError, TapError};
-use crate::network::bridge::Bridge;
 use crate::protocol::handshake::HandshakeResponse;
 use crate::protocol::request::Request;
 use crate::protocol::response::ServerResponse;
@@ -47,12 +47,11 @@ impl ClientConnect {
                 addr: server_addr,
                 protocol_version: handshake.server_protocol_version,
             },
-            bridge: BridgeState {
-                bridge_task: bridge_handler,
+            bridge: BridgeHandle {
+                task: bridge_handler,
                 command_sender: request_sender,
+                event_dispatcher: EventDispatcher::new(event_broadcast_sender),
             },
-            game: GameInfo::default(),
-            event_dispatcher: EventDispatcher::new(event_broadcast_sender),
         };
 
         Ok(client)

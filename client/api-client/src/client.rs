@@ -1,6 +1,7 @@
 pub mod api;
 pub mod connect;
 pub mod event;
+pub mod bridge;
 
 use crate::client::event::ServerEvent;
 use crate::error::{CommandError, InternalError, TapError};
@@ -11,32 +12,20 @@ use event::EventDispatcher;
 use tokio::sync::mpsc::Sender;
 use tokio::task::JoinHandle;
 use tracing::info;
-use crate::protocol::command::core::look::LookResponse;
 
+struct BridgeHandle {
+    task: JoinHandle<()>,
+    command_sender: Sender<Request>,
+    event_dispatcher: EventDispatcher,
+}
 #[derive(Debug)]
 pub struct ServerInfo {
     pub addr: String,
     pub protocol_version: u32,
 }
-
-#[derive(Debug, Default)]
-pub struct GameInfo {
-    pub player_name: Option<String>,
-    pub room_id: Option<String>,
-    pub group_id: Option<String>,
-    pub world: Option<LookResponse>
-}
-
-struct BridgeState {
-    bridge_task: JoinHandle<()>,
-    command_sender: Sender<Request>,
-}
-
 pub struct Client {
     pub server: ServerInfo,
-    pub game: GameInfo,
-    bridge: BridgeState,
-    event_dispatcher: EventDispatcher,
+    bridge: BridgeHandle,
 }
 
 impl Client {
@@ -44,84 +33,7 @@ impl Client {
     where
         F: FnMut(ServerEvent) + Send + 'static,
     {
-        self.event_dispatcher.subscribe(handler);
-    }
-
-    pub fn on_connect_event<F>(&mut self, mut handler: F)
-    where
-        F: FnMut(String) + Send + 'static,
-    {
-        self.on_event(move |event| {
-            if let ServerEvent::Connect(name) = event {
-                handler(name);
-            }
-        });
-    }
-
-    pub fn on_quit_event<F>(&mut self, mut handler: F)
-    where
-        F: FnMut(String) + Send + 'static,
-    {
-        self.on_event(move |event| {
-            if let ServerEvent::Quit(name) = event {
-                handler(name);
-            }
-        });
-    }
-
-    pub fn on_room_event<F>(&mut self, mut handler: F)
-    where
-        F: FnMut(event::RoomEvent) + Send + 'static,
-    {
-        self.on_event(move |event| {
-            if let ServerEvent::Room(data) = event {
-                handler(data);
-            }
-        });
-    }
-
-    pub fn on_group_event<F>(&mut self, mut handler: F)
-    where
-        F: FnMut(event::GroupEvent) + Send + 'static,
-    {
-        self.on_event(move |event| {
-            if let ServerEvent::Group(data) = event {
-                handler(data);
-            }
-        });
-    }
-
-    pub fn on_global_chat_event<F>(&mut self, mut handler: F)
-    where
-        F: FnMut(event::ChatMessage) + Send + 'static,
-    {
-        self.on_event(move |event| {
-            if let ServerEvent::GlobalChat(data) = event {
-                handler(data);
-            }
-        });
-    }
-
-    pub fn on_private_chat_event<F>(&mut self, mut handler: F)
-    where
-        F: FnMut(event::ChatMessage) + Send + 'static,
-    {
-        self.on_event(move |event| {
-            if let ServerEvent::PrivateChat(data) = event {
-                handler(data);
-            }
-        });
-    }
-
-    pub fn on_stats_event<F>(&mut self, mut handler: F)
-    where
-        F: FnMut(u32) + Send + 'static,
-    {
-        self.on_event(move |event| {
-            if let ServerEvent::Stats(count) = event {
-                handler(count);
-            }
-        });
+        self.bridge.event_dispatcher.subscribe(handler);
     }
 
     async fn request<C: Command>(
@@ -165,7 +77,7 @@ impl Client {
     }
 
     pub fn is_connected(&self) -> bool {
-        !self.bridge.bridge_task.is_finished()
+        !self.bridge.task.is_finished()
     }
 
     pub fn close(self) {
@@ -175,7 +87,7 @@ impl Client {
 
 impl Drop for Client {
     fn drop(&mut self) {
-        self.bridge.bridge_task.abort();
+        self.bridge.task.abort();
         info!("Api client dropped :: background tasks properly stopped.");
     }
 }
