@@ -60,3 +60,7 @@ impl ErrorCode {
         }
     }
 }
+
+pub const NPC_QUEST_GIVER: u8 = 1 << 0; 
+pub const NPC_MOB: u8         = 1 << 1; 
+pub const NPC_TALKER: u8      = 1 << 2;

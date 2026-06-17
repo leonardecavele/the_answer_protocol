@@ -1,5 +1,7 @@
 use rust_server::constantes::TickResult;
 use rust_server::game_manager::GameManager;
+use rust_server::parser::Parser;
+
 use std::io::{BufReader, BufRead};
 use std::net::{TcpListener, TcpStream};
 use std::thread;
@@ -8,6 +10,7 @@ use std::sync::mpsc;
 use time::macros::format_description;
 use tracing_subscriber::fmt::time::LocalTime;
 use tracing_subscriber::EnvFilter;
+use tracing::{error, info};
 
 fn start_reader_thread(reader_stream: TcpStream, mpsc_sender: mpsc::Sender<String>) {
     thread::spawn(move || {
@@ -30,13 +33,25 @@ fn start_reader_thread(reader_stream: TcpStream, mpsc_sender: mpsc::Sender<Strin
 fn main() -> std::io::Result<()> {
     let time_format = format_description!("[hour]:[minute]:[second].[subsecond digits:6]");
     let timer = LocalTime::new(time_format);
-
     tracing_subscriber::fmt()
         .with_env_filter(
             EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info")),
         )
         .with_timer(timer)
         .init();
+    
+    let parser = Parser::new("npcs.json");
+
+    match parser.parse_npcs() {
+        Ok(vec) => {
+            info!("Successfully loaded {} NPCs.", vec.len());
+        }
+        Err(err) => {
+            error!("Error parsing NPCs: {}", err);
+        }
+    }
+    
+
 
     let listener = TcpListener::bind("0.0.0.0:38801")?;
 
@@ -50,6 +65,7 @@ fn main() -> std::io::Result<()> {
     let reader_stream = writer_stream.try_clone()?;
 
     let (mpsc_sender, mpsc_receiver) = mpsc::channel();
+
     // channel to make the two threads communicate: 
     // first thread reads from the socket and sends the message to the receiver
     // the receover now reads the sent message and sends PONG back to the go server

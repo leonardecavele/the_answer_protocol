@@ -8,3 +8,5 @@ pub mod player;
 pub mod player_response;
 pub mod room;
 pub mod simulation;
+pub mod npc;
+pub mod parser;
