@@ -1,4 +1,4 @@
-use crate::client::dispatcher::EventDispatcher;
+use crate::client::event::EventDispatcher;
 use crate::client::{BridgeState, Client, ServerInfo};
 use crate::error::{InternalError, NetworkError, TapError};
 use crate::network::bridge::Bridge;

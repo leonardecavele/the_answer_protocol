@@ -1,9 +1,12 @@
 use crate::client::Client;
 use crate::error::{CommandError, TapError};
-use crate::protocol::command::connect::{ConnectCommand, ConnectResponse};
-use crate::protocol::command::global_chat::{GlobalChatCommand, GlobalChatResponse};
-use crate::protocol::command::look::{LookCommand, LookResponse};
-use crate::protocol::command::quit::QuitCommand;
+use crate::protocol::command::communication::global_chat::{GlobalChatCommand, GlobalChatResponse};
+use crate::protocol::command::communication::private_chat::{
+    PrivateChatCommand, PrivateChatResponse,
+};
+use crate::protocol::command::core::connect::{ConnectCommand, ConnectResponse};
+use crate::protocol::command::core::look::{LookCommand, LookResponse};
+use crate::protocol::command::core::quit::QuitCommand;
 use tracing::debug;
 
 impl Client {
@@ -33,6 +36,18 @@ impl Client {
         debug!("sending look request");
 
         let response = self.request(GlobalChatCommand { message }).await?;
+
+        Ok(response)
+    }
+
+    pub async fn chat_private(
+        &self,
+        to: String,
+        message: String,
+    ) -> Result<Result<PrivateChatResponse, CommandError>, TapError> {
+        debug!("sending look request");
+
+        let response = self.request(PrivateChatCommand { to, message }).await?;
 
         Ok(response)
     }

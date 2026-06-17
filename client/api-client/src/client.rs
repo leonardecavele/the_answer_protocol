@@ -1,15 +1,14 @@
 pub mod api;
 pub mod connect;
-pub mod dispatcher;
+pub mod event;
 
-use crate::client::dispatcher::ServerEvent;
+use crate::client::event::ServerEvent;
 use crate::error::{CommandError, InternalError, TapError};
 use crate::protocol::command::Command;
 use crate::protocol::request::Request;
-use crate::protocol::response::{Opcode, ServerResponse};
-use dispatcher::EventDispatcher;
-use tokio::sync::mpsc;
-use tokio::sync::mpsc::{Receiver, Sender};
+use crate::protocol::response::Opcode;
+use event::EventDispatcher;
+use tokio::sync::mpsc::Sender;
 use tokio::task::JoinHandle;
 use tracing::info;
 
@@ -27,7 +26,7 @@ struct BridgeState {
 pub struct Client {
     pub server: ServerInfo,
     bridge: BridgeState,
-    event_dispatcher: EventDispatcher
+    event_dispatcher: EventDispatcher,
 }
 
 impl Client {
@@ -35,8 +34,7 @@ impl Client {
     where
         F: FnMut(ServerEvent) + Send + 'static,
     {
-        self.event_dispatcher
-            .subscribe(handler);
+        self.event_dispatcher.subscribe(handler);
     }
 
     async fn request<C: Command>(

@@ -1,72 +1,42 @@
-use crate::client::Client;
-use crate::error::CommandError;
-use crate::protocol::command::look::LookResponse;
 use crate::protocol::response::ServerResponse;
-use serde::{Deserialize, Serialize};
-use serde_json::Value;
-use serde_with::DisplayFromStr;
-use serde_with::serde_as;
-use std::cmp::PartialEq;
-use std::collections::HashMap;
 use std::string::ToString;
 use tokio::sync::broadcast;
-use tokio::sync::mpsc::Sender;
 use tokio::task::JoinHandle;
-use tracing::{error, info, warn};
+use tracing::warn;
 
 pub struct EventDispatcher {
     broadcast_sender: broadcast::Sender<ServerResponse>,
     subscriber_tasks: Vec<JoinHandle<()>>,
 }
 
-// #[derive(Debug, Deserialize, Serialize, PartialEq)]
-// #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-// #[serde(tag = "event_name")]
-// enum EventType {
-//     NewPlayer,
-// }
-//
-// #[serde_as]
-// #[derive(Debug, Deserialize, Serialize)]
-// pub struct Event {
-//     player: String,
-//     #[serde(flatten)]
-//     event_type: EventType,
-//     data: HashMap<String, Value>
-// }
-
 #[derive(Debug)]
 pub enum ServerEvent {
     Connect(String),
     Quit(String),
-    GlobalChat(GlobalChatEvent),
-    PrivateChat(PrivateChatEvent),
-    RoomPresence(RoomPresenceEvent),
+    Chat(ChatEventData),
+    RoomPresence(RoomPresenceType),
     Unknown(String),
 }
 
 #[derive(Debug)]
-pub struct GlobalChatEvent {
-    pub sender: String,
-    pub message: String,
+pub enum ChatScopeType {
+    Global,
+    Room,
+    Private,
 }
 
 #[derive(Debug)]
-pub struct PrivateChatEvent {
+pub struct ChatEventData {
+    pub scope: ChatScopeType,
     pub sender: String,
     pub message: String,
 }
 
 // Data for a room presence event
 #[derive(Debug)]
-pub enum RoomPresenceAction {
+pub enum RoomPresenceType {
     Enter,
     Leave,
-}
-
-#[derive(Debug)]
-pub struct RoomPresenceEvent {
-    pub action: RoomPresenceAction,
 }
 
 fn parse_event(response: ServerResponse) -> ServerEvent {
@@ -79,20 +49,23 @@ fn parse_event(response: ServerResponse) -> ServerEvent {
     match arguments.as_slice() {
         ["CONNECT", name] => ServerEvent::Connect(name.to_string()),
         ["QUIT", name] => ServerEvent::Quit(name.to_string()),
-        ["GLOBAL", "CHAT", sender, message @ ..] => ServerEvent::GlobalChat(GlobalChatEvent {
+        ["GLOBAL", "CHAT", sender, message @ ..] => ServerEvent::Chat(ChatEventData {
+            scope: ChatScopeType::Global,
             sender: sender.to_string(),
             message: message.join(" "),
         }),
-        ["PRIVATE", "CHAT", sender, message @ ..] => ServerEvent::PrivateChat(PrivateChatEvent {
+        ["ROOM", "CHAT", sender, message @ ..] => ServerEvent::Chat(ChatEventData {
+            scope: ChatScopeType::Room,
             sender: sender.to_string(),
             message: message.join(" "),
         }),
-        ["ROOM", "PRESENCE", "ENTER"] => ServerEvent::RoomPresence(RoomPresenceEvent {
-            action: RoomPresenceAction::Enter,
+        ["PRIVATE", "CHAT", sender, message @ ..] => ServerEvent::Chat(ChatEventData {
+            scope: ChatScopeType::Private,
+            sender: sender.to_string(),
+            message: message.join(" "),
         }),
-        ["ROOM", "PRESENCE", "LEAVE"] => ServerEvent::RoomPresence(RoomPresenceEvent {
-            action: RoomPresenceAction::Leave,
-        }),
+        ["ROOM", "PRESENCE", "ENTER"] => ServerEvent::RoomPresence(RoomPresenceType::Enter),
+        ["ROOM", "PRESENCE", "LEAVE"] => ServerEvent::RoomPresence(RoomPresenceType::Leave),
         _ => ServerEvent::Unknown(arguments.join(" ")),
     }
 }
