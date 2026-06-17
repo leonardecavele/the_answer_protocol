@@ -47,6 +47,83 @@ impl Client {
         self.event_dispatcher.subscribe(handler);
     }
 
+    pub fn on_connect_event<F>(&mut self, mut handler: F)
+    where
+        F: FnMut(String) + Send + 'static,
+    {
+        self.on_event(move |event| {
+            if let ServerEvent::Connect(name) = event {
+                handler(name);
+            }
+        });
+    }
+
+    pub fn on_quit_event<F>(&mut self, mut handler: F)
+    where
+        F: FnMut(String) + Send + 'static,
+    {
+        self.on_event(move |event| {
+            if let ServerEvent::Quit(name) = event {
+                handler(name);
+            }
+        });
+    }
+
+    pub fn on_room_event<F>(&mut self, mut handler: F)
+    where
+        F: FnMut(event::RoomEvent) + Send + 'static,
+    {
+        self.on_event(move |event| {
+            if let ServerEvent::Room(data) = event {
+                handler(data);
+            }
+        });
+    }
+
+    pub fn on_group_event<F>(&mut self, mut handler: F)
+    where
+        F: FnMut(event::GroupEvent) + Send + 'static,
+    {
+        self.on_event(move |event| {
+            if let ServerEvent::Group(data) = event {
+                handler(data);
+            }
+        });
+    }
+
+    pub fn on_global_chat_event<F>(&mut self, mut handler: F)
+    where
+        F: FnMut(event::ChatMessage) + Send + 'static,
+    {
+        self.on_event(move |event| {
+            if let ServerEvent::GlobalChat(data) = event {
+                handler(data);
+            }
+        });
+    }
+
+    pub fn on_private_chat_event<F>(&mut self, mut handler: F)
+    where
+        F: FnMut(event::ChatMessage) + Send + 'static,
+    {
+        self.on_event(move |event| {
+            if let ServerEvent::PrivateChat(data) = event {
+                handler(data);
+            }
+        });
+    }
+
+    pub fn on_stats_event<F>(&mut self, mut handler: F)
+    where
+        F: FnMut(u32) + Send + 'static,
+    {
+        self.on_event(move |event| {
+            if let ServerEvent::Stats(count) = event {
+                handler(count);
+            }
+        });
+    }
+
     async fn request<C: Command>(
         &self,
         command: C,

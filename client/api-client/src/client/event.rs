@@ -1,51 +1,116 @@
 use tokio::sync::broadcast;
 use tokio::task::JoinHandle;
 use tracing::{debug, warn};
+use crate::protocol::response::ServerResponse;
 
-pub struct EventDispatcher {
-    broadcast_sender: broadcast::Sender<ServerEvent>,
-    subscriber_tasks: Vec<JoinHandle<()>>,
+#[derive(Debug, Clone)]
+pub struct ChatMessage {
+    pub sender: String,
+    pub message: String,
+}
+
+#[derive(Debug, Clone)]
+pub enum RoomEvent {
+    PresenceEnter(String),
+    PresenceLeave(String),
+    Chat(ChatMessage),
+}
+
+#[derive(Debug, Clone)]
+pub enum GroupEvent {
+    Invite(String),
+    Join(String),
+    Leave(String),
+    Chat(ChatMessage),
 }
 
 #[derive(Debug, Clone)]
 pub enum ServerEvent {
     Connect(String),
     Quit(String),
-    Chat(ChatEventData),
-    RoomPresence(RoomPresenceData),
-    GroupInvite(String),
-    GroupJoin(String),
-    GroupLeave(String),
+    Room(RoomEvent),
+    Group(GroupEvent),
+    GlobalChat(ChatMessage),
+    PrivateChat(ChatMessage),
     Stats(u32),
     Unknown(String),
 }
 
-#[derive(Debug, Clone)]
-pub enum ChatScopeType {
-    Global,
-    Room,
-    Private,
-    Group,
+impl From<ServerResponse> for ServerEvent {
+    fn from(response: ServerResponse) -> Self {
+        let args: Vec<&str> = response.arguments.iter().map(|s| s.as_str()).collect();
+
+        match args.as_slice() {
+            ["CONNECT", name] => ServerEvent::Connect(name.to_string()),
+            ["QUIT", name] => ServerEvent::Quit(name.to_string()),
+
+            // Room events
+            ["ROOM", "PRESENCE", "ENTER", name] => {
+                ServerEvent::Room(RoomEvent::PresenceEnter(name.to_string()))
+            }
+            ["ROOM", "PRESENCE", "LEAVE", name] => {
+                ServerEvent::Room(RoomEvent::PresenceLeave(name.to_string()))
+            }
+            ["ROOM", "CHAT", sender, message @ ..] => {
+                ServerEvent::Room(RoomEvent::Chat(ChatMessage {
+                    sender: sender.to_string(),
+                    message: message.join(" "),
+                }))
+            }
+
+            // Global events
+            ["GLOBAL", "CHAT", sender, message @ ..] => {
+                ServerEvent::GlobalChat(ChatMessage {
+                    sender: sender.to_string(),
+                    message: message.join(" "),
+                })
+            }
+
+            // Private events
+            ["PRIVATE", "CHAT", sender, message @ ..] => {
+                ServerEvent::PrivateChat(ChatMessage {
+                    sender: sender.to_string(),
+                    message: message.join(" "),
+                })
+            }
+
+            // Group events
+            ["GROUP", "INVITE", leader] => {
+                ServerEvent::Group(GroupEvent::Invite(leader.to_string()))
+            }
+            ["GROUP", "JOIN", user] => {
+                ServerEvent::Group(GroupEvent::Join(user.to_string()))
+            }
+            ["GROUP", "LEAVE", user, ..] => {
+                ServerEvent::Group(GroupEvent::Leave(user.to_string()))
+            }
+            ["GROUP", "CHAT", sender, message @ ..] => {
+                ServerEvent::Group(GroupEvent::Chat(ChatMessage {
+                    sender: sender.to_string(),
+                    message: message.join(" "),
+                }))
+            }
+
+            // Stats events
+            ["STATS", players_str] => {
+                if let Some(count) = players_str
+                    .strip_prefix("players=")
+                    .and_then(|s| s.parse::<u32>().ok())
+                {
+                    ServerEvent::Stats(count)
+                } else {
+                    ServerEvent::Unknown(args.join(" "))
+                }
+            }
+
+            _ => ServerEvent::Unknown(args.join(" ")),
+        }
+    }
 }
 
-#[derive(Debug, Clone)]
-pub struct ChatEventData {
-    pub scope: ChatScopeType,
-    pub sender: String,
-    pub message: String,
-}
-
-// Data for a room presence event
-#[derive(Debug, Clone)]
-pub enum RoomPresenceAction {
-    Enter,
-    Leave,
-}
-
-#[derive(Debug, Clone)]
-pub struct RoomPresenceData {
-    pub action: RoomPresenceAction,
-    pub name: String,
+pub struct EventDispatcher {
+    broadcast_sender: broadcast::Sender<ServerEvent>,
+    subscriber_tasks: Vec<JoinHandle<()>>,
 }
 
 impl EventDispatcher {

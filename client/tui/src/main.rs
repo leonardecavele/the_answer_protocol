@@ -1,5 +1,5 @@
 use api_client::client::connect::ClientConnect;
-use api_client::client::event::ServerEvent;
+use api_client::client::event::{GroupEvent, RoomEvent, ServerEvent};
 use api_client::error::TapError;
 use std::io::{stdin, Write};
 use std::{env, io};
@@ -46,32 +46,55 @@ async fn test_single_connection() -> Result<(), TapError> {
     let mut client =
         ClientConnect::connect(format!("{}:{}", get_server_ip(), get_server_port())).await?;
 
-    client.on_event(move |event| match event {
-        ServerEvent::Connect(name) => {
-            info!("[connect event]: new player {:?}", &name);
+    client.on_connect_event(|name| {
+        info!("[connect event]: new player {:?}", name);
+    });
+
+    client.on_quit_event(|name| {
+        info!("[quit event]: player {:?} has quit", name);
+    });
+
+    client.on_global_chat_event(|msg| {
+        info!("[global chat]: {}: {}", msg.sender, msg.message);
+    });
+
+    client.on_private_chat_event(|msg| {
+        info!("[private chat]: {}: {}", msg.sender, msg.message);
+    });
+
+    client.on_room_event(|event| match event {
+        RoomEvent::PresenceEnter(name) => {
+            info!("[room presence]: {:?} entered the room", name);
         }
-        ServerEvent::Quit(name) => {
-            info!("[quit event]: player {:?} as quit", &name);
+        RoomEvent::PresenceLeave(name) => {
+            info!("[room presence]: {:?} left the room", name);
         }
-        ServerEvent::Chat(data) => {
-            info!("[event {:?}]: {:?}", data.scope, data.message);
+        RoomEvent::Chat(msg) => {
+            info!("[room chat]: {}: {}", msg.sender, msg.message);
         }
-        ServerEvent::RoomPresence(data) => {
-            info!("[room presence event {:?}]: {:?}", data.action, data.name);
+    });
+
+    client.on_group_event(|event| match event {
+        GroupEvent::Invite(leader) => {
+            info!("[group invite]: invited by {:?}", leader);
         }
-        ServerEvent::GroupInvite(leader) => {
-            info!("[group invite event]: invited by {:?}", leader);
+        GroupEvent::Join(user) => {
+            info!("[group join]: player {:?} joined the group", user);
         }
-        ServerEvent::GroupJoin(user) => {
-            info!("[group join event]: player {:?} joined the group", user);
+        GroupEvent::Leave(user) => {
+            info!("[group leave]: player {:?} left the group", user);
         }
-        ServerEvent::GroupLeave(user) => {
-            info!("[group leave event]: player {:?} left the group", user);
+        GroupEvent::Chat(msg) => {
+            info!("[group chat]: {}: {}", msg.sender, msg.message);
         }
-        ServerEvent::Stats(count) => {
-            info!("[stats event]: players online: {}", count);
-        }
-        ServerEvent::Unknown(data) => {
+    });
+
+    client.on_stats_event(|count| {
+        info!("[stats event]: players online: {}", count);
+    });
+
+    client.on_event(|event| {
+        if let ServerEvent::Unknown(data) = event {
             error!("[unknown event]: {:?}", data);
         }
     });

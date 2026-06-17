@@ -1,6 +1,4 @@
-use crate::client::event::{
-    ChatEventData, ChatScopeType, RoomPresenceAction, RoomPresenceData, ServerEvent,
-};
+use crate::client::event::ServerEvent;
 use crate::error::{InternalError, NetworkError, TapError};
 use crate::protocol::request::Request;
 use crate::protocol::response::{Opcode, ServerResponse};
@@ -102,7 +100,7 @@ impl Bridge {
                 let response = ServerResponse::try_from(line)?;
 
                 if response.opcode == Opcode::Evt {
-                    let event = self.parse_event(response);
+                    let event = ServerEvent::from(response);
                     let _ = self.event_transmitter.send(event).map_err(|_| {
                         InternalError::ChannelPanic(
                             "event channel is closed, nowhere to send the event".to_string(),
@@ -160,57 +158,4 @@ impl Bridge {
         Ok(true)
     }
 
-    fn parse_event(&mut self, response: ServerResponse) -> ServerEvent {
-        let arguments = response
-            .arguments
-            .as_slice()
-            .iter()
-            .map(|s| s as &str)
-            .collect::<Vec<&str>>();
-
-        match arguments.as_slice() {
-            ["CONNECT", name] => ServerEvent::Connect(name.to_string()),
-            ["QUIT", name] => ServerEvent::Quit(name.to_string()),
-            ["GLOBAL", "CHAT", sender, message @ ..] => ServerEvent::Chat(ChatEventData {
-                scope: ChatScopeType::Global,
-                sender: sender.to_string(),
-                message: message.join(" "),
-            }),
-            ["ROOM", "CHAT", sender, message @ ..] => ServerEvent::Chat(ChatEventData {
-                scope: ChatScopeType::Room,
-                sender: sender.to_string(),
-                message: message.join(" "),
-            }),
-            ["PRIVATE", "CHAT", sender, message @ ..] => ServerEvent::Chat(ChatEventData {
-                scope: ChatScopeType::Private,
-                sender: sender.to_string(),
-                message: message.join(" "),
-            }),
-            ["ROOM", "PRESENCE", "ENTER", name] => ServerEvent::RoomPresence(RoomPresenceData {
-                action: RoomPresenceAction::Enter,
-                name: name.to_string(),
-            }),
-            ["ROOM", "PRESENCE", "LEAVE", name] => ServerEvent::RoomPresence(RoomPresenceData {
-                action: RoomPresenceAction::Leave,
-                name: name.to_string(),
-            }),
-            ["GROUP", "CHAT", sender, message @ ..] => ServerEvent::Chat(ChatEventData {
-                scope: ChatScopeType::Group,
-                sender: sender.to_string(),
-                message: message.join(" "),
-            }),
-            ["GROUP", "INVITE", leader] => ServerEvent::GroupInvite(leader.to_string()),
-            ["GROUP", "JOIN", user] => ServerEvent::GroupJoin(user.to_string()),
-            ["GROUP", "LEAVE", user, _] => ServerEvent::GroupLeave(user.to_string()),
-            ["STATS", players_str] => {
-                if let Some(count_str) = players_str.strip_prefix("players=") {
-                    if let Ok(count) = count_str.parse::<u32>() {
-                        return ServerEvent::Stats(count);
-                    }
-                }
-                ServerEvent::Unknown(arguments.join(" "))
-            }
-            _ => ServerEvent::Unknown(arguments.join(" ")),
-        }
-    }
 }
