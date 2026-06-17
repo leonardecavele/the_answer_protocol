@@ -1,10 +1,10 @@
 package config
 
 const (
-	GameServerIP   = "localhost"
+	GameServerIP   = "10.11.12.2"
 	GameServerPort = 38801
 
-	GameConnectionRetryDelay = 30
+	GameConnectionRetryDelay = 5
 
 	GameConfirmationMessage = "Duly noted."
 )

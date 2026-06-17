@@ -35,7 +35,7 @@ func handleConnectCommand(args string, client *session.Client, gameServer *game_
 	if err := gameServer.WriteCommand(game_conn.CommandToGameServer{
 		Player:    client.Username,
 		Command:   "CONNECT",
-		Arguments: args,
+		Arguments: "",
 	}); err != nil && !errors.Is(err, serverError.ErrGameServerNotConnected) {
 		return "", err
 	}
