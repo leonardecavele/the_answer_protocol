@@ -13,6 +13,10 @@ pub enum ServerEvent {
     Quit(String),
     Chat(ChatEventData),
     RoomPresence(RoomPresenceData),
+    GroupInvite(String),
+    GroupJoin(String),
+    GroupLeave(String),
+    Stats(u32),
     Unknown(String),
 }
 
@@ -21,6 +25,7 @@ pub enum ChatScopeType {
     Global,
     Room,
     Private,
+    Group,
 }
 
 #[derive(Debug, Clone)]

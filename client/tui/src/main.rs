@@ -59,6 +59,18 @@ async fn test_single_connection() -> Result<(), TapError> {
         ServerEvent::RoomPresence(data) => {
             info!("[room presence event {:?}]: {:?}", data.action, data.name);
         }
+        ServerEvent::GroupInvite(leader) => {
+            info!("[group invite event]: invited by {:?}", leader);
+        }
+        ServerEvent::GroupJoin(user) => {
+            info!("[group join event]: player {:?} joined the group", user);
+        }
+        ServerEvent::GroupLeave(user) => {
+            info!("[group leave event]: player {:?} left the group", user);
+        }
+        ServerEvent::Stats(count) => {
+            info!("[stats event]: players online: {}", count);
+        }
         ServerEvent::Unknown(data) => {
             error!("[unknown event]: {:?}", data);
         }

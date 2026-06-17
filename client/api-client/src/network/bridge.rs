@@ -194,6 +194,22 @@ impl Bridge {
                 action: RoomPresenceAction::Leave,
                 name: name.to_string(),
             }),
+            ["GROUP", "CHAT", sender, message @ ..] => ServerEvent::Chat(ChatEventData {
+                scope: ChatScopeType::Group,
+                sender: sender.to_string(),
+                message: message.join(" "),
+            }),
+            ["GROUP", "INVITE", leader] => ServerEvent::GroupInvite(leader.to_string()),
+            ["GROUP", "JOIN", user] => ServerEvent::GroupJoin(user.to_string()),
+            ["GROUP", "LEAVE", user, _] => ServerEvent::GroupLeave(user.to_string()),
+            ["STATS", players_str] => {
+                if let Some(count_str) = players_str.strip_prefix("players=") {
+                    if let Ok(count) = count_str.parse::<u32>() {
+                        return ServerEvent::Stats(count);
+                    }
+                }
+                ServerEvent::Unknown(arguments.join(" "))
+            }
             _ => ServerEvent::Unknown(arguments.join(" ")),
         }
     }
