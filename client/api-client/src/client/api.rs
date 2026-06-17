@@ -12,6 +12,14 @@ use crate::protocol::command::group::create::{GroupCreateCommand, GroupCreateRes
 use crate::protocol::command::group::invite::{GroupInviteCommand, GroupInviteResponse};
 use crate::protocol::command::group::join::{GroupJoinCommand, GroupJoinResponse};
 use crate::protocol::command::group::leave::{GroupLeaveCommand, GroupLeaveResponse};
+use crate::protocol::command::resource_interaction::attack::{AttackCommand, AttackResponse};
+use crate::protocol::command::resource_interaction::drop::{DropCommand, DropResponse};
+use crate::protocol::command::resource_interaction::inventory::{InventoryCommand, InventoryResponse};
+use crate::protocol::command::resource_interaction::quest::{QuestCommand, QuestResponse};
+use crate::protocol::command::resource_interaction::quests::{QuestsCommand, QuestsResponse};
+use crate::protocol::command::resource_interaction::status::{StatusCommand, StatusResponse};
+use crate::protocol::command::resource_interaction::take::{TakeCommand, TakeResponse};
+use crate::protocol::command::resource_interaction::talk::{TalkCommand, TalkResponse};
 use tracing::debug;
 
 impl Client {
@@ -110,11 +118,51 @@ impl Client {
 
         let response = self.request(GroupLeaveCommand).await?;
 
-        if let Ok(_) = &response {
+        if response.is_ok() {
             self.game.group_id = None;
         }
 
         Ok(response)
+    }
+
+    pub async fn take(&self, item_identifier: String) -> Result<Result<TakeResponse, CommandError>, TapError> {
+        debug!("sending take request");
+        Ok(self.request(TakeCommand { item_identifier }).await?)
+    }
+
+    pub async fn drop_item(&self, item_identifier: String) -> Result<Result<DropResponse, CommandError>, TapError> {
+        debug!("sending drop request");
+        Ok(self.request(DropCommand { item_identifier }).await?)
+    }
+
+    pub async fn inventory(&self) -> Result<Result<InventoryResponse, CommandError>, TapError> {
+        debug!("sending inventory request");
+        Ok(self.request(InventoryCommand).await?)
+    }
+
+    pub async fn talk(&self, npc_name: String) -> Result<Result<TalkResponse, CommandError>, TapError> {
+        debug!("sending talk request");
+        Ok(self.request(TalkCommand { npc_name }).await?)
+    }
+
+    pub async fn attack(&self, npc_name: String) -> Result<Result<AttackResponse, CommandError>, TapError> {
+        debug!("sending attack request");
+        Ok(self.request(AttackCommand { npc_name }).await?)
+    }
+
+    pub async fn status(&self) -> Result<Result<StatusResponse, CommandError>, TapError> {
+        debug!("sending status request");
+        Ok(self.request(StatusCommand).await?)
+    }
+
+    pub async fn quest(&self, npc_name: String) -> Result<Result<QuestResponse, CommandError>, TapError> {
+        debug!("sending quest request");
+        Ok(self.request(QuestCommand { npc_name }).await?)
+    }
+
+    pub async fn quests(&self) -> Result<Result<QuestsResponse, CommandError>, TapError> {
+        debug!("sending quests request");
+        Ok(self.request(QuestsCommand).await?)
     }
 
     pub async fn quit(self) {

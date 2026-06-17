@@ -3,21 +3,21 @@ use crate::error::CommandError;
 use crate::protocol::command::Command;
 use crate::protocol::response::ServerResponse;
 
-pub struct ConnectCommand {
-    pub player_name: String,
+pub struct TalkCommand {
+    pub npc_name: String,
 }
 
-#[derive(Debug)]
-pub struct ConnectResponse {
-    pub player_name: String,
+#[derive(Debug, Clone)]
+pub struct TalkResponse {
+    pub dialogue: String,
 }
 
-impl Command for ConnectCommand {
-    type ResponseData = ConnectResponse;
+impl Command for TalkCommand {
+    type ResponseData = TalkResponse;
 
     fn create_command(&self, server_info: &ServerInfo) -> Result<String, CommandError> {
         match server_info.protocol_version {
-            1 => Ok(format!("CONNECT {}", self.player_name)),
+            1 => Ok(format!("TALK {}", self.npc_name)),
             v => Err(CommandError::version_not_implemented(v)),
         }
     }
@@ -29,14 +29,15 @@ impl Command for ConnectCommand {
     ) -> Result<Self::ResponseData, CommandError> {
         match server_info.protocol_version {
             1 => {
-                if response.arguments.len() != 1 || response.arguments[0] != "connected" {
+                if response.arguments.is_empty() {
                     return Err(CommandError {
                         code: None,
                         message: "invalid arguments".to_string(),
                     });
                 }
-                Ok(ConnectResponse {
-                    player_name: self.player_name.clone(),
+                
+                Ok(TalkResponse {
+                    dialogue: response.arguments.join(" "),
                 })
             }
             v => Err(CommandError::version_not_implemented(v)),
@@ -45,7 +46,7 @@ impl Command for ConnectCommand {
 
     fn refine_error(&self, server_info: &ServerInfo, error: &mut CommandError) {
         error.with_message(match (server_info.protocol_version, error.code) {
-            (1, Some(201)) => Some(format!("{} already taken", self.player_name)),
+            (1, Some(404)) => Some("npc not found".to_string()),
             _ => None,
         })
     }

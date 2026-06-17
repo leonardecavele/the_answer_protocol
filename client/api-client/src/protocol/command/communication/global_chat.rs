@@ -7,6 +7,7 @@ pub struct GlobalChatCommand {
     pub message: String,
 }
 
+#[derive(Debug)]
 pub struct GlobalChatResponse;
 
 impl Command for GlobalChatCommand {

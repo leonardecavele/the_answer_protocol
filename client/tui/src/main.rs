@@ -85,22 +85,25 @@ async fn test_single_connection() -> Result<(), TapError> {
         }
 
         input.clear();
-        println!("(connect | chat_global | chat_private | look | group_create | group_invite | group_join | group_leave | quit)");
+        println!("(connect | chat_global | chat_private | look | who | group_create | group_invite | group_join | group_leave | take | drop | inventory | talk | attack | status | quest | quests | quit)");
         print!("> ");
         let _ = io::stdout().flush();
         let _ = stdin.read_line(input);
 
         let _ = match input.trim().split(" ").collect::<Vec<&str>>().as_slice() {
             ["connect", name] => {
-                let _ = client.connect(name.to_string()).await;
+                let result = client.connect(name.to_string()).await;
+                println!("[connect] {:?}", result);
             }
             ["chat_global", message @ ..] => {
-                let _ = client.chat_global(message.join(" ")).await?;
+                let result = client.chat_global(message.join(" ")).await;
+                println!("[chat_global] {:?}", result);
             }
             ["chat_private", to, message @ ..] => {
-                let _ = client
+                let result = client
                     .chat_private(to.to_string(), message.join(" "))
-                    .await?;
+                    .await;
+                println!("[chat_private] {:?}", result);
             }
             ["look"] => {
                 let _ = client.look().await;
@@ -126,6 +129,38 @@ async fn test_single_connection() -> Result<(), TapError> {
             ["group_leave"] => {
                 let result = client.group_leave().await;
                 println!("[group_leave] {:?}", result);
+            }
+            ["take", item] => {
+                let result = client.take(item.to_string()).await;
+                println!("[take] {:?}", result);
+            }
+            ["drop", item] => {
+                let result = client.drop_item(item.to_string()).await;
+                println!("[drop] {:?}", result);
+            }
+            ["inventory"] => {
+                let result = client.inventory().await;
+                println!("[inventory] {:?}", result);
+            }
+            ["talk", npc] => {
+                let result = client.talk(npc.to_string()).await;
+                println!("[talk] {:?}", result);
+            }
+            ["attack", npc] => {
+                let result = client.attack(npc.to_string()).await;
+                println!("[attack] {:?}", result);
+            }
+            ["status"] => {
+                let result = client.status().await;
+                println!("[status] {:?}", result);
+            }
+            ["quest", npc] => {
+                let result = client.quest(npc.to_string()).await;
+                println!("[quest] {:?}", result);
+            }
+            ["quests"] => {
+                let result = client.quests().await;
+                println!("[quests] {:?}", result);
             }
             ["quit"] => {
                 client.quit().await;

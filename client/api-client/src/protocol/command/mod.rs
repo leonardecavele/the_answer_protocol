@@ -1,6 +1,7 @@
 pub mod communication;
 pub mod core;
 pub mod group;
+pub mod resource_interaction;
 
 use crate::client::ServerInfo;
 use crate::error::CommandError;

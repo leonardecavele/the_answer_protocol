@@ -8,6 +8,7 @@ pub struct PrivateChatCommand {
     pub message: String,
 }
 
+#[derive(Debug)]
 pub struct PrivateChatResponse;
 
 impl Command for PrivateChatCommand {

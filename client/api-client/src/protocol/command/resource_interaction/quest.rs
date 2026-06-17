@@ -2,22 +2,31 @@ use crate::client::ServerInfo;
 use crate::error::CommandError;
 use crate::protocol::command::Command;
 use crate::protocol::response::ServerResponse;
+use serde::{Deserialize, Serialize};
 
-pub struct ConnectCommand {
-    pub player_name: String,
+pub struct QuestCommand {
+    pub npc_name: String,
 }
 
-#[derive(Debug)]
-pub struct ConnectResponse {
-    pub player_name: String,
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct QuestData {
+    pub quest_id: String,
+    pub description: String,
+    pub reward: String,
+    pub status: String,
 }
 
-impl Command for ConnectCommand {
-    type ResponseData = ConnectResponse;
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct QuestResponse {
+    pub quest_data: QuestData,
+}
+
+impl Command for QuestCommand {
+    type ResponseData = QuestResponse;
 
     fn create_command(&self, server_info: &ServerInfo) -> Result<String, CommandError> {
         match server_info.protocol_version {
-            1 => Ok(format!("CONNECT {}", self.player_name)),
+            1 => Ok(format!("QUEST {}", self.npc_name)),
             v => Err(CommandError::version_not_implemented(v)),
         }
     }
@@ -29,14 +38,11 @@ impl Command for ConnectCommand {
     ) -> Result<Self::ResponseData, CommandError> {
         match server_info.protocol_version {
             1 => {
-                if response.arguments.len() != 1 || response.arguments[0] != "connected" {
-                    return Err(CommandError {
-                        code: None,
-                        message: "invalid arguments".to_string(),
-                    });
-                }
-                Ok(ConnectResponse {
-                    player_name: self.player_name.clone(),
+                let quest_data: QuestData = serde_json::from_str(response.arguments.join("").as_str())
+                    .map_err(|e| CommandError::invalid_json_response(e))?;
+                
+                Ok(QuestResponse {
+                    quest_data,
                 })
             }
             v => Err(CommandError::version_not_implemented(v)),
@@ -45,7 +51,8 @@ impl Command for ConnectCommand {
 
     fn refine_error(&self, server_info: &ServerInfo, error: &mut CommandError) {
         error.with_message(match (server_info.protocol_version, error.code) {
-            (1, Some(201)) => Some(format!("{} already taken", self.player_name)),
+            (1, Some(400)) => Some("no quest available".to_string()),
+            (1, Some(404)) => Some("npc not found".to_string()),
             _ => None,
         })
     }
