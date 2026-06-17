@@ -73,7 +73,8 @@ async fn test_single_connection() -> Result<(), TapError> {
         }
 
         input.clear();
-        print!("(connect | chat_global | chat_private | look | group_create | quit)> ");
+        println!("(connect | chat_global | chat_private | look | group_create | group_invite | group_join | group_leave | quit)");
+        print!("> ");
         let _ = io::stdout().flush();
         let _ = stdin.read_line(input);
 
@@ -97,6 +98,18 @@ async fn test_single_connection() -> Result<(), TapError> {
             ["group_create"] => {
                 let result = client.group_create().await;
                 println!("[group_create] {:?}", result);
+            }
+            ["group_invite", name] => {
+                let result = client.group_invite(name.to_string()).await;
+                println!("[group_invite] {:?}", result);
+            }
+            ["group_join", leader_name] => {
+                let result = client.group_join(leader_name.to_string()).await;
+                println!("[group_join] {:?}", result);
+            }
+            ["group_leave"] => {
+                let result = client.group_leave().await;
+                println!("[group_leave] {:?}", result);
             }
             ["quit"] => {
                 client.quit().await;

@@ -8,6 +8,9 @@ use crate::protocol::command::core::connect::{ConnectCommand, ConnectResponse};
 use crate::protocol::command::core::look::{LookCommand, LookResponse};
 use crate::protocol::command::core::quit::QuitCommand;
 use crate::protocol::command::group::create::{GroupCreateCommand, GroupCreateResponse};
+use crate::protocol::command::group::invite::{GroupInviteCommand, GroupInviteResponse};
+use crate::protocol::command::group::join::{GroupJoinCommand, GroupJoinResponse};
+use crate::protocol::command::group::leave::{GroupLeaveCommand, GroupLeaveResponse};
 use tracing::debug;
 
 impl Client {
@@ -61,15 +64,45 @@ impl Client {
         Ok(response)
     }
 
-    pub async fn group_create(
-        &mut self,
-    ) -> Result<Result<GroupCreateResponse, CommandError>, TapError> {
+    pub async fn group_create(&mut self) -> Result<Result<GroupCreateResponse, CommandError>, TapError> {
         debug!("sending group create request");
 
         let response = self.request(GroupCreateCommand).await?;
 
         if let Ok(result) = &response {
             self.game.group_id = Some(result.group_id.to_string());
+        }
+
+        Ok(response)
+    }
+
+    pub async fn group_invite(&self, username: String) -> Result<Result<GroupInviteResponse, CommandError>, TapError> {
+        debug!("sending group invite request");
+
+        let response = self.request(GroupInviteCommand { username }).await?;
+
+        Ok(response)
+    }
+
+    pub async fn group_join(&mut self, leader_name: String) -> Result<Result<GroupJoinResponse, CommandError>, TapError> {
+        debug!("sending group join request");
+
+        let response = self.request(GroupJoinCommand { leader_name }).await?;
+
+        if let Ok(result) = &response {
+            self.game.group_id = Some(result.group_id.to_string());
+        }
+
+        Ok(response)
+    }
+
+    pub async fn group_leave(&mut self) -> Result<Result<GroupLeaveResponse, CommandError>, TapError> {
+        debug!("sending group leave request");
+
+        let response = self.request(GroupLeaveCommand).await?;
+
+        if let Ok(_) = &response {
+            self.game.group_id = None;
         }
 
         Ok(response)
