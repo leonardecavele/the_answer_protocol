@@ -79,6 +79,7 @@ func handleLookCommand(args string, client *session.Client, gameServer *game_con
 	return "OK " + response.Data, nil
 }
 
+// prevent grouped members to gameserver
 func handleMoveCommand(args string, client *session.Client, gameServer *game_conn.GameServerManager) (string, error) {
 	if client.State != session.AUTHENTICATED {
 		return protocol.ResponseNotConnected, nil
