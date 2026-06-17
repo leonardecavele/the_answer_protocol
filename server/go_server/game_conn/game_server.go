@@ -79,7 +79,6 @@ func (gameServer *GameServer) WriteQuestion(question QuestionToGameServer) error
 func routeGameEvent(
 	gameEvent protocol.Event,
 	routeEvent func(username string, event protocol.Event) bool,
-	broadcastEvent func(event protocol.Event),
 ) {
 	ignored := make(map[string]struct{}, len(gameEvent.IgnoredPlayers))
 	for _, username := range gameEvent.IgnoredPlayers {
@@ -88,10 +87,9 @@ func routeGameEvent(
 
 	routed := make(map[string]struct{}, len(gameEvent.Players))
 	targets := make([]string, 0, len(gameEvent.Players))
-	broadcastAll := false
 	for _, username := range gameEvent.Players {
 		username = strings.ToUpper(strings.TrimSpace(username))
-		if username == "" {
+		if username == "" || username == "*" {
 			continue
 		}
 		if _, ok := ignored[username]; ok {
@@ -102,23 +100,10 @@ func routeGameEvent(
 		}
 		routed[username] = struct{}{}
 
-		if username == "*" {
-			broadcastAll = true
-			continue
-		}
 		targets = append(targets, username)
 	}
 
 	gameEvent.Players = targets
-	if broadcastAll && broadcastEvent != nil {
-		broadcastEvent(protocol.Event{
-			Players:        nil,
-			IgnoredPlayers: gameEvent.IgnoredPlayers,
-			EmittedBy:      gameEvent.EmittedBy,
-			EventName:      gameEvent.EventName,
-			Data:           gameEvent.Data,
-		})
-	}
 	for _, username := range targets {
 		if routeEvent != nil {
 			routeEvent(username, gameEvent)
@@ -168,7 +153,7 @@ func (gameServer *GameServer) Read(
 		}
 		if ok && (routeEvent != nil || broadcastEvent != nil) {
 			for _, gameEvent := range gameEvents {
-				routeGameEvent(gameEvent, routeEvent, broadcastEvent)
+				routeGameEvent(gameEvent, routeEvent)
 			}
 			continue
 		}
@@ -179,7 +164,7 @@ func (gameServer *GameServer) Read(
 			continue
 		}
 		if ok && (routeEvent != nil || broadcastEvent != nil) {
-			routeGameEvent(gameEvent, routeEvent, broadcastEvent)
+			routeGameEvent(gameEvent, routeEvent)
 			continue
 		}
 
