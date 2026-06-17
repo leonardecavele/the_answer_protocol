@@ -41,7 +41,6 @@ func handleConnectCommand(args string, client *session.Client, gameServer *game_
 	}
 
 	client.Room.BroadcastEvent(protocol.Event{
-		Player:         "*",
 		IgnoredPlayers: []string{client.Username},
 		EmittedBy:      client.Username,
 		EventName:      "CONNECT",

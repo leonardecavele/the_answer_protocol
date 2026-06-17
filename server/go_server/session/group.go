@@ -43,14 +43,40 @@ func (group *Group) BroadcastEvent(event protocol.Event) {
 
 	group.mutex.Lock()
 	clients := make([]*Client, 0, len(group.clients))
-	for username, client := range group.clients {
-		if _, ok := ignored[username]; ok {
-			continue
+	players := make([]string, 0, len(group.clients))
+	if len(event.Players) > 0 {
+		seen := make(map[string]struct{}, len(event.Players))
+		for _, username := range event.Players {
+			username = strings.ToUpper(strings.TrimSpace(username))
+			if username == "" {
+				continue
+			}
+			if _, ok := ignored[username]; ok {
+				continue
+			}
+			if _, ok := seen[username]; ok {
+				continue
+			}
+			client, ok := group.clients[username]
+			if !ok {
+				continue
+			}
+			seen[username] = struct{}{}
+			clients = append(clients, client)
+			players = append(players, username)
 		}
-		clients = append(clients, client)
+	} else {
+		for username, client := range group.clients {
+			if _, ok := ignored[username]; ok {
+				continue
+			}
+			clients = append(clients, client)
+			players = append(players, username)
+		}
 	}
 	group.mutex.Unlock()
 
+	event.Players = players
 	for _, client := range clients {
 		client.eventChan <- event
 	}
@@ -118,7 +144,6 @@ func (c *Client) JoinGroup(group *Group) string {
 
 	c.Group = group
 	group.BroadcastEvent(protocol.Event{
-		Player:         "*",
 		IgnoredPlayers: []string{c.Username},
 		EmittedBy:      c.Username,
 		EventName:      "GROUP JOIN",
@@ -155,7 +180,7 @@ func (c *Client) QuitGroup() {
 			client.Group = nil
 			if client != c {
 				client.eventChan <- protocol.Event{
-					Player:         "*",
+					Players:        []string{client.Username},
 					IgnoredPlayers: []string{c.Username},
 					EmittedBy:      c.Username,
 					EventName:      "GROUP LEAVE",
@@ -176,7 +201,6 @@ func (c *Client) QuitGroup() {
 	c.Group = nil
 	if !isEmpty {
 		group.BroadcastEvent(protocol.Event{
-			Player:         "*",
 			IgnoredPlayers: []string{},
 			EmittedBy:      c.Username,
 			EventName:      "GROUP LEAVE",

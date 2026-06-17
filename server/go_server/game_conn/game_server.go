@@ -76,6 +76,56 @@ func (gameServer *GameServer) WriteQuestion(question QuestionToGameServer) error
 	return gameServer.WriteCommand(question)
 }
 
+func routeGameEvent(
+	gameEvent protocol.Event,
+	routeEvent func(username string, event protocol.Event) bool,
+	broadcastEvent func(event protocol.Event),
+) {
+	ignored := make(map[string]struct{}, len(gameEvent.IgnoredPlayers))
+	for _, username := range gameEvent.IgnoredPlayers {
+		ignored[strings.ToUpper(strings.TrimSpace(username))] = struct{}{}
+	}
+
+	routed := make(map[string]struct{}, len(gameEvent.Players))
+	targets := make([]string, 0, len(gameEvent.Players))
+	broadcastAll := false
+	for _, username := range gameEvent.Players {
+		username = strings.ToUpper(strings.TrimSpace(username))
+		if username == "" {
+			continue
+		}
+		if _, ok := ignored[username]; ok {
+			continue
+		}
+		if _, ok := routed[username]; ok {
+			continue
+		}
+		routed[username] = struct{}{}
+
+		if username == "*" {
+			broadcastAll = true
+			continue
+		}
+		targets = append(targets, username)
+	}
+
+	gameEvent.Players = targets
+	if broadcastAll && broadcastEvent != nil {
+		broadcastEvent(protocol.Event{
+			Players:        nil,
+			IgnoredPlayers: gameEvent.IgnoredPlayers,
+			EmittedBy:      gameEvent.EmittedBy,
+			EventName:      gameEvent.EventName,
+			Data:           gameEvent.Data,
+		})
+	}
+	for _, username := range targets {
+		if routeEvent != nil {
+			routeEvent(username, gameEvent)
+		}
+	}
+}
+
 func (gameServer *GameServer) Read(
 	quit <-chan struct{},
 	routeCommand func(username string, command CommandFromGameServer) bool,
@@ -118,14 +168,7 @@ func (gameServer *GameServer) Read(
 		}
 		if ok && (routeEvent != nil || broadcastEvent != nil) {
 			for _, gameEvent := range gameEvents {
-				if gameEvent.Player == "*" && broadcastEvent != nil {
-					broadcastEvent(gameEvent)
-					continue
-				}
-				if routeEvent == nil {
-					continue
-				}
-				routeEvent(gameEvent.Player, gameEvent)
+				routeGameEvent(gameEvent, routeEvent, broadcastEvent)
 			}
 			continue
 		}
@@ -136,13 +179,7 @@ func (gameServer *GameServer) Read(
 			continue
 		}
 		if ok && (routeEvent != nil || broadcastEvent != nil) {
-			if gameEvent.Player == "*" && broadcastEvent != nil {
-				broadcastEvent(gameEvent)
-				continue
-			}
-			if routeEvent != nil {
-				routeEvent(gameEvent.Player, gameEvent)
-			}
+			routeGameEvent(gameEvent, routeEvent, broadcastEvent)
 			continue
 		}
 

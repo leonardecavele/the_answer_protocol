@@ -90,8 +90,13 @@ func (room *Room) RouteCommand(username string, command game_conn.CommandFromGam
 }
 
 func (room *Room) RouteEvent(username string, event protocol.Event) bool {
+	username = strings.ToUpper(username)
+	if len(event.Players) == 0 {
+		event.Players = []string{username}
+	}
+
 	room.mutex.Lock()
-	client, ok := room.clients[strings.ToUpper(username)]
+	client, ok := room.clients[username]
 	room.mutex.Unlock()
 
 	if !ok {
@@ -110,14 +115,40 @@ func (room *Room) BroadcastEvent(event protocol.Event) {
 
 	room.mutex.Lock()
 	clients := make([]*Client, 0, len(room.clients))
-	for username, client := range room.clients {
-		if _, ok := ignored[username]; ok {
-			continue
+	players := make([]string, 0, len(room.clients))
+	if len(event.Players) > 0 {
+		seen := make(map[string]struct{}, len(event.Players))
+		for _, username := range event.Players {
+			username = strings.ToUpper(strings.TrimSpace(username))
+			if username == "" {
+				continue
+			}
+			if _, ok := ignored[username]; ok {
+				continue
+			}
+			if _, ok := seen[username]; ok {
+				continue
+			}
+			client, ok := room.clients[username]
+			if !ok {
+				continue
+			}
+			seen[username] = struct{}{}
+			clients = append(clients, client)
+			players = append(players, username)
 		}
-		clients = append(clients, client)
+	} else {
+		for username, client := range room.clients {
+			if _, ok := ignored[username]; ok {
+				continue
+			}
+			clients = append(clients, client)
+			players = append(players, username)
+		}
 	}
 	room.mutex.Unlock()
 
+	event.Players = players
 	for _, client := range clients {
 		client.eventChan <- event
 	}

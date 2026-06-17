@@ -48,7 +48,6 @@ func (c *Client) DeleteClient(gameServer *game_conn.GameServerManager) error {
 	}
 
 	c.Room.BroadcastEvent(protocol.Event{
-		Player:         "*",
 		IgnoredPlayers: []string{username},
 		EmittedBy:      username,
 		EventName:      "QUIT",

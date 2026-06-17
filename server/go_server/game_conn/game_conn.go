@@ -11,7 +11,7 @@ import (
 )
 
 func isValidEvent(event protocol.Event) bool {
-	return event.Player != "" && event.EventName != ""
+	return len(event.Players) > 0 && event.EventName != ""
 }
 
 func dialGameServer(addr string, quit <-chan struct{}) net.Conn {
