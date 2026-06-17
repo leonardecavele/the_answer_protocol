@@ -42,7 +42,7 @@ impl ClientConnect {
             handshake.server_protocol_version
         );
 
-        Ok(Client {
+        let client = Client {
             server: ServerInfo {
                 addr: server_addr,
                 protocol_version: handshake.server_protocol_version,
@@ -52,7 +52,9 @@ impl ClientConnect {
                 command_sender: request_sender,
             },
             event_dispatcher: EventDispatcher::new(event_broadcast_sender),
-        })
+        };
+
+        Ok(client)
     }
 
     async fn connect_tcp<A: ToSocketAddrs + Clone + Display>(

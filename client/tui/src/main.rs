@@ -2,9 +2,10 @@ use api_client::client::Client;
 use api_client::client::connect::ClientConnect;
 use api_client::client::dispatcher::ServerEvent;
 use api_client::error::TapError;
-use std::env;
+use std::io::{Write, stdin};
 use std::process::exit;
 use std::time::Instant;
+use std::{env, io};
 use time::macros::format_description;
 use tracing::{error, info};
 use tracing_subscriber::EnvFilter;
@@ -70,19 +71,24 @@ async fn test_multiple_connections() -> Result<(), TapError> {
         let mut client =
             ClientConnect::connect(format!("{}:{}", get_server_ip(), get_server_port())).await?;
 
-        let player_name = player.clone();
         client.on_event(move |event| match event {
+            ServerEvent::Connect(name) => {
+                info!("[connect event]: new player {:?}", &name);
+            }
+            ServerEvent::Quit(name) => {
+                info!("[quit event]: player {:?} as quit", &name);
+            }
             ServerEvent::GlobalChat(data) => {
-                info!("[global event for {}]: {:?}", player_name, data);
+                info!("[global event]: {:?}", data);
             }
             ServerEvent::PrivateChat(data) => {
-                info!("[private event for {}]: {:?}", player_name, data);
+                info!("[private event]: {:?}", data);
             }
             ServerEvent::RoomPresence(data) => {
-                info!("[room presence event for {}]: {:?}", player_name, data);
+                info!("[room presence event]: {:?}", data);
             }
             ServerEvent::Unknown(data) => {
-                error!("[unknown event for {}]: {:?}", player_name, data);
+                error!("[unknown event]: {:?}", data);
             }
         });
 
@@ -92,8 +98,12 @@ async fn test_multiple_connections() -> Result<(), TapError> {
         clients.push(client);
     }
 
-    for client in clients {
-        client.quit().await;
+    loop {
+        clients.retain(|client| !client.is_connected());
+
+        if clients.is_empty() {
+            break;
+        }
     }
 
     Ok(())
@@ -101,54 +111,84 @@ async fn test_multiple_connections() -> Result<(), TapError> {
 
 #[allow(dead_code)]
 async fn test_single_connection() -> Result<(), TapError> {
-    let player = get_player_name(None);
-
     let mut client =
         ClientConnect::connect(format!("{}:{}", get_server_ip(), get_server_port())).await?;
 
-    let player_name = player.clone();
+    // player_connect(&mut client, player.clone()).await?;
+    // player_chat_global(&mut client, player.clone()).await?;
+    //
+    // let iterations = 10000;
+    // info!(
+    //     "Démarrage du benchmark pour {} requêtes LOOK...",
+    //     iterations
+    // );
+    // let start_time = Instant::now();
+    //
+    // for i in 0..1 {
+    //     player_look(&mut client).await?;
+    //     info!("loop {}", i);
+    // }
+    //
+    // let duration = start_time.elapsed();
+    //
+    // info!(
+    //     "Benchmark terminé : {} requêtes en {:.2?}. (Moyenne : {:.2?} / requête)",
+    //     iterations,
+    //     duration,
+    //     duration / iterations
+    // );
+
     client.on_event(move |event| match event {
+        ServerEvent::Connect(name) => {
+            info!("[connect event]: new player {:?}", &name);
+        }
+        ServerEvent::Quit(name) => {
+            info!("[quit event]: player {:?} as quit", &name);
+        }
         ServerEvent::GlobalChat(data) => {
-            info!("[global event for {}]: {:?}", player_name, data);
+            info!("[global event]: {:?}", data);
         }
         ServerEvent::PrivateChat(data) => {
-            info!("[private event for {}]: {:?}", player_name, data);
+            info!("[private event]: {:?}", data);
         }
         ServerEvent::RoomPresence(data) => {
-            info!("[room presence event for {}]: {:?}", player_name, data);
+            info!("[room presence event]: {:?}", data);
         }
         ServerEvent::Unknown(data) => {
-            error!("[unknown event for {}]: {:?}", player_name, data);
+            error!("[unknown event]: {:?}", data);
         }
     });
 
-    player_connect(&mut client, player.clone()).await?;
-    player_chat_global(&mut client, player.clone()).await?;
+    let mut stdin = stdin();
+    let input = &mut String::new();
 
-    let iterations = 10000;
-    info!(
-        "Démarrage du benchmark pour {} requêtes LOOK...",
-        iterations
-    );
-    let start_time = Instant::now();
+    loop {
+        if !client.is_connected() {
+            break;
+        }
 
-    for i in 0..1 {
-        player_look(&mut client).await?;
-        info!("loop {}", i);
+        input.clear();
+        print!("(connect | say_hello_global | look)> ");
+        let _ = io::stdout().flush();
+        let _ = stdin.read_line(input);
+
+        let _ = match input.trim().split(" ").collect::<Vec<&str>>().as_slice() {
+            ["connect", name] => {
+                let _ = player_connect(&mut client, name.to_string()).await;
+            }
+            ["say_hello_global", message @ ..] => {
+                let _ = client.chat_global(message.join(" ")).await?;
+            }
+            ["look"] => {
+                let _ = player_look(&mut client).await;
+            }
+            ["quit"] => {
+                client.quit().await;
+                break;
+            }
+            _ => {}
+        };
     }
-
-    let duration = start_time.elapsed();
-
-    info!(
-        "Benchmark terminé : {} requêtes en {:.2?}. (Moyenne : {:.2?} / requête)",
-        iterations,
-        duration,
-        duration / iterations
-    );
-
-    loop {}
-
-    // client.quit().await;
 
     Ok(())
 }

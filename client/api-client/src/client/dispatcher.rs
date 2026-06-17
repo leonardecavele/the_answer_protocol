@@ -1,3 +1,4 @@
+use crate::client::Client;
 use crate::error::CommandError;
 use crate::protocol::command::look::LookResponse;
 use crate::protocol::response::ServerResponse;
@@ -9,6 +10,7 @@ use std::cmp::PartialEq;
 use std::collections::HashMap;
 use std::string::ToString;
 use tokio::sync::broadcast;
+use tokio::sync::mpsc::Sender;
 use tokio::task::JoinHandle;
 use tracing::{error, info, warn};
 
@@ -35,13 +37,14 @@ pub struct EventDispatcher {
 
 #[derive(Debug)]
 pub enum ServerEvent {
+    Connect(String),
+    Quit(String),
     GlobalChat(GlobalChatEvent),
     PrivateChat(PrivateChatEvent),
     RoomPresence(RoomPresenceEvent),
     Unknown(String),
 }
 
-// Data for a global chat event
 #[derive(Debug)]
 pub struct GlobalChatEvent {
     pub sender: String,
@@ -74,6 +77,8 @@ fn parse_event(response: ServerResponse) -> ServerEvent {
         .collect::<Vec<&str>>();
 
     match arguments.as_slice() {
+        ["CONNECT", name] => ServerEvent::Connect(name.to_string()),
+        ["QUIT", name] => ServerEvent::Quit(name.to_string()),
         ["GLOBAL", "CHAT", sender, message @ ..] => ServerEvent::GlobalChat(GlobalChatEvent {
             sender: sender.to_string(),
             message: message.join(" "),
@@ -100,9 +105,9 @@ impl EventDispatcher {
         }
     }
 
-    pub fn subscribe<F>(&mut self, handler: F)
+    pub fn subscribe<F>(&mut self, mut handler: F)
     where
-        F: Fn(ServerEvent) + Send + 'static,
+        F: FnMut(ServerEvent) + Send + 'static,
     {
         let mut subscriber = self.broadcast_sender.subscribe();
 
