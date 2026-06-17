@@ -20,6 +20,8 @@ var (
 	ResponseCommandNotFound  = "ERR 400 COMMAND_NOT_FOUND"
 	ResponseInvalidArguments = "ERR 400 INVALID_ARGUMENTS"
 	ResponseInvalidScope     = "ERR 400 INVALID_SCOPE"
+	ResponseInvalidQuestion  = "ERR 998 INVALID_QUESTION"
+	ResponseInvalidCommand   = "ERR 999 INVALID_COMMAND"
 )
 
 // RFC 42TAP standard errors
@@ -39,8 +41,9 @@ var (
 
 // TAP documented extension errors
 var (
-	ResponseNoSuchUser    = "ERR 403 NO_SUCH_USER"
-	ResponseNotInvited    = "ERR 403 NOT_INVITED"
-	ResponseGroupNotFound = "ERR 404 GROUP_NOT_FOUND"
-	ResponseNoSuchGroup   = "ERR 404 NO_SUCH_GROUP"
+	ResponseNoSuchUser     = "ERR 403 NO_SUCH_USER"
+	ResponseNotInvited     = "ERR 403 NOT_INVITED"
+	ResponseNotGroupLeader = "ERR 403 NOT_GROUP_LEADER"
+	ResponseGroupNotFound  = "ERR 404 GROUP_NOT_FOUND"
+	ResponseNoSuchGroup    = "ERR 404 NO_SUCH_GROUP"
 )
