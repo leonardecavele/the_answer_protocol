@@ -2,7 +2,6 @@ package client_conn
 
 import (
 	"bufio"
-	"encoding/json"
 	"errors"
 	"go_server/client_conn/tap_commands"
 	"go_server/game_conn"
