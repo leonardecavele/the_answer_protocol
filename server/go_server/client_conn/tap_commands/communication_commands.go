@@ -10,9 +10,9 @@ import (
 	"strings"
 )
 
-type handleChatScope func(client *session.Client, message string, server *game_conn.GameServerManager) (string, error)
+type chatScope func(client *session.Client, message string, server *game_conn.GameServerManager) (string, error)
 
-var chatScopes = map[string]handleChatScope{
+var chatScopes = map[string]chatScope{
 	"GLOBAL":  chatGlobalScope,
 	"ROOM":    chatRoomScope,
 	"GROUP":   chatGroupScope,
