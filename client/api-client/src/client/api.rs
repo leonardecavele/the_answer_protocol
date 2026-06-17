@@ -7,6 +7,7 @@ use crate::protocol::command::communication::private_chat::{
 use crate::protocol::command::core::connect::{ConnectCommand, ConnectResponse};
 use crate::protocol::command::core::look::{LookCommand, LookResponse};
 use crate::protocol::command::core::quit::QuitCommand;
+use crate::protocol::command::core::who::{WhoCommand, WhoResponse};
 use crate::protocol::command::group::create::{GroupCreateCommand, GroupCreateResponse};
 use crate::protocol::command::group::invite::{GroupInviteCommand, GroupInviteResponse};
 use crate::protocol::command::group::join::{GroupJoinCommand, GroupJoinResponse};
@@ -60,6 +61,14 @@ impl Client {
         debug!("sending look request");
 
         let response = self.request(PrivateChatCommand { to, message }).await?;
+
+        Ok(response)
+    }
+
+    pub async fn who(&self) -> Result<Result<WhoResponse, CommandError>, TapError> {
+        debug!("sending who request");
+
+        let response = self.request(WhoCommand).await?;
 
         Ok(response)
     }

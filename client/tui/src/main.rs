@@ -107,6 +107,10 @@ async fn test_single_connection() -> Result<(), TapError> {
 
                 println!("[look {:?}] {:?}", client.game.player_name, client.game.world);
             }
+            ["who"] => {
+                let result = client.who().await;
+                println!("[who] {:?}", result);
+            }
             ["group_create"] => {
                 let result = client.group_create().await;
                 println!("[group_create] {:?}", result);
