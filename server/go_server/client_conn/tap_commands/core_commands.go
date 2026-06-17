@@ -43,7 +43,7 @@ func handleConnectCommand(args string, client *session.Client, gameServer *game_
 	client.Room.BroadcastEvent(protocol.Event{
 		Player:         "*",
 		IgnoredPlayers: []string{client.Username},
-		EmitedBy:       client.Username,
+		EmittedBy:      client.Username,
 		EventName:      "CONNECT",
 		Data:           client.Username,
 	})
@@ -109,7 +109,7 @@ func handleMoveCommand(args string, client *session.Client, gameServer *game_con
 	event := protocol.Event{
 		Player:         "*",
 		IgnoredPlayers: []string{client.Username},
-		EmitedBy:       client.Username,
+		EmittedBy:      client.Username,
 		EventName:      "MOVE",
 		Data:           args + " " + client.Username,
 	}
@@ -125,7 +125,7 @@ func handleMoveCommand(args string, client *session.Client, gameServer *game_con
 			client.Room.RouteEvent(c.Username, protocol.Event{
 				Player:         c.Username,
 				IgnoredPlayers: []string{},
-				EmitedBy:       client.Username,
+				EmittedBy:      client.Username,
 				EventName:      "MOVE",
 				Data:           args + " " + c.Username,
 			})

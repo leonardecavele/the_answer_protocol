@@ -134,7 +134,7 @@ func (c *Client) JoinGroup(group *Group) string {
 	group.BroadcastEvent(protocol.Event{
 		Player:         "*",
 		IgnoredPlayers: []string{c.Username},
-		EmitedBy:       c.Username,
+		EmittedBy:      c.Username,
 		EventName:      "GROUP JOIN",
 		Data:           c.Username,
 	})
@@ -171,7 +171,7 @@ func (c *Client) QuitGroup() {
 				client.eventChan <- protocol.Event{
 					Player:         "*",
 					IgnoredPlayers: []string{c.Username},
-					EmitedBy:       c.Username,
+					EmittedBy:      c.Username,
 					EventName:      "GROUP LEAVE",
 					Data:           c.Username,
 				}
@@ -192,7 +192,7 @@ func (c *Client) QuitGroup() {
 		group.BroadcastEvent(protocol.Event{
 			Player:         "*",
 			IgnoredPlayers: []string{},
-			EmitedBy:       c.Username,
+			EmittedBy:      c.Username,
 			EventName:      "GROUP LEAVE",
 			Data:           c.Username,
 		})

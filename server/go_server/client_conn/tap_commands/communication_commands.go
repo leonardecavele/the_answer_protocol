@@ -25,7 +25,7 @@ func chatGroupScope(client *session.Client, message string) string {
 	client.Group.BroadcastEvent(protocol.Event{
 		Player:         "*",
 		IgnoredPlayers: []string{client.Username},
-		EmitedBy:       client.Username,
+		EmittedBy:      client.Username,
 		EventName:      "GROUP CHAT",
 		Data:           client.Username + " " + message,
 	})
@@ -36,7 +36,7 @@ func chatGlobalScope(client *session.Client, message string) string {
 	client.Room.BroadcastEvent(protocol.Event{
 		Player:         "*",
 		IgnoredPlayers: []string{client.Username},
-		EmitedBy:       client.Username,
+		EmittedBy:      client.Username,
 		EventName:      "GLOBAL CHAT",
 		Data:           client.Username + " " + message,
 	})
@@ -48,7 +48,7 @@ func chatRoomScope(client *session.Client, message string) string {
 	//client.group.BroadcastEvent(protocol.Event{
 	//	Player:         "*",
 	//	IgnoredPlayers: []string{client.Username},
-	//	EmitedBy:       client.Username,
+	//	EmittedBy:       client.Username,
 	//	EventName:      "GROUP CHAT",
 	//	Data:           client.Username + " " + message,
 	//})
@@ -65,7 +65,7 @@ func chatPrivateScope(client *session.Client, message string) string {
 	ok = client.Room.RouteEvent(username, protocol.Event{
 		Player:         strings.ToUpper(username),
 		IgnoredPlayers: []string{},
-		EmitedBy:       client.Username,
+		EmittedBy:      client.Username,
 		EventName:      "PRIVATE CHAT",
 		Data:           client.Username + " " + privateMessage,
 	})

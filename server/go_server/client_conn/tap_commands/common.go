@@ -56,6 +56,8 @@ var TapCommands = func(commandGroups ...map[string]handleTapCommandArgs) map[str
 
 func handleGameCommandError(response game_conn.CommandFromGameServer) string {
 	switch response.ErrorCode {
+	case 0:
+		return ""
 	case 201:
 		return protocol.ResponseUsernameAlreadyUsed
 	case 301:
