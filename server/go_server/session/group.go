@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"go_server/config"
 	"go_server/protocol"
+	"strings"
 	"sync"
 	"time"
 )
@@ -36,23 +37,15 @@ func NewGroup(leader *Client) (*Group, error) {
 }
 
 func (group *Group) BroadcastEvent(event protocol.Event) {
+	ignored := make(map[string]struct{}, len(event.IgnoredPlayers))
+	for _, username := range event.IgnoredPlayers {
+		ignored[strings.ToUpper(username)] = struct{}{}
+	}
+
 	group.mutex.Lock()
 	clients := make([]*Client, 0, len(group.clients))
-	for _, client := range group.clients {
-		clients = append(clients, client)
-	}
-	group.mutex.Unlock()
-
-	for _, client := range clients {
-		client.eventChan <- event
-	}
-}
-
-func (group *Group) BroadcastEventExcept(event protocol.Event, excepted *Client) {
-	group.mutex.Lock()
-	clients := make([]*Client, 0, len(group.clients))
-	for _, client := range group.clients {
-		if client == excepted {
+	for username, client := range group.clients {
+		if _, ok := ignored[username]; ok {
 			continue
 		}
 		clients = append(clients, client)
@@ -138,14 +131,13 @@ func (c *Client) JoinGroup(group *Group) string {
 	group.mutex.Unlock()
 
 	c.Group = group
-	group.BroadcastEventExcept(
-		protocol.Event{
-			Player:    c.Username,
-			EventName: "GROUP JOIN",
-			Data:      c.Username,
-		},
-		c,
-	)
+	group.BroadcastEvent(protocol.Event{
+		Player:         "*",
+		IgnoredPlayers: []string{c.Username},
+		EmitedBy:       c.Username,
+		EventName:      "GROUP JOIN",
+		Data:           c.Username,
+	})
 
 	return ""
 }
@@ -177,9 +169,11 @@ func (c *Client) QuitGroup() {
 			client.Group = nil
 			if client != c {
 				client.eventChan <- protocol.Event{
-					Player:    c.Username,
-					EventName: "GROUP LEAVE",
-					Data:      c.Username,
+					Player:         "*",
+					IgnoredPlayers: []string{c.Username},
+					EmitedBy:       c.Username,
+					EventName:      "GROUP LEAVE",
+					Data:           c.Username,
 				}
 			}
 		}
@@ -196,9 +190,11 @@ func (c *Client) QuitGroup() {
 	c.Group = nil
 	if !isEmpty {
 		group.BroadcastEvent(protocol.Event{
-			Player:    c.Username,
-			EventName: "GROUP LEAVE",
-			Data:      c.Username,
+			Player:         "*",
+			IgnoredPlayers: []string{},
+			EmitedBy:       c.Username,
+			EventName:      "GROUP LEAVE",
+			Data:           c.Username,
 		})
 	}
 }

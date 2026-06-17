@@ -76,6 +76,7 @@ func (gameServer *GameServer) Read(
 	quit <-chan struct{},
 	routeCommand func(username string, command CommandFromGameServer) bool,
 	routeEvent func(username string, event protocol.Event) bool,
+	broadcastEvent func(event protocol.Event),
 ) {
 	conn := gameServer.currentConn()
 	if conn == nil {
@@ -110,8 +111,15 @@ func (gameServer *GameServer) Read(
 			logger.AppLogger.Error("Game server invalid message: %v", err)
 			continue
 		}
-		if ok && routeEvent != nil {
+		if ok && (routeEvent != nil || broadcastEvent != nil) {
 			for _, gameEvent := range gameEvents {
+				if gameEvent.Player == "*" && broadcastEvent != nil {
+					broadcastEvent(gameEvent)
+					continue
+				}
+				if routeEvent == nil {
+					continue
+				}
 				routeEvent(gameEvent.Player, gameEvent)
 			}
 			continue

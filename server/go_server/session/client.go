@@ -47,13 +47,13 @@ func (c *Client) DeleteClient(gameServer *game_conn.GameServerManager) error {
 		c.QuitGroup()
 	}
 
-	c.Room.BroadcastEventExcept(
-		protocol.Event{
-			EventName: "QUIT",
-			Data:      c.Username,
-		},
-		c,
-	)
+	c.Room.BroadcastEvent(protocol.Event{
+		Player:         "*",
+		IgnoredPlayers: []string{username},
+		EmitedBy:       username,
+		EventName:      "QUIT",
+		Data:           username,
+	})
 
 	c.Room.DeleteUsername(c)
 	closeErr := c.Conn.Close()

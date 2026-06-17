@@ -71,6 +71,7 @@ func (manager *GameServerManager) HandleGameServer(
 	reconnectPlayers func(*GameServerManager) error,
 	routeCommand func(username string, command CommandFromGameServer) bool,
 	routeEvent func(username string, event protocol.Event) bool,
+	broadcastEvent func(event protocol.Event),
 ) {
 	addr := config.GameServerIP + ":" + strconv.Itoa(config.GameServerPort)
 
@@ -106,7 +107,7 @@ func (manager *GameServerManager) HandleGameServer(
 			}
 		}()
 
-		gameServer.Read(quit, routeCommand, routeEvent)
+		gameServer.Read(quit, routeCommand, routeEvent, broadcastEvent)
 		close(stopClosingGameServer)
 
 		manager.ClearServer(gameServer)

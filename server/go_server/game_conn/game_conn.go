@@ -10,6 +10,10 @@ import (
 	"time"
 )
 
+func isValidEvent(event protocol.Event) bool {
+	return event.Player != "" && event.EventName != ""
+}
+
 func dialGameServer(addr string, quit <-chan struct{}) net.Conn {
 	for {
 		select {
@@ -49,7 +53,11 @@ func ReadMessageAsEvents(message string) ([]protocol.Event, bool, error) {
 	var gameEvents []protocol.Event
 
 	if err := json.Unmarshal([]byte(message), &gameEvents); err != nil {
-		return nil, false, nil
+		var gameEvent protocol.Event
+		if err := json.Unmarshal([]byte(message), &gameEvent); err != nil {
+			return nil, false, nil
+		}
+		gameEvents = []protocol.Event{gameEvent}
 	}
 
 	if len(gameEvents) == 0 {
@@ -57,7 +65,7 @@ func ReadMessageAsEvents(message string) ([]protocol.Event, bool, error) {
 	}
 
 	for _, gameEvent := range gameEvents {
-		if gameEvent.Player == "" || gameEvent.EventName == "" {
+		if !isValidEvent(gameEvent) {
 			return nil, false, nil
 		}
 	}

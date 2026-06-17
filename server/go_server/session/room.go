@@ -103,23 +103,15 @@ func (room *Room) RouteEvent(username string, event protocol.Event) bool {
 }
 
 func (room *Room) BroadcastEvent(event protocol.Event) {
+	ignored := make(map[string]struct{}, len(event.IgnoredPlayers))
+	for _, username := range event.IgnoredPlayers {
+		ignored[strings.ToUpper(username)] = struct{}{}
+	}
+
 	room.mutex.Lock()
 	clients := make([]*Client, 0, len(room.clients))
-	for _, client := range room.clients {
-		clients = append(clients, client)
-	}
-	room.mutex.Unlock()
-
-	for _, client := range clients {
-		client.eventChan <- event
-	}
-}
-
-func (room *Room) BroadcastEventExcept(event protocol.Event, excepted *Client) {
-	room.mutex.Lock()
-	clients := make([]*Client, 0, len(room.clients))
-	for _, client := range room.clients {
-		if client == excepted {
+	for username, client := range room.clients {
+		if _, ok := ignored[username]; ok {
 			continue
 		}
 		clients = append(clients, client)

@@ -22,35 +22,35 @@ func chatGroupScope(client *session.Client, message string) string {
 		return protocol.ResponseNotInGroup
 	}
 
-	client.Group.BroadcastEventExcept(
-		protocol.Event{
-			Player:    client.Username,
-			EventName: "GROUP CHAT",
-			Data:      client.Username + " " + message,
-		},
-		client,
-	)
+	client.Group.BroadcastEvent(protocol.Event{
+		Player:         "*",
+		IgnoredPlayers: []string{client.Username},
+		EmitedBy:       client.Username,
+		EventName:      "GROUP CHAT",
+		Data:           client.Username + " " + message,
+	})
 	return "OK"
 }
 
 func chatGlobalScope(client *session.Client, message string) string {
-	client.Room.BroadcastEventExcept(
-		protocol.Event{
-			Player:    client.Username,
-			EventName: "GLOBAL CHAT",
-			Data:      client.Username + " " + message,
-		},
-		client,
-	)
+	client.Room.BroadcastEvent(protocol.Event{
+		Player:         "*",
+		IgnoredPlayers: []string{client.Username},
+		EmitedBy:       client.Username,
+		EventName:      "GLOBAL CHAT",
+		Data:           client.Username + " " + message,
+	})
 
 	return "OK"
 }
 
 func chatRoomScope(client *session.Client, message string) string {
 	//client.group.BroadcastEvent(protocol.Event{
-	//	Player:    client.Username,
-	//	EventName: "GROUP CHAT",
-	//	Data:      client.Username + " " + message,
+	//	Player:         "*",
+	//	IgnoredPlayers: []string{client.Username},
+	//	EmitedBy:       client.Username,
+	//	EventName:      "GROUP CHAT",
+	//	Data:           client.Username + " " + message,
 	//})
 
 	return "NOT IMPLEMENTED YET"
@@ -63,9 +63,11 @@ func chatPrivateScope(client *session.Client, message string) string {
 	}
 
 	ok = client.Room.RouteEvent(username, protocol.Event{
-		Player:    client.Username,
-		EventName: "PRIVATE CHAT",
-		Data:      client.Username + " " + privateMessage,
+		Player:         strings.ToUpper(username),
+		IgnoredPlayers: []string{},
+		EmitedBy:       client.Username,
+		EventName:      "PRIVATE CHAT",
+		Data:           client.Username + " " + privateMessage,
 	})
 	if !ok {
 		return protocol.ResponseNoSuchUser
