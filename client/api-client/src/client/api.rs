@@ -7,7 +7,7 @@ use crate::protocol::command::communication::private_chat::{
 use crate::protocol::command::core::connect::{ConnectCommand, ConnectResponse};
 use crate::protocol::command::core::look::{LookCommand, LookResponse};
 use crate::protocol::command::core::quit::QuitCommand;
-use std::ops::Deref;
+use crate::protocol::command::group::create::{GroupCreateCommand, GroupCreateResponse};
 use tracing::debug;
 
 impl Client {
@@ -57,6 +57,20 @@ impl Client {
         debug!("sending look request");
 
         let response = self.request(PrivateChatCommand { to, message }).await?;
+
+        Ok(response)
+    }
+
+    pub async fn group_create(
+        &mut self,
+    ) -> Result<Result<GroupCreateResponse, CommandError>, TapError> {
+        debug!("sending group create request");
+
+        let response = self.request(GroupCreateCommand).await?;
+
+        if let Ok(result) = &response {
+            self.game.group_id = Some(result.group_id.to_string());
+        }
 
         Ok(response)
     }

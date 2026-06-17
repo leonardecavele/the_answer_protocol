@@ -73,7 +73,7 @@ async fn test_single_connection() -> Result<(), TapError> {
         }
 
         input.clear();
-        print!("(connect | chat_global | chat_private | look | quit)> ");
+        print!("(connect | chat_global | chat_private | look | group_create | quit)> ");
         let _ = io::stdout().flush();
         let _ = stdin.read_line(input);
 
@@ -93,6 +93,10 @@ async fn test_single_connection() -> Result<(), TapError> {
                 let _ = client.look().await;
 
                 println!("[look {:?}] {:?}", client.game.player_name, client.game.world);
+            }
+            ["group_create"] => {
+                let result = client.group_create().await;
+                println!("[group_create] {:?}", result);
             }
             ["quit"] => {
                 client.quit().await;

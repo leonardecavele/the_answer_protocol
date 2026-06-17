@@ -22,6 +22,7 @@ pub struct ServerInfo {
 pub struct GameInfo {
     pub player_name: Option<String>,
     pub room_id: Option<String>,
+    pub group_id: Option<String>,
     pub world: Option<LookResponse>
 }
 
@@ -29,6 +30,7 @@ impl GameInfo {
     pub fn new() -> Self {
         GameInfo {
             player_name: None,
+            group_id: None,
             room_id: None,
             world: None
         }
