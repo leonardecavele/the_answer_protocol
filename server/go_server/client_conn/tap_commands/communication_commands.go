@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-type chatScope func(client *session.Client, message string, server *game_conn.GameServerManager) (string, error)
+type chatScope func(client *session.Client, message string, gameServer *game_conn.GameServerManager) (string, error)
 
 var chatScopes = map[string]chatScope{
 	"GLOBAL":  chatGlobalScope,
@@ -44,13 +44,13 @@ func chatGlobalScope(client *session.Client, message string, _ *game_conn.GameSe
 	return "OK", nil
 }
 
-func chatRoomScope(client *session.Client, message string, server *game_conn.GameServerManager) (string, error) {
+func chatRoomScope(client *session.Client, message string, gameServer *game_conn.GameServerManager) (string, error) {
 	id, err := helper.NewID()
 	if err != nil {
 		return "", err
 	}
 
-	answer, err := server.AskQuestion(game_conn.QuestionToGameServer{
+	answer, err := gameServer.AskQuestion(game_conn.QuestionToGameServer{
 		Question: "ROOM_PLAYERS",
 		Data:     client.Username,
 		Id:       id,
@@ -107,7 +107,7 @@ func chatPrivateScope(client *session.Client, message string, _ *game_conn.GameS
 	return "OK", nil
 }
 
-func handleChatCommand(args string, client *session.Client, server *game_conn.GameServerManager) (string, error) {
+func handleChatCommand(args string, client *session.Client, gameServer *game_conn.GameServerManager) (string, error) {
 	if client.State != session.AUTHENTICATED {
 		return protocol.ResponseNotConnected, nil
 	}
@@ -126,7 +126,7 @@ func handleChatCommand(args string, client *session.Client, server *game_conn.Ga
 		return protocol.ResponseInvalidArguments, nil
 	}
 
-	return chatScopeHandler(client, message, server)
+	return chatScopeHandler(client, message, gameServer)
 }
 
 func handleWhoCommand(args string, client *session.Client, _ *game_conn.GameServerManager) (string, error) {

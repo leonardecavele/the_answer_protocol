@@ -8,8 +8,8 @@ import (
 	"strings"
 )
 
-func handleTakeCommand(args string, client *session.Client, server *game_conn.GameServerManager) (string, error) {
-	if !server.IsConnected() {
+func handleTakeCommand(args string, client *session.Client, gameServer *game_conn.GameServerManager) (string, error) {
+	if !gameServer.IsConnected() {
 		return protocol.ResponseGameServerClosed, nil
 	}
 
@@ -21,7 +21,7 @@ func handleTakeCommand(args string, client *session.Client, server *game_conn.Ga
 		return protocol.ResponseInvalidArguments, nil
 	}
 
-	if err := server.WriteCommand(game_conn.CommandToGameServer{
+	if err := gameServer.WriteCommand(game_conn.CommandToGameServer{
 		Player:    client.Username,
 		Command:   "TAKE",
 		Arguments: args,
