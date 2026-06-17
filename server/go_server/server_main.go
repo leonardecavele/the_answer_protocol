@@ -67,7 +67,7 @@ func main() {
 
 	listener, listenErr := net.Listen("tcp", ":"+strconv.Itoa(config.GoServerPort))
 	if listenErr != nil {
-		os.Exit(int(serverError.ListenerError))
+		os.Exit(int(serverError.CodeListenerError))
 	}
 	defer listener.Close()
 
@@ -88,5 +88,5 @@ func main() {
 		go client_conn.HandleClient(session.NewClient(conn, room), gameServerManager)
 	}
 
-	os.Exit(int(serverError.NoError))
+	os.Exit(int(serverError.CodeNoError))
 }
