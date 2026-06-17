@@ -1,14 +1,8 @@
 package game_conn
 
 import (
-	"errors"
+	serverError "go_server/error"
 	"sync"
-)
-
-var (
-	ErrInvalidQuestionID          = errors.New("invalid question id")
-	ErrQuestionAlreadySubscribed  = errors.New("question already subscribed")
-	ErrQuestionManagerUnavailable = errors.New("question manager unavailable")
 )
 
 type QuestionManager struct {
@@ -24,17 +18,17 @@ func NewQuestionManager() *QuestionManager {
 
 func (manager *QuestionManager) Subscribe(id string) (<-chan AnswerFromGameServer, error) {
 	if manager == nil {
-		return nil, ErrQuestionManagerUnavailable
+		return nil, serverError.ErrQuestionManagerMissing
 	}
 	if id == "" {
-		return nil, ErrInvalidQuestionID
+		return nil, serverError.ErrInvalidQuestionID
 	}
 
 	manager.mutex.Lock()
 	defer manager.mutex.Unlock()
 
 	if _, ok := manager.subscribers[id]; ok {
-		return nil, ErrQuestionAlreadySubscribed
+		return nil, serverError.ErrQuestionSubscribed
 	}
 
 	answerChan := make(chan AnswerFromGameServer, 1)
