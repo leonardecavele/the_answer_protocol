@@ -1,6 +1,6 @@
 use crate::constantes::{TICK_TIME, TickResult};
 use crate::game_manager::GameManager;
-use json::{JsonValue, array, object};
+use json::{array, object};
 use std::sync::mpsc;
 use std::time::Instant;
 use tracing::info;
@@ -33,16 +33,16 @@ impl GameManager {
         //hardcoded event for now :
 
         // let mut events = json::JsonValue::new_array();
-        let events = array![object! {
-            "player": "*",
-            "ignored_players": ["GABIN"],
-            "emmited_by": "GABIN",
-            "event_name": "CONNECT",
-            "data": ""
-        }];
+        // let events = array![object! {
+        //     "player": "*",
+        //     "ignored_players": ["GABIN"],
+        //     "emitted_by": "GABIN",
+        //     "event_name": "CONNECT",
+        //     "data": ""
+        // }];
 
 
-        self.send_msg_to_client(events.dump().to_string())?;
+        // self.send_msg_to_client(events.dump().to_string())?;
         info!("sent event");
         Ok(())
     }

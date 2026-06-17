@@ -1,25 +1,31 @@
+
+use std::ops::Index;
+
 use crate::constantes::{BASE_COMMAND_RESPONSE, ErrorCode};
 use crate::game_manager::GameManager;
 use crate::items::ItemId;
+use crate::{player, room};
 use crate::room::Room;
 use json::{JsonValue, object};
-use tracing::{error, info};
+use tracing::{error, event, info};
 
-fn generate_json(player: &str, command: &str, error_code: ErrorCode, value: &str) -> JsonValue {
+fn generate_json(player: &str, command: &str, error_code: ErrorCode, data: &str) -> JsonValue {
     return object! {
         "player": player,
         "command": command,
         "error_code": error_code.code(),
-        "value": value // most of the time ""
+        "data": data // most of the time ""
     };
 }
 
-fn generate_question_json(question: &str, data: &str) -> JsonValue {
+fn generate_question_json(question: &str, data: &str, id: &str) -> JsonValue {
     return object! {
         "question": question,
-        "data": data
+        "data": data,
+        "id": id
     };
 }
+
 
 impl GameManager {
     fn get_item_id_from_name(&self, item_name: &str) -> ItemId {
@@ -28,10 +34,15 @@ impl GameManager {
         return item_id_int;
     }
 
-    fn validate_question_json(&self, parsed_json: &JsonValue) -> ErrorCode {
+    fn get_item_name_from_id(&mut self, item_id: ItemId) -> String {
+        let item_name = self.get_all_items().get(&item_id).unwrap().get_name();
+        return format!("item.{}.{}",item_id, item_name);
+    }
+
+    fn validate_command_json(&self, parsed_json: &JsonValue) -> ErrorCode {
         if !parsed_json.has_key("command")
             || !parsed_json.has_key("player")
-            || !parsed_json.has_key("arguments")
+            || !parsed_json.has_key("data")
         {
             error!("invalid json: {}", parsed_json.dump());
             return ErrorCode::InvalidCommand;
@@ -40,9 +51,21 @@ impl GameManager {
         }
     }
 
-    fn validate_command_json(&self, parsed_json: &JsonValue) -> ErrorCode {
+    fn generate_event_json(&self, players: &Vec<String>, ignored_players: &[&str], emitted_by: &str, event_name: &str, data: &str) -> JsonValue {
+        return object! {
+            "players": players.as_slice(),
+            "ignored_players": ignored_players,
+            "emitted_by": emitted_by,
+            "event_name": event_name,
+            "data": data
+        };
+    }
+    
+    
+    fn validate_question_json(&self, parsed_json: &JsonValue) -> ErrorCode {
         if !parsed_json.has_key("question")
             || !parsed_json.has_key("data")
+            || !parsed_json.has_key("id")
         {
             // error!("invalid json: {}", parsed_json.dump());
             return ErrorCode::InvalidQuestion;
@@ -51,22 +74,26 @@ impl GameManager {
         }
     }
 
-    // pub fn handle_question(&mut self, parsed_json: &JsonValue) -> String {
-    //     let question: &str = parsed_json["question"].as_str().unwrap();
-    //     let data = &parsed_json["data"];
-    //     match question {
-    //         "ROOM_PLAYERS" => {
-    //             let player_to_check_name = data["username"];
-    //             let player_to_check= self.get_player_from_name(player_to_check_name);
-    //             let player_to_check_current_room = player_to_check.unwrap().get_current_room();
-    //             let players = self.get_all_players_at_room(player_to_check_current_room);
-    //             return generate_question_json(question, data)
-    //         }
-    //         _ => {
-    //             return generate_json("", "", ErrorCode::InvalidQuestion, "").dump();
-    //         }
-    //     }
-    // }
+    pub fn handle_server_question(&mut self, parsed_json: &JsonValue) -> String {
+        let question: &str = parsed_json["question"].as_str().unwrap();
+        let data = parsed_json["data"].as_str().unwrap();
+        let id = parsed_json["id"].as_str().unwrap();
+        match question {
+            "ROOM_PLAYERS" => {
+                let player_to_check_name = data;
+                let player_to_check= self.get_player_from_name(player_to_check_name);
+                let player_to_check_current_room = player_to_check.unwrap().get_current_room();
+                let players = self.get_all_players_at_room(player_to_check_current_room);
+                return generate_question_json(question, format!("{:?}", players).as_str() , id).dump();
+            }
+            _ => {
+                error!("unknown question: {}", question);
+                return "".to_string();
+            }
+        }
+    }
+
+
     pub fn handle_message(&mut self, msg: String) -> String {
         /*
         read the message, simulate the corresponding action and return the response
@@ -81,10 +108,10 @@ impl GameManager {
 
         let json_object = json.unwrap();
 
-        // let server_question_json = self.validate_question_json(&json_object);
-        // if server_question_json == ErrorCode::NoError {
-        //     return self.handle_question(&json_object);
-        // }
+        let server_question_json = self.validate_question_json(&json_object);
+        if server_question_json == ErrorCode::NoError {
+            return self.handle_server_question(&json_object);
+        }
 
 
         let command_json_validity = self.validate_command_json(&json_object);
@@ -95,7 +122,7 @@ impl GameManager {
         let player_name = json_object["player"].as_str().unwrap();
 
         let command_name = json_object["command"].as_str().unwrap();
-        let arguments = &json_object["arguments"];
+        let data =  json_object["data"].as_str().unwrap();
 
         info!(
             "received command {} from player {}",
@@ -104,6 +131,9 @@ impl GameManager {
 
         match command_name {
             "CONNECT" => {
+                // if player_name in self.get_players_by_names().keys(){
+
+                // }
                 self.connect_player(player_name.to_string());
                 return BASE_COMMAND_RESPONSE.to_string();
             }
@@ -131,11 +161,7 @@ impl GameManager {
                 .dump();
             }
             "MOVE" => {
-                if !arguments.has_key("direction") {
-                    return generate_json(player_name, command_name, ErrorCode::InvalidCommand, "")
-                        .dump();
-                }
-                let direction = arguments["direction"].as_str().unwrap();
+                let direction = data;
                 if direction != "NORTH"
                     && direction != "SOUTH"
                     && direction != "EAST"
@@ -144,6 +170,8 @@ impl GameManager {
                     return generate_json(player_name, command_name, ErrorCode::NoExit, "").dump();
                 }
 
+                let player = self.get_player_from_name(player_name).unwrap();
+                let mut last_room_players =  self.get_all_players_at_room(player.get_current_room());
                 let room_to_go = {
                     let player = self.get_player_from_name(player_name).unwrap();
                     let current_player_room_name = player.get_current_room();
@@ -156,20 +184,28 @@ impl GameManager {
                     room_to_go_wrapped.unwrap().clone()
                 };
 
-                let player = self.get_mut_player_from_name(player_name).unwrap();
-
-                player.move_to_room(&room_to_go);
-                let diff_to_add = object! {
-                    "player": "*",
-                    "ignored_players": [player_name],
-                    "emmited_by": player_name,
-                    "event_name": "MOVE",
-                    "data": room_to_go
-                };
-                self.add_diff_to_tick(diff_to_add);
-                return generate_json(player_name, command_name, ErrorCode::NoError, "").dump();
+                self.move_player_to_room(player_name, room_to_go.as_str());
                 
+
+                let player = self.get_player_from_name(player_name).unwrap();
+                let mut current_room_players = self.get_all_players_at_room(player.get_current_room());
+
+
+                // ignore players
+                current_room_players.retain(|x| *x != player_name);
+                last_room_players.retain(|x| *x != player_name);
+
+                let room_leave_diff = self.generate_event_json(&last_room_players, &[player_name], player_name, "ROOM", "LEAVE");
+                let room_enter_diff = self.generate_event_json(&current_room_players, &[player_name], player_name, "ROOM", "ENTER");
+
+                info!("add_diff_start");
+                self.add_diff_to_tick(room_leave_diff);
+                self.add_diff_to_tick(room_enter_diff);
+
+                info!("add_diff_end");
+                return generate_json(player_name, command_name, ErrorCode::NoError, "").dump();
             }
+
             "QUIT" => {
                 self.disconnect_player(player_name.to_string());
                 return BASE_COMMAND_RESPONSE.to_string();
@@ -178,13 +214,9 @@ impl GameManager {
             // "TALK" => {},
             // TAKE format : item.global_id.item_type ( ex: "item.12.legendary sword")
             "TAKE" => {
-                if !arguments.has_key("item_id") {
-                    return generate_json(player_name, command_name, ErrorCode::InvalidCommand, "")
-                        .dump();
-                }
                 let player = self.get_player_from_name(player_name).unwrap();
                 let player_id = player.get_id();
-                let item = arguments["item_id"].as_str().unwrap();
+                let item = data;
                 let item_id = self.get_item_id_from_name(item);
 
                 let player_current_room = player.get_current_room();
@@ -198,16 +230,14 @@ impl GameManager {
                 self.remove_item_from_room(&room_name, item_id);
                 self.add_item_to_player(player_id, item_id);
 
-                return generate_json(player_name, command_name, ErrorCode::NoError, "").dump();
+
+
+                return generate_json(player_name, command_name, ErrorCode::NoError, format!("{}", self.get_item_name_from_id(item_id)).as_str()).dump();
             }
             "DROP" => {
-                if !arguments.has_key("item_id") {
-                    return generate_json(player_name, command_name, ErrorCode::InvalidCommand, "")
-                        .dump();
-                }
                 let player = self.get_player_from_name(player_name).unwrap();
                 let player_id = player.get_id();
-                let item = arguments["item_id"].as_str().unwrap();
+                let item = data;
                 let item_id = self.get_item_id_from_name(item);
                 if !self.item_exists(item_id) {
                     return generate_json(
