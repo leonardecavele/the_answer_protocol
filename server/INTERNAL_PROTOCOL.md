@@ -155,7 +155,7 @@ response_value = snake_case / 1*DIGIT
         "player": <player_name>,
         "command": <command_name>,
         "error_code": <error_code>,
-        "value": <response_value>
+        "data": <response_value>
     }
 
 }
@@ -165,10 +165,7 @@ response_value = snake_case / 1*DIGIT
 
 ### ``value`` for ``CONNECT`` command
 ```json
-{
     "value": ""
-}
-
 ```
 
 ### ``value`` for ``LOOK`` command
@@ -192,7 +189,7 @@ response_value = snake_case / 1*DIGIT
 
 ### ``value`` for ``WHO`` command
 ```json
-    "value": <player_server_count>
+    "value": <server_player_count>
 ```
 ### ``value`` for ``GROUP CREATE`` command
 ```json
@@ -201,7 +198,9 @@ response_value = snake_case / 1*DIGIT
 
 ### ``value`` for ``GROUP INVITE`` command
 ```json
-    "value": ""
+    "value": {
+        
+    }
 ```
 
 ### ``value`` for ``GROUP JOIN`` command
@@ -252,11 +251,11 @@ response_value = snake_case / 1*DIGIT
 
 
 ```json
-{
-    "player": <player_name>,
-    "event_name": <event_name>,
-    "value": <response_value>
-
-}
+[
+  {
+          "player": <player_name>,
+          "event_name": <command_name>,
+          "data": <response_value>
+  }
+]
 ```
-

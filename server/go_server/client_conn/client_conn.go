@@ -3,31 +3,31 @@ package client_conn
 import (
 	"bufio"
 	"errors"
-	"go_server/rust_conn"
+	"go_server/client_conn/tap_commands"
+	"go_server/game_conn"
+	"go_server/logger"
+	"go_server/protocol"
+	"go_server/session"
 	"io"
 	"strings"
-)
-
-import (
-	"go_server/logger"
 )
 
 func parseCommand(msg string) (string, string, string) {
 	msg = strings.TrimRight(msg, "\r\n")
 
 	if msg == "" {
-		return "", "", responseEmptyCommand
+		return "", "", protocol.ResponseEmptyCommand
 	}
 
 	command, args, _ := strings.Cut(msg, " ")
-	if _, ok := tapCommands[command]; ok {
+	if _, ok := tap_commands.TapCommands[command]; ok {
 		return command, args, ""
 	}
 
-	return "", "", responseCommandNotFound
+	return "", "", protocol.ResponseCommandNotFound
 }
 
-func handleTapCommand(str string, client *Client, rustServer *rust_conn.RustServer) (string, error) {
+func handleTapCommand(str string, client *session.Client, gameServer *game_conn.GameServerManager) (string, error) {
 	response := ""
 
 	cmd, args, response := parseCommand(str)
@@ -35,7 +35,7 @@ func handleTapCommand(str string, client *Client, rustServer *rust_conn.RustServ
 		return response, nil
 	}
 
-	response, err := tapCommands[cmd](args, client, rustServer)
+	response, err := tap_commands.TapCommands[cmd](args, client, gameServer)
 	if err != nil {
 		return "", err
 	}
@@ -43,28 +43,30 @@ func handleTapCommand(str string, client *Client, rustServer *rust_conn.RustServ
 	return response, nil
 }
 
-func handleClientEvents(client *Client, done <-chan struct{}) {
+func handleClientEvents(client *session.Client, done <-chan struct{}) {
 	for {
 		select {
 		case <-done:
 			return
-		case event := <-client.eventChan:
-			if err := client.Write("EVT " + string(event)); err != nil {
+		case event := <-client.Events():
+			message, err := protocol.FormatEvent(event)
+			if err != nil {
+				logger.AppLogger.Error("%s Invalid event: %v\n", client.Id, err)
+				return
+			}
+			if err := client.Write(message); err != nil {
 				logger.AppLogger.Error("%s Write error: %v\n", client.Id, err)
 				return
 			}
-			logger.AppLogger.Info("%s Client Write: %s\n", client.Id, event)
+			logger.AppLogger.Info("%s Client Write: %s\n", client.Id, message)
 		}
 	}
 }
 
-func HandleClient(client *Client, rustServer *rust_conn.RustServer, OnError func()) {
+func HandleClient(client *session.Client, gameServer *game_conn.GameServerManager) {
 	defer func() {
-		if err := client.EraseClient(rustServer); err != nil {
+		if err := client.DeleteClient(gameServer); err != nil {
 			logger.AppLogger.Error("%s Erase client error: %v\n", client.Id, err)
-			if OnError != nil {
-				OnError()
-			}
 		}
 	}()
 
@@ -74,11 +76,11 @@ func HandleClient(client *Client, rustServer *rust_conn.RustServer, OnError func
 	logger.AppLogger.Info("%s Connected", client.Id)
 	defer logger.AppLogger.Info("%s Disconnected", client.Id)
 
-	if err := client.Write(responseHello); err != nil {
+	if err := client.Write(protocol.ResponseHello); err != nil {
 		logger.AppLogger.Error("%s Client Write Error: %v\n", client.Id, err)
 		return
 	}
-	logger.AppLogger.Info("%s Client Write: %s", client.Id, responseHello)
+	logger.AppLogger.Info("%s Client Write: %s", client.Id, protocol.ResponseHello)
 
 	go handleClientEvents(client, stopListeningEvents)
 
@@ -93,11 +95,10 @@ func HandleClient(client *Client, rustServer *rust_conn.RustServer, OnError func
 		}
 
 		logger.AppLogger.Info("%s Client Read: %s", client.Id, str)
-		response, err := handleTapCommand(str, client, rustServer)
+		response, err := handleTapCommand(str, client, gameServer)
 		if err != nil {
-			if OnError != nil {
-				OnError()
-			}
+			logger.AppLogger.Error("%s Command error: %v\n", client.Id, err)
+			response = protocol.ResponseGameServerClosed
 		}
 		if response == "" {
 			continue
@@ -106,7 +107,7 @@ func HandleClient(client *Client, rustServer *rust_conn.RustServer, OnError func
 			logger.AppLogger.Error("%s Write error: %v\n", client.Id, err)
 			return
 		}
-		if response == responseBye {
+		if response == protocol.ResponseBye {
 			return
 		}
 		logger.AppLogger.Info("%s Client Write: %s", client.Id, response)
