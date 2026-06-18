@@ -79,6 +79,10 @@ func handleMoveCommand(args string, client *session.Client, gameServer *game_con
 		return response, err
 	}
 
+	if !client.IsLeader() {
+		return protocol.ResponseNotGroupLeader, nil
+	}
+
 	if err := gameServer.WriteCommand(game_conn.CommandToGameServer{
 		Player:    client.Username,
 		Command:   "MOVE",

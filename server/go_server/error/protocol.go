@@ -1,7 +1,7 @@
 package error
 
 const (
-	ProtocolNoError = 0
+	NoError = 0
 
 	NameInUseError = 201
 	NoExitError    = 301

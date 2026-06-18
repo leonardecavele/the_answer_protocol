@@ -7,7 +7,7 @@ import (
 )
 
 func ResponseError(errorCode int, message string) string {
-	if errorCode <= serverError.ProtocolNoError || errorCode > 999 {
+	if errorCode <= serverError.NoError || errorCode > 999 {
 		errorCode = serverError.UnknownError
 		message = "UNKNOWN_ERROR"
 	}
@@ -50,7 +50,6 @@ var (
 
 var ErrorResponseByCommand = map[string]map[int]string{
 	"CONNECT": {
-		serverError.ProtocolNoError:       "",
 		serverError.NameInUseError:        ResponseUsernameAlreadyUsed,
 		serverError.AlreadyConnectedError: ResponseAlreadyConnected,
 		serverError.ConnectionFailedError: ResponseConnectionFailed,
@@ -59,14 +58,12 @@ var ErrorResponseByCommand = map[string]map[int]string{
 		serverError.InvalidCommandError:   ResponseInvalidCommand,
 	},
 	"LOOK": {
-		serverError.ProtocolNoError:       "",
 		serverError.ConnectionFailedError: ResponseConnectionFailed,
 		serverError.SendFailedError:       ResponseSendFailed,
 		serverError.InvalidQuestionError:  ResponseInvalidQuestion,
 		serverError.InvalidCommandError:   ResponseInvalidCommand,
 	},
 	"MOVE": {
-		serverError.ProtocolNoError:       "",
 		serverError.NoExitError:           ResponseNoExit,
 		serverError.ConnectionFailedError: ResponseConnectionFailed,
 		serverError.SendFailedError:       ResponseSendFailed,
@@ -74,14 +71,12 @@ var ErrorResponseByCommand = map[string]map[int]string{
 		serverError.InvalidCommandError:   ResponseInvalidCommand,
 	},
 	"QUIT": {
-		serverError.ProtocolNoError:       "",
 		serverError.ConnectionFailedError: ResponseConnectionFailed,
 		serverError.SendFailedError:       ResponseSendFailed,
 		serverError.InvalidQuestionError:  ResponseInvalidQuestion,
 		serverError.InvalidCommandError:   ResponseInvalidCommand,
 	},
 	"CHAT": {
-		serverError.ProtocolNoError:       "",
 		serverError.InvalidScopeError:     ResponseInvalidScope,
 		serverError.NotInGroupError:       ResponseNotInGroup,
 		serverError.NoSuchUserError:       ResponseNoSuchUser,
@@ -92,7 +87,6 @@ var ErrorResponseByCommand = map[string]map[int]string{
 		serverError.InvalidCommandError:   ResponseInvalidCommand,
 	},
 	"GROUP CREATE": {
-		serverError.ProtocolNoError:       "",
 		serverError.AlreadyInGroupError:   ResponseAlreadyInGroup,
 		serverError.ConnectionFailedError: ResponseConnectionFailed,
 		serverError.SendFailedError:       ResponseSendFailed,
@@ -100,7 +94,6 @@ var ErrorResponseByCommand = map[string]map[int]string{
 		serverError.InvalidCommandError:   ResponseInvalidCommand,
 	},
 	"GROUP INVITE": {
-		serverError.ProtocolNoError:       "",
 		serverError.NotInGroupError:       ResponseNotInGroup,
 		serverError.NoSuchUserError:       ResponseNoSuchUser,
 		serverError.AlreadyInGroupError:   ResponseAlreadyInGroup,
@@ -111,7 +104,6 @@ var ErrorResponseByCommand = map[string]map[int]string{
 		serverError.InvalidCommandError:   ResponseInvalidCommand,
 	},
 	"GROUP JOIN": {
-		serverError.ProtocolNoError:       "",
 		serverError.AlreadyInGroupError:   ResponseAlreadyInGroup,
 		serverError.NotInvitedError:       ResponseNotInvited,
 		serverError.GroupNotFoundError:    ResponseGroupNotFound,
@@ -121,7 +113,6 @@ var ErrorResponseByCommand = map[string]map[int]string{
 		serverError.InvalidCommandError:   ResponseInvalidCommand,
 	},
 	"GROUP LEAVE": {
-		serverError.ProtocolNoError:       "",
 		serverError.NotInGroupError:       ResponseNotInGroup,
 		serverError.GroupNotFoundError:    ResponseGroupNotFound,
 		serverError.ConnectionFailedError: ResponseConnectionFailed,
@@ -130,7 +121,6 @@ var ErrorResponseByCommand = map[string]map[int]string{
 		serverError.InvalidCommandError:   ResponseInvalidCommand,
 	},
 	"TAKE": {
-		serverError.ProtocolNoError:       "",
 		serverError.ItemNotFoundError:     ResponseItemNotFound,
 		serverError.ConnectionFailedError: ResponseConnectionFailed,
 		serverError.SendFailedError:       ResponseSendFailed,
@@ -138,7 +128,6 @@ var ErrorResponseByCommand = map[string]map[int]string{
 		serverError.InvalidCommandError:   ResponseInvalidCommand,
 	},
 	"DROP": {
-		serverError.ProtocolNoError:         "",
 		serverError.ItemNotInInventoryError: ResponseItemNotInInventory,
 		serverError.ConnectionFailedError:   ResponseConnectionFailed,
 		serverError.SendFailedError:         ResponseSendFailed,
@@ -146,14 +135,12 @@ var ErrorResponseByCommand = map[string]map[int]string{
 		serverError.InvalidCommandError:     ResponseInvalidCommand,
 	},
 	"INVENTORY": {
-		serverError.ProtocolNoError:       "",
 		serverError.ConnectionFailedError: ResponseConnectionFailed,
 		serverError.SendFailedError:       ResponseSendFailed,
 		serverError.InvalidQuestionError:  ResponseInvalidQuestion,
 		serverError.InvalidCommandError:   ResponseInvalidCommand,
 	},
 	"TALK": {
-		serverError.ProtocolNoError:       "",
 		serverError.NpcNotFoundError:      ResponseNpcNotFound,
 		serverError.ConnectionFailedError: ResponseConnectionFailed,
 		serverError.SendFailedError:       ResponseSendFailed,
@@ -161,7 +148,6 @@ var ErrorResponseByCommand = map[string]map[int]string{
 		serverError.InvalidCommandError:   ResponseInvalidCommand,
 	},
 	"ATTACK": {
-		serverError.ProtocolNoError:       "",
 		serverError.NpcNotFoundError:      ResponseNpcNotFound,
 		serverError.NpcNotHostileError:    ResponseNpcNotHostile,
 		serverError.ConnectionFailedError: ResponseConnectionFailed,
@@ -170,14 +156,12 @@ var ErrorResponseByCommand = map[string]map[int]string{
 		serverError.InvalidCommandError:   ResponseInvalidCommand,
 	},
 	"STATUS": {
-		serverError.ProtocolNoError:       "",
 		serverError.ConnectionFailedError: ResponseConnectionFailed,
 		serverError.SendFailedError:       ResponseSendFailed,
 		serverError.InvalidQuestionError:  ResponseInvalidQuestion,
 		serverError.InvalidCommandError:   ResponseInvalidCommand,
 	},
 	"QUEST": {
-		serverError.ProtocolNoError:       "",
 		serverError.NpcNotFoundError:      ResponseNpcNotFound,
 		serverError.NoQuestAvailableError: ResponseNoQuestAvailable,
 		serverError.ConnectionFailedError: ResponseConnectionFailed,
@@ -186,7 +170,6 @@ var ErrorResponseByCommand = map[string]map[int]string{
 		serverError.InvalidCommandError:   ResponseInvalidCommand,
 	},
 	"QUESTS": {
-		serverError.ProtocolNoError:       "",
 		serverError.ConnectionFailedError: ResponseConnectionFailed,
 		serverError.SendFailedError:       ResponseSendFailed,
 		serverError.InvalidQuestionError:  ResponseInvalidQuestion,
@@ -195,7 +178,7 @@ var ErrorResponseByCommand = map[string]map[int]string{
 }
 
 func HandleCommandError(command string, errorCode int) string {
-	if errorCode == serverError.ProtocolNoError {
+	if errorCode == serverError.NoError {
 		return ""
 	}
 
