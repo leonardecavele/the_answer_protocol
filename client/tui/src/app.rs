@@ -1,7 +1,7 @@
-use crate::state::AppState;
 use crate::components::Component;
-use crate::components::login::LoginComponent;
 use crate::components::game::GameComponent;
+use crate::components::login::LoginComponent;
+use crate::state::AppState;
 
 pub struct App {
     pub state: AppState,
@@ -21,6 +21,9 @@ impl App {
     }
 
     pub fn switch_to_login(&mut self) {
-        self.active_component = Box::new(LoginComponent::new(self.state.net.server_ip.clone(), self.state.net.server_port.clone()));
+        self.active_component = Box::new(LoginComponent::new(
+            self.state.net.server_ip.clone(),
+            self.state.net.server_port.clone(),
+        ));
     }
 }

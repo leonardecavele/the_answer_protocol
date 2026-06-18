@@ -1,11 +1,11 @@
-mod assets;
-mod state;
 mod app;
-mod components;
-mod events;
+mod assets;
 mod commands;
-mod network;
+mod components;
 mod config;
+mod events;
+mod network;
+mod state;
 
 use app::App;
 use crossterm::{
@@ -15,10 +15,10 @@ use crossterm::{
 };
 use events::AppEvent;
 use futures::StreamExt;
-use ratatui::{backend::CrosstermBackend, Terminal};
-use std::{env, io, sync::Arc, time::Duration};
-use tokio::sync::{mpsc, Mutex};
+use ratatui::{Terminal, backend::CrosstermBackend};
 use state::ConnectionState;
+use std::{env, io, sync::Arc, time::Duration};
+use tokio::sync::{Mutex, mpsc};
 
 const LOCAL_SERVER_IP: &str = "127.0.0.1";
 const LOCAL_SERVER_PORT: &str = "38800";
@@ -97,7 +97,11 @@ async fn run_app(
 
             // Draw notifications as an overlay
             if !app.state.ui.notifications.is_empty() {
-                let max_len = app.state.ui.notifications.iter()
+                let max_len = app
+                    .state
+                    .ui
+                    .notifications
+                    .iter()
                     .map(|n| n.message.len() as u16)
                     .max()
                     .unwrap_or(0);
@@ -128,7 +132,11 @@ async fn run_app(
                     )));
                 }
                 let notif_block = ratatui::widgets::Paragraph::new(lines)
-                    .block(ratatui::widgets::Block::default().borders(ratatui::widgets::Borders::ALL).title(" Notifications "))
+                    .block(
+                        ratatui::widgets::Block::default()
+                            .borders(ratatui::widgets::Borders::ALL)
+                            .title(" Notifications "),
+                    )
                     .wrap(ratatui::widgets::Wrap { trim: true });
                 f.render_widget(ratatui::widgets::Clear, notif_area);
                 f.render_widget(notif_block, notif_area);
@@ -185,10 +193,16 @@ async fn run_app(
                     }
 
                     // Dispatch to active component
-                    app.active_component.handle_event(&mut app.state, &evt, &tx).await;
+                    app.active_component
+                        .handle_event(&mut app.state, &evt, &tx)
+                        .await;
                 }
                 AppEvent::AttemptConnect(name, ip, port) => {
-                    app.state.ui.push_notification(format!("Connecting to {}:{}...", ip, port), crate::state::NotificationType::Info, 10);
+                    app.state.ui.push_notification(
+                        format!("Connecting to {}:{}...", ip, port),
+                        crate::state::NotificationType::Info,
+                        10,
+                    );
                     let tx_clone = tx.clone();
                     tokio::spawn(async move {
                         use api_client::client::connect::ClientConnect;
@@ -197,14 +211,19 @@ async fn run_app(
                             Ok(mut client) => {
                                 let tx_ev = tx_clone.clone();
                                 // Setup listeners
-                                client.on_event(move |ev| { let _ = tx_ev.send(AppEvent::Api(ev)); });
+                                client.on_event(move |ev| {
+                                    let _ = tx_ev.send(AppEvent::Api(ev));
+                                });
 
                                 let _ = tx_clone.send(AppEvent::ClientConnected(client));
                                 let _ = tx_clone.send(AppEvent::ExecuteConnect(name));
                             }
                             Err(e) => {
                                 log::error!("TCP Connection failed: {}", e);
-                                let _ = tx_clone.send(AppEvent::CommandError(format!("TCP Connection failed: {}", e)));
+                                let _ = tx_clone.send(AppEvent::CommandError(format!(
+                                    "TCP Connection failed: {}",
+                                    e
+                                )));
                                 let _ = tx_clone.send(AppEvent::ApiDisconnected);
                             }
                         }
@@ -243,8 +262,11 @@ async fn run_app(
                 }
                 AppEvent::LoginSuccess(name) => {
                     app.state.net.connection_state = ConnectionState::Connected(name.clone());
+                    app.state.net.connected_at = Some(std::time::Instant::now());
                     app.switch_to_game();
-                    app.state.game.push_game_output(format!("Welcome, {}!", name));
+                    app.state
+                        .game
+                        .push_game_output(format!("Welcome, {}!", name));
 
                     if let Some(client_arc) = &app.state.net.client {
                         let client_arc = Arc::clone(client_arc);
@@ -252,7 +274,8 @@ async fn run_app(
                         tokio::spawn(async move {
                             let c = client_arc.lock().await;
                             if let Ok(Ok(data)) = c.who().await {
-                                let _ = tx_clone.send(AppEvent::UpdateOnlinePlayers(data.player_count as u32));
+                                let _ = tx_clone
+                                    .send(AppEvent::UpdateOnlinePlayers(data.player_count as u32));
                             }
                         });
                     }
@@ -266,17 +289,25 @@ async fn run_app(
                     for line in err.lines() {
                         app.state.game.push_game_output(format!("[ERROR] {}", line));
                     }
-                    app.state.ui.push_notification(err, crate::state::NotificationType::Error, 16);
+                    app.state
+                        .ui
+                        .push_notification(err, crate::state::NotificationType::Error, 16);
                 }
                 AppEvent::ClientConnected(client) => {
                     app.state.net.client = Some(Arc::new(Mutex::new(client)));
-                    app.state.game.push_game_output("TCP connection established.".to_string());
+                    app.state
+                        .game
+                        .push_game_output("TCP connection established.".to_string());
                 }
                 AppEvent::ApiDisconnected => {
                     app.state.net.connection_state = ConnectionState::Disconnected;
                     app.switch_to_login();
                     if app.state.net.client.is_some() {
-                        app.state.ui.push_notification("Disconnected from server".to_string(), crate::state::NotificationType::Error, 16);
+                        app.state.ui.push_notification(
+                            "Disconnected from server".to_string(),
+                            crate::state::NotificationType::Error,
+                            16,
+                        );
                         app.state.net.client = None;
                     }
                 }
@@ -287,14 +318,22 @@ async fn run_app(
                     app.state.game.online_players = count;
                 }
                 AppEvent::LocalChatSent(scope, msg) => {
-                    let sender = if let ConnectionState::Connected(name) = &app.state.net.connection_state {
-                        format!("{} (You)", name)
-                    } else {
-                        "You".to_string()
-                    };
+                    let sender =
+                        if let ConnectionState::Connected(name) = &app.state.net.connection_state {
+                            format!("{} (You)", name)
+                        } else {
+                            "You".to_string()
+                        };
                     app.state.game.push_chat(scope, sender, msg);
                 }
-                AppEvent::UpdateRoomContext { room_id, room_display_name, npcs } => {
+                AppEvent::UpdateGroup(group_name) => {
+                    app.state.game.group_name = group_name;
+                }
+                AppEvent::UpdateRoomContext {
+                    room_id,
+                    room_display_name,
+                    npcs,
+                } => {
                     app.state.game.current_room = room_id;
                     app.state.game.current_room_name = room_display_name;
                     app.state.game.npcs_in_room = npcs;

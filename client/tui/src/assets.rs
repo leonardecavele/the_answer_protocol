@@ -1,10 +1,10 @@
-use serde::{Deserialize, Serialize};
+
 use ratatui_image::picker::Picker;
-use ratatui_image::protocol::Protocol;
-use std::fs;
-use std::path::Path;
+
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use image::DynamicImage;
+use std::fs;
+
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct MappingRule {
@@ -30,8 +30,14 @@ pub struct AssetManager {
 impl AssetManager {
     pub fn new() -> Self {
         // Find the root directory and assets directory from global config
-        let root_dir = crate::config::ROOT_DIR.get().cloned().unwrap_or_else(|| std::path::PathBuf::from("."));
-        let assets_dir = crate::config::ASSETS_DIR.get().cloned().unwrap_or_else(|| std::path::PathBuf::from("assets"));
+        let root_dir = crate::config::ROOT_DIR
+            .get()
+            .cloned()
+            .unwrap_or_else(|| std::path::PathBuf::from("."));
+        let assets_dir = crate::config::ASSETS_DIR
+            .get()
+            .cloned()
+            .unwrap_or_else(|| std::path::PathBuf::from("assets"));
 
         let manifest_path = assets_dir.join("manifest.json");
         let manifest: Manifest = if manifest_path.exists() {
@@ -40,15 +46,21 @@ impl AssetManager {
                 Ok(m) => m,
                 Err(e) => {
                     log::error!("Failed to parse manifest.json: {:?}", e);
-                    Manifest { mappings: vec![], display_names: HashMap::new() }
+                    Manifest {
+                        mappings: vec![],
+                        display_names: HashMap::new(),
+                    }
                 }
             }
         } else {
             log::error!("manifest.json not found at {:?}", manifest_path);
-            Manifest { mappings: vec![], display_names: HashMap::new() }
+            Manifest {
+                mappings: vec![],
+                display_names: HashMap::new(),
+            }
         };
 
-        let mut picker = Picker::halfblocks();
+        let picker = Picker::halfblocks();
 
         Self {
             manifest,
@@ -59,10 +71,18 @@ impl AssetManager {
     }
 
     pub fn get_display_name(&self, id: &str) -> String {
-        self.manifest.display_names.get(id).cloned().unwrap_or_else(|| id.to_string())
+        self.manifest
+            .display_names
+            .get(id)
+            .cloned()
+            .unwrap_or_else(|| id.to_string())
     }
 
-    pub fn get_image_for_context(&mut self, room_name: &str, npcs: &[String]) -> Option<&mut ratatui_image::protocol::StatefulProtocol> {
+    pub fn get_image_for_context(
+        &mut self,
+        room_name: &str,
+        npcs: &[String],
+    ) -> Option<&mut ratatui_image::protocol::StatefulProtocol> {
         let mut selected_path = None;
         let mut best_score = -1;
 

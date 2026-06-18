@@ -38,6 +38,16 @@ pub enum AppEvent {
     /// Emitted when the user successfully sends a chat message
     LocalChatSent(crate::state::ChatScope, String),
 
-    UpdateRoomContext { room_id: String, room_display_name: String, npcs: Vec<String> },
-    UpdateStatus { hp: u32, max_hp: u32 },
+    /// Emitted when the player's group changes
+    UpdateGroup(Option<String>),
+
+    UpdateRoomContext {
+        room_id: String,
+        room_display_name: String,
+        npcs: Vec<String>,
+    },
+    UpdateStatus {
+        hp: u32,
+        max_hp: u32,
+    },
 }

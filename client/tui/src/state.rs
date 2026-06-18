@@ -17,6 +17,18 @@ pub struct ChatEntry {
     pub message: String,
 }
 
+impl std::fmt::Display for ChatEntry {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let prefix = match self.scope {
+            ChatScope::Global => "[Global]",
+            ChatScope::Room => "[Room]",
+            ChatScope::Group => "[Group]",
+            ChatScope::Private => "[Private]",
+        };
+        write!(f, "{} {}: {}", prefix, self.sender, self.message)
+    }
+}
+
 pub enum ConnectionState {
     Disconnected,
     Connecting,
@@ -93,11 +105,14 @@ impl GameState {
     }
 
     pub fn push_chat(&mut self, scope: ChatScope, sender: String, message: String) {
-        self.chat_messages.push(ChatEntry {
+        let entry = ChatEntry {
             scope,
             sender,
             message,
-        });
+        };
+        self.push_game_output(entry.to_string());
+        
+        self.chat_messages.push(entry);
         if self.chat_messages.len() > 500 {
             self.chat_messages.remove(0);
         }
@@ -106,7 +121,6 @@ impl GameState {
 
 pub struct UiState {
     pub game_scroll_offset: u16,
-    pub chat_scroll_offset: u16,
     pub show_debug: bool,
     pub show_help: bool,
     pub show_chat: bool,
@@ -118,7 +132,6 @@ impl UiState {
     pub fn new() -> Self {
         Self {
             game_scroll_offset: 0,
-            chat_scroll_offset: 0,
             show_debug: false,
             show_help: false,
             show_chat: false,
@@ -127,7 +140,12 @@ impl UiState {
         }
     }
 
-    pub fn push_notification(&mut self, message: String, level: NotificationType, lifetime_ticks: u32) {
+    pub fn push_notification(
+        &mut self,
+        message: String,
+        level: NotificationType,
+        lifetime_ticks: u32,
+    ) {
         self.notifications.push(Notification {
             message,
             level,

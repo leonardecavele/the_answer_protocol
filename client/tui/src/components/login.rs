@@ -3,11 +3,10 @@ use crate::events::AppEvent;
 use crate::state::AppState;
 use crossterm::event::{Event, KeyCode};
 use ratatui::{
-    layout::{Constraint, Direction, Layout, Rect, Alignment},
-    style::{Color, Modifier, Style},
-    text::{Line, Span},
-    widgets::{Block, Borders, Paragraph, Wrap},
     Frame,
+    layout::{Alignment, Constraint, Direction, Layout, Rect},
+    style::{Color, Modifier, Style},
+    widgets::{Block, Borders, Paragraph},
 };
 use tokio::sync::mpsc;
 use tui_input::Input;
@@ -39,12 +38,16 @@ impl LoginComponent {
 
     fn submit(&self, state: &mut AppState, tx: &mpsc::UnboundedSender<AppEvent>) {
         if self.username_input.value().trim().is_empty() {
-            state.ui.push_notification("Username cannot be empty!".to_string(), crate::state::NotificationType::Error, 16);
+            state.ui.push_notification(
+                "Username cannot be empty!".to_string(),
+                crate::state::NotificationType::Error,
+                16,
+            );
             return;
         }
         state.net.server_ip = self.address_input.value().to_string();
         state.net.server_port = self.port_input.value().to_string();
-        
+
         state.net.connection_state = crate::state::ConnectionState::Connecting;
         let _ = tx.send(AppEvent::AttemptConnect(
             self.username_input.value().to_string(),
@@ -105,13 +108,22 @@ impl Component for LoginComponent {
                 }
                 _ => match self.login_field {
                     LoginField::Username => {
-                        tui_input::backend::crossterm::EventHandler::handle_event(&mut self.username_input, event);
+                        tui_input::backend::crossterm::EventHandler::handle_event(
+                            &mut self.username_input,
+                            event,
+                        );
                     }
                     LoginField::Address => {
-                        tui_input::backend::crossterm::EventHandler::handle_event(&mut self.address_input, event);
+                        tui_input::backend::crossterm::EventHandler::handle_event(
+                            &mut self.address_input,
+                            event,
+                        );
                     }
                     LoginField::Port => {
-                        tui_input::backend::crossterm::EventHandler::handle_event(&mut self.port_input, event);
+                        tui_input::backend::crossterm::EventHandler::handle_event(
+                            &mut self.port_input,
+                            event,
+                        );
                     }
                     LoginField::Button => {}
                 },
@@ -147,8 +159,11 @@ impl Component for LoginComponent {
             .title(" The Answer Protocol ")
             .title_alignment(Alignment::Center)
             .style(Style::default().fg(Color::Cyan));
-            
-        if matches!(state.net.connection_state, crate::state::ConnectionState::Connecting) {
+
+        if matches!(
+            state.net.connection_state,
+            crate::state::ConnectionState::Connecting
+        ) {
             block = block.style(Style::default().fg(Color::Yellow));
         }
 
@@ -167,33 +182,54 @@ impl Component for LoginComponent {
             .split(center_rect);
 
         // Username
-        let user_style = if matches!(self.login_field, LoginField::Username) { Style::default().fg(Color::Yellow) } else { Style::default() };
+        let user_style = if matches!(self.login_field, LoginField::Username) {
+            Style::default().fg(Color::Yellow)
+        } else {
+            Style::default()
+        };
         let user_p = Paragraph::new(self.username_input.value())
             .block(Block::default().borders(Borders::ALL).title(" Username "))
             .style(user_style);
         f.render_widget(user_p, inner_rect[0]);
 
         // Address
-        let addr_style = if matches!(self.login_field, LoginField::Address) { Style::default().fg(Color::Yellow) } else { Style::default() };
+        let addr_style = if matches!(self.login_field, LoginField::Address) {
+            Style::default().fg(Color::Yellow)
+        } else {
+            Style::default()
+        };
         let addr_p = Paragraph::new(self.address_input.value())
             .block(Block::default().borders(Borders::ALL).title(" Server IP "))
             .style(addr_style);
         f.render_widget(addr_p, inner_rect[1]);
 
         // Port
-        let port_style = if matches!(self.login_field, LoginField::Port) { Style::default().fg(Color::Yellow) } else { Style::default() };
+        let port_style = if matches!(self.login_field, LoginField::Port) {
+            Style::default().fg(Color::Yellow)
+        } else {
+            Style::default()
+        };
         let port_p = Paragraph::new(self.port_input.value())
-            .block(Block::default().borders(Borders::ALL).title(" Server Port "))
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .title(" Server Port "),
+            )
             .style(port_style);
         f.render_widget(port_p, inner_rect[2]);
 
         // Button
         let btn_style = if matches!(self.login_field, LoginField::Button) {
-            Style::default().fg(Color::Black).bg(Color::Cyan).add_modifier(Modifier::BOLD)
+            Style::default()
+                .fg(Color::Black)
+                .bg(Color::Cyan)
+                .add_modifier(Modifier::BOLD)
         } else {
-            Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)
+            Style::default()
+                .fg(Color::Cyan)
+                .add_modifier(Modifier::BOLD)
         };
-        
+
         let status_text = match state.net.connection_state {
             crate::state::ConnectionState::Connecting => " CONNECTING... ",
             _ => " CONNECT ",

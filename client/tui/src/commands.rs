@@ -1,7 +1,5 @@
-
-
-use crate::state::{AppState, ChatScope};
 use crate::events::AppEvent;
+use crate::state::{AppState, ChatScope};
 use std::sync::Arc;
 use tokio::sync::mpsc;
 
@@ -56,8 +54,14 @@ pub fn handle_command(state: &mut AppState, cmd_line: String, tx: mpsc::Unbounde
                         });
                         let _ = tx_clone.send(AppEvent::CommandResult(format!("{:#?}", data)));
                     }
-                    Ok(Err(e)) => { let _ = tx_clone.send(AppEvent::CommandError(format!("Command Error: {:?}", e))); }
-                    Err(e) => { let _ = tx_clone.send(AppEvent::CommandError(format!("Network Error: {:?}", e))); }
+                    Ok(Err(e)) => {
+                        let _ = tx_clone
+                            .send(AppEvent::CommandError(format!("Command Error: {:?}", e)));
+                    }
+                    Err(e) => {
+                        let _ = tx_clone
+                            .send(AppEvent::CommandError(format!("Network Error: {:?}", e)));
+                    }
                 },
                 "who" => match c.who().await {
                     Ok(Ok(data)) => {
@@ -66,10 +70,12 @@ pub fn handle_command(state: &mut AppState, cmd_line: String, tx: mpsc::Unbounde
                         let _ = tx_clone.send(AppEvent::CommandResult(format!("{:#?}", data)));
                     }
                     Ok(Err(e)) => {
-                        let _ = tx_clone.send(AppEvent::CommandError(format!("Command Error: {:?}", e)));
+                        let _ = tx_clone
+                            .send(AppEvent::CommandError(format!("Command Error: {:?}", e)));
                     }
                     Err(e) => {
-                        let _ = tx_clone.send(AppEvent::CommandError(format!("Network Error: {:?}", e)));
+                        let _ = tx_clone
+                            .send(AppEvent::CommandError(format!("Network Error: {:?}", e)));
                     }
                 },
                 "chat_global" => match c.chat_global(args.join(" ")).await {
@@ -77,30 +83,65 @@ pub fn handle_command(state: &mut AppState, cmd_line: String, tx: mpsc::Unbounde
                         let msg = args.join(" ");
                         let _ = tx_clone.send(AppEvent::LocalChatSent(ChatScope::Global, msg));
                     }
-                    Ok(Err(e)) => { let _ = tx_clone.send(AppEvent::CommandError(format!("Command Error: {:?}", e))); }
-                    Err(e) => { let _ = tx_clone.send(AppEvent::CommandError(format!("Network Error: {:?}", e))); }
+                    Ok(Err(e)) => {
+                        let _ = tx_clone
+                            .send(AppEvent::CommandError(format!("Command Error: {:?}", e)));
+                    }
+                    Err(e) => {
+                        let _ = tx_clone
+                            .send(AppEvent::CommandError(format!("Network Error: {:?}", e)));
+                    }
                 },
                 "chat_private" if args.len() >= 2 => {
                     let to = args[0].clone();
                     let msg = args[1..].join(" ");
                     match c.chat_private(to.clone(), msg.clone()).await {
                         Ok(Ok(_res)) => {
-                            let _ = tx_clone.send(AppEvent::LocalChatSent(ChatScope::Private, format!("to {}: {}", to, msg)));
+                            let _ = tx_clone.send(AppEvent::LocalChatSent(
+                                ChatScope::Private,
+                                format!("to {}: {}", to, msg),
+                            ));
                         }
-                        Ok(Err(e)) => { let _ = tx_clone.send(AppEvent::CommandError(format!("Command Error: {:?}", e))); }
-                        Err(e) => { let _ = tx_clone.send(AppEvent::CommandError(format!("Network Error: {:?}", e))); }
+                        Ok(Err(e)) => {
+                            let _ = tx_clone
+                                .send(AppEvent::CommandError(format!("Command Error: {:?}", e)));
+                        }
+                        Err(e) => {
+                            let _ = tx_clone
+                                .send(AppEvent::CommandError(format!("Network Error: {:?}", e)));
+                        }
                     }
                 }
-                "group_create" => handle_res!(c.group_create().await),
+                "group_create" => match c.group_create().await {
+                    Ok(Ok(data)) => {
+                        let _ = tx_clone.send(AppEvent::UpdateGroup(Some(data.group_id.clone())));
+                        let _ = tx_clone.send(AppEvent::CommandResult(format!("{:#?}", data)));
+                    }
+                    Ok(Err(e)) => { let _ = tx_clone.send(AppEvent::CommandError(format!("Command Error: {:?}", e))); }
+                    Err(e) => { let _ = tx_clone.send(AppEvent::CommandError(format!("Network Error: {:?}", e))); }
+                },
                 "group_invite" if args.len() == 1 => {
                     handle_res!(c.group_invite(args[0].clone()).await)
                 }
-                "group_join" if args.len() == 1 => {
-                    handle_res!(c.group_join(args[0].clone()).await)
-                }
-                "group_leave" => handle_res!(c.group_leave().await),
+                "group_join" if args.len() == 1 => match c.group_join(args[0].clone()).await {
+                    Ok(Ok(data)) => {
+                        let _ = tx_clone.send(AppEvent::UpdateGroup(Some(data.group_id.clone())));
+                        let _ = tx_clone.send(AppEvent::CommandResult(format!("{:#?}", data)));
+                    }
+                    Ok(Err(e)) => { let _ = tx_clone.send(AppEvent::CommandError(format!("Command Error: {:?}", e))); }
+                    Err(e) => { let _ = tx_clone.send(AppEvent::CommandError(format!("Network Error: {:?}", e))); }
+                },
+                "group_leave" => match c.group_leave().await {
+                    Ok(Ok(data)) => {
+                        let _ = tx_clone.send(AppEvent::UpdateGroup(None));
+                        let _ = tx_clone.send(AppEvent::CommandResult(format!("{:#?}", data)));
+                    }
+                    Ok(Err(e)) => { let _ = tx_clone.send(AppEvent::CommandError(format!("Command Error: {:?}", e))); }
+                    Err(e) => { let _ = tx_clone.send(AppEvent::CommandError(format!("Network Error: {:?}", e))); }
+                },
                 "take" if args.len() == 1 => handle_res!(c.take(args[0].clone()).await),
                 "drop" if args.len() == 1 => handle_res!(c.drop_item(args[0].clone()).await),
+                "move" if args.len() == 1 => handle_res!(c.r#move(args[0].clone()).await),
                 "inventory" => match c.inventory().await {
                     Ok(Ok(data)) => {
                         let _ = tx_clone.send(AppEvent::InventoryUpdate(data.inventory.clone()));
@@ -129,8 +170,14 @@ pub fn handle_command(state: &mut AppState, cmd_line: String, tx: mpsc::Unbounde
                         });
                         let _ = tx_clone.send(AppEvent::CommandResult(format!("{:#?}", data)));
                     }
-                    Ok(Err(e)) => { let _ = tx_clone.send(AppEvent::CommandError(format!("Command Error: {:?}", e))); }
-                    Err(e) => { let _ = tx_clone.send(AppEvent::CommandError(format!("Network Error: {:?}", e))); }
+                    Ok(Err(e)) => {
+                        let _ = tx_clone
+                            .send(AppEvent::CommandError(format!("Command Error: {:?}", e)));
+                    }
+                    Err(e) => {
+                        let _ = tx_clone
+                            .send(AppEvent::CommandError(format!("Network Error: {:?}", e)));
+                    }
                 },
                 "quest" if !args.is_empty() => {
                     handle_res!(c.quest(args.join(" ")).await)
