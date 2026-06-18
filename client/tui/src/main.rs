@@ -1,20 +1,22 @@
 mod app;
+mod commands;
 mod events;
+mod handlers;
 mod ui;
 
-use app::{App, ConnectionState};
+use app::{App, ChatScope, ConnectionState, Screen};
 use crossterm::{
-    event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
+    event::{DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyModifiers},
     execute,
-    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
+    terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
 };
 use events::AppEvent;
-use futures::{FutureExt, StreamExt};
+use futures::StreamExt;
 use ratatui::{backend::CrosstermBackend, Terminal};
 use std::{env, io, sync::Arc, time::Duration};
 use tokio::sync::{mpsc, Mutex};
 
-const LOCAL_SERVER_IP: &str = "127.0.0.1";
+const LOCAL_SERVER_IP: &str = "10.13.6.2";
 const LOCAL_SERVER_PORT: &str = "38800";
 
 fn get_server_ip() -> String {
@@ -27,17 +29,15 @@ fn get_server_port() -> String {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Setup tracing with tui-logger
     tui_logger::init_logger(log::LevelFilter::Trace).unwrap();
     tui_logger::set_default_level(log::LevelFilter::Trace);
-    
+
     use tracing_subscriber::layer::SubscriberExt;
     use tracing_subscriber::util::SubscriberInitExt;
     tracing_subscriber::registry()
         .with(tui_logger::TuiTracingSubscriberLayer)
         .init();
 
-    // Setup terminal
     enable_raw_mode()?;
     let mut stdout = io::stdout();
     execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
@@ -47,7 +47,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut app = App::new(get_server_ip(), get_server_port());
     let res = run_app(&mut terminal, &mut app).await;
 
-    // Restore terminal
     disable_raw_mode()?;
     execute!(
         terminal.backend_mut(),
@@ -69,7 +68,6 @@ async fn run_app(
 ) -> io::Result<()> {
     let (tx, mut rx) = mpsc::unbounded_channel();
 
-    // Spawn crossterm event reader
     let tick_rate = Duration::from_millis(250);
     let tx_clone = tx.clone();
     tokio::spawn(async move {
@@ -100,71 +98,50 @@ async fn run_app(
                             }
                         }
                     }
+
+                    // Decrement notification lifetimes
+                    app.notifications.retain_mut(|notif| {
+                        notif.lifetime = notif.lifetime.saturating_sub(1);
+                        notif.lifetime > 0
+                    });
                 }
                 AppEvent::TerminalEvent(evt) => {
-                    use crate::app::Focus;
-                    match evt {
-                        Event::Key(key) => {
+                    if let Event::Key(key) = evt {
+                        // Global Ctrl shortcuts
+                        if key.modifiers.contains(KeyModifiers::CONTROL) {
                             match key.code {
-                                KeyCode::Esc => app.should_quit = true,
-                                KeyCode::Tab => {
-                                    app.focus = match app.focus {
-                                        Focus::Input => Focus::GameEvents,
-                                        Focus::GameEvents => Focus::SystemLogs,
-                                        Focus::SystemLogs => Focus::Input,
-                                    };
+                                KeyCode::Char('d') => {
+                                    app.show_debug = !app.show_debug;
+                                    continue;
                                 }
-                                KeyCode::Up => match app.focus {
-                                    Focus::GameEvents | Focus::Input => app.scroll_offset = app.scroll_offset.saturating_add(1),
-                                    Focus::SystemLogs => app.logger_state.transition(tui_logger::TuiWidgetEvent::UpKey),
-                                },
-                                KeyCode::Down => match app.focus {
-                                    Focus::GameEvents | Focus::Input => app.scroll_offset = app.scroll_offset.saturating_sub(1),
-                                    Focus::SystemLogs => app.logger_state.transition(tui_logger::TuiWidgetEvent::DownKey),
-                                },
-                                KeyCode::PageUp => match app.focus {
-                                    Focus::GameEvents | Focus::Input => app.scroll_offset = app.scroll_offset.saturating_add(5),
-                                    Focus::SystemLogs => app.logger_state.transition(tui_logger::TuiWidgetEvent::PrevPageKey),
-                                },
-                                KeyCode::PageDown => match app.focus {
-                                    Focus::GameEvents | Focus::Input => app.scroll_offset = app.scroll_offset.saturating_sub(5),
-                                    Focus::SystemLogs => app.logger_state.transition(tui_logger::TuiWidgetEvent::NextPageKey),
-                                },
-                                KeyCode::Enter => {
-                                    let cmd_str = app.input.value().to_string();
-                                    app.input.reset();
-                                    handle_command(app, cmd_str, tx.clone()).await;
+                                KeyCode::Char('h') => {
+                                    app.show_help = !app.show_help;
+                                    continue;
                                 }
-                                _ => {
-                                    if matches!(app.focus, Focus::Input) {
-                                        tui_input::backend::crossterm::EventHandler::handle_event(&mut app.input, &Event::Key(key));
-                                    } else if matches!(app.focus, Focus::SystemLogs) {
-                                        match key.code {
-                                            KeyCode::Char(' ') => app.logger_state.transition(tui_logger::TuiWidgetEvent::SpaceKey),
-                                            KeyCode::Left => app.logger_state.transition(tui_logger::TuiWidgetEvent::LeftKey),
-                                            KeyCode::Right => app.logger_state.transition(tui_logger::TuiWidgetEvent::RightKey),
-                                            KeyCode::Esc => app.logger_state.transition(tui_logger::TuiWidgetEvent::EscapeKey),
-                                            _ => {}
-                                        }
-                                    }
+                                KeyCode::Char('t') => {
+                                    app.show_chat = !app.show_chat;
+                                    continue;
                                 }
-                            }
-                        }
-                        Event::Mouse(mouse) => {
-                            use crossterm::event::MouseEventKind;
-                            match mouse.kind {
-                                MouseEventKind::ScrollUp => match app.focus {
-                                    Focus::GameEvents | Focus::Input => app.scroll_offset = app.scroll_offset.saturating_add(3),
-                                    Focus::SystemLogs => app.logger_state.transition(tui_logger::TuiWidgetEvent::UpKey),
-                                },
-                                MouseEventKind::ScrollDown => match app.focus {
-                                    Focus::GameEvents | Focus::Input => app.scroll_offset = app.scroll_offset.saturating_sub(3),
-                                    Focus::SystemLogs => app.logger_state.transition(tui_logger::TuiWidgetEvent::DownKey),
-                                },
                                 _ => {}
                             }
                         }
-                        _ => {}
+
+                        // Esc: close overlays or quit
+                        if key.code == KeyCode::Esc {
+                            if app.show_debug || app.show_help {
+                                app.show_debug = false;
+                                app.show_help = false;
+                            } else {
+                                app.should_quit = true;
+                            }
+                            continue;
+                        }
+
+                        // Screen-specific handling
+                        match app.screen {
+                            Screen::Login => handlers::login::handle_key(app, key, &evt, &tx),
+                            Screen::Game => handlers::game::handle_key(app, key, &evt, &tx).await,
+                        }
                     }
                 }
                 AppEvent::ExecuteConnect(name) => {
@@ -175,17 +152,23 @@ async fn run_app(
                             let mut c = client_arc.lock().await;
                             match c.connect(name.clone()).await {
                                 Ok(Ok(_)) => {
-                                    log::info!("Connected to game as {}", name);
+                                    log::info!("Connected as {}", name);
                                     let _ = tx_clone.send(AppEvent::LoginSuccess(name));
                                 }
                                 Ok(Err(err)) => {
-                                    log::error!("Game connect command failed: {:?}", err);
-                                    let _ = tx_clone.send(AppEvent::CommandError(format!("Login failed: {:?}", err)));
+                                    log::error!("Connect failed: {:?}", err);
+                                    let _ = tx_clone.send(AppEvent::CommandError(format!(
+                                        "Login failed: {:?}",
+                                        err
+                                    )));
                                     let _ = tx_clone.send(AppEvent::ApiDisconnected);
                                 }
                                 Err(err) => {
-                                    log::error!("Network error on connect: {:?}", err);
-                                    let _ = tx_clone.send(AppEvent::CommandError(format!("Network error: {:?}", err)));
+                                    log::error!("Network error: {:?}", err);
+                                    let _ = tx_clone.send(AppEvent::CommandError(format!(
+                                        "Network error: {:?}",
+                                        err
+                                    )));
                                     let _ = tx_clone.send(AppEvent::ApiDisconnected);
                                 }
                             }
@@ -194,143 +177,107 @@ async fn run_app(
                 }
                 AppEvent::LoginSuccess(name) => {
                     app.state = ConnectionState::Connected(name.clone());
-                    app.push_message(format!("Successfully logged in as {}.", name));
+                    app.screen = Screen::Game;
+                    app.push_game_output(format!("Welcome, {}!", name));
+
+                    if let Some(client_arc) = &app.client {
+                        let client_arc = Arc::clone(client_arc);
+                        let tx_clone = tx.clone();
+                        tokio::spawn(async move {
+                            let c = client_arc.lock().await;
+                            if let Ok(Ok(data)) = c.who().await {
+                                let _ = tx_clone.send(AppEvent::UpdateOnlinePlayers(data.player_count as u32));
+                            }
+                        });
+                    }
                 }
                 AppEvent::CommandResult(res) => {
                     for line in res.lines() {
-                        app.push_message(format!("[OK] {}", line));
+                        app.push_game_output(format!("{}", line));
                     }
                 }
                 AppEvent::CommandError(err) => {
                     for line in err.lines() {
-                        app.push_message(format!("[ERROR] {}", line));
+                        app.push_game_output(format!("[ERROR] {}", line));
                     }
+                    app.push_notification(err, crate::app::NotificationType::Error, 16);
                 }
                 AppEvent::ClientConnected(client) => {
                     app.client = Some(Arc::new(Mutex::new(client)));
-                    app.push_message("TCP Connection established.".to_string());
+                    app.push_game_output("TCP connection established.".to_string());
+                    app.push_notification("TCP connected.".to_string(), crate::app::NotificationType::Info, 12);
                 }
                 AppEvent::ApiDisconnected => {
                     app.state = ConnectionState::Disconnected;
+                    app.screen = Screen::Login;
                     app.client = None;
-                    app.push_message("Disconnected from server.".to_string());
+                    app.push_notification("Disconnected from server".to_string(), crate::app::NotificationType::Error, 16);
+                }
+                AppEvent::InventoryUpdate(items) => {
+                    app.inventory = items;
+                }
+                AppEvent::UpdateOnlinePlayers(count) => {
+                    app.online_players = count;
+                }
+                AppEvent::LocalChatSent(scope, msg) => {
+                    let sender = if let ConnectionState::Connected(name) = &app.state {
+                        format!("{} (You)", name)
+                    } else {
+                        "You".to_string()
+                    };
+                    app.push_chat(scope, sender, msg);
                 }
                 AppEvent::Api(api_evt) => {
                     use api_client::client::event::*;
                     match api_evt {
                         ServerEvent::Connect(name) => {
-                            if matches!(app.state, ConnectionState::Connecting) {
-                                app.state = ConnectionState::Connected(name.clone());
-                            }
-                            app.push_message(format!("-> {} connected to the server.", name));
+                            app.push_game_output(format!("-> {} connected.", name));
+                            app.online_players += 1;
+                            app.push_notification(format!("{} connected", name), crate::app::NotificationType::Info, 16);
                         }
-                        ServerEvent::Quit(name) => app.push_message(format!("<- {} quit the server.", name)),
-                        ServerEvent::Room(RoomEvent::PresenceEnter(name)) => app.push_message(format!("[Room] {} entered.", name)),
-                        ServerEvent::Room(RoomEvent::PresenceLeave(name)) => app.push_message(format!("[Room] {} left.", name)),
-                        ServerEvent::Room(RoomEvent::Chat(msg)) => app.push_message(format!("[Room] {}: {}", msg.sender, msg.message)),
-                        ServerEvent::Group(GroupEvent::Chat(msg)) => app.push_message(format!("[Group] {}: {}", msg.sender, msg.message)),
-                        ServerEvent::Group(GroupEvent::Invite(name)) => app.push_message(format!("[Group] {} invited you.", name)),
-                        ServerEvent::Group(GroupEvent::Join(name)) => app.push_message(format!("[Group] {} joined.", name)),
-                        ServerEvent::Group(GroupEvent::Leave(name)) => app.push_message(format!("[Group] {} left.", name)),
-                        ServerEvent::GlobalChat(msg) => app.push_message(format!("[Global] {}: {}", msg.sender, msg.message)),
-                        ServerEvent::PrivateChat(msg) => app.push_message(format!("[Private] {}: {}", msg.sender, msg.message)),
-                        ServerEvent::Stats(count) => app.push_message(format!("Server stats: {} players online.", count)),
-                        ServerEvent::Unknown(u) => app.push_message(format!("Unknown event: {}", u)),
+                        ServerEvent::Quit(name) => {
+                            app.push_game_output(format!("<- {} quit.", name));
+                            app.online_players = app.online_players.saturating_sub(1);
+                            app.push_notification(format!("{} disconnected", name), crate::app::NotificationType::Info, 16);
+                        }
+                        ServerEvent::Room(RoomEvent::PresenceEnter(name)) => {
+                            app.push_game_output(format!("[Room] {} entered.", name));
+                        }
+                        ServerEvent::Room(RoomEvent::PresenceLeave(name)) => {
+                            app.push_game_output(format!("[Room] {} left.", name));
+                        }
+                        ServerEvent::Room(RoomEvent::Chat(msg)) => {
+                            app.push_chat(ChatScope::Room, msg.sender, msg.message);
+                        }
+                        ServerEvent::Group(GroupEvent::Chat(msg)) => {
+                            app.push_chat(ChatScope::Group, msg.sender, msg.message);
+                        }
+                        ServerEvent::Group(GroupEvent::Invite(name)) => {
+                            app.push_game_output(format!("[Group] {} invited you.", name));
+                            app.push_notification(format!("{} invited you to group", name), crate::app::NotificationType::Info, 20);
+                        }
+                        ServerEvent::Group(GroupEvent::Join(name)) => {
+                            app.push_game_output(format!("[Group] {} joined.", name));
+                        }
+                        ServerEvent::Group(GroupEvent::Leave(name)) => {
+                            app.push_game_output(format!("[Group] {} left.", name));
+                        }
+                        ServerEvent::GlobalChat(msg) => {
+                            app.push_chat(ChatScope::Global, msg.sender, msg.message);
+                        }
+                        ServerEvent::PrivateChat(msg) => {
+                            app.push_chat(ChatScope::Private, msg.sender, msg.message);
+                        }
+                        ServerEvent::Stats(count) => {
+                            app.online_players = count;
+                        }
+                        ServerEvent::Unknown(u) => {
+                            app.push_game_output(format!("Unknown event: {}", u));
+                        }
                     }
                 }
             }
         }
     }
     Ok(())
-}
-
-async fn handle_command(app: &mut App, cmd_line: String, tx: mpsc::UnboundedSender<AppEvent>) {
-    let parts: Vec<&str> = cmd_line.trim().split_whitespace().collect();
-    if parts.is_empty() {
-        return;
-    }
-
-    let cmd = parts[0];
-    app.push_message(format!("> {}", cmd_line));
-
-    if cmd == "quit" {
-        app.should_quit = true;
-        return;
-    }
-
-    if cmd == "connect" && parts.len() == 2 {
-        let name = parts[1].to_string();
-        let ip = app.server_ip.clone();
-        let port = app.server_port.clone();
-
-        app.state = ConnectionState::Connecting;
-        app.push_message(format!("Connecting to {}:{}...", ip, port));
-
-        let tx_clone = tx.clone();
-        tokio::spawn(async move {
-            use api_client::client::connect::ClientConnect;
-
-            match ClientConnect::connect(format!("{}:{}", ip, port)).await {
-                Ok(mut client) => {
-                    let tx_ev = tx_clone.clone();
-                    // Setup listeners
-                    client.on_event(move |ev| { let _ = tx_ev.send(AppEvent::Api(ev)); });
-
-                    let _ = tx_clone.send(AppEvent::ClientConnected(client));
-                    let _ = tx_clone.send(AppEvent::ExecuteConnect(name));
-                }
-                Err(e) => {
-                    log::error!("TCP Connection failed: {}", e);
-                    let _ = tx_clone.send(AppEvent::ApiDisconnected);
-                }
-            }
-        });
-        return;
-    }
-
-    // Other commands require a client
-    if let Some(client_arc) = &app.client {
-        let client_arc = Arc::clone(client_arc);
-        let cmd = cmd.to_string();
-        let args: Vec<String> = parts[1..].iter().map(|s| s.to_string()).collect();
-
-        let tx_clone = tx.clone();
-        tokio::spawn(async move {
-            let mut c = client_arc.lock().await;
-
-            macro_rules! handle_res {
-                ($res:expr) => {
-                    match $res {
-                        Ok(Ok(data)) => { let _ = tx_clone.send(AppEvent::CommandResult(format!("{:#?}", data))); }
-                        Ok(Err(e)) => { let _ = tx_clone.send(AppEvent::CommandError(format!("Command Error: {:?}", e))); }
-                        Err(e) => { let _ = tx_clone.send(AppEvent::CommandError(format!("Network Error: {:?}", e))); }
-                    }
-                }
-            }
-
-            match cmd.as_str() {
-                "look" => handle_res!(c.look().await),
-                "who" => handle_res!(c.who().await),
-                "chat_global" => handle_res!(c.chat_global(args.join(" ")).await),
-                "chat_private" if args.len() >= 2 => handle_res!(c.chat_private(args[0].clone(), args[1..].join(" ")).await),
-                "group_create" => handle_res!(c.group_create().await),
-                "group_invite" if args.len() == 1 => handle_res!(c.group_invite(args[0].clone()).await),
-                "group_join" if args.len() == 1 => handle_res!(c.group_join(args[0].clone()).await),
-                "group_leave" => handle_res!(c.group_leave().await),
-                "take" if args.len() == 1 => handle_res!(c.take(args[0].clone()).await),
-                "drop" if args.len() == 1 => handle_res!(c.drop_item(args[0].clone()).await),
-                "inventory" => handle_res!(c.inventory().await),
-                "talk" if args.len() == 1 => handle_res!(c.talk(args[0].clone()).await),
-                "attack" if args.len() == 1 => handle_res!(c.attack(args[0].clone()).await),
-                "status" => handle_res!(c.status().await),
-                "quest" if args.len() == 1 => handle_res!(c.quest(args[0].clone()).await),
-                "quests" => handle_res!(c.quests().await),
-                _ => {
-                    let _ = tx_clone.send(AppEvent::CommandError(format!("Unknown or malformed command: {}", cmd)));
-                }
-            }
-        });
-    } else {
-        app.push_message("Error: Not connected. Type `connect <name>` first.".to_string());
-    }
 }
