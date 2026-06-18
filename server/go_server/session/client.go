@@ -7,6 +7,7 @@ import (
 	"go_server/protocol"
 	"net"
 	"sync"
+	"time"
 )
 
 type ClientState string
@@ -90,4 +91,16 @@ func (c *Client) Events() <-chan protocol.Event {
 
 func (c *Client) ReadCommand() game_conn.CommandFromGameServer {
 	return <-c.commandChan
+}
+
+func (c *Client) ReadCommandTimeout(timeout time.Duration) (game_conn.CommandFromGameServer, bool) {
+	timer := time.NewTimer(timeout)
+	defer timer.Stop()
+
+	select {
+	case command := <-c.commandChan:
+		return command, true
+	case <-timer.C:
+		return game_conn.CommandFromGameServer{}, false
+	}
 }

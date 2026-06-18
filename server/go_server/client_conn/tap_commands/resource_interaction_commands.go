@@ -2,7 +2,6 @@ package tap_commands
 
 import (
 	"go_server/game_conn"
-	"go_server/protocol"
 	"go_server/session"
 )
 
@@ -19,8 +18,8 @@ func handleTakeCommand(args string, client *session.Client, gameServer *game_con
 		return "", err
 	}
 
-	response := client.ReadCommand()
-	if errorResponse := protocol.HandleCommandError("TAKE", response.ErrorCode); errorResponse != "" {
+	response, errorResponse := readGameServerCommand("TAKE", client)
+	if errorResponse != "" {
 		return errorResponse, nil
 	}
 
@@ -40,8 +39,8 @@ func handleDropCommand(args string, client *session.Client, gameServer *game_con
 		return "", err
 	}
 
-	response := client.ReadCommand()
-	if errorResponse := protocol.HandleCommandError("DROP", response.ErrorCode); errorResponse != "" {
+	response, errorResponse := readGameServerCommand("DROP", client)
+	if errorResponse != "" {
 		return errorResponse, nil
 	}
 
@@ -60,8 +59,8 @@ func handleInventoryCommand(args string, client *session.Client, gameServer *gam
 		return "", err
 	}
 
-	response := client.ReadCommand()
-	if errorResponse := protocol.HandleCommandError("INVENTORY", response.ErrorCode); errorResponse != "" {
+	response, errorResponse := readGameServerCommand("INVENTORY", client)
+	if errorResponse != "" {
 		return errorResponse, nil
 	}
 
@@ -81,8 +80,8 @@ func handleTalkCommand(args string, client *session.Client, gameServer *game_con
 		return "", err
 	}
 
-	response := client.ReadCommand()
-	if errorResponse := protocol.HandleCommandError("TALK", response.ErrorCode); errorResponse != "" {
+	response, errorResponse := readGameServerCommand("TALK", client)
+	if errorResponse != "" {
 		return errorResponse, nil
 	}
 
@@ -102,8 +101,8 @@ func handleAttackCommand(args string, client *session.Client, gameServer *game_c
 		return "", err
 	}
 
-	response := client.ReadCommand()
-	if errorResponse := protocol.HandleCommandError("ATTACK", response.ErrorCode); errorResponse != "" {
+	response, errorResponse := readGameServerCommand("ATTACK", client)
+	if errorResponse != "" {
 		return errorResponse, nil
 	}
 
@@ -122,8 +121,8 @@ func handleStatusCommand(args string, client *session.Client, gameServer *game_c
 		return "", err
 	}
 
-	response := client.ReadCommand()
-	if errorResponse := protocol.HandleCommandError("STATUS", response.ErrorCode); errorResponse != "" {
+	response, errorResponse := readGameServerCommand("STATUS", client)
+	if errorResponse != "" {
 		return errorResponse, nil
 	}
 
@@ -143,8 +142,8 @@ func handleQuestCommand(args string, client *session.Client, gameServer *game_co
 		return "", err
 	}
 
-	response := client.ReadCommand()
-	if errorResponse := protocol.HandleCommandError("QUEST", response.ErrorCode); errorResponse != "" {
+	response, errorResponse := readGameServerCommand("QUEST", client)
+	if errorResponse != "" {
 		return errorResponse, nil
 	}
 
@@ -163,8 +162,8 @@ func handleQuestsCommand(args string, client *session.Client, gameServer *game_c
 		return "", err
 	}
 
-	response := client.ReadCommand()
-	if errorResponse := protocol.HandleCommandError("QUESTS", response.ErrorCode); errorResponse != "" {
+	response, errorResponse := readGameServerCommand("QUESTS", client)
+	if errorResponse != "" {
 		return errorResponse, nil
 	}
 

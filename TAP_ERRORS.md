@@ -52,21 +52,40 @@
 
 <pre><code class="language-abnf">; custom error response-lines
 <a id="err-already-connected" href="TAP_ERRORS.md#err-already-connected">err-already-connected</a> = "ERR" SP "400" SP "ALREADY_CONNECTED" LF
+<a id="err-not-connected" href="TAP_ERRORS.md#err-not-connected">err-not-connected</a> = "ERR" SP "400" SP "NOT_CONNECTED" LF
+<a id="err-invalid-username" href="TAP_ERRORS.md#err-invalid-username">err-invalid-username</a> = "ERR" SP "400" SP "INVALID_USERNAME" LF
+<a id="err-room-full" href="TAP_ERRORS.md#err-room-full">err-room-full</a> = "ERR" SP "400" SP "ROOM_FULL" LF
+<a id="err-group-full" href="TAP_ERRORS.md#err-group-full">err-group-full</a> = "ERR" SP "400" SP "GROUP_FULL" LF
+<a id="err-empty-command" href="TAP_ERRORS.md#err-empty-command">err-empty-command</a> = "ERR" SP "400" SP "EMPTY_COMMAND" LF
+<a id="err-command-not-found" href="TAP_ERRORS.md#err-command-not-found">err-command-not-found</a> = "ERR" SP "400" SP "COMMAND_NOT_FOUND" LF
+<a id="err-invalid-arguments" href="TAP_ERRORS.md#err-invalid-arguments">err-invalid-arguments</a> = "ERR" SP "400" SP "INVALID_ARGUMENTS" LF
 <a id="err-invalid-scope" href="TAP_ERRORS.md#err-invalid-scope">err-invalid-scope</a> = "ERR" SP "400" SP "INVALID_SCOPE" LF
 <a id="err-no-such-user" href="TAP_ERRORS.md#err-no-such-user">err-no-such-user</a> = "ERR" SP "403" SP "NO_SUCH_USER" LF
 <a id="err-not-invited" href="TAP_ERRORS.md#err-not-invited">err-not-invited</a> = "ERR" SP "403" SP "NOT_INVITED" LF
 <a id="err-group-not-found" href="TAP_ERRORS.md#err-group-not-found">err-group-not-found</a> = "ERR" SP "404" SP "GROUP_NOT_FOUND" LF
 <a id="err-no-such-group" href="TAP_ERRORS.md#err-no-such-group">err-no-such-group</a> = "ERR" SP "404" SP "NO_SUCH_GROUP" LF
 <a id="err-not-group-leader" href="TAP_ERRORS.md#err-not-group-leader">err-not-group-leader</a> = "ERR" SP "403" SP "NOT_GROUP_LEADER" LF
+<a id="err-invalid-question" href="TAP_ERRORS.md#err-invalid-question">err-invalid-question</a> = "ERR" SP "998" SP "INVALID_QUESTION" LF
+<a id="err-invalid-command" href="TAP_ERRORS.md#err-invalid-command">err-invalid-command</a> = "ERR" SP "999" SP "INVALID_COMMAND" LF
+<a id="err-unknown-error" href="TAP_ERRORS.md#err-unknown-error">err-unknown-error</a> = "ERR" SP "999" SP "UNKNOWN_ERROR" LF
 </code></pre>
 
 | Error | Meaning |
 |---|---|
 | `ERR 400 ALREADY_CONNECTED` | Client tried to connect while already authenticated |
+| `ERR 400 NOT_CONNECTED` | Command requires an authenticated client |
+| `ERR 400 INVALID_USERNAME` | Username does not match the protocol format |
+| `ERR 400 ROOM_FULL` | Target room cannot accept another player |
+| `ERR 400 GROUP_FULL` | Target group cannot accept another player |
+| `ERR 400 EMPTY_COMMAND` | Client sent an empty command line |
+| `ERR 400 COMMAND_NOT_FOUND` | Command is not supported by this server |
+| `ERR 400 INVALID_ARGUMENTS` | Command arguments do not match the expected format |
 | `ERR 400 INVALID_SCOPE` | Chat scope is not `GLOBAL`, `ROOM`, or `GROUP` |
 | `ERR 403 NO_SUCH_USER` | Requested user does not exist or is not connected |
 | `ERR 403 NOT_INVITED` | Player tried to join a group without a valid invitation |
 | `ERR 404 GROUP_NOT_FOUND` | Target group does not exist anymore |
 | `ERR 404 NO_SUCH_GROUP` | Requested group does not exist |
 | `ERR 403 NOT_GROUP_LEADER` | Player must be the group leader to perform this action |
-| `ERR 999 INVALID COMMAND` | The player sent an invalid command format   |
+| `ERR 998 INVALID_QUESTION` | Game server received an invalid question payload |
+| `ERR 999 INVALID_COMMAND` | The player sent an invalid command format |
+| `ERR 999 UNKNOWN_ERROR` | Server received an unknown or invalid game-server error code |

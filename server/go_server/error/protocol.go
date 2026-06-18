@@ -32,10 +32,11 @@ const (
 	NpcNotHostileError    = 405
 	NoQuestAvailableError = 406
 
-	ConnectionFailedError = 900
-	GameServerClosedError = 900
-	SendFailedError       = 901
+	ConnectionFailedError  = 900
+	SendFailedError        = 901
+	GameServerTimeoutError = 902
 
 	InvalidQuestionError = 998
 	InvalidCommandError  = 999
+	UnknownError         = 999
 )
