@@ -1,10 +1,13 @@
+mod assets;
+mod state;
 mod app;
-mod commands;
+mod components;
 mod events;
-mod handlers;
-mod ui;
+mod commands;
+mod network;
+mod config;
 
-use app::{App, ChatScope, ConnectionState, Screen};
+use app::App;
 use crossterm::{
     event::{DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyModifiers},
     execute,
@@ -15,8 +18,9 @@ use futures::StreamExt;
 use ratatui::{backend::CrosstermBackend, Terminal};
 use std::{env, io, sync::Arc, time::Duration};
 use tokio::sync::{mpsc, Mutex};
+use state::ConnectionState;
 
-const LOCAL_SERVER_IP: &str = "10.13.6.2";
+const LOCAL_SERVER_IP: &str = "127.0.0.1";
 const LOCAL_SERVER_PORT: &str = "38800";
 
 fn get_server_ip() -> String {
@@ -29,6 +33,8 @@ fn get_server_port() -> String {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    dotenvy::dotenv().ok();
+    config::init_config();
     tui_logger::init_logger(log::LevelFilter::Trace).unwrap();
     tui_logger::set_default_level(log::LevelFilter::Trace);
 
@@ -85,13 +91,54 @@ async fn run_app(
         }
     });
 
-    while !app.should_quit {
-        terminal.draw(|f| ui::draw(f, app))?;
+    while !app.state.should_quit {
+        terminal.draw(|f| {
+            app.active_component.draw(&mut app.state, f, f.area());
+
+            // Draw notifications as an overlay
+            if !app.state.ui.notifications.is_empty() {
+                let max_len = app.state.ui.notifications.iter()
+                    .map(|n| n.message.len() as u16)
+                    .max()
+                    .unwrap_or(0);
+                let box_width = (max_len + 4).max(20).min(f.area().width.saturating_sub(4));
+
+                let mut total_lines = 0;
+                let inner_width = box_width.saturating_sub(2).max(1);
+                for n in &app.state.ui.notifications {
+                    let lines = (n.message.len() as u16 + inner_width - 1) / inner_width;
+                    total_lines += lines.max(1);
+                }
+
+                let notif_area = ratatui::layout::Rect {
+                    x: f.area().width.saturating_sub(box_width + 1),
+                    y: 1,
+                    width: box_width,
+                    height: total_lines + 2,
+                };
+                let mut lines = Vec::new();
+                for n in &app.state.ui.notifications {
+                    let color = match n.level {
+                        crate::state::NotificationType::Info => ratatui::style::Color::Cyan,
+                        crate::state::NotificationType::Error => ratatui::style::Color::Red,
+                    };
+                    lines.push(ratatui::text::Line::from(ratatui::text::Span::styled(
+                        n.message.clone(),
+                        ratatui::style::Style::default().fg(color),
+                    )));
+                }
+                let notif_block = ratatui::widgets::Paragraph::new(lines)
+                    .block(ratatui::widgets::Block::default().borders(ratatui::widgets::Borders::ALL).title(" Notifications "))
+                    .wrap(ratatui::widgets::Wrap { trim: true });
+                f.render_widget(ratatui::widgets::Clear, notif_area);
+                f.render_widget(notif_block, notif_area);
+            }
+        })?;
 
         if let Some(event) = rx.recv().await {
             match event {
                 AppEvent::Tick => {
-                    if let Some(client_arc) = &app.client {
+                    if let Some(client_arc) = &app.state.net.client {
                         if let Ok(c) = client_arc.try_lock() {
                             if !c.is_connected() {
                                 let _ = tx.send(AppEvent::ApiDisconnected);
@@ -99,8 +146,7 @@ async fn run_app(
                         }
                     }
 
-                    // Decrement notification lifetimes
-                    app.notifications.retain_mut(|notif| {
+                    app.state.ui.notifications.retain_mut(|notif| {
                         notif.lifetime = notif.lifetime.saturating_sub(1);
                         notif.lifetime > 0
                     });
@@ -111,15 +157,15 @@ async fn run_app(
                         if key.modifiers.contains(KeyModifiers::CONTROL) {
                             match key.code {
                                 KeyCode::Char('d') => {
-                                    app.show_debug = !app.show_debug;
+                                    app.state.ui.show_debug = !app.state.ui.show_debug;
                                     continue;
                                 }
                                 KeyCode::Char('h') => {
-                                    app.show_help = !app.show_help;
+                                    app.state.ui.show_help = !app.state.ui.show_help;
                                     continue;
                                 }
                                 KeyCode::Char('t') => {
-                                    app.show_chat = !app.show_chat;
+                                    app.state.ui.show_chat = !app.state.ui.show_chat;
                                     continue;
                                 }
                                 _ => {}
@@ -128,24 +174,44 @@ async fn run_app(
 
                         // Esc: close overlays or quit
                         if key.code == KeyCode::Esc {
-                            if app.show_debug || app.show_help {
-                                app.show_debug = false;
-                                app.show_help = false;
+                            if app.state.ui.show_debug || app.state.ui.show_help {
+                                app.state.ui.show_debug = false;
+                                app.state.ui.show_help = false;
                             } else {
-                                app.should_quit = true;
+                                app.state.should_quit = true;
                             }
                             continue;
                         }
-
-                        // Screen-specific handling
-                        match app.screen {
-                            Screen::Login => handlers::login::handle_key(app, key, &evt, &tx),
-                            Screen::Game => handlers::game::handle_key(app, key, &evt, &tx).await,
-                        }
                     }
+
+                    // Dispatch to active component
+                    app.active_component.handle_event(&mut app.state, &evt, &tx).await;
+                }
+                AppEvent::AttemptConnect(name, ip, port) => {
+                    app.state.ui.push_notification(format!("Connecting to {}:{}...", ip, port), crate::state::NotificationType::Info, 10);
+                    let tx_clone = tx.clone();
+                    tokio::spawn(async move {
+                        use api_client::client::connect::ClientConnect;
+
+                        match ClientConnect::connect(format!("{}:{}", ip, port)).await {
+                            Ok(mut client) => {
+                                let tx_ev = tx_clone.clone();
+                                // Setup listeners
+                                client.on_event(move |ev| { let _ = tx_ev.send(AppEvent::Api(ev)); });
+
+                                let _ = tx_clone.send(AppEvent::ClientConnected(client));
+                                let _ = tx_clone.send(AppEvent::ExecuteConnect(name));
+                            }
+                            Err(e) => {
+                                log::error!("TCP Connection failed: {}", e);
+                                let _ = tx_clone.send(AppEvent::CommandError(format!("TCP Connection failed: {}", e)));
+                                let _ = tx_clone.send(AppEvent::ApiDisconnected);
+                            }
+                        }
+                    });
                 }
                 AppEvent::ExecuteConnect(name) => {
-                    if let Some(client_arc) = &app.client {
+                    if let Some(client_arc) = &app.state.net.client {
                         let client_arc = Arc::clone(client_arc);
                         let tx_clone = tx.clone();
                         tokio::spawn(async move {
@@ -176,11 +242,11 @@ async fn run_app(
                     }
                 }
                 AppEvent::LoginSuccess(name) => {
-                    app.state = ConnectionState::Connected(name.clone());
-                    app.screen = Screen::Game;
-                    app.push_game_output(format!("Welcome, {}!", name));
+                    app.state.net.connection_state = ConnectionState::Connected(name.clone());
+                    app.switch_to_game();
+                    app.state.game.push_game_output(format!("Welcome, {}!", name));
 
-                    if let Some(client_arc) = &app.client {
+                    if let Some(client_arc) = &app.state.net.client {
                         let client_arc = Arc::clone(client_arc);
                         let tx_clone = tx.clone();
                         tokio::spawn(async move {
@@ -193,88 +259,52 @@ async fn run_app(
                 }
                 AppEvent::CommandResult(res) => {
                     for line in res.lines() {
-                        app.push_game_output(format!("{}", line));
+                        app.state.game.push_game_output(format!("{}", line));
                     }
                 }
                 AppEvent::CommandError(err) => {
                     for line in err.lines() {
-                        app.push_game_output(format!("[ERROR] {}", line));
+                        app.state.game.push_game_output(format!("[ERROR] {}", line));
                     }
-                    app.push_notification(err, crate::app::NotificationType::Error, 16);
+                    app.state.ui.push_notification(err, crate::state::NotificationType::Error, 16);
                 }
                 AppEvent::ClientConnected(client) => {
-                    app.client = Some(Arc::new(Mutex::new(client)));
-                    app.push_game_output("TCP connection established.".to_string());
-                    app.push_notification("TCP connected.".to_string(), crate::app::NotificationType::Info, 12);
+                    app.state.net.client = Some(Arc::new(Mutex::new(client)));
+                    app.state.game.push_game_output("TCP connection established.".to_string());
                 }
                 AppEvent::ApiDisconnected => {
-                    app.state = ConnectionState::Disconnected;
-                    app.screen = Screen::Login;
-                    app.client = None;
-                    app.push_notification("Disconnected from server".to_string(), crate::app::NotificationType::Error, 16);
+                    app.state.net.connection_state = ConnectionState::Disconnected;
+                    app.switch_to_login();
+                    if app.state.net.client.is_some() {
+                        app.state.ui.push_notification("Disconnected from server".to_string(), crate::state::NotificationType::Error, 16);
+                        app.state.net.client = None;
+                    }
                 }
                 AppEvent::InventoryUpdate(items) => {
-                    app.inventory = items;
+                    app.state.game.inventory = items;
                 }
                 AppEvent::UpdateOnlinePlayers(count) => {
-                    app.online_players = count;
+                    app.state.game.online_players = count;
                 }
                 AppEvent::LocalChatSent(scope, msg) => {
-                    let sender = if let ConnectionState::Connected(name) = &app.state {
+                    let sender = if let ConnectionState::Connected(name) = &app.state.net.connection_state {
                         format!("{} (You)", name)
                     } else {
                         "You".to_string()
                     };
-                    app.push_chat(scope, sender, msg);
+                    app.state.game.push_chat(scope, sender, msg);
+                }
+                AppEvent::UpdateRoomContext { room_id, room_display_name, npcs } => {
+                    app.state.game.current_room = room_id;
+                    app.state.game.current_room_name = room_display_name;
+                    app.state.game.npcs_in_room = npcs;
+                }
+                AppEvent::UpdateStatus { hp, max_hp } => {
+                    app.state.game.hp = hp;
+                    app.state.game.max_hp = max_hp;
                 }
                 AppEvent::Api(api_evt) => {
-                    use api_client::client::event::*;
-                    match api_evt {
-                        ServerEvent::Connect(name) => {
-                            app.push_game_output(format!("-> {} connected.", name));
-                            app.online_players += 1;
-                            app.push_notification(format!("{} connected", name), crate::app::NotificationType::Info, 16);
-                        }
-                        ServerEvent::Quit(name) => {
-                            app.push_game_output(format!("<- {} quit.", name));
-                            app.online_players = app.online_players.saturating_sub(1);
-                            app.push_notification(format!("{} disconnected", name), crate::app::NotificationType::Info, 16);
-                        }
-                        ServerEvent::Room(RoomEvent::PresenceEnter(name)) => {
-                            app.push_game_output(format!("[Room] {} entered.", name));
-                        }
-                        ServerEvent::Room(RoomEvent::PresenceLeave(name)) => {
-                            app.push_game_output(format!("[Room] {} left.", name));
-                        }
-                        ServerEvent::Room(RoomEvent::Chat(msg)) => {
-                            app.push_chat(ChatScope::Room, msg.sender, msg.message);
-                        }
-                        ServerEvent::Group(GroupEvent::Chat(msg)) => {
-                            app.push_chat(ChatScope::Group, msg.sender, msg.message);
-                        }
-                        ServerEvent::Group(GroupEvent::Invite(name)) => {
-                            app.push_game_output(format!("[Group] {} invited you.", name));
-                            app.push_notification(format!("{} invited you to group", name), crate::app::NotificationType::Info, 20);
-                        }
-                        ServerEvent::Group(GroupEvent::Join(name)) => {
-                            app.push_game_output(format!("[Group] {} joined.", name));
-                        }
-                        ServerEvent::Group(GroupEvent::Leave(name)) => {
-                            app.push_game_output(format!("[Group] {} left.", name));
-                        }
-                        ServerEvent::GlobalChat(msg) => {
-                            app.push_chat(ChatScope::Global, msg.sender, msg.message);
-                        }
-                        ServerEvent::PrivateChat(msg) => {
-                            app.push_chat(ChatScope::Private, msg.sender, msg.message);
-                        }
-                        ServerEvent::Stats(count) => {
-                            app.online_players = count;
-                        }
-                        ServerEvent::Unknown(u) => {
-                            app.push_game_output(format!("Unknown event: {}", u));
-                        }
-                    }
+                    crate::network::handle_server_event(&mut app.state, api_evt);
                 }
             }
         }

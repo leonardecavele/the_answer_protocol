@@ -1,48 +1,25 @@
-use crate::app::{App, ChatScope, GameFocus, ACTIONS};
+
+
+use crate::state::{AppState, ChatScope};
 use crate::events::AppEvent;
 use std::sync::Arc;
 use tokio::sync::mpsc;
-use tui_input::Input;
 
-pub async fn execute_action(app: &mut App, tx: &mpsc::UnboundedSender<AppEvent>) {
-    let action = ACTIONS[app.selected_action];
-    match action {
-        "WHO" => {
-            handle_command(app, "who".to_string(), tx.clone()).await;
-        }
-        "LOOK" => {
-            handle_command(app, "look".to_string(), tx.clone()).await;
-        }
-        "ATTACK" => {
-            app.input = Input::from("attack ".to_string());
-            app.game_focus = GameFocus::Input;
-        }
-        "QUEST" => {
-            app.input = Input::from("quest ".to_string());
-            app.game_focus = GameFocus::Input;
-        }
-        "QUIT" => {
-            app.should_quit = true;
-        }
-        _ => {}
-    }
-}
-
-pub async fn handle_command(app: &mut App, cmd_line: String, tx: mpsc::UnboundedSender<AppEvent>) {
+pub fn handle_command(state: &mut AppState, cmd_line: String, tx: mpsc::UnboundedSender<AppEvent>) {
     let parts: Vec<&str> = cmd_line.trim().split_whitespace().collect();
     if parts.is_empty() {
         return;
     }
 
     let cmd = parts[0];
-    app.push_game_output(format!("> {}", cmd_line));
+    state.game.push_game_output(format!("> {}", cmd_line));
 
     if cmd == "quit" {
-        app.should_quit = true;
+        state.should_quit = true;
         return;
     }
 
-    if let Some(client_arc) = &app.client {
+    if let Some(client_arc) = &state.net.client {
         let client_arc = Arc::clone(client_arc);
         let cmd = cmd.to_string();
         let args: Vec<String> = parts[1..].iter().map(|s| s.to_string()).collect();
@@ -70,7 +47,18 @@ pub async fn handle_command(app: &mut App, cmd_line: String, tx: mpsc::Unbounded
             }
 
             match cmd.as_str() {
-                "look" => handle_res!(c.look().await),
+                "look" => match c.look().await {
+                    Ok(Ok(data)) => {
+                        let _ = tx_clone.send(AppEvent::UpdateRoomContext {
+                            room_id: data.room.id.clone(),
+                            room_display_name: data.room.name.clone(),
+                            npcs: data.npcs.clone(),
+                        });
+                        let _ = tx_clone.send(AppEvent::CommandResult(format!("{:#?}", data)));
+                    }
+                    Ok(Err(e)) => { let _ = tx_clone.send(AppEvent::CommandError(format!("Command Error: {:?}", e))); }
+                    Err(e) => { let _ = tx_clone.send(AppEvent::CommandError(format!("Network Error: {:?}", e))); }
+                },
                 "who" => match c.who().await {
                     Ok(Ok(data)) => {
                         let count = data.player_count as u32;
@@ -88,7 +76,6 @@ pub async fn handle_command(app: &mut App, cmd_line: String, tx: mpsc::Unbounded
                     Ok(Ok(_res)) => {
                         let msg = args.join(" ");
                         let _ = tx_clone.send(AppEvent::LocalChatSent(ChatScope::Global, msg));
-                        // let _ = tx_clone.send(AppEvent::CommandResult(format!("{:#?}", res)));
                     }
                     Ok(Err(e)) => { let _ = tx_clone.send(AppEvent::CommandError(format!("Command Error: {:?}", e))); }
                     Err(e) => { let _ = tx_clone.send(AppEvent::CommandError(format!("Network Error: {:?}", e))); }
@@ -99,7 +86,6 @@ pub async fn handle_command(app: &mut App, cmd_line: String, tx: mpsc::Unbounded
                     match c.chat_private(to.clone(), msg.clone()).await {
                         Ok(Ok(_res)) => {
                             let _ = tx_clone.send(AppEvent::LocalChatSent(ChatScope::Private, format!("to {}: {}", to, msg)));
-                            // let _ = tx_clone.send(AppEvent::CommandResult(format!("{:#?}", res)));
                         }
                         Ok(Err(e)) => { let _ = tx_clone.send(AppEvent::CommandError(format!("Command Error: {:?}", e))); }
                         Err(e) => { let _ = tx_clone.send(AppEvent::CommandError(format!("Network Error: {:?}", e))); }
@@ -135,7 +121,17 @@ pub async fn handle_command(app: &mut App, cmd_line: String, tx: mpsc::Unbounded
                 "attack" if !args.is_empty() => {
                     handle_res!(c.attack(args.join(" ")).await)
                 }
-                "status" => handle_res!(c.status().await),
+                "status" => match c.status().await {
+                    Ok(Ok(data)) => {
+                        let _ = tx_clone.send(AppEvent::UpdateStatus {
+                            hp: data.player_status.hp,
+                            max_hp: data.player_status.max_hp,
+                        });
+                        let _ = tx_clone.send(AppEvent::CommandResult(format!("{:#?}", data)));
+                    }
+                    Ok(Err(e)) => { let _ = tx_clone.send(AppEvent::CommandError(format!("Command Error: {:?}", e))); }
+                    Err(e) => { let _ = tx_clone.send(AppEvent::CommandError(format!("Network Error: {:?}", e))); }
+                },
                 "quest" if !args.is_empty() => {
                     handle_res!(c.quest(args.join(" ")).await)
                 }
@@ -147,6 +143,6 @@ pub async fn handle_command(app: &mut App, cmd_line: String, tx: mpsc::Unbounded
             }
         });
     } else {
-        app.push_game_output("Not connected.".to_string());
+        state.game.push_game_output("Not connected.".to_string());
     }
 }

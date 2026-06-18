@@ -8,6 +8,7 @@ pub enum AppEvent {
     ClientConnected(api_client::client::Client),
 
     /// Trigger the CONNECT protocol command after TCP is established
+    AttemptConnect(String, String, String),
     ExecuteConnect(String),
 
     /// Emitted when a user command returns a successful response
@@ -35,5 +36,8 @@ pub enum AppEvent {
     UpdateOnlinePlayers(u32),
 
     /// Emitted when the user successfully sends a chat message
-    LocalChatSent(crate::app::ChatScope, String),
+    LocalChatSent(crate::state::ChatScope, String),
+
+    UpdateRoomContext { room_id: String, room_display_name: String, npcs: Vec<String> },
+    UpdateStatus { hp: u32, max_hp: u32 },
 }
