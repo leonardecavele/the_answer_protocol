@@ -7,6 +7,7 @@ use crate::protocol::command::communication::private_chat::{
 use crate::protocol::command::core::connect::{ConnectCommand, ConnectResponse};
 use crate::protocol::command::core::look::{LookCommand, LookResponse};
 use crate::protocol::command::core::quit::QuitCommand;
+use crate::protocol::command::core::r#move::{MoveCommand, MoveResponse};
 use crate::protocol::command::core::who::{WhoCommand, WhoResponse};
 use crate::protocol::command::group::create::{GroupCreateCommand, GroupCreateResponse};
 use crate::protocol::command::group::invite::{GroupInviteCommand, GroupInviteResponse};
@@ -36,6 +37,14 @@ impl Client {
     pub async fn look(&mut self) -> Result<Result<LookResponse, CommandError>, TapError> {
         debug!("sending look request");
         self.request(LookCommand).await
+    }
+
+    pub async fn r#move(
+        &mut self,
+        direction: String,
+    ) -> Result<Result<MoveResponse, CommandError>, TapError> {
+        debug!("sending move request");
+        self.request(MoveCommand { direction }).await
     }
 
     pub async fn chat_global(
