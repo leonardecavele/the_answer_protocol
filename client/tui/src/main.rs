@@ -110,7 +110,7 @@ async fn test_single_connection() -> Result<(), TapError> {
 
         input.clear();
         println!(
-            "(connect | chat_global | chat_private | look | who | group_create | group_invite | group_join | group_leave | take | drop | inventory | talk | attack | status | quest | quests | quit)"
+            "(connect | chat_global | chat_private | look | move | who | group_create | group_invite | group_join | group_leave | take | drop | inventory | talk | attack | status | quest | quests | quit)"
         );
         print!("> ");
         let _ = io::stdout().flush();
@@ -140,6 +140,10 @@ async fn test_single_connection() -> Result<(), TapError> {
             ["look"] => {
                 let result = client.look().await;
                 println!("[look {}] {:?}", player_name, result);
+            }
+            ["move", direction] => {
+                let result = client.r#move(direction.to_string()).await;
+                println!("[move] {:?}", result);
             }
             ["who"] => {
                 let result = client.who().await;
