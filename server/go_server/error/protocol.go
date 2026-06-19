@@ -31,6 +31,7 @@ const (
 
 	NpcNotHostileError    = 405
 	NoQuestAvailableError = 406
+	NotInSameRoomError    = 407
 
 	ConnectionFailedError  = 900
 	SendFailedError        = 901

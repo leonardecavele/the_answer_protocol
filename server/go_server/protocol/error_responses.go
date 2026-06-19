@@ -43,6 +43,7 @@ var (
 	ResponseNoSuchUser          = ResponseError(serverError.NoSuchUserError, "NO_SUCH_USER")
 	ResponseNotInvited          = ResponseError(serverError.NotInvitedError, "NOT_INVITED")
 	ResponseNotGroupLeader      = ResponseError(serverError.NotGroupLeaderError, "NOT_GROUP_LEADER")
+	ResponseNotInSameRoom       = ResponseError(serverError.NotInSameRoomError, "NOT_IN_SAME_ROOM")
 	ResponseGroupNotFound       = ResponseError(serverError.GroupNotFoundError, "GROUP_NOT_FOUND")
 	ResponseNoSuchGroup         = ResponseError(serverError.NoSuchGroupError, "NO_SUCH_GROUP")
 	ResponseUnknownError        = ResponseError(serverError.UnknownError, "UNKNOWN_ERROR")
@@ -98,6 +99,7 @@ var ErrorResponseByCommand = map[string]map[int]string{
 		serverError.NoSuchUserError:       ResponseNoSuchUser,
 		serverError.AlreadyInGroupError:   ResponseAlreadyInGroup,
 		serverError.GroupNotFoundError:    ResponseGroupNotFound,
+		serverError.NotInSameRoomError:    ResponseNotInSameRoom,
 		serverError.ConnectionFailedError: ResponseConnectionFailed,
 		serverError.SendFailedError:       ResponseSendFailed,
 		serverError.InvalidQuestionError:  ResponseInvalidQuestion,
