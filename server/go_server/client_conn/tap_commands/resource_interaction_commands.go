@@ -134,7 +134,7 @@ func handleQuestCommand(args string, client *session.Client, gameServer *game_co
 	if response, err := isOk(args, client, gameServer, true, true); response != "" || err != nil {
 		return response, err
 	}
-	if !client.IsLeader() {
+	if client.Group != nil && !client.IsLeader() {
 		return protocol.ResponseNotGroupLeader, nil
 	}
 
