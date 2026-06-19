@@ -65,7 +65,11 @@ func isOk(args string, client *session.Client, gameServer *game_conn.GameServerM
 		return protocol.ResponseNotConnected, nil
 	}
 
-	if (hasArgs && (strings.Contains(args, " ") || args == "")) || (!hasArgs && args != "") {
+	if hasArgs {
+		if args == "" || strings.TrimSpace(args) != args {
+			return protocol.ResponseInvalidArguments, nil
+		}
+	} else if args != "" {
 		return protocol.ResponseInvalidArguments, nil
 	}
 
