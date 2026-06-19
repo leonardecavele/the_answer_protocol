@@ -1,18 +1,18 @@
-use std::collections::HashSet;
 use crate::items::ItemId;
-// use json::object; 
+use std::collections::HashSet;
+// use json::object;
 
 pub struct Inventory {
-    items: HashSet<ItemId>
+    items: HashSet<ItemId>,
 }
 
 impl Inventory {
     pub fn new() -> Self {
         Self {
-            items: HashSet::new()
+            items: HashSet::new(),
         }
     }
-    
+
     pub fn contains_item(&self, item_id: ItemId) -> bool {
         return self.items.contains(&item_id);
     }
@@ -28,5 +28,4 @@ impl Inventory {
     pub fn get_items(&self) -> &HashSet<ItemId> {
         &self.items
     }
-
 }

@@ -1,6 +1,6 @@
 use crate::constantes::{BASE_COMMAND_RESPONSE, ErrorCode};
 use crate::game_manager::GameManager;
-use crate::items::ItemId;
+use crate::items::{Item, ItemId};
 use crate::room::Room;
 use json::{JsonValue, object};
 use tracing::{error, info};
@@ -31,7 +31,7 @@ impl GameManager {
 
     fn get_item_name_from_id(&mut self, item_id: ItemId) -> String {
         let item_name = self.get_all_items().get(&item_id).unwrap().get_name();
-        return format!("item.{}.{}", item_id, item_name);
+        return format!("{}.{}", item_id, item_name);
     }
 
     fn validate_command_json(&self, parsed_json: &JsonValue) -> ErrorCode {
@@ -49,14 +49,12 @@ impl GameManager {
     fn generate_event_json(
         &self,
         players: &Vec<String>,
-        ignored_players: &[&str],
         emitted_by: &str,
         event_name: &str,
-        data: &str,
+        data: &str
     ) -> JsonValue {
         return object! {
             "players": players.as_slice(),
-            "ignored_players": ignored_players,
             "emitted_by": emitted_by,
             "event_name": event_name,
             "data": data
@@ -138,19 +136,29 @@ impl GameManager {
                 return BASE_COMMAND_RESPONSE.to_string();
             }
             "LOOK" => {
+                let (player_room_id, player_room_name, player_room_description, player_room_exits, room_players, room_items_str) = {
+                    let player = self.get_player_from_name(player_name).unwrap();
+                    let room = self.get_room(player.get_current_room()).unwrap();
+                    (
+                        room.get_id(),
+                        room.get_name(),
+                        room.get_description(),
+                        room.get_exits(),
+                        self.get_all_players_at_room(player.get_current_room()),
+                        self.convert_items_to_string(room.get_inventory()),
+                    )
+                };
+
                 let room = object! {
                     "room": {
-                        "id": "",
-                        "name": "Room Display Name",
-                        "description": "Room description text",
-                        "exits": {
-                        "north": "room.north_id",
-                        "south": "room.south_id"
-                        }
+                        "id": Room::protocol_representation(player_room_id, player_room_name.to_string()),
+                        "name": player_room_name,
+                        "description": player_room_description,
+                        "exits": JsonValue::from(player_room_exits.clone())
                     },
-                    "players": ["username1", "username2"],
-                    "items": ["item.id1", "item.id2"],
-                    "npcs": ["npc.id1", "npc.id2"]
+                    "players": JsonValue::from(room_players),
+                    "items": JsonValue::from(room_items_str),
+                    "npcs": JsonValue::from(self.get_npcs_in_room(player_room_name))
                 };
                 return generate_json(
                     player_name,
@@ -196,14 +204,12 @@ impl GameManager {
 
                 let room_leave_diff = self.generate_event_json(
                     &last_room_players,
-                    &[player_name],
                     player_name,
                     "ROOM",
                     "LEAVE",
                 );
                 let room_enter_diff = self.generate_event_json(
                     &current_room_players,
-                    &[player_name],
                     player_name,
                     "ROOM",
                     "ENTER",
@@ -222,15 +228,32 @@ impl GameManager {
                 return BASE_COMMAND_RESPONSE.to_string();
             }
 
-            // "TALK" => {},
-            // TAKE format : item.global_id.item_type ( ex: "item.12.legendary sword")
+            // "TALK" => {
+            //     let (player_id, player_room) = {
+            //         let player = self.get_player_from_name(player_name).unwrap();
+            //         (player.get_id(), player.get_current_room().to_string())
+            //     };
+            //     let target_npc = data;
+            //     let npc_id = Npc::convert_to_id
+            //     let npc = self.game_manager.get_npc(target_npc);
+            //     if npc.is_none() {
+            //         return generate_json(player_name, command_name, ErrorCode::NpcNotFound, "")
+            //     }
+                
+            // },
+            // TAKE format : global_id.item_type ( ex: "12.legendary sword")
             "TAKE" => {
                 let (player_id, player_room) = {
                     let player = self.get_player_from_name(player_name).unwrap();
                     (player.get_id(), player.get_current_room().to_string())
                 };
                 let item = data;
-                let item_id = self.get_item_id_from_name(item);
+                let parsed_item: Option<(ItemId, String)> = Item::parse_item(item);
+                if parsed_item.is_none() {
+                    return generate_json(player_name, command_name, ErrorCode::ItemNotFound, "")
+                        .dump();
+                }
+                let item_id = parsed_item.unwrap().0;
 
                 let room_name: String = {
                     let room: &Room = self.get_room(player_room.as_str()).unwrap();
@@ -249,13 +272,13 @@ impl GameManager {
                 self.remove_item_from_room(&room_name, item_id);
                 self.add_item_to_player(player_id, item_id);
 
-                let players_to_send = self.get_all_players_at_room(player_room.as_str());
+                let mut players_to_send = self.get_all_players_at_room(player_room.as_str());
+                players_to_send.retain(|name| name != player_name);
                 let events_json = self.generate_event_json(
                     &players_to_send,
-                    &vec![player_name],
                     player_name,
                     "TAKE",
-                    "",
+                    item,
                 );
                 self.add_diff_to_tick(events_json);
 
@@ -289,7 +312,6 @@ impl GameManager {
                 let players_to_send = self.get_all_players_at_room(room_name.as_str());
                 let events_json = self.generate_event_json(
                     &players_to_send,
-                    &vec![player_name],
                     player_name,
                     "DROP",
                     "",

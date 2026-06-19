@@ -42,7 +42,7 @@ impl GameManager {
 
 
         // self.send_msg_to_client(events.dump().to_string())?;
-        info!("sent event");
+        // info!("sent event");
         Ok(())
     }
 }

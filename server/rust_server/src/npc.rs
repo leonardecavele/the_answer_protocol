@@ -2,14 +2,16 @@ use json::JsonValue;
 use tracing::error;
 
 use crate::constantes::{NPC_MOB, NPC_QUEST_GIVER, NPC_TALKER};
+use crate::room::RoomName;
 
 type NpcType = u8;
-type NpcId = u32;
+pub type NpcId = u32;
 
 // for now, use this. later create Dialog and Questid structs
-type Dialog = String;
-type Questid = u32;
+pub type Dialog = String;
+pub type Questid = u32;
 
+#[derive(Clone)]
 pub struct Npc {
     id: NpcId,
     name: String,
@@ -18,6 +20,7 @@ pub struct Npc {
     max_hp: Option<u32>,
     dialogs: Option<Vec<Dialog>>,
     quests: Option<Vec<Questid>>,
+    room_spawn: RoomName,
 }
 
 impl Npc {
@@ -57,6 +60,8 @@ impl Npc {
             None
         };
 
+        let room_spawn = json["spawns"].as_str()?.to_string();
+
         Some(Self {
             id,
             name,
@@ -65,6 +70,7 @@ impl Npc {
             max_hp,
             dialogs,
             quests,
+            room_spawn,
         })
     }
 
@@ -85,5 +91,8 @@ impl Npc {
     }
     pub fn get_dialog(&self, index: usize) -> Option<&Dialog> {
         self.dialogs.as_ref()?.get(index)
+    }
+    pub fn get_spawn_room(&self) -> &str {
+        &self.room_spawn
     }
 }

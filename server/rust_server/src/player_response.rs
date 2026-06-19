@@ -11,7 +11,7 @@ impl GameManager {
         for (player_name, tick_diff) in diff.iter() {
             let msg = object! {
                 "player": player_name.as_str(),
-                "tick_diff": tick_diff.clone()
+                "events": tick_diff.clone()
             };
 
             self.send_msg_to_client(msg.dump())?;

@@ -1,5 +1,4 @@
 use crate::constantes::HARDCODED_PLAYER_ROOM;
-use crate::groups::GroupId;
 use crate::inventory::Inventory;
 use crate::items::ItemId;
 use crate::npc::Npc;
@@ -12,7 +11,6 @@ pub type PlayerCount = u32;
 pub struct Player {
     name: String,
     id: PlayerId,
-    group_id: Option<GroupId>,
     inventory: Inventory,
     current_room: String,
     dialogs_index: HashMap<String, usize>,
@@ -23,7 +21,6 @@ impl Player {
         Self {
             name,
             id,
-            group_id: None,
             inventory: Inventory::new(),
             current_room: HARDCODED_PLAYER_ROOM.to_string(),
             dialogs_index: HashMap::new(),
@@ -37,9 +34,6 @@ impl Player {
     }
     pub fn get_id(&self) -> PlayerId {
         self.id
-    }
-    pub fn get_group_id(&self) -> Option<GroupId> {
-        self.group_id
     }
     pub fn get_items(&self) -> &HashSet<ItemId> {
         &self.inventory.get_items()

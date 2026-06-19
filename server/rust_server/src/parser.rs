@@ -1,15 +1,16 @@
+use std::collections::HashMap;
 use std::fs;
-use crate::npc::Npc;
+use crate::npc::{Npc, NpcId};
 
 pub struct Parser {
-    ncps: Vec<Npc>,
+    npcs: HashMap<NpcId, Npc>,
     file_path: String,
 }
 
 impl Parser {
     pub fn new(file_path: &str) -> Self {
         Self {
-            ncps: Vec::new(),
+            npcs: HashMap::new(),
             file_path: file_path.to_string(),
         }
     }
@@ -21,12 +22,12 @@ impl Parser {
         let parsed = json::parse(&content)
             .map_err(|e| format!("Failed to parse JSON: {}", e))?;
 
-        let mut npcs = Vec::new();
+        let mut npcs = HashMap::new();
         
         if parsed["npcs"].is_array() {
             for item in parsed["npcs"].members() {
                 if let Some(npc) = Npc::new(item) {
-                    npcs.push(npc);
+                    npcs.insert(npc.get_id(), npc);
                 }
                 else {
                     return Err("an invalid npc was found".to_string());
@@ -36,10 +37,10 @@ impl Parser {
             return Err("JSON does not contain 'npcs' array".to_string());
         }
 
-        self.ncps = npcs;
+        self.npcs = npcs;
         Ok(())
     }
-    pub fn get_npcs(&self) -> &Vec<Npc> {
-        &self.ncps
+    pub fn get_npcs(&self) -> &HashMap<NpcId, Npc> {
+        &self.npcs
     }
 }
