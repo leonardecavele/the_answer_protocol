@@ -6,7 +6,6 @@ use crate::room::{Room, RoomName};
 
 use json::object;
 use std::collections::HashMap;
-use std::hash::Hash;
 use std::io::Write;
 use std::net::TcpStream;
 use std::sync::mpsc;
