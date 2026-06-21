@@ -1,15 +1,17 @@
 use json::JsonValue;
 use tracing::error;
 
-use crate::constantes::{NPC_QUEST_GIVER, NPC_MOB, NPC_TALKER};
+use crate::constantes::{NPC_MOB, NPC_QUEST_GIVER, NPC_TALKER};
+use crate::room::RoomName;
 
 type NpcType = u8;
-type NpcId = u32;
+pub type NpcId = u32;
 
 // for now, use this. later create Dialog and Questid structs
-type Dialog = String;
-type Questid = u32;
+pub type Dialog = String;
+pub type Questid = u32;
 
+#[derive(Clone)]
 pub struct Npc {
     id: NpcId,
     name: String,
@@ -18,6 +20,7 @@ pub struct Npc {
     max_hp: Option<u32>,
     dialogs: Option<Vec<Dialog>>,
     quests: Option<Vec<Questid>>,
+    room_spawn: RoomName,
 }
 
 impl Npc {
@@ -31,19 +34,20 @@ impl Npc {
         }
         let hp = json["hp"].as_u32();
         let max_hp = json["max_hp"].as_u32();
-        
-        let dialogs = if json["dialogs"].is_array() && !json["dialogs"].is_empty() {
-            let mut dialogs = Vec::new();
-            for item in json["dialogs"].members() {
-                if let Some(dialog) = item.as_str() {
-                    dialogs.push(dialog.to_string());
+
+        let dialogs: Option<Vec<Dialog>> =
+            if json["dialogs"].is_array() && !json["dialogs"].is_empty() {
+                let mut dialogs = Vec::new();
+                for item in json["dialogs"].members() {
+                    if let Some(dialog) = item.as_str() {
+                        dialogs.push(dialog.to_string());
+                    }
                 }
-            }
-            Some(dialogs)
-        } else {
-            None
-        };
-        
+                Some(dialogs)
+            } else {
+                None
+            };
+
         let quests = if json["quests"].is_array() && !json["quests"].is_empty() {
             let mut quests = Vec::new();
             for item in json["quests"].members() {
@@ -56,6 +60,8 @@ impl Npc {
             None
         };
 
+        let room_spawn = json["spawns"].as_str()?.to_string();
+
         Some(Self {
             id,
             name,
@@ -64,9 +70,10 @@ impl Npc {
             max_hp,
             dialogs,
             quests,
+            room_spawn,
         })
     }
-    
+
     pub fn get_id(&self) -> NpcId {
         self.id
     }
@@ -82,10 +89,10 @@ impl Npc {
     pub fn get_max_hp(&self) -> Option<u32> {
         self.max_hp
     }
-    pub fn get_dialogs(&self) -> Option<Vec<Dialog>> {
-        self.dialogs.clone()
+    pub fn get_dialog(&self, index: usize) -> Option<&Dialog> {
+        self.dialogs.as_ref()?.get(index)
     }
-    pub fn get_quests(&self) -> Option<Vec<Questid>> {
-        self.quests.clone()
+    pub fn get_spawn_room(&self) -> &str {
+        &self.room_spawn
     }
 }

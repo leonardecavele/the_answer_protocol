@@ -70,7 +70,7 @@ fn main() -> std::io::Result<()> {
     // first thread reads from the socket and sends the message to the receiver
     // the receover now reads the sent message and sends PONG back to the go server
     start_reader_thread(reader_stream, mpsc_sender);
-    let mut game_manager = GameManager::new(mpsc_receiver, writer_stream);
+    let mut game_manager = GameManager::new(mpsc_receiver, writer_stream, parser);
     loop {
         let start = Instant::now(); // this tick time start
         game_manager.update_game_state()?;

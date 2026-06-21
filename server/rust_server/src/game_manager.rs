@@ -1,32 +1,37 @@
 use crate::constantes::Direction;
-use crate::groups::GroupManager;
 use crate::items::{Item, ItemId};
+use crate::npc::{Npc, NpcId};
+use crate::parser::Parser;
+use crate::inventory::Inventory;
 use crate::player::{Player, PlayerCount, PlayerId};
 use crate::room::{Room, RoomName};
-
+use json::JsonValue;
 use json::object;
 use std::collections::HashMap;
 use std::io::Write;
 use std::net::TcpStream;
 use std::sync::mpsc;
 use tracing::error;
-use json::JsonValue;
 
 pub struct GameManager {
     players: HashMap<PlayerId, Player>,
     players_by_name: HashMap<String, PlayerId>,
-    groups: GroupManager,
     next_player_id: PlayerCount,
     next_item_id: ItemId,
     all_items: HashMap<ItemId, Item>,
-    all_rooms: HashMap<String, Room>,
+    all_rooms: HashMap<RoomName, Room>,
+    all_npcs: HashMap<NpcId, Npc>,
     mpsc_receiver: mpsc::Receiver<String>,
     writer_stream: TcpStream,
-    tick_diff: JsonValue
+    tick_diff: HashMap<String, JsonValue>,
 }
 
 impl GameManager {
-    pub fn new(mpsc_receiver: mpsc::Receiver<String>, writer_stream: TcpStream) -> Self {
+    pub fn new(
+        mpsc_receiver: mpsc::Receiver<String>,
+        writer_stream: TcpStream,
+        parser: Parser,
+    ) -> Self {
         let mut starting_items = HashMap::new();
         let item_id: ItemId = 0;
         let item = Item::new(
@@ -38,21 +43,31 @@ impl GameManager {
         starting_items.insert(item_id, item);
         let mut starting_rooms: HashMap<String, Room> = HashMap::new();
         let room_name: RoomName = "room_test".to_string();
-        let mut room = Room::new(room_name.clone(), HashMap::new());
+        let room_name2: RoomName = "room_test2".to_string();
+
+        let mut room_exits = HashMap::new();
+        room_exits.insert("NORTH".to_string(), room_name2.clone());
+
+        let mut room_exits2 = HashMap::new();
+        room_exits2.insert("SOUTH".to_string(), room_name.clone());
+
+        let mut room = Room::new(0, room_name.clone(), "nothing".to_string(), room_exits);
+        let room2 = Room::new(1, room_name2.clone(), "nothing".to_string(), room_exits2);
         room.add_item(item_id);
         starting_rooms.insert(room_name, room);
+        starting_rooms.insert(room_name2, room2);
 
         let mut manager = Self {
             players: HashMap::new(),
             players_by_name: HashMap::new(),
-            groups: GroupManager::new(),
             next_player_id: 0,
             next_item_id: 0,
             all_items: starting_items,
             all_rooms: starting_rooms,
+            all_npcs: parser.get_npcs().clone(),
             mpsc_receiver,
             writer_stream,
-            tick_diff: JsonValue::new_array()
+            tick_diff: HashMap::new(),
         };
 
         manager.next_player_id = manager.restore_next_player_id();
@@ -67,7 +82,6 @@ impl GameManager {
     pub fn get_player(&self, player_id: PlayerId) -> Option<&Player> {
         self.players.get(&player_id)
     }
-
     pub fn get_player_id(&self, player_name: &str) -> Option<&PlayerId> {
         self.players_by_name.get(player_name)
     }
@@ -89,10 +103,6 @@ impl GameManager {
             Some(player_id) => self.players.get_mut(&player_id),
             _none => None,
         }
-    }
-
-    pub fn all_groups(&mut self) -> &mut GroupManager {
-        return &mut self.groups;
     }
 
     fn restore_next_player_id(&self) -> PlayerId {
@@ -187,7 +197,7 @@ impl GameManager {
         let items: Vec<String> = player
             .get_items()
             .iter()
-            .map(|item_id| format!("item.{}.{}", item_id, self.get_item_name(item_id)))
+            .map(|item_id| format!("{}.{}", item_id, self.get_item_name(item_id)))
             .collect();
         return object! {
             "items": items
@@ -237,29 +247,56 @@ impl GameManager {
         }
     }
 
-    pub fn get_tick_diff(&self) -> &JsonValue
-    {
+    pub fn get_tick_diff(&self) -> &HashMap<String, JsonValue> {
         &self.tick_diff
     }
 
-    pub fn add_diff_to_tick(&mut self, diff: JsonValue)
-    {
-        let _ = self.tick_diff.push(diff);
+    pub fn add_diff_to_tick(&mut self, diff: JsonValue) {
+        let players = diff["players"].members();
+        let mut filtered = diff.clone();
+        filtered.remove("players");
+        for player in players {
+            let key = player.as_str().unwrap().to_string();
+            let entry = self.tick_diff.entry(key).or_insert(JsonValue::new_array());
+
+            entry.push(filtered.clone()).unwrap();
+        }
+    }
+    pub fn clear_diff(&mut self) {
+        self.tick_diff.clear();
     }
 
-    pub fn clear_diff(&mut self)
-    {
-        self.tick_diff = JsonValue::new_array();
-    }
-
-    pub fn get_all_players_at_room(&self, room_name: &str) -> Vec<String>
-    {
-        let mut players: Vec<String> = Vec::new(); 
-        for player in self.players.values(){
-            if player.get_current_room() == room_name{
+    pub fn get_all_players_at_room(&self, room_name: &str) -> Vec<String> {
+        let mut players: Vec<String> = Vec::new();
+        for player in self.players.values() {
+            if player.get_current_room() == room_name {
                 players.push(player.get_name().to_string());
             }
         }
         return players;
+    }
+
+    pub fn move_player_to_room(&mut self, player_name: &str, room_name: &str) {
+        let player = self.get_mut_player_from_name(player_name).unwrap();
+        player.move_to_room(&room_name.to_string());
+    }
+
+    pub fn get_npcs_in_room(&self, room_name: &str) -> Vec<String> {
+        self.all_npcs
+            .values()
+            .filter(|&npc| npc.get_spawn_room() == room_name)
+            .map(|npc| npc.get_name().to_string())
+            .collect()
+    }
+
+    pub fn get_npc(&self, npc_id: NpcId) -> Option<&Npc> {
+        self.all_npcs.get(&npc_id)
+    }
+    pub fn convert_items_to_string(&self, inventory: &Inventory) -> Vec<String> {
+        inventory
+            .get_items()
+            .iter()
+            .map(|item_id| format!("{}.{}", item_id, self.get_item_name(item_id)))
+            .collect()
     }
 }

@@ -6,11 +6,9 @@
       "npc_type": 2,
       "hp": 20,
       "max_hp": 20,
-      "dialogs": [
-        "Stay safe, traveler.",
-        "The roads can be dangerous."
-      ],
-      "quests": []
+      "dialogs": ["Stay safe, traveler.", "The roads can be dangerous."],
+      "quests": [],
+      "spawns": "room_test2"
     },
     {
       "id": 2,
@@ -18,10 +16,9 @@
       "npc_type": 5,
       "hp": null,
       "max_hp": null,
-      "dialogs": [
-        "I have a task for you, young adventurer."
-      ],
-      "quests": [101, 102]
+      "dialogs": ["I have a task for you, young adventurer."],
+      "quests": [101, 102],
+      "spawns": "room_test"
     }
   ]
 }
