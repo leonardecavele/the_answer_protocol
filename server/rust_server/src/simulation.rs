@@ -18,6 +18,7 @@ impl GameManager {
                 Err(mpsc::RecvTimeoutError::Timeout) => break,
                 Err(mpsc::RecvTimeoutError::Disconnected) => return Ok(TickResult::Exit),
             };
+
         }
         return Ok(TickResult::TickEnd);
     }

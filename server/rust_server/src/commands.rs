@@ -42,11 +42,12 @@ impl GameManager {
 
     fn generate_event_json(
         &self,
-        players: &Vec<String>,
+        players: &mut Vec<String>,
         emitted_by: &str,
         event_name: &str,
         data: &str,
     ) -> JsonValue {
+        players.retain(|player| player != emitted_by);
         return object! {
             "players": players.as_slice(),
             "emitted_by": emitted_by,
@@ -202,13 +203,11 @@ impl GameManager {
                     self.get_all_players_at_room(player.get_current_room());
 
                 // tick events part
-                current_room_players.retain(|x| *x != player_name);
-                last_room_players.retain(|x| *x != player_name);
                 
                 let room_leave_diff =
-                    self.generate_event_json(&last_room_players, player_name, "ROOM", "LEAVE");
+                    self.generate_event_json(&mut last_room_players, player_name, "ROOM", "LEAVE");
                 let room_enter_diff =
-                    self.generate_event_json(&current_room_players, player_name, "ROOM", "ENTER");
+                    self.generate_event_json(&mut current_room_players, player_name, "ROOM", "ENTER");
 
                 info!("before add_diff");
                 self.add_diff_to_tick(room_leave_diff);
@@ -271,9 +270,8 @@ impl GameManager {
                 self.add_item_to_player(player_id, item_id);
 
                 let mut players_to_send = self.get_all_players_at_room(player_room.as_str());
-                players_to_send.retain(|name| name != player_name);
                 let events_json =
-                    self.generate_event_json(&players_to_send, player_name, "TAKE", item);
+                    self.generate_event_json(&mut players_to_send, player_name, "TAKE", item);
                 self.add_diff_to_tick(events_json);
 
                 return generate_json(
@@ -312,9 +310,8 @@ impl GameManager {
                 self.add_item_to_room(&room_name, item_id);
 
                 let mut players_to_send = self.get_all_players_at_room(room_name.as_str());
-                players_to_send.retain(|p| p != player_name);
                 let events_json =
-                    self.generate_event_json(&players_to_send, player_name, "DROP", item);
+                    self.generate_event_json(&mut players_to_send, player_name, "DROP", item);
                 self.add_diff_to_tick(events_json);
 
                 return generate_json(player_name, command_name, ErrorCode::NoError, item).dump();
