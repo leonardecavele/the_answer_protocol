@@ -69,4 +69,7 @@ impl Player {
 
         return dialog.unwrap().to_string();
     }
+    pub fn has_item(&self, item_id: ItemId) -> bool {
+        self.inventory.contains_item(item_id)
+    }
 }
