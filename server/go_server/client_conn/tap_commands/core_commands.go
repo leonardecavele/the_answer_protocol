@@ -112,7 +112,7 @@ func handleMoveCommand(args string, client *session.Client, gameServer *game_con
 		}
 	}
 
-	return "OK " + response.Data, nil
+	return "OK " + "room=" + response.Data, nil
 }
 
 func handleQuitCommand(args string, client *session.Client, gameServer *game_conn.GameServerManager) (string, error) {
