@@ -56,3 +56,5 @@ pub enum AppEvent {
         max_hp: u32,
     },
 }
+
+pub mod router;
