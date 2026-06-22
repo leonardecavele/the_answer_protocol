@@ -14,7 +14,12 @@ pub struct Room {
 }
 
 impl Room {
-    pub fn new(id: RoomId, name: String, description: String, exits: HashMap<Direction, RoomName>) -> Self {
+    pub fn new(
+        id: RoomId,
+        name: String,
+        description: String,
+        exits: HashMap<Direction, RoomName>,
+    ) -> Self {
         let protocol_representation = Room::protocol_representation(id, name.clone());
         Self {
             id,

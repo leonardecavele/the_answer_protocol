@@ -181,7 +181,7 @@ impl GameManager {
 
                 let player = self.get_player_from_name(player_name).unwrap();
                 let mut last_room_players = self.get_all_players_at_room(player.get_current_room());
-                let room_to_go = {
+                let (room_to_go, room_to_go_id) = {
                     let player = self.get_player_from_name(player_name).unwrap();
                     let current_player_room_name = player.get_current_room();
                     let room_to_go_wrapped = self
@@ -190,7 +190,9 @@ impl GameManager {
                         return generate_json(player_name, command_name, ErrorCode::NoExit, "")
                             .dump();
                     }
-                    room_to_go_wrapped.unwrap().clone()
+                    let room_to_go = room_to_go_wrapped.unwrap().clone();
+                    let room_id = self.get_room(room_to_go.as_str()).unwrap().get_id();
+                    (room_to_go, room_id)
                 };
 
                 self.move_player_to_room(player_name, room_to_go.as_str());
@@ -202,7 +204,7 @@ impl GameManager {
                 // tick events part
                 current_room_players.retain(|x| *x != player_name);
                 last_room_players.retain(|x| *x != player_name);
-
+                
                 let room_leave_diff =
                     self.generate_event_json(&last_room_players, player_name, "ROOM", "LEAVE");
                 let room_enter_diff =
@@ -213,7 +215,8 @@ impl GameManager {
                 self.add_diff_to_tick(room_enter_diff);
 
                 info!("after add_diff");
-                return generate_json(player_name, command_name, ErrorCode::NoError, "").dump();
+                let room_repr = Room::protocol_representation(room_to_go_id, room_to_go);
+                return generate_json(player_name, command_name, ErrorCode::NoError, room_repr.as_str()).dump();
             }
 
             "QUIT" => {
@@ -227,13 +230,13 @@ impl GameManager {
             //         (player.get_id(), player.get_current_room().to_string())
             //     };
             //     let target_npc = data;
-            //     let npc_id = Npc::convert_to_id
-            //     let npc = self.game_manager.get_npc(target_npc);
+            //     let npc_id = Npc::convert_to_id(target_npc);
+            //     let npc = self.game_manager.get_npc(npc_id);
             //     if npc.is_none() {
-            //         return generate_json(player_name, command_name, ErrorCode::NpcNotFound, "")
+            //         return generate_json(player_name, command_name, ErrorCode::NpcNotFound, "").dump();
             //     }
 
-            // },
+            // }
             // TAKE format : global_id.item_type ( ex: "12.legendary sword")
             "TAKE" => {
                 let (player_id, player_room) = {
