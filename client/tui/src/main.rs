@@ -18,6 +18,7 @@ use futures::StreamExt;
 use ratatui::{Terminal, backend::CrosstermBackend};
 use state::ConnectionState;
 use std::{env, io, sync::Arc, time::Duration};
+use tokio::io::AsyncBufReadExt;
 use tokio::sync::{Mutex, mpsc};
 
 const LOCAL_SERVER_IP: &str = "127.0.0.1";
@@ -220,10 +221,7 @@ async fn run_app(
                             }
                             Err(e) => {
                                 log::error!("TCP Connection failed: {}", e);
-                                let _ = tx_clone.send(AppEvent::CommandError(format!(
-                                    "TCP Connection failed: {}",
-                                    e
-                                )));
+                                let _ = tx_clone.send(AppEvent::TapError(e));
                                 let _ = tx_clone.send(AppEvent::ApiDisconnected);
                             }
                         }
@@ -242,18 +240,12 @@ async fn run_app(
                                 }
                                 Ok(Err(err)) => {
                                     log::error!("Connect failed: {:?}", err);
-                                    let _ = tx_clone.send(AppEvent::CommandError(format!(
-                                        "Login failed: {:?}",
-                                        err
-                                    )));
+                                    let _ = tx_clone.send(AppEvent::CommandError(err));
                                     let _ = tx_clone.send(AppEvent::ApiDisconnected);
                                 }
                                 Err(err) => {
                                     log::error!("Network error: {:?}", err);
-                                    let _ = tx_clone.send(AppEvent::CommandError(format!(
-                                        "Network error: {:?}",
-                                        err
-                                    )));
+                                    let _ = tx_clone.send(AppEvent::TapError(err));
                                     let _ = tx_clone.send(AppEvent::ApiDisconnected);
                                 }
                             }
@@ -286,12 +278,42 @@ async fn run_app(
                     }
                 }
                 AppEvent::CommandError(err) => {
-                    for line in err.lines() {
-                        app.state.game.push_game_output(format!("[ERROR] {}", line));
-                    }
-                    app.state
-                        .ui
-                        .push_notification(err, crate::state::NotificationType::Error, 16);
+                    let message = match err.code {
+                        Some(code) => format!("[{}] Command error: {}", code, err.message),
+                        None => format!("Command error: {}", err.message),
+                    };
+
+                    app.state.game.push_game_output(message.clone());
+                    app.state.ui.push_notification(
+                        message,
+                        state::NotificationType::Error,
+                        16,
+                    );
+                }
+                AppEvent::NetworkError(err) => {
+                    let message = format!("Network error: {}", err);
+                    app.state.ui.push_notification(
+                        message,
+                        state::NotificationType::Error,
+                        16,
+                    );
+                }
+                AppEvent::TapError(err) => {
+                    let message = format!("Tap error: {}", err);
+                    app.state.ui.push_notification(
+                        message,
+                        state::NotificationType::Error,
+                        16,
+                    );
+                }
+                AppEvent::UnknowCommand(err) => {
+                    let message = format!("Unknow command: {}", err);
+                    app.state.game.push_game_output(message.clone());
+                    app.state.ui.push_notification(
+                        message,
+                        state::NotificationType::Error,
+                        16,
+                    );
                 }
                 AppEvent::ClientConnected(client) => {
                     app.state.net.client = Some(Arc::new(Mutex::new(client)));
@@ -305,7 +327,7 @@ async fn run_app(
                     if app.state.net.client.is_some() {
                         app.state.ui.push_notification(
                             "Disconnected from server".to_string(),
-                            crate::state::NotificationType::Error,
+                            state::NotificationType::Error,
                             16,
                         );
                         app.state.net.client = None;

@@ -34,11 +34,11 @@ pub fn handle_command(state: &mut AppState, cmd_line: String, tx: mpsc::Unbounde
                         }
                         Ok(Err(e)) => {
                             let _ = tx_clone
-                                .send(AppEvent::CommandError(format!("Command Error: {:?}", e)));
+                                .send(AppEvent::CommandError(e));
                         }
                         Err(e) => {
                             let _ = tx_clone
-                                .send(AppEvent::CommandError(format!("Network Error: {:?}", e)));
+                                .send(AppEvent::TapError(e));
                         }
                     }
                 };
@@ -56,11 +56,11 @@ pub fn handle_command(state: &mut AppState, cmd_line: String, tx: mpsc::Unbounde
                     }
                     Ok(Err(e)) => {
                         let _ = tx_clone
-                            .send(AppEvent::CommandError(format!("Command Error: {:?}", e)));
+                            .send(AppEvent::CommandError(e));
                     }
                     Err(e) => {
                         let _ = tx_clone
-                            .send(AppEvent::CommandError(format!("Network Error: {:?}", e)));
+                            .send(AppEvent::TapError(e));
                     }
                 },
                 "who" => match c.who().await {
@@ -71,11 +71,11 @@ pub fn handle_command(state: &mut AppState, cmd_line: String, tx: mpsc::Unbounde
                     }
                     Ok(Err(e)) => {
                         let _ = tx_clone
-                            .send(AppEvent::CommandError(format!("Command Error: {:?}", e)));
+                            .send(AppEvent::CommandError(e));
                     }
                     Err(e) => {
                         let _ = tx_clone
-                            .send(AppEvent::CommandError(format!("Network Error: {:?}", e)));
+                            .send(AppEvent::TapError(e));
                     }
                 },
                 "chat_global" => match c.chat_global(args.join(" ")).await {
@@ -85,11 +85,11 @@ pub fn handle_command(state: &mut AppState, cmd_line: String, tx: mpsc::Unbounde
                     }
                     Ok(Err(e)) => {
                         let _ = tx_clone
-                            .send(AppEvent::CommandError(format!("Command Error: {:?}", e)));
+                            .send(AppEvent::CommandError(e));
                     }
                     Err(e) => {
                         let _ = tx_clone
-                            .send(AppEvent::CommandError(format!("Network Error: {:?}", e)));
+                            .send(AppEvent::TapError(e));
                     }
                 },
                 "chat_private" if args.len() >= 2 => {
@@ -104,11 +104,11 @@ pub fn handle_command(state: &mut AppState, cmd_line: String, tx: mpsc::Unbounde
                         }
                         Ok(Err(e)) => {
                             let _ = tx_clone
-                                .send(AppEvent::CommandError(format!("Command Error: {:?}", e)));
+                                .send(AppEvent::CommandError(e));
                         }
                         Err(e) => {
                             let _ = tx_clone
-                                .send(AppEvent::CommandError(format!("Network Error: {:?}", e)));
+                                .send(AppEvent::TapError(e));
                         }
                     }
                 }
@@ -117,8 +117,8 @@ pub fn handle_command(state: &mut AppState, cmd_line: String, tx: mpsc::Unbounde
                         let _ = tx_clone.send(AppEvent::UpdateGroup(Some(data.group_id.clone())));
                         let _ = tx_clone.send(AppEvent::CommandResult(format!("{:#?}", data)));
                     }
-                    Ok(Err(e)) => { let _ = tx_clone.send(AppEvent::CommandError(format!("Command Error: {:?}", e))); }
-                    Err(e) => { let _ = tx_clone.send(AppEvent::CommandError(format!("Network Error: {:?}", e))); }
+                    Ok(Err(e)) => { let _ = tx_clone.send(AppEvent::CommandError(e)); }
+                    Err(e) => { let _ = tx_clone.send(AppEvent::TapError(e)); }
                 },
                 "group_invite" if args.len() == 1 => {
                     handle_res!(c.group_invite(args[0].clone()).await)
@@ -128,16 +128,16 @@ pub fn handle_command(state: &mut AppState, cmd_line: String, tx: mpsc::Unbounde
                         let _ = tx_clone.send(AppEvent::UpdateGroup(Some(data.group_id.clone())));
                         let _ = tx_clone.send(AppEvent::CommandResult(format!("{:#?}", data)));
                     }
-                    Ok(Err(e)) => { let _ = tx_clone.send(AppEvent::CommandError(format!("Command Error: {:?}", e))); }
-                    Err(e) => { let _ = tx_clone.send(AppEvent::CommandError(format!("Network Error: {:?}", e))); }
+                    Ok(Err(e)) => { let _ = tx_clone.send(AppEvent::CommandError(e)); }
+                    Err(e) => { let _ = tx_clone.send(AppEvent::TapError(e)); }
                 },
                 "group_leave" => match c.group_leave().await {
                     Ok(Ok(data)) => {
                         let _ = tx_clone.send(AppEvent::UpdateGroup(None));
                         let _ = tx_clone.send(AppEvent::CommandResult(format!("{:#?}", data)));
                     }
-                    Ok(Err(e)) => { let _ = tx_clone.send(AppEvent::CommandError(format!("Command Error: {:?}", e))); }
-                    Err(e) => { let _ = tx_clone.send(AppEvent::CommandError(format!("Network Error: {:?}", e))); }
+                    Ok(Err(e)) => { let _ = tx_clone.send(AppEvent::CommandError(e)); }
+                    Err(e) => { let _ = tx_clone.send(AppEvent::TapError(e)); }
                 },
                 "take" if args.len() == 1 => handle_res!(c.take(args[0].clone()).await),
                 "drop" if args.len() == 1 => handle_res!(c.drop_item(args[0].clone()).await),
@@ -149,11 +149,11 @@ pub fn handle_command(state: &mut AppState, cmd_line: String, tx: mpsc::Unbounde
                     }
                     Ok(Err(e)) => {
                         let _ = tx_clone
-                            .send(AppEvent::CommandError(format!("Command Error: {:?}", e)));
+                            .send(AppEvent::CommandError(e));
                     }
                     Err(e) => {
                         let _ = tx_clone
-                            .send(AppEvent::CommandError(format!("Network Error: {:?}", e)));
+                            .send(AppEvent::TapError(e));
                     }
                 },
                 "talk" if !args.is_empty() => {
@@ -172,11 +172,11 @@ pub fn handle_command(state: &mut AppState, cmd_line: String, tx: mpsc::Unbounde
                     }
                     Ok(Err(e)) => {
                         let _ = tx_clone
-                            .send(AppEvent::CommandError(format!("Command Error: {:?}", e)));
+                            .send(AppEvent::CommandError(e));
                     }
                     Err(e) => {
                         let _ = tx_clone
-                            .send(AppEvent::CommandError(format!("Network Error: {:?}", e)));
+                            .send(AppEvent::TapError(e));
                     }
                 },
                 "quest" if !args.is_empty() => {
@@ -185,7 +185,7 @@ pub fn handle_command(state: &mut AppState, cmd_line: String, tx: mpsc::Unbounde
                 "quests" => handle_res!(c.quests().await),
                 _ => {
                     let _ =
-                        tx_clone.send(AppEvent::CommandError(format!("Unknown command: {}", cmd)));
+                        tx_clone.send(AppEvent::UnknowCommand(cmd));
                 }
             }
         });

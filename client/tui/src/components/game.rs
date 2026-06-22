@@ -292,12 +292,12 @@ impl Component for GameComponent {
             .alignment(Alignment::Center);
         f.render_widget(header_widget, main_chunks[0]);
 
-        // Middle (Scene + Game Events taking full width)
-        let left_chunks = Layout::default()
-            .direction(Direction::Vertical)
+        // Middle (Game Events + Scene side-by-side)
+        let middle_chunks = Layout::default()
+            .direction(Direction::Horizontal)
             .constraints([
-                Constraint::Min(10),    // Scene
-                Constraint::Length(10), // Game Events
+                Constraint::Percentage(50), // Game Events (Left)
+                Constraint::Percentage(50), // Scene (Right)
             ])
             .split(main_chunks[1]);
 
@@ -326,8 +326,8 @@ impl Component for GameComponent {
             .borders(Borders::ALL)
             .border_style(scene_style)
             .title(scene_title);
-        let inner_scene = scene_block.inner(left_chunks[0]);
-        f.render_widget(scene_block, left_chunks[0]);
+        let inner_scene = scene_block.inner(middle_chunks[1]);
+        f.render_widget(scene_block, middle_chunks[1]);
 
         // Fallback to "default" room if current_room is empty
         let check_room = if state.game.current_room.is_empty() {
@@ -467,7 +467,7 @@ impl Component for GameComponent {
             .map(|l| Line::from(l.as_str()))
             .collect();
         let max_scroll =
-            (game_lines.len() as u16).saturating_sub(left_chunks[1].height.saturating_sub(2));
+            (game_lines.len() as u16).saturating_sub(middle_chunks[0].height.saturating_sub(2));
         let scroll = max_scroll.saturating_sub(state.ui.game_scroll_offset);
 
         // Game Events is never "focused" in the tab cycle directly (Input scrolls it), but we can give it unfocused_color
@@ -480,7 +480,7 @@ impl Component for GameComponent {
             )
             .scroll((scroll, 0))
             .wrap(Wrap { trim: true });
-        f.render_widget(messages_widget, left_chunks[1]);
+        f.render_widget(messages_widget, middle_chunks[0]);
 
         // Input Area
         let input_style = if matches!(self.focus, GameFocus::Input) {

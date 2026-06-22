@@ -1,4 +1,5 @@
 use api_client::client::event::ServerEvent;
+use api_client::error::{CommandError, NetworkError, TapError};
 
 pub enum AppEvent {
     /// An event received from the game server API
@@ -15,12 +16,16 @@ pub enum AppEvent {
     CommandResult(String),
 
     /// Emitted when a user command fails
-    CommandError(String),
+    CommandError(CommandError),
+    NetworkError(NetworkError),
+    TapError(TapError),
+    
+    UnknowCommand(String),
 
     /// Emitted when the initial game login succeeds
     LoginSuccess(String),
 
-    /// The API client disconnected from the server
+    /// The API client disconnected from the serverString
     ApiDisconnected,
 
     /// A terminal event (key, mouse, resize)
