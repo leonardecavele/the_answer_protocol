@@ -67,7 +67,35 @@ impl Command for MoveCommand {
             return;
         }
         let mut c = client.lock().await;
-        send_result(c.r#move(args[0].clone().to_uppercase()).await, &tx);
+        match c.r#move(args[0].clone().to_uppercase()).await {
+            Ok(Ok(data)) => {
+                let _ = tx.send(AppEvent::CommandResult(format!("{:#?}", data)));
+                
+                // Fetch the new room state immediately
+                match c.look().await {
+                    Ok(Ok(look_data)) => {
+                        let _ = tx.send(AppEvent::UpdateRoomContext {
+                            room_id: look_data.room.id.clone(),
+                            room_display_name: look_data.room.name.clone(),
+                            npcs: look_data.npcs.clone(),
+                        });
+                        let _ = tx.send(AppEvent::CommandResult(format!("{:#?}", look_data)));
+                    }
+                    Ok(Err(e)) => {
+                        let _ = tx.send(AppEvent::CommandError(e));
+                    }
+                    Err(e) => {
+                        let _ = tx.send(AppEvent::TapError(e));
+                    }
+                }
+            }
+            Ok(Err(e)) => {
+                let _ = tx.send(AppEvent::CommandError(e));
+            }
+            Err(e) => {
+                let _ = tx.send(AppEvent::TapError(e));
+            }
+        }
     }
 }
 
