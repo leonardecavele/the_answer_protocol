@@ -95,4 +95,7 @@ impl Npc {
     pub fn get_spawn_room(&self) -> &str {
         &self.room_spawn
     }
+    // pub fn convert_to_id(name: &str) -> NpcId {
+    // )
+    // }
 }
