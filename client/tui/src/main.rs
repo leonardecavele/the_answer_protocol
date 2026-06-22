@@ -11,15 +11,15 @@ use app::App;
 use crossterm::{
     event::{DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyModifiers},
     execute,
-    terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
+    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use events::AppEvent;
 use futures::StreamExt;
-use ratatui::{Terminal, backend::CrosstermBackend};
+use log::error;
+use ratatui::{backend::CrosstermBackend, Terminal};
 use state::ConnectionState;
 use std::{env, io, sync::Arc, time::Duration};
-use tokio::io::AsyncBufReadExt;
-use tokio::sync::{Mutex, mpsc};
+use tokio::sync::{mpsc, Mutex};
 
 const LOCAL_SERVER_IP: &str = "127.0.0.1";
 const LOCAL_SERVER_PORT: &str = "38800";
@@ -36,7 +36,10 @@ fn get_server_port() -> String {
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenvy::dotenv().ok();
     config::init_config();
-    tui_logger::init_logger(log::LevelFilter::Trace).unwrap();
+    if let Err(e) = tui_logger::init_logger(log::LevelFilter::Trace) {
+        error!("Unable to init tui logger");
+        return Err(Box::from(e));
+    }
     tui_logger::set_default_level(log::LevelFilter::Trace);
 
     use tracing_subscriber::layer::SubscriberExt;
@@ -124,8 +127,8 @@ async fn run_app(
                 let mut lines = Vec::new();
                 for n in &app.state.ui.notifications {
                     let color = match n.level {
-                        crate::state::NotificationType::Info => ratatui::style::Color::Cyan,
-                        crate::state::NotificationType::Error => ratatui::style::Color::Red,
+                        state::NotificationType::Info => ratatui::style::Color::Cyan,
+                        state::NotificationType::Error => ratatui::style::Color::Red,
                     };
                     lines.push(ratatui::text::Line::from(ratatui::text::Span::styled(
                         n.message.clone(),
@@ -201,7 +204,7 @@ async fn run_app(
                 AppEvent::AttemptConnect(name, ip, port) => {
                     app.state.ui.push_notification(
                         format!("Connecting to {}:{}...", ip, port),
-                        crate::state::NotificationType::Info,
+                        state::NotificationType::Info,
                         10,
                     );
                     let tx_clone = tx.clone();
@@ -266,8 +269,8 @@ async fn run_app(
                         tokio::spawn(async move {
                             let c = client_arc.lock().await;
                             if let Ok(Ok(data)) = c.who().await {
-                                let _ = tx_clone
-                                    .send(AppEvent::UpdateOnlinePlayers(data.player_count as u32));
+                                let _ =
+                                    tx_clone.send(AppEvent::UpdateOnlinePlayers(data.player_count));
                             }
                         });
                     }
@@ -284,36 +287,28 @@ async fn run_app(
                     };
 
                     app.state.game.push_game_output(message.clone());
-                    app.state.ui.push_notification(
-                        message,
-                        state::NotificationType::Error,
-                        16,
-                    );
+                    app.state
+                        .ui
+                        .push_notification(message, state::NotificationType::Error, 16);
                 }
                 AppEvent::NetworkError(err) => {
                     let message = format!("Network error: {}", err);
-                    app.state.ui.push_notification(
-                        message,
-                        state::NotificationType::Error,
-                        16,
-                    );
+                    app.state
+                        .ui
+                        .push_notification(message, state::NotificationType::Error, 16);
                 }
                 AppEvent::TapError(err) => {
                     let message = format!("Tap error: {}", err);
-                    app.state.ui.push_notification(
-                        message,
-                        state::NotificationType::Error,
-                        16,
-                    );
+                    app.state
+                        .ui
+                        .push_notification(message, state::NotificationType::Error, 16);
                 }
                 AppEvent::UnknowCommand(err) => {
                     let message = format!("Unknow command: {}", err);
                     app.state.game.push_game_output(message.clone());
-                    app.state.ui.push_notification(
-                        message,
-                        state::NotificationType::Error,
-                        16,
-                    );
+                    app.state
+                        .ui
+                        .push_notification(message, state::NotificationType::Error, 16);
                 }
                 AppEvent::ClientConnected(client) => {
                     app.state.net.client = Some(Arc::new(Mutex::new(client)));
@@ -365,7 +360,7 @@ async fn run_app(
                     app.state.game.max_hp = max_hp;
                 }
                 AppEvent::Api(api_evt) => {
-                    crate::network::handle_server_event(&mut app.state, api_evt);
+                    network::handle_server_event(&mut app.state, api_evt);
                 }
             }
         }

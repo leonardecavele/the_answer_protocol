@@ -39,7 +39,7 @@ impl AssetManager {
             .cloned()
             .unwrap_or_else(|| std::path::PathBuf::from("assets"));
 
-        let manifest_path = assets_dir.join("manifest.json");
+        let manifest_path = root_dir.join("manifest.json");
         let manifest: Manifest = if manifest_path.exists() {
             let content = fs::read_to_string(&manifest_path).unwrap_or_default();
             match serde_json::from_str(&content) {

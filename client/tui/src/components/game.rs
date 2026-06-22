@@ -340,7 +340,7 @@ impl Component for GameComponent {
             .assets
             .get_image_for_context(check_room, &state.game.npcs_in_room)
         {
-            let img_widget = ratatui_image::StatefulImage::new();
+            let img_widget = ratatui_image::StatefulImage::new().resize(ratatui_image::Resize::Scale(None));
             f.render_stateful_widget(img_widget, inner_scene, dyn_img);
         } else {
             f.render_widget(

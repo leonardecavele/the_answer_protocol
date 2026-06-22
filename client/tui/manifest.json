@@ -1,0 +1,19 @@
+{
+  "mappings": [
+    {
+      "room": "0.room_test",
+      "npc": "WiseWizard",
+      "image": "../../assets/final/aytessi.png"
+    },
+    {
+      "room": "default",
+      "image": "../../assets/final/devant_l_ecole.jpg"
+    }
+  ],
+  "display_names": {
+    "WiseWizard": "aytessi",
+    "npc.id2": "Town Guard",
+    "item.id1": "Rusty Sword",
+    "item.id2": "Health Potion"
+  }
+}
