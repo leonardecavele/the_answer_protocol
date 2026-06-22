@@ -1,7 +1,6 @@
 pub mod commands;
 pub mod constantes;
 pub mod game_manager;
-pub mod groups;
 pub mod inventory;
 pub mod items;
 pub mod player;

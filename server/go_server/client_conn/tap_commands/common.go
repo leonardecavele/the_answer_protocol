@@ -38,6 +38,11 @@ var resourceInteractionTapCommands = map[string]handleTapCommandArgs{
 	"QUESTS":    handleQuestsCommand,
 }
 
+var customTapCommands = map[string]handleTapCommandArgs{
+	"USE":   handleUseCommand,
+	"AGGRO": handleAggroCommand,
+}
+
 var TapCommands = func(commandGroups ...map[string]handleTapCommandArgs) map[string]handleTapCommandArgs {
 	commands := make(map[string]handleTapCommandArgs)
 	for _, commandGroup := range commandGroups {
@@ -54,6 +59,7 @@ var TapCommands = func(commandGroups ...map[string]handleTapCommandArgs) map[str
 	communicationTapCommands,
 	groupTapCommands,
 	resourceInteractionTapCommands,
+	customTapCommands,
 )
 
 func isOk(args string, client *session.Client, gameServer *game_conn.GameServerManager, needGameServer bool, hasArgs bool) (string, error) {
@@ -65,7 +71,11 @@ func isOk(args string, client *session.Client, gameServer *game_conn.GameServerM
 		return protocol.ResponseNotConnected, nil
 	}
 
-	if (hasArgs && (strings.Contains(args, " ") || args == "")) || (!hasArgs && args != "") {
+	if hasArgs {
+		if args == "" || strings.TrimSpace(args) != args {
+			return protocol.ResponseInvalidArguments, nil
+		}
+	} else if args != "" {
 		return protocol.ResponseInvalidArguments, nil
 	}
 

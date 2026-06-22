@@ -1,11 +1,13 @@
 package session
 
 import (
+	"encoding/json"
 	"errors"
 	serverError "go_server/error"
 	"go_server/game_conn"
 	"go_server/protocol"
 	"net"
+	"strings"
 	"sync"
 	"time"
 )
@@ -112,4 +114,51 @@ func (c *Client) ReadCommandTimeout(timeout time.Duration) (game_conn.CommandFro
 	case <-timer.C:
 		return game_conn.CommandFromGameServer{}, false
 	}
+}
+
+func (c *Client) InSameRoom(clients []*Client, gameServer *game_conn.GameServerManager) (bool, error) {
+	if c == nil || gameServer == nil {
+		return false, serverError.ErrGameServerNotConnected
+	}
+
+	answer, err := gameServer.AskQuestion(game_conn.QuestionToGameServer{
+		Question: "ROOM_PLAYERS",
+		Data:     c.Username,
+	})
+	if err != nil {
+		return false, err
+	}
+
+	var usernames []string
+	if err := json.Unmarshal([]byte(answer.Data), &usernames); err != nil {
+		return false, err
+	}
+
+	roomPlayers := make(map[string]struct{}, len(usernames))
+	for _, username := range usernames {
+		username = strings.ToUpper(strings.TrimSpace(username))
+		if username != "" {
+			roomPlayers[username] = struct{}{}
+		}
+	}
+
+	currentUsername := strings.ToUpper(strings.TrimSpace(c.Username))
+	for _, client := range clients {
+		if client == nil {
+			return false, nil
+		}
+
+		username := strings.ToUpper(strings.TrimSpace(client.Username))
+		if username == "" {
+			return false, nil
+		}
+		if username == currentUsername {
+			continue
+		}
+		if _, ok := roomPlayers[username]; !ok {
+			return false, nil
+		}
+	}
+
+	return true, nil
 }
