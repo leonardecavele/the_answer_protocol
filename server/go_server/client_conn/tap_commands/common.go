@@ -2,6 +2,7 @@ package tap_commands
 
 import (
 	"fmt"
+	"go_server/config"
 	"go_server/game_conn"
 	"go_server/protocol"
 	"go_server/session"
@@ -69,4 +70,17 @@ func isOk(args string, client *session.Client, gameServer *game_conn.GameServerM
 	}
 
 	return "", nil
+}
+
+func readGameServerCommand(command string, client *session.Client) (game_conn.CommandFromGameServer, string) {
+	response, ok := client.ReadCommandTimeout(config.GameServerCommandTimeout)
+	if !ok {
+		return game_conn.CommandFromGameServer{}, protocol.ResponseGameServerTimeout
+	}
+
+	if errorResponse := protocol.HandleCommandError(command, response.ErrorCode); errorResponse != "" {
+		return game_conn.CommandFromGameServer{}, errorResponse
+	}
+
+	return response, ""
 }

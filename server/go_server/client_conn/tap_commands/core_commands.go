@@ -66,8 +66,8 @@ func handleLookCommand(args string, client *session.Client, gameServer *game_con
 		return "", err
 	}
 
-	response := client.ReadCommand()
-	if errorResponse := protocol.HandleCommandError("LOOK", response.ErrorCode); errorResponse != "" {
+	response, errorResponse := readGameServerCommand("LOOK", client)
+	if errorResponse != "" {
 		return errorResponse, nil
 	}
 
@@ -79,6 +79,10 @@ func handleMoveCommand(args string, client *session.Client, gameServer *game_con
 		return response, err
 	}
 
+	if !client.IsLeader() {
+		return protocol.ResponseNotGroupLeader, nil
+	}
+
 	if err := gameServer.WriteCommand(game_conn.CommandToGameServer{
 		Player:    client.Username,
 		Command:   "MOVE",
@@ -87,8 +91,8 @@ func handleMoveCommand(args string, client *session.Client, gameServer *game_con
 		return "", err
 	}
 
-	response := client.ReadCommand()
-	if errorResponse := protocol.HandleCommandError("MOVE", response.ErrorCode); errorResponse != "" {
+	response, errorResponse := readGameServerCommand("MOVE", client)
+	if errorResponse != "" {
 		return errorResponse, nil
 	}
 

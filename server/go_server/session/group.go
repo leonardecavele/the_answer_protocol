@@ -173,3 +173,11 @@ func (c *Client) QuitGroup() {
 
 	c.Group = nil
 }
+
+func (client *Client) IsLeader() bool {
+	if client.Group == nil {
+		return false
+	}
+
+	return client.Username == client.Group.leader
+}

@@ -1,7 +1,7 @@
 package error
 
 const (
-	ProtocolNoError = 0
+	NoError = 0
 
 	NameInUseError = 201
 	NoExitError    = 301
@@ -32,10 +32,11 @@ const (
 	NpcNotHostileError    = 405
 	NoQuestAvailableError = 406
 
-	ConnectionFailedError = 900
-	GameServerClosedError = 900
-	SendFailedError       = 901
+	ConnectionFailedError  = 900
+	SendFailedError        = 901
+	GameServerTimeoutError = 902
 
 	InvalidQuestionError = 998
 	InvalidCommandError  = 999
+	UnknownError         = 999
 )
