@@ -235,6 +235,27 @@ impl GameManager {
         return self.all_items.contains_key(&item_id);
     }
 
+    pub fn get_only_item_with_name(&self, item_name: &str) -> Option<ItemId> {
+        let mut count = 0;
+        let mut item_id: Option<ItemId> = None;
+        for (_, item) in self.all_items.iter() {
+            if item.get_name() == item_name {
+                count += 1;
+                item_id = Some(item.get_id());
+            }
+        }
+        if count == 1 {
+            item_id
+        } else {
+            None
+        }
+    }
+
+    pub fn item_exists_with_name(&self, item_id: ItemId, item_name: &str) -> bool {
+        let item = self.all_items.get(&item_id);
+        item.is_some_and(|item| item.get_name() == item_name)
+    }
+
     pub fn get_neighbor_room_name(
         &self,
         room_name: &str,

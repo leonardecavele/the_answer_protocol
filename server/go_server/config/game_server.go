@@ -3,7 +3,7 @@ package config
 import "time"
 
 const (
-	GameServerIP   = "10.12.5.5"
+	GameServerIP   = "localhost"
 	GameServerPort = 38801
 
 	GameConnectionRetryDelay = 5
