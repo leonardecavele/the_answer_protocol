@@ -1,0 +1,58 @@
+{
+  "rooms": [
+    {
+      "id": 1,
+      "name": "cluster_du_bas",
+      "description": "Des bureaux pleins d'étudiants, où beaucoup de projets comme de bêtises fleurissent.",
+      "exits": {"south": "pature", "north": "cantina"}
+    },
+    {
+      "id": 2,
+      "name": "pature",
+      "description": "Un petit pré verdoyant et fleuri.",
+      "exits": {"north": "cluster_du_bas", "east": "devant_l_ecole"}
+    },
+    {
+      "id": 3,
+      "name": "devant_l_ecole",
+      "description": "Un grand panneau 42 vous accueille à la meilleure école du numérique.",
+      "exits": {"west": "entree", "south": "pature"}
+    },
+    {
+      "id": 4,
+      "name": "devant_le_bocal",
+      "description": "Certains viennent y chercher leur TIG, d'autres s'y rafraichir.",
+      "exits": {"west": "cluster_du_haut"}
+    },
+    {
+      "id": 5,
+      "name": "cluster_du_haut",
+      "description": "Des bureaux pleins d'étudiants, où beaucoup de projets comme de bêtises fleurissent.",
+      "exits": {"east": "devant_le_bocal", "north": "afk"}
+    },
+    {
+      "id": 6,
+      "name": "afk",
+      "description": "Un lieu de repos pour ces étudiants qui travaillent jour et nuit.",
+      "exits": {"south": "cluster_du_haut", "north": "cantina", "east": "entree"}
+    },
+    {
+      "id": 7,
+      "name": "entree",
+      "description": "Habitat naturel de ceux qui maîtrisent l'art du babyfoot.",
+      "exits": {"west": "afk", "east": "devant_l_ecole"}
+    },
+    {
+      "id": 8,
+      "name": "cantina",
+      "description": "Les étudiants y mangent midi et dîner. Essentiellement des wraps.",
+      "exits": {"north": "afk", "east": "foyer", "south": "cluster_du_bas"}
+    },
+    {
+      "id": 9,
+      "name": "foyer",
+      "description": "Une véritable usine à wraps au sein de l'école 42.",
+      "exits": {"west": "cantina"}
+    }
+  ]
+}
