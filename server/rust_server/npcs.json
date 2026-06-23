@@ -2,23 +2,412 @@
   "npcs": [
     {
       "id": 1,
-      "name": "Village Guard",
-      "npc_type": 2,
-      "hp": 20,
-      "max_hp": 20,
-      "dialogs": ["Stay safe, traveler.", "The roads can be dangerous."],
-      "quests": [],
-      "spawns": "room_test2"
-    },
-    {
-      "id": 2,
-      "name": "Wise Wizard",
+      "name": "vquetier",
       "npc_type": 5,
       "hp": null,
       "max_hp": null,
-      "dialogs": ["I have a task for you, young adventurer."],
-      "quests": [101, 102],
-      "spawns": "room_test"
+      "dialogs": [
+        [
+          "Tu sais ce qui est vraiment intéressant avec les LLMs ?",
+          "Ce n'est même plus l'attention.",
+          "L'attention est devenue le niveau 0 de la discussion.",
+          "Ce qui m'intéresse aujourd'hui c'est plutôt la question de savoir pourquoi des représentations aussi distribuées finissent par produire des features relativement localisables lorsqu'on applique des sparse autoencoders.",
+          "Parce que normalement ça ne devrait pas être aussi propre.",
+          "Quand tu regardes les anciens résultats sur les représentations distribuées, tout suggère qu'un concept devrait être éparpillé partout.",
+          "Puis tu entraînes un SAE suffisamment gros.",
+          "Et soudain tu trouves des directions qui ressemblent réellement à des objets sémantiques.",
+          "Pas parfaitement.",
+          "Mais suffisamment pour devenir troublantes.",
+          "Du coup la question cesse d'être \"comment le modèle représente les concepts\".",
+          "La question devient \"dans quelle base les concepts deviennent-ils simples\".",
+          "Ce qui est une question beaucoup plus mathématique.",
+          "Ça ressemble davantage à de la théorie spectrale qu'à de la linguistique.",
+          "D'ailleurs je pense que beaucoup de discussions sur les embeddings passent complètement à côté du sujet.",
+          "Les gens imaginent un nuage de points.",
+          "Ils imaginent vaguement des distances cosinus.",
+          "Ils imaginent roi - homme + femme ≈ reine.",
+          "Ce qui est amusant mais presque historique aujourd'hui.",
+          "Les vrais objets intéressants sont probablement les sous-espaces.",
+          "Les variétés.",
+          "Les directions privilégiées.",
+          "Les transformations linéaires apprises.",
+          "À grande échelle un transformer ressemble moins à une machine qui stocke des concepts qu'à une machine qui apprend des changements de coordonnées successifs.",
+          "Chaque couche réécrit le problème dans un système de référence légèrement différent.",
+          "Et le miracle est que cette succession de transformations finit par rendre la prédiction locale relativement facile.",
+          "C'est presque une histoire de préconditionnement géant.",
+          "Quand tu regardes certains papiers d'interprétabilité mécanistique, tu commences à voir apparaître des objets qui ressemblent à des algorithmes internes.",
+          "Pas au sens symbolique.",
+          "Au sens où certaines têtes semblent implémenter des opérations relativement spécialisées.",
+          "Détection de délimiteurs.",
+          "Copie.",
+          "Recherche de motifs.",
+          "Tracking d'accords grammaticaux.",
+          "Mécanismes de suppression d'information.",
+          "Et ça me rappelle énormément les structures de données.",
+          "Pas parce qu'elles sont identiques.",
+          "Parce qu'on retrouve la même logique de compression.",
+          "Un bon algorithme est souvent une manière de conserver uniquement l'information pertinente.",
+          "Un segment tree n'existe que parce qu'on refuse de recalculer certaines choses.",
+          "Une table sparse existe parce qu'on refuse de refaire le même travail.",
+          "Une structure de flot existe parce qu'on refuse d'explorer naïvement toutes les possibilités.",
+          "Toute l'informatique est une lutte contre le calcul inutile.",
+          "C'est probablement pour ça que j'aime autant les algorithmes de flot.",
+          "Pas les versions classiques.",
+          "Les trucs un peu plus étranges.",
+          "Cost scaling.",
+          "Capacity scaling.",
+          "Successive Shortest Path avec potentiels.",
+          "Les algorithmes où tu as l'impression que quelqu'un a trouvé une manière élégante de tricher contre l'explosion combinatoire.",
+          "SSP est un bon exemple.",
+          "À première vue on fait juste des plus courts chemins.",
+          "Mais en réalité tout le mécanisme des potentiels sert à réécrire la géométrie du problème.",
+          "Tu ne changes pas le graphe.",
+          "Tu changes la façon dont tu le regardes.",
+          "Les coûts réduits deviennent non négatifs.",
+          "Dijkstra redevient utilisable.",
+          "Et soudain un problème qui paraissait impossible devient manipulable.",
+          "J'aime beaucoup les algorithmes qui fonctionnent comme ça.",
+          "Ceux qui gagnent non pas par force brute mais par changement de perspective.",
+          "C'est aussi pour ça que les gens deviennent obsédés par LeetCode.",
+          "Pas pour les entretiens.",
+          "Les entretiens c'est un effet secondaire.",
+          "Ce qui est addictif c'est le moment où tu réalises que l'espace des solutions était mal paramétré.",
+          "Le problème n'était pas difficile.",
+          "Ton système de coordonnées était mauvais.",
+          "Tu pensais en tableaux.",
+          "Il fallait penser en graphes.",
+          "Tu pensais en graphes.",
+          "Il fallait penser en flots.",
+          "Tu pensais en flots.",
+          "Il fallait penser en dualité.",
+          "Puis un jour tu tombes sur un problème et tu réalises que la solution entière tient dans une observation de théorie des matroïdes que personne n'a envie d'entendre pendant un repas.",
+          "C'est là que les choses deviennent amusantes.",
+          "D'ailleurs Rocket League produit parfois la même sensation.",
+          "Les nouveaux regardent les mécaniques.",
+          "Les gens très forts regardent les rotations.",
+          "Puis certains commencent à regarder l'occupation de l'espace.",
+          "Les timings de ressources.",
+          "Les lignes de pression.",
+          "Les contraintes imposées aux adversaires.",
+          "À un certain niveau on ne joue plus vraiment le ballon.",
+          "On réduit progressivement l'ensemble des états accessibles.",
+          "Ce qui ressemble beaucoup à certaines stratégies en théorie des jeux.",
+          "Une équipe comme KCorp, lorsqu'elle est en contrôle total d'une partie, me donne parfois l'impression d'exécuter une recherche implicite dans un arbre de possibilités.",
+          "Pas parce qu'elle explore réellement cet arbre.",
+          "Parce qu'elle a appris une heuristique suffisamment bonne pour se comporter comme si elle l'avait exploré.",
+          "Et ça, au fond, c'est une définition étonnamment générale de l'intelligence.",
+          "Trouver une représentation assez compacte pour éviter d'avoir à faire le calcul exact.",
+          "Les humains font ça.",
+          "Les algorithmes font ça.",
+          "Les modèles font ça.",
+          "La question intéressante n'est peut-être pas de savoir comment ils raisonnent.",
+          "La question intéressante est de savoir quelle structure du monde permet à ces approximations de fonctionner aussi bien.",
+          "Parce que c'est probablement là que se cache la vraie théorie."
+        ]
+      ],
+      "quests": [],
+      "spawns": "cluster_du_bas"
+    },
+    {
+      "id": 2,
+      "name": "faon",
+      "npc_type": 5,
+      "hp": null,
+      "max_hp": null,
+      "dialogs": [
+        [
+          "༺ ᛚᛖ ᚠᚨᛟᚾ ᚾᛖ ᛈᚨᚱᛚᛖ ᛈᚨᛋ ᚨᚢᛪ ᚺᛟᛗᛗᛖᛋ ༻",
+          "☽ ᛁᛚ ᛈᛟᚱᛏᛖ ᛚᚨ ᚹᛟᛁᛪ ᛞᛖᛋ ᚱᚨᚲᛁᚾᛖᛋ ☾",
+          "⟁ ᛚᚨ ᛗᛟᚢᛋᛋᛖ ᚱᛖᛏᛁᛖᚾᛏ ᛋᛖᛋ ᛈᚨᛋ ⟁"
+        ]
+      ],
+      "quests": [],
+      "spawns": "pature"
+    },
+    {
+      "id": 3,
+      "name": "smenard",
+      "npc_type": 5,
+      "hp": null,
+      "max_hp": null,
+      "dialogs": [
+        [
+          "baaaakaaaa"
+        ]
+      ],
+      "quests": [],
+      "spawns": "cluster_du_bas"
+    },
+    {
+      "id": 4,
+      "name": "mdourdoi",
+      "npc_type": 2,
+      "hp": 150,
+      "max_hp": 150,
+      "dialogs": [
+        [
+          "Jeune homme !",
+          "Je n'arrive pas à faire",
+          "fonctionner la calculette lumineuse !",
+          "Aide moi à réparer ma libft et vite !"
+        ]
+      ],
+      "quests": [],
+      "spawns": "cluster_du_bas"
+    },
+    {
+      "id": 5,
+      "name": "gagulhon",
+      "npc_type": 5,
+      "hp": null,
+      "max_hp": null,
+      "dialogs": [
+        [
+          "hmphhhh hmphhhh"
+        ]
+      ],
+      "quests": [],
+      "spawns": "devant_l_ecole"
+    },
+    {
+      "id": 6,
+      "name": "ndalailallema",
+      "npc_type": 5,
+      "hp": null,
+      "max_hp": null,
+      "dialogs": [
+        [
+          "Salutations jeune programmeur.",
+          "Je constate que tu ne connais guère",
+          "les principes SOLID...",
+          "Voici la quête idéale pour overflow",
+          "ton bouddhisme jusqu'à l'éveil."
+        ],
+        [
+          "*Nathan discute avec son alter",
+          "ego Parad0xe et semble ne pas vous entendre*"
+        ]
+      ],
+      "quests": [],
+      "spawns": "devant_le_bocal"
+    },
+    {
+      "id": 7,
+      "name": "gabach",
+      "npc_type": 5,
+      "hp": null,
+      "max_hp": null,
+      "dialogs": [
+        [
+          "J'ai remarqué quelque chose.",
+          "Tu te déplaces de room en room mais",
+          "tu n'utilises pas les vim motions.",
+          "Savais-tu que hjkl étaient respectivement",
+          "gauche bas haut droite ?",
+          "C'est bien plus efficace tu sais."
+        ],
+        [
+          "Tu aimes Neovim ?",
+          "Moi j'aime bien Neovim.",
+          "Tu connais Vimgrep ?",
+          "C'est très pratique pour du refactor.",
+          "Tu peux utiliser sed aussi.",
+          "Sed et Vimgrep se marient très bien."
+        ],
+        [
+          "Coucou.",
+          "Si tu veux j'ai une config Neovim à te passer.",
+          "C'est de la bonne fais moi confiance."
+        ],
+        [
+          "Tu veux que je t'apprenne à utiliser ton navigateur sans souris ?",
+          "Tu peux utiliser Surfing Keys ça permet de cliquer et sélectionner sans souris.",
+          "Tu peux aussi utiliser les Vim motions dans les pages et dans les inputs."
+        ],
+        [
+          "Je déteste VSCode.",
+          "J'ai corrigé quelqu'un qui utilisait VSCode; je suis de mauvaise humeur.",
+          "Moi je les KO les gens qui utilisent VSCode. J'ai pas peur moi.",
+          "#NEOVIMGANG"
+        ]
+      ],
+      "quests": [],
+      "spawns": "cluster_du_haut"
+    },
+    {
+      "id": 8,
+      "name": "enchevri",
+      "npc_type": 2,
+      "hp": 120,
+      "max_hp": 120,
+      "dialogs": [
+        [
+          "Je comprends rien a la norme...",
+          "Pitié aide moi...",
+          "J'ai compté à la main parce que je sais pas",
+          "me servir de grep et j'ai 1242 lignes d'erreur...",
+          "Mets mon code à la norme s'il-te-plaît... :("
+        ]
+      ],
+      "quests": [],
+      "spawns": "cluster_du_haut"
+    },
+    {
+      "id": 9,
+      "name": "acampion",
+      "npc_type": 2,
+      "hp": 100,
+      "max_hp": 100,
+      "dialogs": [
+        [
+          "Coucou !",
+          "Mon crâne rayonne aujourd'hui.",
+          "Tu sais jouer aux échecs ?",
+          "J'ai tellement de niveau que tu vas t'en arracher les cheveux.",
+          "...",
+          "...",
+          "Arrête de me regarder comme ça !"
+        ]
+      ],
+      "quests": [],
+      "spawns": "afk"
+    },
+    {
+      "id": 10,
+      "name": "mphippen",
+      "npc_type": 5,
+      "hp": null,
+      "max_hp": null,
+      "dialogs": [
+        [
+          "Sigsegven !",
+          "Tu savais que 67 c'etait l'origine",
+          "de l'univers ?",
+          "Les gens pensent que c'est 42 mais",
+          "c'est 67 en fait.",
+          "C'est moi qui ait créé l'univers donc",
+          "je sais de quoi je parle.",
+          "Tu veux que je t'apprenne à le faire ?",
+          "Il faut d'abors faire SIX.",
+          "puis SEVEN !",
+          "SIX !",
+          "SEVEN !"
+        ]
+      ],
+      "quests": [],
+      "spawns": "afk"
+    },
+    {
+      "id": 11,
+      "name": "crappo",
+      "npc_type": 2,
+      "hp": 100,
+      "max_hp": 100,
+      "dialogs": [
+        [
+          "TU VEUX JOUER AU BABY ?!",
+          "HEIN ?!",
+          "TU VEUX JOUER ?!",
+          "MAIS OUI TU VEUX JOUER !",
+          "ALLEZ VIENS QUE JE T'ECLATE !"
+        ]
+      ],
+      "quests": [],
+      "spawns": "entree"
+    },
+    {
+      "id": 12,
+      "name": "ayteyssi",
+      "npc_type": 5,
+      "hp": null,
+      "max_hp": null,
+      "dialogs": [
+        [
+          "... *aura*"
+        ]
+      ],
+      "quests": [],
+      "spawns": "devant_l_ecole"
+    },
+    {
+      "id": 13,
+      "name": "ldecavel",
+      "npc_type": 2,
+      "hp": 100,
+      "max_hp": 100,
+      "dialogs": [
+        [
+          "mhh...",
+          "MHHH.....",
+          "Ah bonsoir !",
+          "Tu ne me reconnais pas ?",
+          "Je suis le grand gagnant du shifumi explorer enfin !",
+          "Affronte moi et goûte à ma puissance."
+        ]
+      ],
+      "quests": [],
+      "spawns": "cantina"
+    },
+    {
+      "id": 14,
+      "name": "cobussie",
+      "npc_type": 5,
+      "hp": null,
+      "max_hp": null,
+      "dialogs": [
+        [
+          "mhhh mhh mh",
+          "mhh mh ?",
+          "mhh !!!",
+          "mhh mhh MHHHH !"
+        ]
+      ],
+      "quests": [],
+      "spawns": "cantina"
+    },
+    {
+      "id": 15,
+      "name": "ibady",
+      "npc_type": 2,
+      "hp": 142,
+      "max_hp": 142,
+      "dialogs": [
+        [
+          "UN WRAP SAUCE",
+          "MIAMI POUR ENCHEVRI !",
+          "Qu'est-ce que tu fais là toi ?!",
+          "Tu vois pas que c'est le rush ?!",
+          "Allez on se magne et au fourneau !"
+        ]
+      ],
+      "quests": [],
+      "spawns": "foyer"
+    },
+    {
+      "id": 16,
+      "name": "bokim",
+      "npc_type": 5,
+      "hp": null,
+      "max_hp": null,
+      "dialogs": [
+        [
+          "Coucou !",
+          "Est-ce que tu sais qu'on est juste dans un jeu ?",
+          "Tu ne peux pas le battre pour sortir tu peux juste quitter.",
+          "Mais si tu veux tu peux gagner de l'expérience en te battant.",
+          "Il y a 6 monstres que tu peux combattre.",
+          "Ibady, Ldecavel, Mdourdoi, Acampion, Crappo et Enchevri.",
+          "Certains d'entre eux peuvent te faire gagner des items.",
+          "Iris fait gagner des wraps qui régénèrent ta vie.",
+          "Matthieu fait gagner des t-shirts qui te permettent de subir moins de dégats.",
+          "Tu peux trouver un objet perdu en face du cluster du bas.",
+          "Il te permettra de débloquer les quêtes de Nathan devant le bocal.",
+          "Et surtout ne parle jamais à Vquetier si ton temps est compté.",
+          "Bon courage !"
+        ]
+      ],
+      "quests": [],
+      "spawns": "cluster_du_haut"
     }
   ]
 }
