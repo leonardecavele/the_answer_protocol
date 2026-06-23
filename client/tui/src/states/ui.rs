@@ -34,4 +34,24 @@ impl UiState {
             show_event_overlay: false,
         }
     }
+
+    pub fn push_notification(
+        &mut self,
+        id_opt: Option<String>,
+        notification_type: NotificationType,
+        message: String,
+        duration_ms: Option<u64>,
+    ) {
+        let duration = duration_ms.unwrap_or(5000);
+        self.notifications.push(Notification::new(
+            id_opt,
+            message,
+            notification_type,
+            duration,
+        ));
+    }
+
+    pub fn remove_notification(&mut self, target_id: &str) {
+        self.notifications.retain(|n| n.id != target_id);
+    }
 }

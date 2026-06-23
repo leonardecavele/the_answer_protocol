@@ -21,8 +21,16 @@ pub enum SystemEvent {
 /// Events strictly related to the network layer status and data.
 #[derive(Debug, Clone)]
 pub enum NetworkEvent {
-    ConnectionAttemptStarted { server_address: String },
-    ConnectionEstablished,
+    ConnectionAttemptStarted { 
+        server_ip: String,
+        server_port: String,
+        player_name: String,
+    },
+    ConnectionEstablished { 
+        server_ip: String,
+        server_port: String,
+        player_name: String,
+    },
     ConnectionFailed { error_message: String },
     ConnectionLost { reason: String },
     /// Raw payload from the API client before processing

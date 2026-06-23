@@ -14,6 +14,7 @@ use crossterm::event::{Event as CrosstermEvent, KeyCode, KeyModifiers};
 use ratatui::backend::CrosstermBackend;
 use ratatui::Terminal;
 use std::io;
+use std::time::Instant;
 use tracing::info;
 
 pub struct App {
@@ -38,21 +39,11 @@ impl App {
         }
     }
 
-    /// The main application loop.
     pub async fn run(
         &mut self,
         terminal: &mut Terminal<CrosstermBackend<io::Stdout>>,
     ) -> Result<(), ApplicationError> {
-        // Start the network manager, giving it a clone of the event sender
-        let event_sender = self.event_broker.sender();
-        self.network_manager = Some(NetworkManager::start(
-            event_sender,
-            self.state.network.server_ip.clone(),
-            self.state.network.server_port.clone(),
-        ));
-
         while !self.state.should_quit {
-            // 1. Draw the UI
             terminal.draw(|frame| {
                 let area = frame.area();
                 self.active_view.draw(&self.state, frame, area);
@@ -60,20 +51,15 @@ impl App {
                 self.notification_overlay.draw(&self.state, frame, area);
             })?;
 
-            // 2. Wait for the next event asynchronously
             let application_event = self.event_broker.next_event().await?;
 
-            // 3. Update the state based on the event
             self.update(application_event);
         }
 
         Ok(())
     }
 
-    /// Centralized update method.
-    /// Determines how the application state changes in response to an event.
     fn update(&mut self, event: ApplicationEvent) {
-        // Archiving the event
         if !matches!(event, ApplicationEvent::Tick) {
             self.state
                 .ui
@@ -86,9 +72,7 @@ impl App {
 
         match event {
             ApplicationEvent::Tick => {
-                // Handle periodic updates (animations, timeouts, etc.)
-                let now = std::time::Instant::now();
-                self.state.ui.notifications.retain(|n| now < n.expires_at);
+                self.state.ui.notifications.retain(|n| Instant::now() < n.expires_at);
             }
             ApplicationEvent::Terminal(crossterm_event) => {
                 self.handle_terminal_event(crossterm_event);
@@ -112,7 +96,6 @@ impl App {
 
     fn handle_terminal_event(&mut self, event: CrosstermEvent) {
         if let CrosstermEvent::Key(key_event) = event {
-            // Global keybinds
             if key_event.modifiers == KeyModifiers::CONTROL && key_event.code == KeyCode::Char('c')
             {
                 self.state.should_quit = true;
@@ -125,41 +108,60 @@ impl App {
             }
         }
 
-        // Pass event to global overlays first. If consumed, stop propagation.
         if self.event_overlay.is_blocking(&self.state) {
-            let _ = self.event_overlay.handle_event(&mut self.state, &event);
+            let _ = self.event_overlay.handle_event(&mut self.state, &event, &self.event_broker.sender());
             return;
         }
 
-        // Notifications only intercept clicks that target them
         if let CrosstermEvent::Mouse(mouse_event) = event {
             if self.notification_overlay.is_mouse_over(mouse_event.column, mouse_event.row) {
-                if self.notification_overlay.handle_event(&mut self.state, &event) {
+                if self.notification_overlay.handle_event(&mut self.state, &event, &self.event_broker.sender()) {
                     return;
                 }
             }
         }
 
-        // Route event to active view
-        self.active_view.handle_event(&mut self.state, &event);
+        self.active_view.handle_event(&mut self.state, &event, &self.event_broker.sender());
     }
 
     fn handle_network_event(&mut self, event: NetworkEvent) {
         match event {
-            NetworkEvent::ConnectionAttemptStarted { server_address } => {
-                info!("Attempting to connect to {}", server_address);
+            NetworkEvent::ConnectionAttemptStarted { server_ip, server_port, player_name } => {
+                self.network_manager = None;
+                
+                self.network_manager = Some(crate::network::NetworkManager::start(
+                    self.event_broker.sender(),
+                    server_ip,
+                    server_port,
+                    player_name,
+                ));
             }
-            NetworkEvent::ConnectionEstablished => {
-                info!("Connection established!");
+            NetworkEvent::ConnectionEstablished { server_ip, server_port, player_name } => {
+                self.state.ui.remove_notification(crate::constants::NOTIF_ID_CONNECTION_ATTEMPT);
+                
+                self.state.ui.push_notification(
+                    None,
+                    crate::events::types::NotificationType::Information,
+                    "Connected to the server successfully!".to_string(),
+                    None,
+                );
+                
+                self.state.network.server_ip = server_ip;
+                self.state.network.server_port = server_port;
+                self.state.game.player_name = Some(player_name);
+
+                self.active_view = Box::new(crate::ui::views::game::GameView::new());
             }
             NetworkEvent::ConnectionFailed { error_message } => {
-                info!("Connection failed: {}", error_message);
-                self.state.ui.notifications.push(crate::states::ui::Notification::new(
+                self.network_manager = None;
+                self.state.ui.remove_notification(crate::constants::NOTIF_ID_CONNECTION_ATTEMPT);
+                
+                self.state.ui.push_notification(
                     None,
-                    format!("Connection Failed: {}", error_message),
                     crate::events::types::NotificationType::Error,
-                    5000,
-                ));
+                    format!("Connection failed: {}", error_message),
+                    None,
+                );
             }
             NetworkEvent::ConnectionLost { reason } => {
                 info!("Connection lost: {}", reason);
@@ -171,7 +173,6 @@ impl App {
     }
 
     fn handle_game_event(&mut self, event: GameEvent) {
-        // Game logic updates
         match event {
             GameEvent::PlayerJoined { player_name } => info!("Player {} joined", player_name),
             _ => {}

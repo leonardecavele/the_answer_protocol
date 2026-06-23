@@ -3,10 +3,12 @@ pub mod event_overlay;
 pub mod text_input;
 pub mod button;
 
+use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
 use crossterm::event::Event as CrosstermEvent;
 use ratatui::layout::Rect;
 use ratatui::Frame;
+use tokio::sync::mpsc;
 
 /// The Component trait defines a reusable UI element.
 pub trait Component {
@@ -21,7 +23,7 @@ pub trait Component {
 
     /// Handles an event, returning a boolean indicating if the event was consumed.
     /// If consumed, the event shouldn't be propagated further to other components or views.
-    fn handle_event(&mut self, _state: &mut AppState, _event: &CrosstermEvent) -> bool {
+    fn handle_event(&mut self, _state: &mut AppState, _event: &CrosstermEvent, _event_sender: &mpsc::Sender<ApplicationEvent>) -> bool {
         false
     }
 

@@ -117,7 +117,7 @@ impl Component for NotificationComponent {
         }
     }
 
-    fn handle_event(&mut self, state: &mut AppState, event: &CrosstermEvent) -> bool {
+    fn handle_event(&mut self, state: &mut AppState, event: &CrosstermEvent, _event_sender: &tokio::sync::mpsc::Sender<crate::events::ApplicationEvent>) -> bool {
         if let CrosstermEvent::Mouse(MouseEvent { kind, column, row, .. }) = event {
             if *kind == MouseEventKind::Down(crossterm::event::MouseButton::Left) {
                 // Find which notification was clicked

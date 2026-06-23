@@ -1,6 +1,4 @@
-use crate::events::types::NotificationType;
 use crate::states::app::AppState;
-use crate::states::ui::Notification;
 use crate::ui::components::button::ButtonComponent;
 use crate::ui::components::text_input::TextInputComponent;
 use crate::ui::components::Component;
@@ -116,7 +114,7 @@ impl AppView for LoginView {
         self.connect_button.draw(state, frame, button_area);
     }
 
-    fn handle_event(&mut self, state: &mut AppState, event: &CrosstermEvent) {
+    fn handle_event(&mut self, state: &mut AppState, event: &CrosstermEvent, event_sender: &tokio::sync::mpsc::Sender<crate::events::ApplicationEvent>) {
         match event {
             CrosstermEvent::Key(KeyEvent { code, .. }) => {
                 // Keyboard navigation
@@ -163,47 +161,46 @@ impl AppView for LoginView {
             _ => {}
         }
 
-        // Delegate event to the currently focused component
         match self.current_focus {
             LoginFocus::PlayerName => {
-                self.name_input.handle_event(state, event);
+                self.name_input.handle_event(state, event, event_sender);
             }
             LoginFocus::ServerIp => {
-                self.ip_input.handle_event(state, event);
+                self.ip_input.handle_event(state, event, event_sender);
             }
             LoginFocus::ServerPort => {
-                self.port_input.handle_event(state, event);
+                self.port_input.handle_event(state, event, event_sender);
             }
             LoginFocus::ConnectButton => {
-                self.connect_button.handle_event(state, event);
+                self.connect_button.handle_event(state, event, event_sender);
                 
                 if self.connect_button.take_pressed() {
-                    // Check if fields are empty
-                    if self.name_input.value.is_empty() 
-                        || self.ip_input.value.is_empty() 
-                        || self.port_input.value.is_empty() 
-                    {
-                        state.ui.notifications.push(Notification::new(
-                            None, 
-                            "All fields are required!".to_string(), 
-                            NotificationType::Error, 
-                            5000
-                        ));
+                    let name = self.name_input.value.clone();
+                    let ip = self.ip_input.value.clone();
+                    let port = self.port_input.value.clone();
+
+                    if name.is_empty() || ip.is_empty() || port.is_empty() {
+                        state.ui.push_notification(
+                            None,
+                            crate::events::types::NotificationType::Warning,
+                            "All fields must be filled.".to_string(),
+                            None,
+                        );
                     } else {
-                        // Fields are valid, we update the state and we would normally trigger the connection here
-                        state.game.player_name = Some(self.name_input.value.clone());
-                        state.network.server_ip = self.ip_input.value.clone();
-                        state.network.server_port = self.port_input.value.clone();
-                        
-                        state.ui.notifications.push(Notification::new(
-                            None, 
-                            format!("Connecting to {}:{}...", state.network.server_ip, state.network.server_port), 
-                            NotificationType::Information, 
-                            5000
+                        state.ui.push_notification(
+                            Some(crate::constants::NOTIF_ID_CONNECTION_ATTEMPT.to_string()),
+                            crate::events::types::NotificationType::Information,
+                            format!("Connecting to {}:{}...", ip, port),
+                            None,
+                        );
+
+                        let _ = event_sender.try_send(crate::events::ApplicationEvent::Network(
+                            crate::events::NetworkEvent::ConnectionAttemptStarted {
+                                server_ip: ip,
+                                server_port: port,
+                                player_name: name,
+                            }
                         ));
-                        
-                        // NOTE: Real network trigger will be implemented later.
-                        // Right now the NetworkManager in app.rs starts automatically.
                     }
                 }
             }

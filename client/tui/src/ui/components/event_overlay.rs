@@ -1,5 +1,6 @@
 use crate::states::app::AppState;
 use crate::ui::components::Component;
+use crossterm::event::Event as CrosstermEvent;
 // No need to import keyboard events anymore as we do not manage them manually
 use ratatui::layout::Rect;
 use ratatui::style::{Color, Style};
@@ -15,6 +16,10 @@ impl EventOverlayComponent {
 }
 
 impl Component for EventOverlayComponent {
+    fn handle_event(&mut self, _state: &mut AppState, _event: &CrosstermEvent, _event_sender: &tokio::sync::mpsc::Sender<crate::events::ApplicationEvent>) -> bool {
+        false
+    }
+
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
         if !state.ui.show_event_overlay {
             return;

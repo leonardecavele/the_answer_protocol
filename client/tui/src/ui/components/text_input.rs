@@ -3,7 +3,7 @@ use crate::ui::components::Component;
 use crossterm::event::{Event as CrosstermEvent, KeyCode, KeyEvent};
 use ratatui::layout::Rect;
 use ratatui::style::{Color, Style};
-use ratatui::widgets::{Block, Borders, Padding, Paragraph};
+use ratatui::widgets::{Block, Borders, Paragraph};
 use ratatui::Frame;
 
 pub struct TextInputComponent {
@@ -51,7 +51,7 @@ impl Component for TextInputComponent {
         frame.render_widget(paragraph, area);
     }
 
-    fn handle_event(&mut self, _state: &mut AppState, event: &CrosstermEvent) -> bool {
+    fn handle_event(&mut self, _state: &mut AppState, event: &CrosstermEvent, _event_sender: &tokio::sync::mpsc::Sender<crate::events::ApplicationEvent>) -> bool {
         if !self.is_focused {
             return false;
         }

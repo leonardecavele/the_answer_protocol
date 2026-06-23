@@ -16,30 +16,35 @@ impl NetworkManager {
         event_sender: mpsc::Sender<ApplicationEvent>,
         server_ip: String,
         server_port: String,
+        player_name: String,
     ) -> Self {
         let background_task = tokio::spawn(async move {
             let server_address = format!("{}:{}", server_ip, server_port);
-            
-            // Notify the application that we are starting the connection attempt.
-            let _ = event_sender
-                .send(ApplicationEvent::Network(NetworkEvent::ConnectionAttemptStarted {
-                    server_address: server_address.clone(),
-                }))
-                .await;
 
-            // TODO: In the future, this is where we will instantiate `api_client::client::connect::ClientConnect`
-            // and actually perform the TCP connection.
-            
-            // For now, let's simulate a connection delay to prove the async nature.
-            tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
-            
-            // Simulate a connection failure just for the scaffolding phase.
-            // Normally we would loop here listening to `api_client` events and translating them.
-            let _ = event_sender
-                .send(ApplicationEvent::Network(NetworkEvent::ConnectionFailed {
-                    error_message: "Network layer not fully implemented yet".to_string(),
-                }))
-                .await;
+            match api_client::client::connect::ClientConnect::connect(&server_address).await {
+                Ok(mut client) => {
+                    let _ = event_sender.send(ApplicationEvent::Network(NetworkEvent::ConnectionEstablished {
+                        server_ip,
+                        server_port,
+                        player_name,
+                    })).await;
+
+                    client.on_event({
+                        let _event_sender = event_sender.clone();
+                        move |server_event| {
+                            tracing::debug!("Received event from server: {:?}", server_event);
+                        }
+                    });
+
+                    let (_tx, rx) = tokio::sync::oneshot::channel::<()>();
+                    let _ = rx.await;
+                }
+                Err(e) => {
+                    let _ = event_sender.send(ApplicationEvent::Network(NetworkEvent::ConnectionFailed {
+                        error_message: e.to_string(),
+                    })).await;
+                }
+            }
         });
 
         Self { background_task }
@@ -48,7 +53,6 @@ impl NetworkManager {
 
 impl Drop for NetworkManager {
     fn drop(&mut self) {
-        // Ensure the network task is aborted if the manager is dropped
         self.background_task.abort();
     }
 }
