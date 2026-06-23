@@ -1,28 +1,19 @@
-pub mod app;
-pub mod assets;
-pub mod commands;
-pub mod components;
-pub mod config;
+pub mod errors;
 pub mod events;
+pub mod app;
 pub mod network;
-pub mod state;
+pub mod states;
+pub mod constants;
 
-use crate::app::App;
-use crate::events::{AppEvent, UiEvent};
 use crossterm::event::{DisableMouseCapture, EnableMouseCapture};
 use crossterm::execute;
 use crossterm::terminal::{
     EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode,
 };
-use futures::StreamExt;
 use ratatui::Terminal;
 use ratatui::backend::CrosstermBackend;
-use std::time::Duration;
 use std::{io, panic};
-use tokio::sync::mpsc;
-
-const TICK_RATE: Duration = Duration::from_millis(500);
-const MAX_EVENTS_BUS: usize = 250;
+use crate::app::App;
 
 fn terminal_setup() -> io::Result<Terminal<CrosstermBackend<io::Stdout>>> {
     enable_raw_mode()?;
@@ -64,7 +55,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     terminal_restore(terminal)?;
 
     if let Err(err) = res {
-        eprintln!("{:?}", err);
+        eprintln!("Application Exited with Error: {:?}", err);
     }
 
     Ok(())
