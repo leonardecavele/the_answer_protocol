@@ -2,7 +2,7 @@ use crate::states::app::AppState;
 use crate::ui::components::button::ButtonComponent;
 use crate::ui::components::text_input::TextInputComponent;
 use crate::ui::components::Component;
-use crate::ui::AppView;
+use crate::ui::views::AppView;
 use crossterm::event::{Event as CrosstermEvent, KeyCode, KeyEvent, MouseEvent, MouseEventKind};
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::Frame;
@@ -114,7 +114,7 @@ impl AppView for LoginView {
         self.connect_button.draw(state, frame, button_area);
     }
 
-    fn handle_event(&mut self, state: &mut AppState, event: &CrosstermEvent, event_sender: &tokio::sync::mpsc::Sender<crate::events::ApplicationEvent>) {
+    fn handle_terminal_event(&mut self, state: &mut AppState, event: &CrosstermEvent, event_sender: &tokio::sync::mpsc::Sender<crate::events::ApplicationEvent>) {
         match event {
             CrosstermEvent::Key(KeyEvent { code, .. }) => {
                 // Keyboard navigation
@@ -163,16 +163,16 @@ impl AppView for LoginView {
 
         match self.current_focus {
             LoginFocus::PlayerName => {
-                self.name_input.handle_event(state, event, event_sender);
+                self.name_input.handle_terminal_event(state, event, event_sender);
             }
             LoginFocus::ServerIp => {
-                self.ip_input.handle_event(state, event, event_sender);
+                self.ip_input.handle_terminal_event(state, event, event_sender);
             }
             LoginFocus::ServerPort => {
-                self.port_input.handle_event(state, event, event_sender);
+                self.port_input.handle_terminal_event(state, event, event_sender);
             }
             LoginFocus::ConnectButton => {
-                self.connect_button.handle_event(state, event, event_sender);
+                self.connect_button.handle_terminal_event(state, event, event_sender);
                 
                 if self.connect_button.take_pressed() {
                     let name = self.name_input.value.clone();

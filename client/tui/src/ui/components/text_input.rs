@@ -51,7 +51,7 @@ impl Component for TextInputComponent {
         frame.render_widget(paragraph, area);
     }
 
-    fn handle_event(&mut self, _state: &mut AppState, event: &CrosstermEvent, _event_sender: &tokio::sync::mpsc::Sender<crate::events::ApplicationEvent>) -> bool {
+    fn handle_terminal_event(&mut self, _state: &mut AppState, event: &CrosstermEvent, _event_sender: &tokio::sync::mpsc::Sender<crate::events::ApplicationEvent>) -> bool {
         if !self.is_focused {
             return false;
         }

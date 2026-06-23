@@ -9,7 +9,6 @@ pub enum ApplicationEvent {
     System(SystemEvent),
     Network(NetworkEvent),
     Game(GameEvent),
-    UserInterface(UserInterfaceEvent),
 }
 
 /// Events related to the application lifecycle and system level actions.
@@ -46,17 +45,6 @@ pub enum GameEvent {
     ChatMessageReceived { sender: String, message: String },
 }
 
-/// Events for UI-specific triggers (notifications, popups).
-#[derive(Debug, Clone)]
-pub enum UserInterfaceEvent {
-    ShowNotification { 
-        id: Option<String>,
-        message: String, 
-        notification_type: NotificationType, 
-        duration_ms: u64 
-    },
-    HideNotification,
-}
 
 #[derive(Debug, Clone, Copy)]
 pub enum NotificationType {

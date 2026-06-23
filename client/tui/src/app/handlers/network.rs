@@ -1,0 +1,65 @@
+use crate::app::App;
+use crate::events::NetworkEvent;
+use tracing::info;
+
+impl App {
+    pub(crate) fn handle_network_event(&mut self, event: NetworkEvent) {
+        match event {
+            NetworkEvent::ConnectionAttemptStarted {
+                server_ip,
+                server_port,
+                player_name,
+            } => {
+                self.network_manager = None;
+
+                self.network_manager = Some(crate::network::NetworkManager::start(
+                    self.event_broker.sender(),
+                    server_ip,
+                    server_port,
+                    player_name,
+                ));
+            }
+            NetworkEvent::ConnectionEstablished {
+                server_ip,
+                server_port,
+                player_name,
+            } => {
+                self.state
+                    .ui
+                    .remove_notification(crate::constants::NOTIF_ID_CONNECTION_ATTEMPT);
+
+                self.state.ui.push_notification(
+                    None,
+                    crate::events::types::NotificationType::Information,
+                    "Connected to the server successfully!".to_string(),
+                    None,
+                );
+
+                self.state.network.server_ip = server_ip;
+                self.state.network.server_port = server_port;
+                self.state.game.player_name = Some(player_name);
+
+                self.active_view = Box::new(crate::ui::views::game::GameView::new());
+            }
+            NetworkEvent::ConnectionFailed { error_message } => {
+                self.network_manager = None;
+                self.state
+                    .ui
+                    .remove_notification(crate::constants::NOTIF_ID_CONNECTION_ATTEMPT);
+
+                self.state.ui.push_notification(
+                    None,
+                    crate::events::types::NotificationType::Error,
+                    format!("Connection failed: {}", error_message),
+                    None,
+                );
+            }
+            NetworkEvent::ConnectionLost { reason } => {
+                info!("Connection lost: {}", reason);
+            }
+            NetworkEvent::ServerPayloadReceived(_) => {
+                info!("Received raw server payload");
+            }
+        }
+    }
+}

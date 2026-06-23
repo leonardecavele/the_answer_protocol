@@ -23,7 +23,7 @@ pub trait Component {
 
     /// Handles an event, returning a boolean indicating if the event was consumed.
     /// If consumed, the event shouldn't be propagated further to other components or views.
-    fn handle_event(&mut self, _state: &mut AppState, _event: &CrosstermEvent, _event_sender: &mpsc::Sender<ApplicationEvent>) -> bool {
+    fn handle_terminal_event(&mut self, _state: &mut AppState, _event: &CrosstermEvent, _event_sender: &mpsc::Sender<ApplicationEvent>) -> bool {
         false
     }
 

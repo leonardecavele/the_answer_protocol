@@ -1,6 +1,6 @@
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
-use crate::ui::AppView;
+use crate::ui::views::AppView;
 use crossterm::event::Event as CrosstermEvent;
 use ratatui::layout::{Alignment, Rect};
 use ratatui::style::{Color, Style};
@@ -30,7 +30,7 @@ impl AppView for GameView {
         frame.render_widget(paragraph, area);
     }
 
-    fn handle_event(
+    fn handle_terminal_event(
         &mut self,
         _state: &mut AppState,
         _event: &CrosstermEvent,

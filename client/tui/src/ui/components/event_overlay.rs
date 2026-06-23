@@ -16,7 +16,7 @@ impl EventOverlayComponent {
 }
 
 impl Component for EventOverlayComponent {
-    fn handle_event(&mut self, _state: &mut AppState, _event: &CrosstermEvent, _event_sender: &tokio::sync::mpsc::Sender<crate::events::ApplicationEvent>) -> bool {
+    fn handle_terminal_event(&mut self, _state: &mut AppState, _event: &CrosstermEvent, _event_sender: &tokio::sync::mpsc::Sender<crate::events::ApplicationEvent>) -> bool {
         false
     }
 
