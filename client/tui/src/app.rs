@@ -1,8 +1,13 @@
-use crate::constants::TICK_RATE;
+use crate::constants::{MAX_EVENT_HISTORY, TICK_RATE};
 use crate::errors::ApplicationError;
-use crate::events::{ApplicationEvent, EventBroker, GameEvent, NetworkEvent, SystemEvent, UserInterfaceEvent};
+use crate::events::{
+    ApplicationEvent, EventBroker, GameEvent, NetworkEvent, SystemEvent, UserInterfaceEvent,
+};
 use crate::network::NetworkManager;
 use crate::states::app::AppState;
+use crate::ui::components::event_overlay::EventOverlayComponent;
+use crate::ui::components::notifications::NotificationComponent;
+use crate::ui::components::Component;
 use crate::ui::views::LoginView;
 use crate::ui::AppView;
 use crossterm::event::{Event as CrosstermEvent, KeyCode, KeyModifiers};
@@ -17,6 +22,8 @@ pub struct App {
     // Store the network manager to keep its background task alive
     pub network_manager: Option<NetworkManager>,
     pub active_view: Box<dyn AppView>,
+    pub event_overlay: EventOverlayComponent,
+    pub notification_overlay: NotificationComponent,
 }
 
 impl App {
@@ -26,6 +33,8 @@ impl App {
             event_broker: EventBroker::new(TICK_RATE),
             network_manager: None,
             active_view: Box::new(LoginView::new()),
+            event_overlay: EventOverlayComponent::new(),
+            notification_overlay: NotificationComponent::new(),
         }
     }
 
@@ -34,7 +43,6 @@ impl App {
         &mut self,
         terminal: &mut Terminal<CrosstermBackend<io::Stdout>>,
     ) -> Result<(), ApplicationError> {
-        
         // Start the network manager, giving it a clone of the event sender
         let event_sender = self.event_broker.sender();
         self.network_manager = Some(NetworkManager::start(
@@ -46,7 +54,10 @@ impl App {
         while !self.state.should_quit {
             // 1. Draw the UI
             terminal.draw(|frame| {
-                self.active_view.draw(&self.state, frame, frame.area());
+                let area = frame.area();
+                self.active_view.draw(&self.state, frame, area);
+                self.event_overlay.draw(&self.state, frame, area);
+                self.notification_overlay.draw(&self.state, frame, area);
             })?;
 
             // 2. Wait for the next event asynchronously
@@ -62,20 +73,37 @@ impl App {
     /// Centralized update method.
     /// Determines how the application state changes in response to an event.
     fn update(&mut self, event: ApplicationEvent) {
+        // Archiving the event
+        if !matches!(event, ApplicationEvent::Tick) {
+            self.state
+                .ui
+                .event_history
+                .insert(0, format!("{:?}", event));
+            if self.state.ui.event_history.len() > MAX_EVENT_HISTORY {
+                self.state.ui.event_history.truncate(MAX_EVENT_HISTORY);
+            }
+        }
+
         match event {
             ApplicationEvent::Tick => {
                 // Handle periodic updates (animations, timeouts, etc.)
+                self.state.ui.notifications.retain_mut(|n| {
+                    if n.remaining_ticks > 0 {
+                        n.remaining_ticks -= 1;
+                        true
+                    } else {
+                        false
+                    }
+                });
             }
             ApplicationEvent::Terminal(crossterm_event) => {
                 self.handle_terminal_event(crossterm_event);
             }
-            ApplicationEvent::System(system_event) => {
-                match system_event {
-                    SystemEvent::QuitRequested => {
-                        self.state.should_quit = true;
-                    }
+            ApplicationEvent::System(system_event) => match system_event {
+                SystemEvent::QuitRequested => {
+                    self.state.should_quit = true;
                 }
-            }
+            },
             ApplicationEvent::Network(network_event) => {
                 self.handle_network_event(network_event);
             }
@@ -91,16 +119,31 @@ impl App {
     fn handle_terminal_event(&mut self, event: CrosstermEvent) {
         if let CrosstermEvent::Key(key_event) = event {
             // Global keybinds
-            if key_event.modifiers == KeyModifiers::CONTROL && key_event.code == KeyCode::Char('c') {
+            if key_event.modifiers == KeyModifiers::CONTROL && key_event.code == KeyCode::Char('c')
+            {
                 self.state.should_quit = true;
                 return;
             }
-            if key_event.code == KeyCode::Esc {
-                self.state.should_quit = true;
+            if key_event.modifiers == KeyModifiers::CONTROL && key_event.code == KeyCode::Char('e')
+            {
+                self.state.ui.show_event_overlay = !self.state.ui.show_event_overlay;
                 return;
             }
         }
-        
+
+        // Pass event to global overlays first. If consumed, stop propagation.
+        if self.event_overlay.is_blocking(&self.state) {
+            let _ = self.event_overlay.handle_event(&mut self.state, &event);
+            return;
+        }
+
+        if self.notification_overlay.is_blocking(&self.state) {
+            let _ = self
+                .notification_overlay
+                .handle_event(&mut self.state, &event);
+            return;
+        }
+
         // Route event to active view
         self.active_view.handle_event(&mut self.state, &event);
     }

@@ -22,3 +22,4 @@ serde = { version = "1.0.228", features = ["derive"] }
 ratatui-image = { version = "11.0.4", default-features = false, features = ["crossterm"] }
 dotenvy = "0.15.7"
 thiserror = "2.0.18"
+uuid = { version = "1.23.3", features = ["v4"] }

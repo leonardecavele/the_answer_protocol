@@ -2794,6 +2794,7 @@ dependencies = [
  "tracing-subscriber",
  "tui-input",
  "tui-logger",
+ "uuid",
 ]
 
 [[package]]

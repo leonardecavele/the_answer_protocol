@@ -42,6 +42,7 @@ pub enum GameEvent {
 #[derive(Debug, Clone)]
 pub enum UserInterfaceEvent {
     ShowNotification { 
+        id: Option<String>,
         message: String, 
         notification_type: NotificationType, 
         duration_ticks: u32 
