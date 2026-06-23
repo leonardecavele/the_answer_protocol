@@ -376,36 +376,21 @@ impl GameManager {
                         .get_current_room()
                 };
                 if npc_wrapped.is_none() {
-                    return generate_json(
-                        player_name,
-                        command_name,
-                        ErrorCode::NpcNotFound,
-                        "",
-                    )
-                    .dump();
+                    return generate_json(player_name, command_name, ErrorCode::NpcNotFound, "")
+                        .dump();
                 }
                 let (npc_id, _) = npc_wrapped.unwrap();
                 if !self.npc_is_in_room(npc_id, player_room) {
-                    return generate_json(
-                        player_name,
-                        command_name,
-                        ErrorCode::NpcNotInRoom,
-                        "",
-                    )
-                    .dump();
+                    return generate_json(player_name, command_name, ErrorCode::NpcNotInRoom, "")
+                        .dump();
                 }
                 let npc_type = self.get_npc_type(npc_id);
                 if (npc_type & NPC_MOB) == 0 {
-                    return generate_json(
-                        player_name,
-                        command_name,
-                        ErrorCode::NpcNotHostile,
-                        "",
-                    )
-                    .dump();
+                    return generate_json(player_name, command_name, ErrorCode::NpcNotHostile, "")
+                        .dump();
                 }
                 let combat_result = self.player_attacks_npc(*player_id.unwrap(), npc_id);
-                
+
                 return generate_json(
                     player_name,
                     command_name,
@@ -430,7 +415,6 @@ impl GameManager {
                 println!("Unknown command: {}", command_name);
                 return "".to_string();
             }
-            
         }
     }
 }
