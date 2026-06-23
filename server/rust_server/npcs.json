@@ -6,6 +6,7 @@
       "npc_type": 5,
       "hp": null,
       "max_hp": null,
+<<<<<<< HEAD
       "dialogs": [
         [
           "Tu sais ce qui est vraiment intéressant avec les LLMs ?",
@@ -408,6 +409,11 @@
       ],
       "quests": [],
       "spawns": "cluster_du_haut"
+=======
+      "dialogs": ["I have a task for you, young adventurer."],
+      "quests": [],
+      "spawns": "room_test"
+>>>>>>> feature/rust_server
     }
   ]
 }
