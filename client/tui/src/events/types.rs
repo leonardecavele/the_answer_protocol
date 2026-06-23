@@ -8,7 +8,6 @@ pub enum ApplicationEvent {
     Tick,
     System(SystemEvent),
     Network(NetworkEvent),
-    Game(GameEvent),
 }
 
 /// Events related to the application lifecycle and system level actions.
@@ -36,14 +35,6 @@ pub enum NetworkEvent {
     ServerPayloadReceived(ServerEvent),
 }
 
-/// Events representing high-level game logic and state updates.
-#[derive(Debug, Clone)]
-pub enum GameEvent {
-    PlayerJoined { player_name: String },
-    PlayerLeft { player_name: String },
-    RoomContextUpdated { room_id: String, display_name: String },
-    ChatMessageReceived { sender: String, message: String },
-}
 
 
 #[derive(Debug, Clone, Copy)]

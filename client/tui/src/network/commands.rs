@@ -1,0 +1,21 @@
+#[derive(Debug, Clone)]
+pub enum NetworkCommand {
+    Look,
+    Move(String),
+    ChatGlobal(String),
+    ChatPrivate { to: String, message: String },
+    Who,
+    GroupCreate,
+    GroupInvite(String),
+    GroupJoin(String),
+    GroupLeave,
+    Take(String),
+    DropItem(String),
+    Inventory,
+    Talk(String),
+    Attack(String),
+    Status,
+    Quest(String),
+    Quests,
+    Quit,
+}

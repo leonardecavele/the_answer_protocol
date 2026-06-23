@@ -57,8 +57,8 @@ impl App {
             NetworkEvent::ConnectionLost { reason } => {
                 info!("Connection lost: {}", reason);
             }
-            NetworkEvent::ServerPayloadReceived(_) => {
-                info!("Received raw server payload");
+            NetworkEvent::ServerPayloadReceived(server_event) => {
+                self.handle_server_event(server_event);
             }
         }
     }

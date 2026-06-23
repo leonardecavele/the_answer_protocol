@@ -85,9 +85,6 @@ impl App {
             ApplicationEvent::Network(network_event) => {
                 self.handle_network_event(network_event);
             }
-            ApplicationEvent::Game(game_event) => {
-                self.handle_game_event(game_event);
-            }
         }
     }
 }
