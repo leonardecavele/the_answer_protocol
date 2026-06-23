@@ -28,6 +28,7 @@ pub enum ErrorCode {
     ItemNotFound,
     ItemNotInInventory,
     NpcNotFound,
+    NpcNotInRoom,
     GroupNotFound,
     NoSuchGroup,
     NpcNotHostile,
@@ -36,6 +37,7 @@ pub enum ErrorCode {
     SendFailed,
     InvalidCommand,
     InvalidQuestion,
+    
 }
 
 impl ErrorCode {
@@ -55,6 +57,7 @@ impl ErrorCode {
             | Self::NoSuchGroup => 404,
             Self::NpcNotHostile => 405,
             Self::NoQuestAvailable => 406,
+            Self::NpcNotInRoom => 407,
             Self::ConnectionFailed => 900,
             Self::SendFailed => 901,
             Self::InvalidQuestion => 998,
@@ -63,6 +66,10 @@ impl ErrorCode {
     }
 }
 
-pub const NPC_QUEST_GIVER: u8 = 1 << 0; 
-pub const NPC_MOB: u8         = 1 << 1; 
-pub const NPC_TALKER: u8      = 1 << 2;
+pub const NPC_QUEST_GIVER: u8 = 1 << 0;
+pub const NPC_MOB: u8 = 1 << 1;
+pub const NPC_TALKER: u8 = 1 << 2;
+
+pub const NO_MORE_MESSAGES: &str = "[end of dialogue]";
+pub const PLAYER_STARTING_MAX_HP: u32 = 100;
+pub const PLAYER_STARTING_HP: u32 = PLAYER_STARTING_MAX_HP;

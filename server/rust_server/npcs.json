@@ -17,7 +17,7 @@
       "hp": null,
       "max_hp": null,
       "dialogs": ["I have a task for you, young adventurer."],
-      "quests": [101, 102],
+      "quests": [],
       "spawns": "room_test"
     }
   ]
