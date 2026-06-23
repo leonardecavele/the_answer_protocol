@@ -45,7 +45,7 @@ pub enum UserInterfaceEvent {
         id: Option<String>,
         message: String, 
         notification_type: NotificationType, 
-        duration_ticks: u32 
+        duration_ms: u64 
     },
     HideNotification,
 }

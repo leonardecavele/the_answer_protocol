@@ -1,6 +1,6 @@
 use crate::states::app::AppState;
 use crate::ui::components::Component;
-// Plus besoin d'importer les événements clavier car on ne les gère plus manuellement
+// No need to import keyboard events anymore as we do not manage them manually
 use ratatui::layout::Rect;
 use ratatui::style::{Color, Style};
 use ratatui::widgets::{Block, Borders, Clear, List, ListItem};

@@ -1,5 +1,7 @@
 pub mod notifications;
 pub mod event_overlay;
+pub mod text_input;
+pub mod button;
 
 use crate::states::app::AppState;
 use crossterm::event::Event as CrosstermEvent;
@@ -21,5 +23,29 @@ pub trait Component {
     /// If consumed, the event shouldn't be propagated further to other components or views.
     fn handle_event(&mut self, _state: &mut AppState, _event: &CrosstermEvent) -> bool {
         false
+    }
+
+    // --- MOUSE & CLICK SUPPORT ---
+    
+    /// Indicates if this component can receive focus or be clicked
+    fn is_clickable(&self) -> bool {
+        false
+    }
+
+    /// Returns the last area where this component was drawn
+    fn get_last_area(&self) -> Option<Rect> {
+        None
+    }
+
+    /// Saves the last area where this component was drawn (should be called in draw)
+    fn set_last_area(&mut self, _area: Rect) {}
+
+    /// Indicates whether the mouse position (col, row) is over the component
+    fn is_mouse_over(&self, col: u16, row: u16) -> bool {
+        if let Some(area) = self.get_last_area() {
+            col >= area.x && col < area.x + area.width && row >= area.y && row < area.y + area.height
+        } else {
+            false
+        }
     }
 }

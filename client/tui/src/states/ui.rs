@@ -1,20 +1,21 @@
 use crate::events::types::NotificationType;
+use std::time::{Duration, Instant};
 use uuid::Uuid;
 
 pub struct Notification {
     pub id: String,
     pub message: String,
     pub notification_type: NotificationType,
-    pub remaining_ticks: u32,
+    pub expires_at: Instant,
 }
 
 impl Notification {
-    pub fn new(id_opt: Option<String>, message: String, notif_type: NotificationType, ticks: u32) -> Self {
+    pub fn new(id_opt: Option<String>, message: String, notif_type: NotificationType, duration_ms: u64) -> Self {
         Self {
             id: id_opt.unwrap_or_else(|| Uuid::new_v4().to_string()),
             message,
             notification_type: notif_type,
-            remaining_ticks: ticks,
+            expires_at: Instant::now() + Duration::from_millis(duration_ms),
         }
     }
 }

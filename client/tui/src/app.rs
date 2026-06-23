@@ -87,14 +87,8 @@ impl App {
         match event {
             ApplicationEvent::Tick => {
                 // Handle periodic updates (animations, timeouts, etc.)
-                self.state.ui.notifications.retain_mut(|n| {
-                    if n.remaining_ticks > 0 {
-                        n.remaining_ticks -= 1;
-                        true
-                    } else {
-                        false
-                    }
-                });
+                let now = std::time::Instant::now();
+                self.state.ui.notifications.retain(|n| now < n.expires_at);
             }
             ApplicationEvent::Terminal(crossterm_event) => {
                 self.handle_terminal_event(crossterm_event);
@@ -137,11 +131,13 @@ impl App {
             return;
         }
 
-        if self.notification_overlay.is_blocking(&self.state) {
-            let _ = self
-                .notification_overlay
-                .handle_event(&mut self.state, &event);
-            return;
+        // Notifications only intercept clicks that target them
+        if let CrosstermEvent::Mouse(mouse_event) = event {
+            if self.notification_overlay.is_mouse_over(mouse_event.column, mouse_event.row) {
+                if self.notification_overlay.handle_event(&mut self.state, &event) {
+                    return;
+                }
+            }
         }
 
         // Route event to active view
@@ -158,6 +154,12 @@ impl App {
             }
             NetworkEvent::ConnectionFailed { error_message } => {
                 info!("Connection failed: {}", error_message);
+                self.state.ui.notifications.push(crate::states::ui::Notification::new(
+                    None,
+                    format!("Connection Failed: {}", error_message),
+                    crate::events::types::NotificationType::Error,
+                    5000,
+                ));
             }
             NetworkEvent::ConnectionLost { reason } => {
                 info!("Connection lost: {}", reason);
