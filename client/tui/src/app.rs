@@ -3,6 +3,8 @@ use crate::errors::ApplicationError;
 use crate::events::{ApplicationEvent, EventBroker, GameEvent, NetworkEvent, SystemEvent, UserInterfaceEvent};
 use crate::network::NetworkManager;
 use crate::states::app::AppState;
+use crate::ui::views::LoginView;
+use crate::ui::AppView;
 use crossterm::event::{Event as CrosstermEvent, KeyCode, KeyModifiers};
 use ratatui::backend::CrosstermBackend;
 use ratatui::Terminal;
@@ -14,14 +16,16 @@ pub struct App {
     pub event_broker: EventBroker,
     // Store the network manager to keep its background task alive
     pub network_manager: Option<NetworkManager>,
+    pub active_view: Box<dyn AppView>,
 }
 
 impl App {
     pub fn new(ip: String, port: String) -> Self {
         Self {
-            state: AppState::new(ip.clone(), port.clone()),
+            state: AppState::new(ip, port),
             event_broker: EventBroker::new(TICK_RATE),
             network_manager: None,
+            active_view: Box::new(LoginView::new()),
         }
     }
 
@@ -35,16 +39,14 @@ impl App {
         let event_sender = self.event_broker.sender();
         self.network_manager = Some(NetworkManager::start(
             event_sender,
-            self.state.server_ip.clone(),
-            self.state.server_port.clone(),
+            self.state.network.server_ip.clone(),
+            self.state.network.server_port.clone(),
         ));
 
         while !self.state.should_quit {
             // 1. Draw the UI
-            terminal.draw(|f| {
-                // TODO: draw active view
-                // self.active_view.draw(&mut self.state, f, f.area());
-                todo!()
+            terminal.draw(|frame| {
+                self.active_view.draw(&self.state, frame, frame.area());
             })?;
 
             // 2. Wait for the next event asynchronously
@@ -97,9 +99,10 @@ impl App {
                 self.state.should_quit = true;
                 return;
             }
-
-            // TODO: Route key events to the active UI component
         }
+        
+        // Route event to active view
+        self.active_view.handle_event(&mut self.state, &event);
     }
 
     fn handle_network_event(&mut self, event: NetworkEvent) {

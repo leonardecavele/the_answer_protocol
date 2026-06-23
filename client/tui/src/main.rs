@@ -1,5 +1,6 @@
 pub mod errors;
 pub mod events;
+pub mod ui;
 pub mod app;
 pub mod network;
 pub mod states;

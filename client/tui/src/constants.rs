@@ -1,4 +1,4 @@
 use std::time::Duration;
 
 pub const TICK_RATE: Duration = Duration::from_millis(500);
-pub const MAX_EVENTS_BUS: usize = 250;
+pub const MAX_EVENTS_BUS: usize = 100;
