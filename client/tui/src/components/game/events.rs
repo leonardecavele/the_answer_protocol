@@ -18,7 +18,7 @@ impl Component for EventsComponent {
         &mut self,
         _state: &mut AppState,
         _event: &Event,
-        _tx: &tokio::sync::mpsc::UnboundedSender<AppEvent>,
+        _tx: &tokio::sync::mpsc::Sender<AppEvent>,
     ) {
         // Events overlay doesn't handle keyboard directly, InputComponent scrolls it via AppState
     }

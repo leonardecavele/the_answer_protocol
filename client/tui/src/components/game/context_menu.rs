@@ -24,7 +24,7 @@ impl Component for ContextMenuComponent {
         &mut self,
         state: &mut AppState,
         event: &Event,
-        tx: &tokio::sync::mpsc::UnboundedSender<AppEvent>,
+        tx: &tokio::sync::mpsc::Sender<AppEvent>,
     ) {
         if let Event::Key(key) = event {
             match key.code {

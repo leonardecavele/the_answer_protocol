@@ -26,4 +26,19 @@ impl NetworkState {
             connected_at: None,
         }
     }
+    
+    pub fn handle_event(&mut self, event: &crate::events::NetEvent) {
+        use crate::events::NetEvent::*;
+        match event {
+            LoginSuccess(name) => {
+                self.connection_state = ConnectionState::Connected(name.clone());
+                self.connected_at = Some(std::time::Instant::now());
+            }
+            ApiDisconnected => {
+                self.connection_state = ConnectionState::Disconnected;
+                self.client = None;
+            }
+            _ => {} // Other net events (Api, Error, AttemptConnect) are mostly handled as side-effects or logged
+        }
+    }
 }

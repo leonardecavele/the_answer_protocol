@@ -1,7 +1,8 @@
 pub mod game;
 pub mod login;
 
-use crate::events::AppEvent;
+use
+crate::events::AppEvent;
 use crate::state::AppState;
 use crossterm::event::Event;
 use ratatui::Frame;
@@ -15,7 +16,7 @@ pub trait Component: Send + Sync {
         &mut self,
         state: &mut AppState,
         event: &Event,
-        tx: &mpsc::UnboundedSender<AppEvent>,
+        tx: &mpsc::Sender<AppEvent>,
     );
 
     /// Draw the component onto the screen

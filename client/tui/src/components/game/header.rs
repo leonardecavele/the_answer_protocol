@@ -17,7 +17,7 @@ impl Component for HeaderComponent {
         &mut self,
         _state: &mut AppState,
         _event: &Event,
-        _tx: &tokio::sync::mpsc::UnboundedSender<AppEvent>,
+        _tx: &tokio::sync::mpsc::Sender<AppEvent>,
     ) {
         // Header doesn't handle events
     }

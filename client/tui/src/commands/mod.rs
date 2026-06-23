@@ -1,4 +1,4 @@
-use crate::events::AppEvent;
+use crate::events::{AppEvent, GameEvent, NetEvent};
 use api_client::client::Client;
 use async_trait::async_trait;
 use std::collections::HashMap;
@@ -12,17 +12,17 @@ pub mod info;
 
 pub fn send_result<T: std::fmt::Debug>(
     res: Result<Result<T, api_client::error::CommandError>, api_client::error::TapError>,
-    tx: &tokio::sync::mpsc::UnboundedSender<AppEvent>,
+    tx: &tokio::sync::mpsc::Sender<AppEvent>,
 ) {
     match res {
         Ok(Ok(data)) => {
-            let _ = tx.send(AppEvent::CommandResult(format!("{:#?}", data)));
+            let _ = tx.send(AppEvent::Game(GameEvent::CommandResult(format!("{:#?}", data))));
         }
         Ok(Err(e)) => {
-            let _ = tx.send(AppEvent::CommandError(e));
+            let _ = tx.send(AppEvent::Game(GameEvent::CommandError(e)));
         }
         Err(e) => {
-            let _ = tx.send(AppEvent::TapError(e));
+            let _ = tx.send(AppEvent::Network(NetEvent::TapError(e)));
         }
     }
 }
@@ -34,7 +34,7 @@ pub trait Command: Send + Sync {
         &self,
         args: Vec<String>,
         client: Arc<Mutex<Client>>,
-        tx: tokio::sync::mpsc::UnboundedSender<AppEvent>,
+        tx: tokio::sync::mpsc::Sender<AppEvent>,
     );
 }
 
@@ -87,7 +87,7 @@ impl CommandRegistry {
         cmd_name: &str,
         args: Vec<String>,
         client: Arc<Mutex<Client>>,
-        tx: tokio::sync::mpsc::UnboundedSender<AppEvent>,
+        tx: tokio::sync::mpsc::Sender<AppEvent>,
     ) -> bool {
         if let Some(cmd) = self.commands.get(cmd_name) {
             cmd.execute(args, client, tx).await;
@@ -101,7 +101,7 @@ impl CommandRegistry {
 pub fn handle_command(
     state: &mut crate::state::AppState,
     cmd_line: String,
-    tx: tokio::sync::mpsc::UnboundedSender<AppEvent>,
+    tx: tokio::sync::mpsc::Sender<AppEvent>,
 ) {
     let registry = std::sync::Arc::clone(&state.registry);
     let parts: Vec<&str> = cmd_line.trim().split_whitespace().collect();
@@ -125,7 +125,7 @@ pub fn handle_command(
         tokio::spawn(async move {
             let handled = registry.execute(&cmd, args, client_arc, tx_clone.clone()).await;
             if !handled {
-                let _ = tx_clone.send(AppEvent::UnknowCommand(cmd));
+                let _ = tx_clone.send(AppEvent::Game(GameEvent::UnknowCommand(cmd)));
             }
         });
     } else {

@@ -17,7 +17,7 @@ impl Component for LogsComponent {
         &mut self,
         state: &mut AppState,
         event: &Event,
-        _tx: &tokio::sync::mpsc::UnboundedSender<AppEvent>,
+        _tx: &tokio::sync::mpsc::Sender<AppEvent>,
     ) {
         if let Event::Key(key) = event {
             match key.code {

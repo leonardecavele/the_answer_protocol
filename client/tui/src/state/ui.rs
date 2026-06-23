@@ -66,4 +66,20 @@ impl UiState {
             lifetime: lifetime_ticks,
         });
     }
+
+    pub fn handle_event(&mut self, event: &crate::events::UiEvent) {
+        use crate::events::UiEvent::*;
+        match event {
+            Tick => {
+                self.notifications.retain_mut(|notif| {
+                    notif.lifetime = notif.lifetime.saturating_sub(1);
+                    notif.lifetime > 0
+                });
+            }
+            Notification(msg, level, lifetime) => {
+                self.push_notification(msg.clone(), level.clone(), *lifetime);
+            }
+            TerminalEvent(_) => {} // Terminal events are generally routed to components, not directly mutating UI state here
+        }
+    }
 }

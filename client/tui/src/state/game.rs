@@ -73,4 +73,49 @@ impl GameState {
             self.chat_messages.remove(0);
         }
     }
+
+    pub fn handle_event(&mut self, event: &crate::events::GameEvent) {
+        use crate::events::GameEvent::*;
+        match event {
+            InventoryUpdate(items) => {
+                self.inventory = items.clone();
+            }
+            UpdateOnlinePlayers(count) => {
+                self.online_players = *count;
+            }
+            LocalChatSent(scope, msg) => {
+                self.push_chat(scope.clone(), "You".to_string(), msg.clone());
+            }
+            UpdateGroup(group_name) => {
+                self.group_name = group_name.clone();
+            }
+            UpdateRoomContext { room_id, room_display_name, npcs } => {
+                self.current_room = room_id.clone();
+                self.current_room_name = room_display_name.clone();
+                self.npcs_in_room = npcs.clone();
+            }
+            UpdateStatus { hp, max_hp } => {
+                self.hp = *hp;
+                self.max_hp = *max_hp;
+            }
+            CommandResult(res) => {
+                for line in res.lines() {
+                    self.push_game_output(line.to_string());
+                }
+            }
+            CommandError(err) => {
+                let message = match err.code {
+                    Some(code) => format!("[{}] Command error: {}", code, err.message),
+                    None => format!("Command error: {}", err.message),
+                };
+                self.push_game_output(message);
+            }
+            UnknowCommand(cmd) => {
+                self.push_game_output(format!("Unknown command: {}", cmd));
+            }
+            PushGameOutput(msg) => {
+                self.push_game_output(msg.clone());
+            }
+        }
+    }
 }

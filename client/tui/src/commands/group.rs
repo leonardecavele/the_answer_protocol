@@ -17,19 +17,19 @@ impl Command for GroupCreateCommand {
         &self,
         _args: Vec<String>,
         client: Arc<Mutex<Client>>,
-        tx: tokio::sync::mpsc::UnboundedSender<AppEvent>,
+        tx: tokio::sync::mpsc::Sender<AppEvent>,
     ) {
         let mut c = client.lock().await;
         match c.group_create().await {
             Ok(Ok(data)) => {
-                let _ = tx.send(AppEvent::UpdateGroup(Some(data.group_id.clone())));
-                let _ = tx.send(AppEvent::CommandResult(format!("{:#?}", data)));
+                let _ = tx.send(AppEvent::Game(crate::events::GameEvent::UpdateGroup(Some(data.group_id.clone()))));
+                let _ = tx.send(AppEvent::Game(crate::events::GameEvent::CommandResult(format!("{:#?}", data))));
             }
             Ok(Err(e)) => {
-                let _ = tx.send(AppEvent::CommandError(e));
+                let _ = tx.send(AppEvent::Game(crate::events::GameEvent::CommandError(e)));
             }
             Err(e) => {
-                let _ = tx.send(AppEvent::TapError(e));
+                let _ = tx.send(AppEvent::Network(crate::events::NetEvent::TapError(e)));
             }
         }
     }
@@ -47,12 +47,12 @@ impl Command for GroupInviteCommand {
         &self,
         args: Vec<String>,
         client: Arc<Mutex<Client>>,
-        tx: tokio::sync::mpsc::UnboundedSender<AppEvent>,
+        tx: tokio::sync::mpsc::Sender<AppEvent>,
     ) {
         if args.is_empty() {
             return;
         }
-        let mut c = client.lock().await;
+        let c = client.lock().await;
         send_result(c.group_invite(args[0].clone()).await, &tx);
     }
 }
@@ -69,7 +69,7 @@ impl Command for GroupJoinCommand {
         &self,
         args: Vec<String>,
         client: Arc<Mutex<Client>>,
-        tx: tokio::sync::mpsc::UnboundedSender<AppEvent>,
+        tx: tokio::sync::mpsc::Sender<AppEvent>,
     ) {
         if args.is_empty() {
             return;
@@ -77,14 +77,14 @@ impl Command for GroupJoinCommand {
         let mut c = client.lock().await;
         match c.group_join(args[0].clone()).await {
             Ok(Ok(data)) => {
-                let _ = tx.send(AppEvent::UpdateGroup(Some(data.group_id.clone())));
-                let _ = tx.send(AppEvent::CommandResult(format!("{:#?}", data)));
+                let _ = tx.send(AppEvent::Game(crate::events::GameEvent::UpdateGroup(Some(data.group_id.clone()))));
+                let _ = tx.send(AppEvent::Game(crate::events::GameEvent::CommandResult(format!("{:#?}", data))));
             }
             Ok(Err(e)) => {
-                let _ = tx.send(AppEvent::CommandError(e));
+                let _ = tx.send(AppEvent::Game(crate::events::GameEvent::CommandError(e)));
             }
             Err(e) => {
-                let _ = tx.send(AppEvent::TapError(e));
+                let _ = tx.send(AppEvent::Network(crate::events::NetEvent::TapError(e)));
             }
         }
     }
@@ -102,19 +102,19 @@ impl Command for GroupLeaveCommand {
         &self,
         _args: Vec<String>,
         client: Arc<Mutex<Client>>,
-        tx: tokio::sync::mpsc::UnboundedSender<AppEvent>,
+        tx: tokio::sync::mpsc::Sender<AppEvent>,
     ) {
         let mut c = client.lock().await;
         match c.group_leave().await {
             Ok(Ok(data)) => {
-                let _ = tx.send(AppEvent::UpdateGroup(None));
-                let _ = tx.send(AppEvent::CommandResult(format!("{:#?}", data)));
+                let _ = tx.send(AppEvent::Game(crate::events::GameEvent::UpdateGroup(None)));
+                let _ = tx.send(AppEvent::Game(crate::events::GameEvent::CommandResult(format!("{:#?}", data))));
             }
             Ok(Err(e)) => {
-                let _ = tx.send(AppEvent::CommandError(e));
+                let _ = tx.send(AppEvent::Game(crate::events::GameEvent::CommandError(e)));
             }
             Err(e) => {
-                let _ = tx.send(AppEvent::TapError(e));
+                let _ = tx.send(AppEvent::Network(crate::events::NetEvent::TapError(e)));
             }
         }
     }

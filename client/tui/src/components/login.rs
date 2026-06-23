@@ -36,7 +36,7 @@ impl LoginComponent {
         }
     }
 
-    fn submit(&self, state: &mut AppState, tx: &mpsc::UnboundedSender<AppEvent>) {
+    fn submit(&self, state: &mut AppState, tx: &mpsc::Sender<AppEvent>) {
         if self.username_input.value().trim().is_empty() {
             state.ui.push_notification(
                 "Username cannot be empty!".to_string(),
@@ -49,11 +49,11 @@ impl LoginComponent {
         state.net.server_port = self.port_input.value().to_string();
 
         state.net.connection_state = crate::state::ConnectionState::Connecting;
-        let _ = tx.send(AppEvent::AttemptConnect(
+        let _ = tx.send(AppEvent::Network(crate::events::NetEvent::AttemptConnect(
             self.username_input.value().to_string(),
             self.address_input.value().to_string(),
             self.port_input.value().to_string(),
-        ));
+        )));
     }
 }
 
@@ -63,7 +63,7 @@ impl Component for LoginComponent {
         &mut self,
         state: &mut AppState,
         event: &Event,
-        tx: &mpsc::UnboundedSender<AppEvent>,
+        tx: &mpsc::Sender<AppEvent>,
     ) {
         if let Event::Key(key) = event {
             match key.code {

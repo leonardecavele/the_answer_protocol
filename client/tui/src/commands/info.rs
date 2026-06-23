@@ -17,23 +17,23 @@ impl Command for LookCommand {
         &self,
         _args: Vec<String>,
         client: Arc<Mutex<Client>>,
-        tx: tokio::sync::mpsc::UnboundedSender<AppEvent>,
+        tx: tokio::sync::mpsc::Sender<AppEvent>,
     ) {
         let mut c = client.lock().await;
         match c.look().await {
             Ok(Ok(data)) => {
-                let _ = tx.send(AppEvent::UpdateRoomContext {
+                let _ = tx.send(AppEvent::Game(crate::events::GameEvent::UpdateRoomContext {
                     room_id: data.room.id.clone(),
                     room_display_name: data.room.name.clone(),
                     npcs: data.npcs.clone(),
-                });
-                let _ = tx.send(AppEvent::CommandResult(format!("{:#?}", data)));
+                }));
+                let _ = tx.send(AppEvent::Game(crate::events::GameEvent::CommandResult(format!("{:#?}", data))));
             }
             Ok(Err(e)) => {
-                let _ = tx.send(AppEvent::CommandError(e));
+                let _ = tx.send(AppEvent::Game(crate::events::GameEvent::CommandError(e)));
             }
             Err(e) => {
-                let _ = tx.send(AppEvent::TapError(e));
+                let _ = tx.send(AppEvent::Network(crate::events::NetEvent::TapError(e)));
             }
         }
     }
@@ -51,20 +51,20 @@ impl Command for WhoCommand {
         &self,
         _args: Vec<String>,
         client: Arc<Mutex<Client>>,
-        tx: tokio::sync::mpsc::UnboundedSender<AppEvent>,
+        tx: tokio::sync::mpsc::Sender<AppEvent>,
     ) {
-        let mut c = client.lock().await;
+        let c = client.lock().await;
         match c.who().await {
             Ok(Ok(data)) => {
                 let count = data.player_count as u32;
-                let _ = tx.send(AppEvent::UpdateOnlinePlayers(count));
-                let _ = tx.send(AppEvent::CommandResult(format!("{:#?}", data)));
+                let _ = tx.send(AppEvent::Game(crate::events::GameEvent::UpdateOnlinePlayers(count)));
+                let _ = tx.send(AppEvent::Game(crate::events::GameEvent::CommandResult(format!("{:#?}", data))));
             }
             Ok(Err(e)) => {
-                let _ = tx.send(AppEvent::CommandError(e));
+                let _ = tx.send(AppEvent::Game(crate::events::GameEvent::CommandError(e)));
             }
             Err(e) => {
-                let _ = tx.send(AppEvent::TapError(e));
+                let _ = tx.send(AppEvent::Network(crate::events::NetEvent::TapError(e)));
             }
         }
     }
@@ -82,19 +82,19 @@ impl Command for InventoryCommand {
         &self,
         _args: Vec<String>,
         client: Arc<Mutex<Client>>,
-        tx: tokio::sync::mpsc::UnboundedSender<AppEvent>,
+        tx: tokio::sync::mpsc::Sender<AppEvent>,
     ) {
-        let mut c = client.lock().await;
+        let c = client.lock().await;
         match c.inventory().await {
             Ok(Ok(data)) => {
-                let _ = tx.send(AppEvent::InventoryUpdate(data.inventory.clone()));
-                let _ = tx.send(AppEvent::CommandResult(format!("{:#?}", data)));
+                let _ = tx.send(AppEvent::Game(crate::events::GameEvent::InventoryUpdate(data.inventory.clone())));
+                let _ = tx.send(AppEvent::Game(crate::events::GameEvent::CommandResult(format!("{:#?}", data))));
             }
             Ok(Err(e)) => {
-                let _ = tx.send(AppEvent::CommandError(e));
+                let _ = tx.send(AppEvent::Game(crate::events::GameEvent::CommandError(e)));
             }
             Err(e) => {
-                let _ = tx.send(AppEvent::TapError(e));
+                let _ = tx.send(AppEvent::Network(crate::events::NetEvent::TapError(e)));
             }
         }
     }
@@ -112,22 +112,22 @@ impl Command for StatusCommand {
         &self,
         _args: Vec<String>,
         client: Arc<Mutex<Client>>,
-        tx: tokio::sync::mpsc::UnboundedSender<AppEvent>,
+        tx: tokio::sync::mpsc::Sender<AppEvent>,
     ) {
-        let mut c = client.lock().await;
+        let c = client.lock().await;
         match c.status().await {
             Ok(Ok(data)) => {
-                let _ = tx.send(AppEvent::UpdateStatus {
+                let _ = tx.send(AppEvent::Game(crate::events::GameEvent::UpdateStatus {
                     hp: data.player_status.hp,
                     max_hp: data.player_status.max_hp,
-                });
-                let _ = tx.send(AppEvent::CommandResult(format!("{:#?}", data)));
+                }));
+                let _ = tx.send(AppEvent::Game(crate::events::GameEvent::CommandResult(format!("{:#?}", data))));
             }
             Ok(Err(e)) => {
-                let _ = tx.send(AppEvent::CommandError(e));
+                let _ = tx.send(AppEvent::Game(crate::events::GameEvent::CommandError(e)));
             }
             Err(e) => {
-                let _ = tx.send(AppEvent::TapError(e));
+                let _ = tx.send(AppEvent::Network(crate::events::NetEvent::TapError(e)));
             }
         }
     }
@@ -145,9 +145,9 @@ impl Command for QuestsCommand {
         &self,
         _args: Vec<String>,
         client: Arc<Mutex<Client>>,
-        tx: tokio::sync::mpsc::UnboundedSender<AppEvent>,
+        tx: tokio::sync::mpsc::Sender<AppEvent>,
     ) {
-        let mut c = client.lock().await;
+        let c = client.lock().await;
         send_result(c.quests().await, &tx);
     }
 }

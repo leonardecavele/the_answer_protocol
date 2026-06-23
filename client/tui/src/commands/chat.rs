@@ -18,19 +18,19 @@ impl Command for ChatGlobalCommand {
         &self,
         args: Vec<String>,
         client: Arc<Mutex<Client>>,
-        tx: tokio::sync::mpsc::UnboundedSender<AppEvent>,
+        tx: tokio::sync::mpsc::Sender<AppEvent>,
     ) {
-        let mut c = client.lock().await;
-        let msg = args.join(" ");
-        match c.chat_global(msg.clone()).await {
-            Ok(Ok(_res)) => {
-                let _ = tx.send(AppEvent::LocalChatSent(ChatScope::Global, msg));
+        let c = client.lock().await;
+        match c.chat_global(args.join(" ")).await {
+            Ok(Ok(_)) => {
+                let msg = args.join(" ");
+                let _ = tx.send(AppEvent::Game(crate::events::GameEvent::LocalChatSent(ChatScope::Global, msg)));
             }
             Ok(Err(e)) => {
-                let _ = tx.send(AppEvent::CommandError(e));
+                let _ = tx.send(AppEvent::Game(crate::events::GameEvent::CommandError(e)));
             }
             Err(e) => {
-                let _ = tx.send(AppEvent::TapError(e));
+                let _ = tx.send(AppEvent::Network(crate::events::NetEvent::TapError(e)));
             }
         }
     }
@@ -48,26 +48,23 @@ impl Command for ChatPrivateCommand {
         &self,
         args: Vec<String>,
         client: Arc<Mutex<Client>>,
-        tx: tokio::sync::mpsc::UnboundedSender<AppEvent>,
+        tx: tokio::sync::mpsc::Sender<AppEvent>,
     ) {
         if args.len() < 2 {
             return;
         }
         let to = args[0].clone();
         let msg = args[1..].join(" ");
-        let mut c = client.lock().await;
-        match c.chat_private(to.clone(), msg.clone()).await {
-            Ok(Ok(_res)) => {
-                let _ = tx.send(AppEvent::LocalChatSent(
-                    ChatScope::Private,
-                    format!("to {}: {}", to, msg),
-                ));
+        let c = client.lock().await;
+        match c.chat_private(to, msg.clone()).await {
+            Ok(Ok(_)) => {
+                let _ = tx.send(AppEvent::Game(crate::events::GameEvent::LocalChatSent(ChatScope::Private, msg)));
             }
             Ok(Err(e)) => {
-                let _ = tx.send(AppEvent::CommandError(e));
+                let _ = tx.send(AppEvent::Game(crate::events::GameEvent::CommandError(e)));
             }
             Err(e) => {
-                let _ = tx.send(AppEvent::TapError(e));
+                let _ = tx.send(AppEvent::Network(crate::events::NetEvent::TapError(e)));
             }
         }
     }
@@ -85,12 +82,12 @@ impl Command for TalkCommand {
         &self,
         args: Vec<String>,
         client: Arc<Mutex<Client>>,
-        tx: tokio::sync::mpsc::UnboundedSender<AppEvent>,
+        tx: tokio::sync::mpsc::Sender<AppEvent>,
     ) {
         if args.is_empty() {
             return;
         }
-        let mut c = client.lock().await;
+        let c = client.lock().await;
         send_result(c.talk(args.join(" ")).await, &tx);
     }
 }

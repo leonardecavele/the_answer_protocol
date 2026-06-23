@@ -42,7 +42,7 @@ impl Component for GameComponent {
         &mut self,
         state: &mut AppState,
         event: &Event,
-        tx: &tokio::sync::mpsc::UnboundedSender<AppEvent>,
+        tx: &tokio::sync::mpsc::Sender<AppEvent>,
     ) {
         if state.ui.context_menu_open {
             self.context_menu.handle_event(state, event, tx).await;
