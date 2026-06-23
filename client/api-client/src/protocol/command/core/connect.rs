@@ -2,12 +2,13 @@ use crate::client::ServerInfo;
 use crate::error::CommandError;
 use crate::protocol::command::Command;
 use crate::protocol::response::ServerResponse;
+use serde::{Deserialize, Serialize};
 
 pub struct ConnectCommand {
     pub player_name: String,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ConnectResponse {
     pub player_name: String,
 }

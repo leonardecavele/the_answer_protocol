@@ -7,6 +7,7 @@ use crate::network::NetworkManager;
 use crate::states::app::AppState;
 use crate::ui::components::event_overlay::EventOverlayComponent;
 use crate::ui::components::notifications::NotificationComponent;
+use crate::events::NotificationType;
 use crate::ui::components::Component;
 use crate::ui::views::LoginView;
 use crate::ui::views::AppView;
@@ -84,6 +85,18 @@ impl App {
             },
             ApplicationEvent::Network(network_event) => {
                 self.handle_network_event(network_event);
+            }
+            ApplicationEvent::ApiResponse(envelope) => {
+                if let Some(error) = envelope.response.get_error() {
+                    self.state.ui.push_notification(
+                        None,
+                        NotificationType::Warning,
+                        error.message.clone(),
+                        None,
+                    );
+                } else {
+                    self.handle_api_response(envelope);
+                }
             }
         }
     }

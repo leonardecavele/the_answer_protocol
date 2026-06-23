@@ -1,5 +1,5 @@
 use crate::events::{ApplicationEvent, NetworkEvent};
-use crate::network::commands::NetworkCommand;
+use crate::network::envelopes::{RequestEnvelope, ResponseEnvelope};
 use tokio::sync::mpsc;
 use tokio::task::JoinHandle;
 
@@ -7,7 +7,7 @@ use tokio::task::JoinHandle;
 /// It runs in a background Tokio task to ensure the UI never freezes during I/O.
 pub struct NetworkManager {
     background_task: JoinHandle<()>,
-    pub command_sender: mpsc::Sender<NetworkCommand>,
+    pub command_sender: mpsc::Sender<RequestEnvelope>,
 }
 
 impl NetworkManager {
@@ -19,7 +19,7 @@ impl NetworkManager {
         server_port: String,
         player_name: String,
     ) -> Self {
-        let (command_tx, mut command_rx) = mpsc::channel::<NetworkCommand>(128);
+        let (command_tx, mut command_rx) = mpsc::channel::<RequestEnvelope>(128);
 
         let background_task = tokio::spawn(async move {
             let server_address = format!("{}:{}", server_ip, server_port);
@@ -30,17 +30,22 @@ impl NetworkManager {
                     match client.connect(player_name.clone()).await {
                         Ok(Ok(_connect_response)) => {
                             let _ = event_sender
-                                .send(ApplicationEvent::Network(NetworkEvent::ConnectionEstablished {
-                                    server_ip,
-                                    server_port,
-                                    player_name,
-                                }))
+                                .send(ApplicationEvent::Network(
+                                    NetworkEvent::ConnectionEstablished {
+                                        server_ip,
+                                        server_port,
+                                        player_name,
+                                    },
+                                ))
                                 .await;
 
                             client.on_event({
                                 let _event_sender = event_sender.clone();
                                 move |server_event| {
-                                    tracing::debug!("Received event from server: {:?}", server_event);
+                                    tracing::debug!(
+                                        "Received event from server: {:?}",
+                                        server_event
+                                    );
                                     let _ = _event_sender.try_send(ApplicationEvent::Network(
                                         NetworkEvent::ServerPayloadReceived(server_event),
                                     ));
@@ -48,27 +53,18 @@ impl NetworkManager {
                             });
 
                             // Command loop
-                            while let Some(cmd) = command_rx.recv().await {
-                                match cmd {
-                                    NetworkCommand::Look => { let _ = client.look().await; }
-                                    NetworkCommand::Move(dir) => { let _ = client.r#move(dir).await; }
-                                    NetworkCommand::ChatGlobal(msg) => { let _ = client.chat_global(msg).await; }
-                                    NetworkCommand::ChatPrivate { to, message } => { let _ = client.chat_private(to, message).await; }
-                                    NetworkCommand::Who => { let _ = client.who().await; }
-                                    NetworkCommand::GroupCreate => { let _ = client.group_create().await; }
-                                    NetworkCommand::GroupInvite(u) => { let _ = client.group_invite(u).await; }
-                                    NetworkCommand::GroupJoin(leader) => { let _ = client.group_join(leader).await; }
-                                    NetworkCommand::GroupLeave => { let _ = client.group_leave().await; }
-                                    NetworkCommand::Take(item) => { let _ = client.take(item).await; }
-                                    NetworkCommand::DropItem(item) => { let _ = client.drop_item(item).await; }
-                                    NetworkCommand::Inventory => { let _ = client.inventory().await; }
-                                    NetworkCommand::Talk(npc) => { let _ = client.talk(npc).await; }
-                                    NetworkCommand::Attack(npc) => { let _ = client.attack(npc).await; }
-                                    NetworkCommand::Status => { let _ = client.status().await; }
-                                    NetworkCommand::Quest(npc) => { let _ = client.quest(npc).await; }
-                                    NetworkCommand::Quests => { let _ = client.quests().await; }
-                                    NetworkCommand::Quit => {
-                                        client.quit().await;
+                            while let Some(envelope) = command_rx.recv().await {
+                                match client.execute_request(envelope.request).await {
+                                    Ok(api_response) => {
+                                        let _ = event_sender.try_send(ApplicationEvent::ApiResponse(ResponseEnvelope {
+                                            id: envelope.id,
+                                            response: api_response,
+                                        }));
+                                    }
+                                    Err(tap_error) => {
+                                        let _ = event_sender.try_send(ApplicationEvent::Network(NetworkEvent::ConnectionLost {
+                                            reason: format!("Failed to send request: {:?}", tap_error),
+                                        }));
                                         break;
                                     }
                                 }
@@ -77,7 +73,7 @@ impl NetworkManager {
                         Ok(Err(command_error)) => {
                             let _ = event_sender
                                 .send(ApplicationEvent::Network(NetworkEvent::ConnectionFailed {
-                                    error_message: format!("Login rejected: {:?}", command_error),
+                                    error_message: command_error.message,
                                 }))
                                 .await;
                         }
@@ -106,7 +102,7 @@ impl NetworkManager {
         }
     }
 
-    pub fn send_command(&self, cmd: NetworkCommand) {
+    pub fn send_command(&self, cmd: RequestEnvelope) {
         let _ = self.command_sender.try_send(cmd);
     }
 }

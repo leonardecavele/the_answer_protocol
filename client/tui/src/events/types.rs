@@ -1,5 +1,6 @@
 use api_client::client::event::ServerEvent;
 use crossterm::event::Event as CrosstermEvent;
+use crate::network::envelopes::ResponseEnvelope;
 
 /// The main event enum that encapsulates all possible events in the application.
 #[derive(Debug, Clone)]
@@ -8,6 +9,7 @@ pub enum ApplicationEvent {
     Tick,
     System(SystemEvent),
     Network(NetworkEvent),
+    ApiResponse(ResponseEnvelope),
 }
 
 /// Events related to the application lifecycle and system level actions.

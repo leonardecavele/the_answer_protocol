@@ -5,6 +5,7 @@ use crate::protocol::response::ServerResponse;
 
 pub struct QuitCommand;
 
+#[derive(Debug, Clone)]
 pub struct QuitResponse;
 
 impl Command for QuitCommand {

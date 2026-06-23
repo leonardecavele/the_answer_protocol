@@ -2,13 +2,14 @@ use crate::client::ServerInfo;
 use crate::error::CommandError;
 use crate::protocol::command::Command;
 use crate::protocol::response::ServerResponse;
+use serde::{Deserialize, Serialize};
 
 pub struct PrivateChatCommand {
     pub to: String,
     pub message: String,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct PrivateChatResponse;
 
 impl Command for PrivateChatCommand {

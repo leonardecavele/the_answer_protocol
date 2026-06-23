@@ -3,6 +3,7 @@ pub mod connect;
 pub mod event;
 pub mod bridge;
 
+use crate::protocol::command::enums::{ApiRequest, ApiResponse};
 use crate::client::event::ServerEvent;
 use crate::error::{CommandError, InternalError, TapError};
 use crate::protocol::command::Command;
@@ -73,6 +74,30 @@ impl Client {
                 }
             }
             Err(e) => Ok(Err(e)),
+        }
+    }
+
+    pub async fn execute_request(&self, request: ApiRequest) -> Result<ApiResponse, TapError> {
+        match request {
+            ApiRequest::Connect(cmd) => Ok(ApiResponse::Connect(self.request(cmd).await?)),
+            ApiRequest::Quit(cmd) => Ok(ApiResponse::Quit(self.request(cmd).await?)),
+            ApiRequest::Look(cmd) => Ok(ApiResponse::Look(self.request(cmd).await?)),
+            ApiRequest::Move(cmd) => Ok(ApiResponse::Move(self.request(cmd).await?)),
+            ApiRequest::Who(cmd) => Ok(ApiResponse::Who(self.request(cmd).await?)),
+            ApiRequest::GlobalChat(cmd) => Ok(ApiResponse::GlobalChat(self.request(cmd).await?)),
+            ApiRequest::PrivateChat(cmd) => Ok(ApiResponse::PrivateChat(self.request(cmd).await?)),
+            ApiRequest::Take(cmd) => Ok(ApiResponse::Take(self.request(cmd).await?)),
+            ApiRequest::Drop(cmd) => Ok(ApiResponse::Drop(self.request(cmd).await?)),
+            ApiRequest::Inventory(cmd) => Ok(ApiResponse::Inventory(self.request(cmd).await?)),
+            ApiRequest::Status(cmd) => Ok(ApiResponse::Status(self.request(cmd).await?)),
+            ApiRequest::Talk(cmd) => Ok(ApiResponse::Talk(self.request(cmd).await?)),
+            ApiRequest::Attack(cmd) => Ok(ApiResponse::Attack(self.request(cmd).await?)),
+            ApiRequest::Quest(cmd) => Ok(ApiResponse::Quest(self.request(cmd).await?)),
+            ApiRequest::Quests(cmd) => Ok(ApiResponse::Quests(self.request(cmd).await?)),
+            ApiRequest::GroupCreate(cmd) => Ok(ApiResponse::GroupCreate(self.request(cmd).await?)),
+            ApiRequest::GroupJoin(cmd) => Ok(ApiResponse::GroupJoin(self.request(cmd).await?)),
+            ApiRequest::GroupLeave(cmd) => Ok(ApiResponse::GroupLeave(self.request(cmd).await?)),
+            ApiRequest::GroupInvite(cmd) => Ok(ApiResponse::GroupInvite(self.request(cmd).await?)),
         }
     }
 
