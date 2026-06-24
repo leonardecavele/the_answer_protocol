@@ -4,6 +4,7 @@ use crate::protocol::command::Command;
 use crate::protocol::response::ServerResponse;
 use serde::{Deserialize, Serialize};
 
+#[derive(Debug, Clone)]
 pub struct MoveCommand {
     pub direction: String,
 }
@@ -59,4 +60,12 @@ impl Command for MoveCommand {
             _ => None,
         })
     }
+
+    fn from_str(args: &str) -> Option<Self> {
+        if args.trim().is_empty() { return None; }
+        Some(Self {
+            direction: args.trim().to_string(),
+        })
+    }
+
 }

@@ -4,6 +4,7 @@ use crate::protocol::command::Command;
 use crate::protocol::response::ServerResponse;
 use serde::{Deserialize, Serialize};
 
+#[derive(Debug, Clone)]
 pub struct ConnectCommand {
     pub player_name: String,
 }
@@ -50,4 +51,12 @@ impl Command for ConnectCommand {
             _ => None,
         })
     }
+
+    fn from_str(args: &str) -> Option<Self> {
+        if args.trim().is_empty() { return None; }
+        Some(Self {
+            player_name: args.trim().to_string(),
+        })
+    }
+
 }

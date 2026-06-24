@@ -41,75 +41,74 @@ use crate::protocol::command::resource_interaction::quests::QuestsResponse;
 use crate::protocol::command::resource_interaction::status::StatusResponse;
 use crate::protocol::command::resource_interaction::take::TakeResponse;
 use crate::protocol::command::resource_interaction::talk::TalkResponse;
+use crate::protocol::command::Command;
 
-pub enum ApiRequest {
-    Connect(ConnectCommand),
-    Quit(QuitCommand),
-    Look(LookCommand),
-    Move(MoveCommand),
-    Who(WhoCommand),
-    GlobalChat(GlobalChatCommand),
-    PrivateChat(PrivateChatCommand),
-    Take(TakeCommand),
-    Drop(DropCommand),
-    Inventory(InventoryCommand),
-    Status(StatusCommand),
-    Talk(TalkCommand),
-    Attack(AttackCommand),
-    Quest(QuestCommand),
-    Quests(QuestsCommand),
-    GroupCreate(GroupCreateCommand),
-    GroupJoin(GroupJoinCommand),
-    GroupLeave(GroupLeaveCommand),
-    GroupInvite(GroupInviteCommand),
-}
-
-#[derive(Debug, Clone)]
-pub enum ApiResponse {
-    Connect(Result<ConnectResponse, CommandError>),
-    Quit(Result<QuitResponse, CommandError>),
-    Look(Result<LookResponse, CommandError>),
-    Move(Result<MoveResponse, CommandError>),
-    Who(Result<WhoResponse, CommandError>),
-    GlobalChat(Result<GlobalChatResponse, CommandError>),
-    PrivateChat(Result<PrivateChatResponse, CommandError>),
-    Take(Result<TakeResponse, CommandError>),
-    Drop(Result<DropResponse, CommandError>),
-    Inventory(Result<InventoryResponse, CommandError>),
-    Status(Result<StatusResponse, CommandError>),
-    Talk(Result<TalkResponse, CommandError>),
-    Attack(Result<AttackResponse, CommandError>),
-    Quest(Result<QuestResponse, CommandError>),
-    Quests(Result<QuestsResponse, CommandError>),
-    GroupCreate(Result<GroupCreateResponse, CommandError>),
-    GroupJoin(Result<GroupJoinResponse, CommandError>),
-    GroupLeave(Result<GroupLeaveResponse, CommandError>),
-    GroupInvite(Result<GroupInviteResponse, CommandError>),
-}
-
-impl ApiResponse {
-    pub fn get_error(&self) -> Option<&CommandError> {
-        match self {
-            ApiResponse::Connect(Err(e)) => Some(e),
-            ApiResponse::Quit(Err(e)) => Some(e),
-            ApiResponse::Look(Err(e)) => Some(e),
-            ApiResponse::Move(Err(e)) => Some(e),
-            ApiResponse::Who(Err(e)) => Some(e),
-            ApiResponse::GlobalChat(Err(e)) => Some(e),
-            ApiResponse::PrivateChat(Err(e)) => Some(e),
-            ApiResponse::Take(Err(e)) => Some(e),
-            ApiResponse::Drop(Err(e)) => Some(e),
-            ApiResponse::Inventory(Err(e)) => Some(e),
-            ApiResponse::Status(Err(e)) => Some(e),
-            ApiResponse::Talk(Err(e)) => Some(e),
-            ApiResponse::Attack(Err(e)) => Some(e),
-            ApiResponse::Quest(Err(e)) => Some(e),
-            ApiResponse::Quests(Err(e)) => Some(e),
-            ApiResponse::GroupCreate(Err(e)) => Some(e),
-            ApiResponse::GroupJoin(Err(e)) => Some(e),
-            ApiResponse::GroupLeave(Err(e)) => Some(e),
-            ApiResponse::GroupInvite(Err(e)) => Some(e),
-            _ => None,
+macro_rules! define_api_protocol {
+    (
+        $(
+            $variant:ident($cmd_type:ty, $resp_type:ty) => $cmd_name:expr
+        ),* $(,)?
+    ) => {
+        #[derive(Debug, Clone)]
+        pub enum ApiRequest {
+            $(
+                $variant($cmd_type),
+            )*
         }
-    }
+
+        impl ApiRequest {
+            pub fn parse(input: &str) -> Option<Self> {
+                let mut parts = input.trim().splitn(2, ' ');
+                let keyword = parts.next()?.to_lowercase();
+                let args = parts.next().unwrap_or("");
+
+                match keyword.as_str() {
+                    $(
+                        $cmd_name => <$cmd_type>::from_str(args).map(ApiRequest::$variant),
+                    )*
+                    _ => None,
+                }
+            }
+        }
+
+        #[derive(Debug, Clone)]
+        pub enum ApiResponse {
+            $(
+                $variant(Result<$resp_type, CommandError>),
+            )*
+        }
+
+        impl ApiResponse {
+            pub fn get_error(&self) -> Option<&CommandError> {
+                match self {
+                    $(
+                        ApiResponse::$variant(Err(e)) => Some(e),
+                    )*
+                    _ => None,
+                }
+            }
+        }
+    };
+}
+
+define_api_protocol! {
+    Connect(ConnectCommand, ConnectResponse) => "connect",
+    Quit(QuitCommand, QuitResponse) => "quit",
+    Look(LookCommand, LookResponse) => "look",
+    Move(MoveCommand, MoveResponse) => "move",
+    Who(WhoCommand, WhoResponse) => "who",
+    GlobalChat(GlobalChatCommand, GlobalChatResponse) => "say",
+    PrivateChat(PrivateChatCommand, PrivateChatResponse) => "msg",
+    Take(TakeCommand, TakeResponse) => "take",
+    Drop(DropCommand, DropResponse) => "drop",
+    Inventory(InventoryCommand, InventoryResponse) => "inv",
+    Status(StatusCommand, StatusResponse) => "status",
+    Talk(TalkCommand, TalkResponse) => "talk",
+    Attack(AttackCommand, AttackResponse) => "attack",
+    Quest(QuestCommand, QuestResponse) => "quest",
+    Quests(QuestsCommand, QuestsResponse) => "quests",
+    GroupCreate(GroupCreateCommand, GroupCreateResponse) => "group_create",
+    GroupJoin(GroupJoinCommand, GroupJoinResponse) => "group_join",
+    GroupLeave(GroupLeaveCommand, GroupLeaveResponse) => "group_leave",
+    GroupInvite(GroupInviteCommand, GroupInviteResponse) => "group_invite",
 }

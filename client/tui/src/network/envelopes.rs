@@ -6,6 +6,15 @@ pub struct RequestEnvelope {
     pub request: ApiRequest,
 }
 
+impl RequestEnvelope {
+    pub fn new(request: ApiRequest) -> Self {
+        Self {
+            id: Uuid::new_v4(),
+            request,
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct ResponseEnvelope {
     pub id: Uuid,

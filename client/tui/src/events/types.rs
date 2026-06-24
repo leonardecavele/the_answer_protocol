@@ -10,6 +10,7 @@ pub enum ApplicationEvent {
     System(SystemEvent),
     Network(NetworkEvent),
     ApiResponse(ResponseEnvelope),
+    SendRawCommand(String),
 }
 
 /// Events related to the application lifecycle and system level actions.

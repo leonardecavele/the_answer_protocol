@@ -4,6 +4,7 @@ use crate::protocol::command::Command;
 use crate::protocol::response::ServerResponse;
 use serde::{Deserialize, Serialize};
 
+#[derive(Debug, Clone)]
 pub struct QuestsCommand;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -45,4 +46,9 @@ impl Command for QuestsCommand {
             v => Err(CommandError::version_not_implemented(v)),
         }
     }
+
+    fn from_str(_args: &str) -> Option<Self> {
+        Some(Self)
+    }
+
 }

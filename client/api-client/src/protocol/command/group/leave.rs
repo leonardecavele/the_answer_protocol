@@ -3,6 +3,7 @@ use crate::error::CommandError;
 use crate::protocol::command::Command;
 use crate::protocol::response::ServerResponse;
 
+#[derive(Debug, Clone)]
 pub struct GroupLeaveCommand;
 
 #[derive(Debug, Clone)]
@@ -36,4 +37,9 @@ impl Command for GroupLeaveCommand {
             _ => None,
         })
     }
+
+    fn from_str(_args: &str) -> Option<Self> {
+        Some(Self)
+    }
+
 }

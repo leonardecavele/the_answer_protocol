@@ -72,7 +72,7 @@ impl App {
     }
 
     fn update(&mut self, event: ApplicationEvent) {
-        if !matches!(event, ApplicationEvent::Tick) {
+        if !matches!(event, ApplicationEvent::Tick) && !matches!(event, ApplicationEvent::Terminal(_)) {
             self.state
                 .ui
                 .event_history
@@ -107,6 +107,19 @@ impl App {
                         .push(crate::states::ui::Notification::warning(error.to_string()));
                 } else {
                     self.handle_api_response(envelope);
+                }
+            }
+            ApplicationEvent::SendRawCommand(command) => {
+                if let Some(request) = api_client::protocol::command::enums::ApiRequest::parse(&command) {
+                    if let Some(network_manager) = &self.network_manager {
+                        let envelope = crate::network::envelopes::RequestEnvelope::new(request);
+                        network_manager.send_command(envelope);
+                    }
+                } else {
+                    self.state.ui.push(crate::states::ui::Notification::warning(format!(
+                        "Unknown or invalid command: {}",
+                        command
+                    )));
                 }
             }
         }

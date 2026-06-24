@@ -3,6 +3,7 @@ use crate::error::CommandError;
 use crate::protocol::command::Command;
 use crate::protocol::response::ServerResponse;
 
+#[derive(Debug, Clone)]
 pub struct GroupInviteCommand {
     pub username: String,
 }
@@ -40,4 +41,12 @@ impl Command for GroupInviteCommand {
             _ => None,
         })
     }
+
+    fn from_str(args: &str) -> Option<Self> {
+        if args.trim().is_empty() { return None; }
+        Some(Self {
+            username: args.trim().to_string(),
+        })
+    }
+
 }

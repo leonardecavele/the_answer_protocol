@@ -21,6 +21,11 @@ pub trait Command {
     ) -> Result<Self::ResponseData, CommandError>;
 
     fn refine_error(&self, _server_info: &ServerInfo, _error: &mut CommandError) {}
+
+    fn from_str(args: &str) -> Option<Self> where Self: Sized {
+        let _ = args;
+        None
+    }
 }
 
 impl CommandError {

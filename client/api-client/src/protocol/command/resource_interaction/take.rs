@@ -3,6 +3,7 @@ use crate::error::CommandError;
 use crate::protocol::command::Command;
 use crate::protocol::response::ServerResponse;
 
+#[derive(Debug, Clone)]
 pub struct TakeCommand {
     pub item_identifier: String,
 }
@@ -58,4 +59,12 @@ impl Command for TakeCommand {
             _ => None,
         })
     }
+
+    fn from_str(args: &str) -> Option<Self> {
+        if args.trim().is_empty() { return None; }
+        Some(Self {
+            item_identifier: args.trim().to_string(),
+        })
+    }
+
 }

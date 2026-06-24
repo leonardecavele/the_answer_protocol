@@ -3,6 +3,7 @@ use crate::error::CommandError;
 use crate::protocol::command::Command;
 use crate::protocol::response::ServerResponse;
 
+#[derive(Debug, Clone)]
 pub struct GroupCreateCommand;
 
 #[derive(Debug, Clone)]
@@ -56,4 +57,9 @@ impl Command for GroupCreateCommand {
             _ => None,
         })
     }
+
+    fn from_str(_args: &str) -> Option<Self> {
+        Some(Self)
+    }
+
 }

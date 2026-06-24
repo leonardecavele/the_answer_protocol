@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use std::collections::HashMap;
 
+#[derive(Debug, Clone)]
 pub struct LookCommand;
 
 #[serde_as]
@@ -58,4 +59,9 @@ impl Command for LookCommand {
             v => Err(CommandError::version_not_implemented(v)),
         }
     }
+
+    fn from_str(_args: &str) -> Option<Self> {
+        Some(Self)
+    }
+
 }

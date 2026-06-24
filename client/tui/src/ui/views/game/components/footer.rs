@@ -47,11 +47,7 @@ impl Component for FooterComponent {
                 let command = self.input.inner.value.trim().to_string();
                 if !command.is_empty() {
                     self.input.inner.value.clear();
-                    // Simulate command submission via a notification
-                    state.ui.push(crate::states::ui::Notification::info(format!(
-                        "Command intercepted: {}",
-                        command
-                    )));
+                    let _ = event_sender.try_send(crate::events::ApplicationEvent::SendRawCommand(command));
                 }
                 return true;
             }

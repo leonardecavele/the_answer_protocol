@@ -4,6 +4,7 @@ use crate::protocol::command::Command;
 use crate::protocol::response::ServerResponse;
 use serde::{Deserialize, Serialize};
 
+#[derive(Debug, Clone)]
 pub struct PrivateChatCommand {
     pub to: String,
     pub message: String,
@@ -47,4 +48,13 @@ impl Command for PrivateChatCommand {
             _ => None,
         })
     }
+
+    fn from_str(args: &str) -> Option<Self> {
+        let (to, message) = args.trim().split_once(' ')?;
+        Some(Self {
+            to: to.trim().to_string(),
+            message: message.trim().to_string(),
+        })
+    }
+
 }

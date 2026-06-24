@@ -3,6 +3,7 @@ use crate::error::CommandError;
 use crate::protocol::command::Command;
 use crate::protocol::response::ServerResponse;
 
+#[derive(Debug, Clone)]
 pub struct WhoCommand;
 
 #[derive(Debug, Clone)]
@@ -55,4 +56,9 @@ impl Command for WhoCommand {
             v => Err(CommandError::version_not_implemented(v)),
         }
     }
+
+    fn from_str(_args: &str) -> Option<Self> {
+        Some(Self)
+    }
+
 }

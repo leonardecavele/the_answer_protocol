@@ -4,6 +4,7 @@ use crate::protocol::command::Command;
 use crate::protocol::response::ServerResponse;
 use serde::{Deserialize, Serialize};
 
+#[derive(Debug, Clone)]
 pub struct GlobalChatCommand {
     pub message: String,
 }
@@ -46,4 +47,12 @@ impl Command for GlobalChatCommand {
             _ => None,
         })
     }
+
+    fn from_str(args: &str) -> Option<Self> {
+        if args.trim().is_empty() { return None; }
+        Some(Self {
+            message: args.trim().to_string(),
+        })
+    }
+
 }

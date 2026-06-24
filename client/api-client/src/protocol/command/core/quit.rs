@@ -3,6 +3,7 @@ use crate::error::CommandError;
 use crate::protocol::command::Command;
 use crate::protocol::response::ServerResponse;
 
+#[derive(Debug, Clone)]
 pub struct QuitCommand;
 
 #[derive(Debug, Clone)]
@@ -37,4 +38,9 @@ impl Command for QuitCommand {
             v => Err(CommandError::version_not_implemented(v)),
         }
     }
+
+    fn from_str(_args: &str) -> Option<Self> {
+        Some(Self)
+    }
+
 }

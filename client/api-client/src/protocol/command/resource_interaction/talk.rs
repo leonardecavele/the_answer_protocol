@@ -3,6 +3,7 @@ use crate::error::CommandError;
 use crate::protocol::command::Command;
 use crate::protocol::response::ServerResponse;
 
+#[derive(Debug, Clone)]
 pub struct TalkCommand {
     pub npc_name: String,
 }
@@ -50,4 +51,12 @@ impl Command for TalkCommand {
             _ => None,
         })
     }
+
+    fn from_str(args: &str) -> Option<Self> {
+        if args.trim().is_empty() { return None; }
+        Some(Self {
+            npc_name: args.trim().to_string(),
+        })
+    }
+
 }
