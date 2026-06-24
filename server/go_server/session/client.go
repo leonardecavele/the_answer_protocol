@@ -59,15 +59,17 @@ func (c *Client) DeleteClient(gameServer *game_conn.GameServerManager) error {
 		})
 	}
 
-	c.Room.BroadcastEvent(protocol.EventBatch{
-		IgnoredPlayers: []string{username},
-		Events: []protocol.Event{
-			{
-				EmittedBy: username,
-				EventName: "QUIT",
+	if state == AUTHENTICATED {
+		c.Room.BroadcastEvent(protocol.EventBatch{
+			IgnoredPlayers: []string{username},
+			Events: []protocol.Event{
+				{
+					EmittedBy: username,
+					EventName: "QUIT",
+				},
 			},
-		},
-	})
+		})
+	}
 
 	c.Room.DeleteUsername(c)
 	closeErr := c.Conn.Close()
