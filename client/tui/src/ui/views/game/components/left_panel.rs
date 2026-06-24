@@ -9,11 +9,13 @@ use ratatui::{
     widgets::{Block, Borders, List, ListItem},
 };
 
-pub struct LeftPanelComponent;
+pub struct LeftPanelComponent {
+    pub npcs_area: Option<Rect>,
+}
 
 impl LeftPanelComponent {
     pub fn new() -> Self {
-        Self
+        Self { npcs_area: None }
     }
 }
 
@@ -61,7 +63,7 @@ impl Component for LeftPanelComponent {
                     NpcType::Enemy => Color::Red,
                     NpcType::QuestGiver => Color::Yellow,
                     NpcType::Dialogue => Color::Blue,
-                    NpcType::Normal => Color::Gray,
+                    NpcType::Normal => Color::White,
                 };
 
                 ListItem::new(Span::styled(
@@ -70,9 +72,13 @@ impl Component for LeftPanelComponent {
                 ))
             })
             .collect();
-        let npcs_list = List::new(npcs_items)
-            .block(Block::default().borders(Borders::ALL).title(" Room NPCs "));
+        let mut npcs_block = Block::default().borders(Borders::ALL).title(" Room NPCs ");
+        if state.ui.current_focus == crate::states::ui::GameFocus::NpcList {
+            npcs_block = npcs_block.border_style(Style::default().fg(Color::Yellow));
+        }
+        let npcs_list = List::new(npcs_items).block(npcs_block);
         frame.render_widget(npcs_list, chunks[1]);
+        self.npcs_area = Some(chunks[1]);
 
         // 3. Group Members
         let group_items: Vec<ListItem> = state

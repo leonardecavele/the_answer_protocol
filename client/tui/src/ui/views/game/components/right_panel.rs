@@ -4,7 +4,8 @@ use crate::ui::components::Component;
 use ratatui::{
     Frame,
     layout::{Alignment, Rect},
-    widgets::{Block, Borders, Paragraph},
+    style::{Color, Style},
+    widgets::{Paragraph, Clear},
 };
 
 pub struct RightPanelComponent;
@@ -116,6 +117,21 @@ impl Component for RightPanelComponent {
                 p_area.height = lines_count;
             }
             frame.render_widget(p, p_area);
+        }
+
+        if state.ui.current_focus == crate::states::ui::GameFocus::RightPanel {
+            let focus_text = " [ FOCUS ] ";
+            let focus_area = Rect {
+                x: inner_area.x + inner_area.width.saturating_sub(11),
+                y: inner_area.y,
+                width: 11,
+                height: 1,
+            };
+            frame.render_widget(Clear, focus_area);
+            frame.render_widget(
+                Paragraph::new(focus_text).style(Style::default().fg(Color::Yellow)),
+                focus_area,
+            );
         }
     }
 }

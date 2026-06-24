@@ -19,7 +19,7 @@ impl FooterComponent {
 
 impl Component for FooterComponent {
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
-        // The text field takes up the entire area and uses its own border
+        self.input.inner.is_focused = state.ui.current_focus == crate::states::ui::GameFocus::Input;
         self.input.draw(state, frame, area);
     }
 
@@ -29,16 +29,11 @@ impl Component for FooterComponent {
         event: &CrosstermEvent,
         event_sender: &tokio::sync::mpsc::Sender<crate::events::ApplicationEvent>,
     ) -> bool {
-        // If mouse click on the footer, force focus
-        if let CrosstermEvent::Mouse(mouse) = event {
-            if self.input.is_mouse_over(mouse.column, mouse.row) {
-                self.input.inner.is_focused = true;
-            }
-        }
-
+        // We don't handle mouse focus here anymore, GameView handles it for us.
+        
         // Intercept the Enter key BEFORE passing it to TextInputComponent
         // (Because TextInput doesn't handle Enter, it returns false)
-        if self.input.inner.is_focused {
+        if state.ui.current_focus == crate::states::ui::GameFocus::Input {
             if let CrosstermEvent::Key(KeyEvent {
                 code: KeyCode::Enter,
                 ..
@@ -54,6 +49,10 @@ impl Component for FooterComponent {
         }
 
         // Delegate to the interactive component (handles typing and backspace)
-        self.input.handle_terminal_event(state, event, event_sender)
+        if state.ui.current_focus == crate::states::ui::GameFocus::Input {
+            self.input.handle_terminal_event(state, event, event_sender)
+        } else {
+            false
+        }
     }
 }

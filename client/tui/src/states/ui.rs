@@ -8,6 +8,19 @@ use uuid::Uuid;
 
 pub const NOTIF_DEFAULT_DURATION_MS: u64 = 5000;
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum GameFocus {
+    Input,
+    RightPanel,
+    NpcList,
+}
+
+impl Default for GameFocus {
+    fn default() -> Self {
+        GameFocus::Input
+    }
+}
+
 pub struct Notification {
     pub id: String,
     pub message: String,
@@ -74,6 +87,7 @@ pub struct UiState {
     pub event_history: Vec<String>,
     pub image_picker: Picker,
     pub image_cache: RefCell<HashMap<String, Option<(StatefulProtocol, u32, u32)>>>,
+    pub current_focus: GameFocus,
 }
 
 impl UiState {
@@ -86,6 +100,7 @@ impl UiState {
             event_history: Vec::new(),
             image_picker: picker,
             image_cache: RefCell::new(HashMap::new()),
+            current_focus: GameFocus::default(),
         }
     }
 

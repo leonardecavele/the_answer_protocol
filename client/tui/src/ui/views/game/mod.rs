@@ -22,6 +22,8 @@ pub struct GameView {
     right_panel: RightPanelComponent,
     chat_overlay: ChatOverlayComponent,
     show_chat: bool,
+    right_panel_area: Option<Rect>,
+    footer_area: Option<Rect>,
 }
 
 impl GameView {
@@ -34,6 +36,8 @@ impl GameView {
             right_panel: RightPanelComponent::new(),
             chat_overlay: ChatOverlayComponent::new(),
             show_chat: false,
+            right_panel_area: None,
+            footer_area: None,
         }
     }
 }
@@ -66,6 +70,9 @@ impl AppView for GameView {
         self.right_panel.draw(state, frame, horizontal_chunks[2]);
         self.footer.draw(state, frame, vertical_chunks[2]);
 
+        self.right_panel_area = Some(horizontal_chunks[2]);
+        self.footer_area = Some(vertical_chunks[2]);
+
         // Chat Overlay
         if self.show_chat {
             let center_area = horizontal_chunks[1];
@@ -95,6 +102,42 @@ impl AppView for GameView {
             if key.code == KeyCode::F(1) {
                 self.show_chat = !self.show_chat;
                 return;
+            }
+            if key.code == KeyCode::Tab {
+                state.ui.current_focus = match state.ui.current_focus {
+                    crate::states::ui::GameFocus::Input => crate::states::ui::GameFocus::NpcList,
+                    crate::states::ui::GameFocus::NpcList => crate::states::ui::GameFocus::RightPanel,
+                    crate::states::ui::GameFocus::RightPanel => crate::states::ui::GameFocus::Input,
+                };
+                return;
+            }
+            if key.code == KeyCode::BackTab {
+                state.ui.current_focus = match state.ui.current_focus {
+                    crate::states::ui::GameFocus::Input => crate::states::ui::GameFocus::RightPanel,
+                    crate::states::ui::GameFocus::RightPanel => crate::states::ui::GameFocus::NpcList,
+                    crate::states::ui::GameFocus::NpcList => crate::states::ui::GameFocus::Input,
+                };
+                return;
+            }
+        }
+
+        if let CrosstermEvent::Mouse(mouse) = event {
+            if mouse.kind == crossterm::event::MouseEventKind::Down(crossterm::event::MouseButton::Left) {
+                if let Some(r) = self.left_panel.npcs_area {
+                    if crate::ui::components::is_mouse_in_rect(mouse.column, mouse.row, r) {
+                        state.ui.current_focus = crate::states::ui::GameFocus::NpcList;
+                    }
+                }
+                if let Some(r) = self.right_panel_area {
+                    if crate::ui::components::is_mouse_in_rect(mouse.column, mouse.row, r) {
+                        state.ui.current_focus = crate::states::ui::GameFocus::RightPanel;
+                    }
+                }
+                if let Some(r) = self.footer_area {
+                    if crate::ui::components::is_mouse_in_rect(mouse.column, mouse.row, r) {
+                        state.ui.current_focus = crate::states::ui::GameFocus::Input;
+                    }
+                }
             }
         }
 
