@@ -1,6 +1,6 @@
-use crate::states::ui::UiState;
-use crate::states::network::NetworkState;
 use crate::states::game::GameState;
+use crate::states::network::NetworkState;
+use crate::states::ui::UiState;
 
 pub struct AppState {
     pub should_quit: bool,

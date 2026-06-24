@@ -10,7 +10,12 @@ pub struct Notification {
 }
 
 impl Notification {
-    pub fn new(id_opt: Option<String>, message: String, notif_type: NotificationType, duration_ms: u64) -> Self {
+    pub fn new(
+        id_opt: Option<String>,
+        message: String,
+        notif_type: NotificationType,
+        duration_ms: u64,
+    ) -> Self {
         Self {
             id: id_opt.unwrap_or_else(|| Uuid::new_v4().to_string()),
             message,

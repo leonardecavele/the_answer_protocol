@@ -1,11 +1,12 @@
 use crate::states::app::AppState;
-use crate::ui::components::button::ButtonComponent;
-use crate::ui::components::text_input::TextInputComponent;
 use crate::ui::components::Component;
+use crate::ui::components::button::ButtonComponent;
+use crate::ui::components::interactive::Interactive;
+use crate::ui::components::text_input::TextInputComponent;
 use crate::ui::views::AppView;
 use crossterm::event::{Event as CrosstermEvent, KeyCode, KeyEvent, MouseEvent, MouseEventKind};
-use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::Frame;
+use ratatui::layout::{Constraint, Direction, Layout, Rect};
 
 #[derive(PartialEq)]
 pub enum LoginFocus {
@@ -17,34 +18,34 @@ pub enum LoginFocus {
 
 pub struct LoginView {
     pub current_focus: LoginFocus,
-    pub name_input: TextInputComponent,
-    pub ip_input: TextInputComponent,
-    pub port_input: TextInputComponent,
-    pub connect_button: ButtonComponent,
+    pub name_input: Interactive<TextInputComponent>,
+    pub ip_input: Interactive<TextInputComponent>,
+    pub port_input: Interactive<TextInputComponent>,
+    pub connect_button: Interactive<ButtonComponent>,
 }
 
 impl LoginView {
     pub fn new() -> Self {
         let mut view = Self {
             current_focus: LoginFocus::PlayerName,
-            name_input: TextInputComponent::new("Player Name"),
-            ip_input: TextInputComponent::new("Server IP"),
-            port_input: TextInputComponent::new("Server Port"),
-            connect_button: ButtonComponent::new("Connect"),
+            name_input: Interactive::new(TextInputComponent::new("Player Name")),
+            ip_input: Interactive::new(TextInputComponent::new("Server IP")),
+            port_input: Interactive::new(TextInputComponent::new("Server Port")),
+            connect_button: Interactive::new(ButtonComponent::new("Connect")),
         };
         // Set initial value for defaults
-        view.ip_input.value = "127.0.0.1".to_string();
-        view.port_input.value = "38800".to_string();
-        
+        view.ip_input.inner.value = "127.0.0.1".to_string();
+        view.port_input.inner.value = "38800".to_string();
+
         view.update_focus();
         view
     }
 
     fn update_focus(&mut self) {
-        self.name_input.is_focused = self.current_focus == LoginFocus::PlayerName;
-        self.ip_input.is_focused = self.current_focus == LoginFocus::ServerIp;
-        self.port_input.is_focused = self.current_focus == LoginFocus::ServerPort;
-        self.connect_button.is_focused = self.current_focus == LoginFocus::ConnectButton;
+        self.name_input.inner.is_focused = self.current_focus == LoginFocus::PlayerName;
+        self.ip_input.inner.is_focused = self.current_focus == LoginFocus::ServerIp;
+        self.port_input.inner.is_focused = self.current_focus == LoginFocus::ServerPort;
+        self.connect_button.inner.is_focused = self.current_focus == LoginFocus::ConnectButton;
     }
 
     fn cycle_focus_forward(&mut self) {
@@ -56,7 +57,7 @@ impl LoginView {
         };
         self.update_focus();
     }
-    
+
     fn cycle_focus_backward(&mut self) {
         self.current_focus = match self.current_focus {
             LoginFocus::PlayerName => LoginFocus::ConnectButton,
@@ -100,7 +101,7 @@ impl AppView for LoginView {
         self.name_input.draw(state, frame, get_center_rect(1));
         self.ip_input.draw(state, frame, get_center_rect(3));
         self.port_input.draw(state, frame, get_center_rect(5));
-        
+
         // Button should be slightly narrower maybe, or just center it
         let button_area = Layout::default()
             .direction(Direction::Horizontal)
@@ -114,7 +115,12 @@ impl AppView for LoginView {
         self.connect_button.draw(state, frame, button_area);
     }
 
-    fn handle_terminal_event(&mut self, state: &mut AppState, event: &CrosstermEvent, event_sender: &tokio::sync::mpsc::Sender<crate::events::ApplicationEvent>) {
+    fn handle_terminal_event(
+        &mut self,
+        state: &mut AppState,
+        event: &CrosstermEvent,
+        event_sender: &tokio::sync::mpsc::Sender<crate::events::ApplicationEvent>,
+    ) {
         match event {
             CrosstermEvent::Key(KeyEvent { code, .. }) => {
                 // Keyboard navigation
@@ -135,7 +141,9 @@ impl AppView for LoginView {
                     }
                 }
             }
-            CrosstermEvent::Mouse(MouseEvent { kind, column, row, .. }) => {
+            CrosstermEvent::Mouse(MouseEvent {
+                kind, column, row, ..
+            }) => {
                 // Mouse navigation (Left click)
                 if *kind == MouseEventKind::Down(crossterm::event::MouseButton::Left) {
                     if self.name_input.is_mouse_over(*column, *row) {
@@ -154,7 +162,7 @@ impl AppView for LoginView {
                         self.current_focus = LoginFocus::ConnectButton;
                         self.update_focus();
                         // Simulate a button press directly if clicked
-                        self.connect_button.is_pressed = true;
+                        self.connect_button.inner.is_pressed = true;
                     }
                 }
             }
@@ -163,21 +171,25 @@ impl AppView for LoginView {
 
         match self.current_focus {
             LoginFocus::PlayerName => {
-                self.name_input.handle_terminal_event(state, event, event_sender);
+                self.name_input
+                    .handle_terminal_event(state, event, event_sender);
             }
             LoginFocus::ServerIp => {
-                self.ip_input.handle_terminal_event(state, event, event_sender);
+                self.ip_input
+                    .handle_terminal_event(state, event, event_sender);
             }
             LoginFocus::ServerPort => {
-                self.port_input.handle_terminal_event(state, event, event_sender);
+                self.port_input
+                    .handle_terminal_event(state, event, event_sender);
             }
             LoginFocus::ConnectButton => {
-                self.connect_button.handle_terminal_event(state, event, event_sender);
-                
-                if self.connect_button.take_pressed() {
-                    let name = self.name_input.value.clone();
-                    let ip = self.ip_input.value.clone();
-                    let port = self.port_input.value.clone();
+                self.connect_button
+                    .handle_terminal_event(state, event, event_sender);
+
+                if self.connect_button.inner.take_pressed() {
+                    let name = self.name_input.inner.value.clone();
+                    let ip = self.ip_input.inner.value.clone();
+                    let port = self.port_input.inner.value.clone();
 
                     if name.is_empty() || ip.is_empty() || port.is_empty() {
                         state.ui.push_notification(
@@ -199,7 +211,7 @@ impl AppView for LoginView {
                                 server_ip: ip,
                                 server_port: port,
                                 player_name: name,
-                            }
+                            },
                         ));
                     }
                 }

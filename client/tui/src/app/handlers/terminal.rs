@@ -26,22 +26,18 @@ impl App {
             return;
         }
 
-        if let CrosstermEvent::Mouse(mouse_event) = event {
-            if self
-                .notification_overlay
-                .is_mouse_over(mouse_event.column, mouse_event.row)
-            {
-                if self.notification_overlay.handle_terminal_event(
-                    &mut self.state,
-                    &event,
-                    &self.event_broker.sender(),
-                ) {
-                    return;
-                }
-            }
+        if self.notification_overlay.handle_terminal_event(
+            &mut self.state,
+            &event,
+            &self.event_broker.sender(),
+        ) {
+            return;
         }
 
-        self.active_view
-            .handle_terminal_event(&mut self.state, &event, &self.event_broker.sender());
+        self.active_view.handle_terminal_event(
+            &mut self.state,
+            &event,
+            &self.event_broker.sender(),
+        );
     }
 }

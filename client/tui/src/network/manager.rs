@@ -56,15 +56,22 @@ impl NetworkManager {
                             while let Some(envelope) = command_rx.recv().await {
                                 match client.execute_request(envelope.request).await {
                                     Ok(api_response) => {
-                                        let _ = event_sender.try_send(ApplicationEvent::ApiResponse(ResponseEnvelope {
-                                            id: envelope.id,
-                                            response: api_response,
-                                        }));
+                                        let _ = event_sender.try_send(
+                                            ApplicationEvent::ApiResponse(ResponseEnvelope {
+                                                id: envelope.id,
+                                                response: api_response,
+                                            }),
+                                        );
                                     }
                                     Err(tap_error) => {
-                                        let _ = event_sender.try_send(ApplicationEvent::Network(NetworkEvent::ConnectionLost {
-                                            reason: format!("Failed to send request: {:?}", tap_error),
-                                        }));
+                                        let _ = event_sender.try_send(ApplicationEvent::Network(
+                                            NetworkEvent::ConnectionLost {
+                                                reason: format!(
+                                                    "Failed to send request: {:?}",
+                                                    tap_error
+                                                ),
+                                            },
+                                        ));
                                         break;
                                     }
                                 }

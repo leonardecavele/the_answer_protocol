@@ -1,10 +1,10 @@
 use crate::states::app::AppState;
-use crate::ui::components::Component;
+use crate::ui::components::interactive::InteractiveComponent;
 use crossterm::event::{Event as CrosstermEvent, KeyCode, KeyEvent};
+use ratatui::Frame;
 use ratatui::layout::{Alignment, Rect};
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::widgets::{Block, Borders, Paragraph};
-use ratatui::Frame;
 
 pub struct ButtonComponent {
     pub label: String,
@@ -22,7 +22,7 @@ impl ButtonComponent {
             last_area: None,
         }
     }
-    
+
     /// Returns true if the button was just pressed, and resets the pressed state.
     pub fn take_pressed(&mut self) -> bool {
         if self.is_pressed {
@@ -34,25 +34,15 @@ impl ButtonComponent {
     }
 }
 
-impl Component for ButtonComponent {
-    fn is_clickable(&self) -> bool { true }
-    
-    fn get_last_area(&self) -> Option<Rect> { self.last_area }
-    
-    fn set_last_area(&mut self, area: Rect) { self.last_area = Some(area); }
-
-    fn draw(&mut self, _state: &AppState, frame: &mut Frame, area: Rect) {
-        self.set_last_area(area);
-        
+impl InteractiveComponent for ButtonComponent {
+    fn render(&mut self, _state: &AppState, frame: &mut Frame, area: Rect) {
         let mut style = Style::default().fg(Color::Gray);
-        
+
         if self.is_focused {
             style = style.fg(Color::Green).add_modifier(Modifier::BOLD);
         }
 
-        let block = Block::default()
-            .borders(Borders::ALL)
-            .style(style);
+        let block = Block::default().borders(Borders::ALL).style(style);
 
         let display_text = if self.is_focused {
             format!("> {} <", self.label)
@@ -63,11 +53,17 @@ impl Component for ButtonComponent {
         let paragraph = Paragraph::new(display_text)
             .block(block)
             .alignment(Alignment::Center);
-            
+
         frame.render_widget(paragraph, area);
     }
 
-    fn handle_terminal_event(&mut self, _state: &mut AppState, event: &CrosstermEvent, _event_sender: &tokio::sync::mpsc::Sender<crate::events::ApplicationEvent>) -> bool {
+    fn handle_terminal_event(
+        &mut self,
+        _state: &mut AppState,
+        event: &CrosstermEvent,
+        _event_sender: &tokio::sync::mpsc::Sender<crate::events::ApplicationEvent>,
+        _is_hovered: bool,
+    ) -> bool {
         if !self.is_focused {
             return false;
         }
@@ -78,7 +74,7 @@ impl Component for ButtonComponent {
                 return true;
             }
         }
-        
+
         false
     }
 }

@@ -24,15 +24,15 @@ impl EventBroker {
     pub fn new(tick_rate: Duration) -> Self {
         // Create an mpsc channel with a reasonable capacity.
         // We use 65536 to ensure the channel doesn't block easily.
-        let (sender, receiver) = mpsc::channel(2^16);
-        
+        let (sender, receiver) = mpsc::channel(2 ^ 16);
+
         let task_sender = sender.clone();
-        
+
         // Spawn the background task
         let background_task = tokio::spawn(async move {
             let mut event_stream = EventStream::new();
             let mut tick_interval = tokio::time::interval(tick_rate);
-            
+
             loop {
                 tokio::select! {
                     _ = tick_interval.tick() => {

@@ -1,10 +1,10 @@
 use crate::states::app::AppState;
-use crate::ui::components::Component;
+use crate::ui::components::interactive::InteractiveComponent;
 use crossterm::event::{Event as CrosstermEvent, KeyCode, KeyEvent};
+use ratatui::Frame;
 use ratatui::layout::Rect;
 use ratatui::style::{Color, Style};
 use ratatui::widgets::{Block, Borders, Paragraph};
-use ratatui::Frame;
 
 pub struct TextInputComponent {
     pub label: String,
@@ -24,18 +24,14 @@ impl TextInputComponent {
     }
 }
 
-impl Component for TextInputComponent {
-    fn is_clickable(&self) -> bool { true }
-    
-    fn get_last_area(&self) -> Option<Rect> { self.last_area }
-    
-    fn set_last_area(&mut self, area: Rect) { self.last_area = Some(area); }
+impl InteractiveComponent for TextInputComponent {
+    fn render(&mut self, _state: &AppState, frame: &mut Frame, area: Rect) {
+        let border_color = if self.is_focused {
+            Color::Cyan
+        } else {
+            Color::DarkGray
+        };
 
-    fn draw(&mut self, _state: &AppState, frame: &mut Frame, area: Rect) {
-        self.set_last_area(area);
-        
-        let border_color = if self.is_focused { Color::Cyan } else { Color::DarkGray };
-        
         let block = Block::default()
             .title(format!(" {} ", self.label.as_str()))
             .borders(Borders::ALL)
@@ -51,7 +47,13 @@ impl Component for TextInputComponent {
         frame.render_widget(paragraph, area);
     }
 
-    fn handle_terminal_event(&mut self, _state: &mut AppState, event: &CrosstermEvent, _event_sender: &tokio::sync::mpsc::Sender<crate::events::ApplicationEvent>) -> bool {
+    fn handle_terminal_event(
+        &mut self,
+        _state: &mut AppState,
+        event: &CrosstermEvent,
+        _event_sender: &tokio::sync::mpsc::Sender<crate::events::ApplicationEvent>,
+        _is_hovered: bool,
+    ) -> bool {
         if !self.is_focused {
             return false;
         }

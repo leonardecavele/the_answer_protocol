@@ -3,10 +3,10 @@ use crate::events::types::NotificationType;
 use crate::states::app::AppState;
 use crate::ui::components::Component;
 use crossterm::event::{Event as CrosstermEvent, MouseEvent, MouseEventKind};
+use ratatui::Frame;
 use ratatui::layout::{Alignment, Rect};
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::widgets::{Block, Borders, Clear, Paragraph, Wrap};
-use ratatui::Frame;
 
 pub struct NotificationComponent {
     /// Stores the area (Rect) associated with the ID (String) of each visible notification
@@ -22,18 +22,6 @@ impl NotificationComponent {
 }
 
 impl Component for NotificationComponent {
-    fn is_clickable(&self) -> bool {
-        true
-    }
-
-    /// Override is_mouse_over to check the visible_areas array
-    /// instead of relying on a single `last_area`.
-    fn is_mouse_over(&self, col: u16, row: u16) -> bool {
-        self.visible_areas.iter().any(|(_, area)| {
-            col >= area.x && col < area.x + area.width && row >= area.y && row < area.y + area.height
-        })
-    }
-
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
         self.visible_areas.clear();
 
@@ -65,25 +53,25 @@ impl Component for NotificationComponent {
 
             // Add "[X] " to indicate that it can be closed
             let text = format!("[X] {}", notif.message);
-            
+
             // Dynamic width (max 30% of terminal width, minimum 20 chars)
             let mut max_width = (area.width as f32 * 0.3) as u16;
             max_width = std::cmp::max(max_width, 20);
-            
+
             let text_length = text.chars().count() as u16;
-            
+
             // Limit width if text is smaller than max_width
             let width = std::cmp::min(max_width, text_length + 2); // +2 for borders
-            
+
             // Dynamic height calculation
             let inner_width = width.saturating_sub(2).max(1);
-            
+
             // Integer math ceiling formula: (A + B - 1) / B
             let mut lines = (text_length + inner_width - 1) / inner_width;
-            
+
             // Account for manual newlines
             lines += text.matches('\n').count() as u16;
-            
+
             let height = lines + 2; // +2 for top/bottom borders
 
             let paragraph = Paragraph::new(text)
@@ -92,7 +80,11 @@ impl Component for NotificationComponent {
                 .wrap(Wrap { trim: true });
 
             // Position at top right
-            let x = if area.width > width { area.width - width } else { 0 };
+            let x = if area.width > width {
+                area.width - width
+            } else {
+                0
+            };
 
             let notif_area = Rect {
                 x,
@@ -108,25 +100,32 @@ impl Component for NotificationComponent {
             frame.render_widget(paragraph, notif_area);
 
             // Shift the next notification downwards
-            current_y += height; 
-            
+            current_y += height;
+
             // Protection against overflow
             if current_y > area.height {
-                break; 
+                break;
             }
         }
     }
 
-    fn handle_terminal_event(&mut self, state: &mut AppState, event: &CrosstermEvent, _event_sender: &tokio::sync::mpsc::Sender<crate::events::ApplicationEvent>) -> bool {
-        if let CrosstermEvent::Mouse(MouseEvent { kind, column, row, .. }) = event {
+    fn handle_terminal_event(
+        &mut self,
+        state: &mut AppState,
+        event: &CrosstermEvent,
+        _event_sender: &tokio::sync::mpsc::Sender<crate::events::ApplicationEvent>,
+    ) -> bool {
+        if let CrosstermEvent::Mouse(MouseEvent {
+            kind, column, row, ..
+        }) = event
+        {
             if *kind == MouseEventKind::Down(crossterm::event::MouseButton::Left) {
                 // Find which notification was clicked
-                if let Some((clicked_id, _)) = self.visible_areas.iter().find(|(_, area)| {
-                    *column >= area.x
-                        && *column < area.x + area.width
-                        && *row >= area.y
-                        && *row < area.y + area.height
-                }) {
+                if let Some((clicked_id, _)) = self
+                    .visible_areas
+                    .iter()
+                    .find(|(_, area)| crate::ui::components::is_mouse_in_rect(*column, *row, *area))
+                {
                     // Remove the targeted notification from the state
                     let id_to_remove = clicked_id.clone();
                     state.ui.notifications.retain(|n| n.id != id_to_remove);

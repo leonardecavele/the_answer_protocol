@@ -1,18 +1,16 @@
 use crate::constants::{MAX_EVENT_HISTORY, TICK_RATE};
 use crate::errors::ApplicationError;
-use crate::events::{
-    ApplicationEvent, EventBroker, SystemEvent,
-};
+use crate::events::NotificationType;
+use crate::events::{ApplicationEvent, EventBroker, SystemEvent};
 use crate::network::NetworkManager;
 use crate::states::app::AppState;
+use crate::ui::components::Component;
 use crate::ui::components::event_overlay::EventOverlayComponent;
 use crate::ui::components::notifications::NotificationComponent;
-use crate::events::NotificationType;
-use crate::ui::components::Component;
-use crate::ui::views::LoginView;
 use crate::ui::views::AppView;
-use ratatui::backend::CrosstermBackend;
+use crate::ui::views::LoginView;
 use ratatui::Terminal;
+use ratatui::backend::CrosstermBackend;
 use std::io;
 use std::time::Instant;
 
@@ -73,7 +71,10 @@ impl App {
 
         match event {
             ApplicationEvent::Tick => {
-                self.state.ui.notifications.retain(|n| Instant::now() < n.expires_at);
+                self.state
+                    .ui
+                    .notifications
+                    .retain(|n| Instant::now() < n.expires_at);
             }
             ApplicationEvent::Terminal(crossterm_event) => {
                 self.handle_terminal_event(crossterm_event);

@@ -1,11 +1,12 @@
+pub mod app;
+pub mod constants;
 pub mod errors;
 pub mod events;
-pub mod ui;
-pub mod app;
 pub mod network;
 pub mod states;
-pub mod constants;
+pub mod ui;
 
+use crate::app::App;
 use crossterm::event::{DisableMouseCapture, EnableMouseCapture};
 use crossterm::execute;
 use crossterm::terminal::{
@@ -14,7 +15,6 @@ use crossterm::terminal::{
 use ratatui::Terminal;
 use ratatui::backend::CrosstermBackend;
 use std::{io, panic};
-use crate::app::App;
 
 fn terminal_setup() -> io::Result<Terminal<CrosstermBackend<io::Stdout>>> {
     enable_raw_mode()?;
