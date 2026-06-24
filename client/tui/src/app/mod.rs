@@ -27,8 +27,21 @@ pub struct App {
 
 impl App {
     pub fn new(ip: String, port: String) -> Self {
+        let (manifest, err) = match crate::data::manifest::Manifest::load() {
+            Ok(m) => (m, None),
+            Err(e) => (crate::data::manifest::Manifest::default(), Some(e)),
+        };
+
+        let mut state = AppState::new(ip, port, manifest);
+        if let Some(e) = err {
+             state.ui.push(
+                 crate::states::ui::Notification::error(e)
+                     .with_duration(10000)
+             );
+        }
+
         Self {
-            state: AppState::new(ip, port),
+            state,
             event_broker: EventBroker::new(TICK_RATE),
             network_manager: None,
             active_view: Box::new(LoginView::new()),

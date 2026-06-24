@@ -1,0 +1,28 @@
+{
+  "npcs": {
+    "npc_001": {
+      "name": "Bloodthirsty Goblin",
+      "npc_type": "enemy"
+    },
+    "npc_002": {
+      "name": "Old Sage",
+      "npc_type": "quest_giver"
+    },
+    "npc_003": {
+      "name": "Traveling Merchant",
+      "npc_type": "dialogue"
+    }
+  },
+  "items": {
+    "item_001": {
+      "name": "Rusty Sword",
+      "description": "An ancient, blunt weapon."
+    }
+  },
+  "rooms": {
+    "room_1": {
+      "name": "Cavern Entrance",
+      "description": "The entrance to a dark and damp cavern."
+    }
+  }
+}

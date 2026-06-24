@@ -10,12 +10,12 @@ pub struct AppState {
 }
 
 impl AppState {
-    pub fn new(ip: String, port: String) -> Self {
+    pub fn new(ip: String, port: String, manifest: crate::data::manifest::Manifest) -> Self {
         Self {
             should_quit: false,
             ui: UiState::new(),
             network: NetworkState::new(ip, port),
-            game: GameState::new(),
+            game: GameState::new(manifest),
         }
     }
 }

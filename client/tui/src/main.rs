@@ -5,6 +5,7 @@ pub mod events;
 pub mod network;
 pub mod states;
 pub mod ui;
+pub mod data;
 
 use crate::app::App;
 use crossterm::event::{DisableMouseCapture, EnableMouseCapture};
@@ -50,7 +51,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut terminal = terminal_setup()?;
 
-    let mut app = App::new("127.0.0.1".to_string(), "38800".to_string());
+    let mut app = App::new(
+        crate::constants::DEFAULT_SERVER_IP.to_string(),
+        crate::constants::DEFAULT_SERVER_PORT.to_string(),
+    );
     let res = app.run(&mut terminal).await;
 
     terminal_restore(terminal)?;
