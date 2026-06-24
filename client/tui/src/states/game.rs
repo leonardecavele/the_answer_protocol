@@ -23,6 +23,7 @@ pub struct GameState {
     pub room_npcs: Vec<String>,
     pub current_room_id: Option<String>,
     pub focused_entity_id: Option<String>,
+    pub action_logs: Vec<String>,
 }
 
 impl GameState {
@@ -37,6 +38,11 @@ impl GameState {
             room_npcs: Vec::new(),
             current_room_id: None,
             focused_entity_id: None,
+            action_logs: Vec::new(),
         }
+    }
+
+    pub fn log_action(&mut self, text: String) {
+        self.action_logs.push(text);
     }
 }

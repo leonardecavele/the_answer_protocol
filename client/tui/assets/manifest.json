@@ -1,29 +1,22 @@
 {
   "npcs": {
-    "npc_001": {
-      "name": "Bloodthirsty Goblin",
-      "type": "enemy"
-    },
-    "npc_002": {
-      "name": "Old Sage",
-      "type": "quest_giver"
-    },
-    "npc_003": {
-      "name": "Traveling Merchant",
-      "type": "dialogue"
+    "Wise Wizard": {
+      "name": "ayteyssi",
+      "type": "dialogue",
+		"image_path": "../../assets/final/mobs/ayteyssi/ayteyssi.png"
     }
   },
   "items": {
-    "item_001": {
+    "0.test sword": {
       "name": "Rusty Sword",
       "description": "An ancient, blunt weapon."
     }
   },
   "rooms": {
-    "room_start": {
-      "name": "Cavern Entrance",
-      "description": "A dark cavern entrance...",
-      "image_path": "assets/images/rooms/cavern.png"
+    "0.room_test": {
+      "name": "Devant l'ecole",
+		"description": "",
+      "image_path": "../../assets/final/devant_l_ecole.jpg"
     }
   }
 }

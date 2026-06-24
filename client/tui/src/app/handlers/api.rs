@@ -17,6 +17,22 @@ impl App {
             ApiResponse::Inventory(Ok(_inv_res)) => {
                 // Update inventory
             }
+            ApiResponse::Talk(Ok(talk_res)) => {
+                if let api_client::protocol::command::enums::ApiRequest::Talk(cmd) = envelope.original_request {
+                    self.state.game.focused_entity_id = Some(cmd.npc_name.clone());
+                    self.state.game.log_action(format!("[{}] says: \"{}\"", cmd.npc_name, talk_res.dialogue));
+                }
+            }
+            ApiResponse::Attack(Ok(attack_res)) => {
+                if let api_client::protocol::command::enums::ApiRequest::Attack(cmd) = envelope.original_request {
+                    self.state.game.focused_entity_id = Some(cmd.npc_name.clone());
+                    let res = attack_res.combat_result;
+                    self.state.game.log_action(format!(
+                        "Combat with {}: You dealt {} damage. (Your HP: {} | Target HP: {}) Status: {}",
+                        cmd.npc_name, res.damage, res.attacker_hp, res.target_hp, res.status
+                    ));
+                }
+            }
             // Add other successful response handlers here as needed
             _ => {}
         }

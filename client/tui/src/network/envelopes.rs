@@ -19,4 +19,5 @@ impl RequestEnvelope {
 pub struct ResponseEnvelope {
     pub id: Uuid,
     pub response: ApiResponse,
+    pub original_request: ApiRequest,
 }
