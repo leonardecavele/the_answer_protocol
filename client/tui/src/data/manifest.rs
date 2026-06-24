@@ -22,20 +22,23 @@ impl Default for NpcType {
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct NpcEntry {
     pub name: String,
-    #[serde(default)]
+    #[serde(rename = "type", default)]
     pub npc_type: NpcType,
+    pub image_path: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ItemEntry {
     pub name: String,
     pub description: String,
+    pub image_path: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct RoomEntry {
     pub name: String,
     pub description: String,
+    pub image_path: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, Default)]

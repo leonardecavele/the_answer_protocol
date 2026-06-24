@@ -2,15 +2,15 @@
   "npcs": {
     "npc_001": {
       "name": "Bloodthirsty Goblin",
-      "npc_type": "enemy"
+      "type": "enemy"
     },
     "npc_002": {
       "name": "Old Sage",
-      "npc_type": "quest_giver"
+      "type": "quest_giver"
     },
     "npc_003": {
       "name": "Traveling Merchant",
-      "npc_type": "dialogue"
+      "type": "dialogue"
     }
   },
   "items": {
@@ -20,9 +20,10 @@
     }
   },
   "rooms": {
-    "room_1": {
+    "room_start": {
       "name": "Cavern Entrance",
-      "description": "The entrance to a dark and damp cavern."
+      "description": "A dark cavern entrance...",
+      "image_path": "assets/images/rooms/cavern.png"
     }
   }
 }

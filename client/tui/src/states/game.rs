@@ -21,6 +21,8 @@ pub struct GameState {
     pub online_players_count: u32,
     pub manifest: crate::data::manifest::Manifest,
     pub room_npcs: Vec<String>,
+    pub current_room_id: Option<String>,
+    pub focused_entity_id: Option<String>,
 }
 
 impl GameState {
@@ -33,6 +35,8 @@ impl GameState {
             online_players_count: 0,
             manifest,
             room_npcs: Vec::new(),
+            current_room_id: None,
+            focused_entity_id: None,
         }
     }
 }

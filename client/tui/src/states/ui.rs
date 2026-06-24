@@ -1,5 +1,9 @@
 use crate::events::types::NotificationType;
 use std::time::{Duration, Instant};
+use std::cell::RefCell;
+use std::collections::HashMap;
+use ratatui_image::picker::Picker;
+use ratatui_image::protocol::StatefulProtocol;
 use uuid::Uuid;
 
 pub const NOTIF_DEFAULT_DURATION_MS: u64 = 5000;
@@ -66,16 +70,22 @@ impl Notification {
 
 pub struct UiState {
     pub notifications: Vec<Notification>,
-    pub event_history: Vec<String>,
     pub show_event_overlay: bool,
+    pub event_history: Vec<String>,
+    pub image_picker: Picker,
+    pub image_cache: RefCell<HashMap<String, Option<StatefulProtocol>>>,
 }
 
 impl UiState {
     pub fn new() -> Self {
+        let picker = Picker::halfblocks();
+
         Self {
             notifications: Vec::new(),
-            event_history: Vec::new(),
             show_event_overlay: false,
+            event_history: Vec::new(),
+            image_picker: picker,
+            image_cache: RefCell::new(HashMap::new()),
         }
     }
 
