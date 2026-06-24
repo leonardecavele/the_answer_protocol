@@ -61,4 +61,10 @@ impl Manifest {
 
         Ok(manifest)
     }
+
+    pub fn get_npc_name(&self, id: &str) -> String {
+        self.npcs.get(id)
+            .map(|n| n.name.clone())
+            .unwrap_or_else(|| id.to_string())
+    }
 }

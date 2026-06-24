@@ -11,7 +11,7 @@ use ratatui::{
 use tokio::sync::mpsc;
 use std::time::Instant;
 
-pub const CHAR_DELAY_MS: u128 = 20;
+pub const CHAR_DELAY_MS: u128 = 2;
 
 pub struct DialoguePopupComponent;
 

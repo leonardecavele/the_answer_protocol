@@ -16,7 +16,9 @@ impl App {
             ApiResponse::Move(Ok(_move_res)) => {
                 self.state.game.focused_entity_id = None;
                 if let Some(network_manager) = &self.network_manager {
-                    let req = api_client::protocol::command::enums::ApiRequest::Look(api_client::protocol::command::core::look::LookCommand);
+                    let req = api_client::protocol::command::enums::ApiRequest::Look(
+                        api_client::protocol::command::core::look::LookCommand,
+                    );
                     let envelope = crate::network::envelopes::RequestEnvelope::new(req);
                     network_manager.send_command(envelope);
                 }
@@ -25,42 +27,70 @@ impl App {
                 // Update inventory
             }
             ApiResponse::Talk(Ok(talk_res)) => {
-                if let api_client::protocol::command::enums::ApiRequest::Talk(cmd) = envelope.original_request {
+                if let api_client::protocol::command::enums::ApiRequest::Talk(cmd) =
+                    envelope.original_request
+                {
                     let mut text = talk_res.dialogue.clone();
                     let ends_dialog = text.contains(crate::states::game::END_OF_DIALOGUE_TAG);
                     if ends_dialog {
-                        text = text.replace(crate::states::game::END_OF_DIALOGUE_TAG, "**nothing**").trim().to_string();
+                        text = text
+                            .replace(crate::states::game::END_OF_DIALOGUE_TAG, "**nothing**")
+                            .trim()
+                            .to_string();
                     }
 
                     self.state.game.focused_entity_id = Some(cmd.npc_name.clone());
-                    
-                    let display_name = self.state.game.manifest.npcs.get(&cmd.npc_name)
-                        .map(|n| n.name.clone())
-                        .unwrap_or_else(|| cmd.npc_name.clone());
-                    
-                    self.state.game.log_action(format!("[{}] says: \"{}\"", display_name, text));
-                    
-                    self.state.game.active_dialogue = Some(crate::states::game::DialogueState::new(
-                        cmd.npc_name,
-                        display_name,
-                        text,
-                        ends_dialog,
-                    ));
+
+                    let display_name = self.state.game.manifest.get_npc_name(&cmd.npc_name);
+
+                    self.state
+                        .game
+                        .log_action(format!("[{}] says: \"{}\"", display_name, text));
+
+                    self.state.game.active_dialogue =
+                        Some(crate::states::game::DialogueState::new(
+                            cmd.npc_name,
+                            display_name,
+                            text,
+                            ends_dialog,
+                        ));
                 }
             }
             ApiResponse::Attack(Ok(attack_res)) => {
-                if let api_client::protocol::command::enums::ApiRequest::Attack(cmd) = envelope.original_request {
+                if let api_client::protocol::command::enums::ApiRequest::Attack(cmd) =
+                    envelope.original_request
+                {
                     self.state.game.focused_entity_id = Some(cmd.npc_name.clone());
-                    
-                    let display_name = self.state.game.manifest.npcs.get(&cmd.npc_name)
-                        .map(|n| n.name.clone())
-                        .unwrap_or_else(|| cmd.npc_name.clone());
+
+                    let display_name = self.state.game.manifest.get_npc_name(&cmd.npc_name);
 
                     let res = attack_res.combat_result;
-                    self.state.game.log_action(format!(
-                        "Combat with {}: You dealt {} damage. (Your HP: {} | Target HP: {}) Status: {}",
-                        display_name, res.damage, res.attacker_hp, res.target_hp, res.status
-                    ));
+
+                    let text = match res.status.eq_ignore_ascii_case("Victory") {
+                        true => {
+                            self.state.game.room_npcs.retain(|npc| npc != &cmd.npc_name);
+                            format!(
+                                "Combat with {}: You dealt {} damage. {} is death. Victory.",
+                                display_name, res.damage, display_name
+                            )
+                        }
+                        false => {
+                            format!(
+                                "Combat with {}: You dealt {} damage. (Your HP: {} | Target HP: {}) ",
+                                display_name, res.damage, res.attacker_hp, res.target_hp
+                            )
+                        }
+                    };
+
+                    self.state.game.active_dialogue =
+                        Some(crate::states::game::DialogueState::new(
+                            cmd.npc_name,
+                            display_name.clone(),
+                            text.clone(),
+                            true,
+                        ));
+
+                    self.state.game.log_action(text);
                 }
             }
             // Add other successful response handlers here as needed
