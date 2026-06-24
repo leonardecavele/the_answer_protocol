@@ -1,43 +1,122 @@
 {
     "npcs": {
-        "11.crappo": {
-            "name": "crappo",
-            "type": "enemy",
-            "image_path": "../../assets/final/mobs/ayteyssi/ayteyssi.png",
-			"actions": ["Attack"]
-        },
-        "12.ayteyssi": {
-            "name": "ayteyssi",
+        "1.vquetier": {
+            "name": "vquetier",
             "type": "dialogue",
-            "image_path": "../../assets/final/mobs/talk/ayteyssi/ayteyssi.png",
-			"actions": ["Talk"]
+            "image_path": "../../assets/final/mobs/talk/vquetier/vquetier.png",
+            "actions": ["Talk"]
+        },
+        "2.faon": {
+            "name": "faon",
+            "type": "dialogue",
+            "image_path": "../../assets/final/mobs/talk/faon/faon.png",
+            "actions": ["Talk"]
+        },
+        "3.smenard": {
+            "name": "smenard",
+            "type": "dialogue",
+            "image_path": "../../assets/final/mobs/talk/smenard/smenard.png",
+            "actions": ["Talk"]
+        },
+        "4.mdourdoi": {
+            "name": "mdourdoi",
+            "type": "enemy",
+            "image_path": "../../assets/final/mobs/fight/mdourdoi/mdourdoi_cluster_du_bas.png",
+            "actions": ["Talk", "Attack"]
         },
         "5.gagulhon": {
             "name": "gagulhon",
             "type": "dialogue",
             "image_path": "../../assets/final/mobs/talk/gagulhon/gagulhon1.png",
-			"actions": ["Talk"]
+            "actions": ["Talk"]
         },
         "6.ndalailallema": {
-            "name": "dalailallema",
+            "name": "ndalailallema",
             "type": "quest_giver",
             "image_path": "../../assets/final/mobs/quest/ndalailallema/ndalailallema.png",
-			"actions": ["Talk"]
+            "actions": ["Talk"]
+        },
+        "7.gabach": {
+            "name": "gabach",
+            "type": "dialogue",
+            "actions": ["Talk"]
+        },
+        "8.enchevri": {
+            "name": "enchevri",
+            "type": "enemy",
+            "image_path": "../../assets/final/mobs/fight/enchevri/enchevri_cluster_du_haut.png",
+            "actions": ["Talk", "Attack"]
+        },
+        "9.acampion": {
+            "name": "acampion",
+            "type": "enemy",
+            "image_path": "../../assets/final/mobs/fight/acampion/acampion_afk.png",
+            "actions": ["Talk", "Attack"]
+        },
+        "10.mphippen": {
+            "name": "mphippen",
+            "type": "dialogue",
+            "actions": ["Talk"]
+        },
+        "11.crappo": {
+            "name": "crappo",
+            "type": "enemy",
+            "actions": ["Talk", "Attack"]
+        },
+        "12.ayteyssi": {
+            "name": "ayteyssi",
+            "type": "dialogue",
+            "image_path": "../../assets/final/mobs/talk/ayteyssi/ayteyssi.png",
+            "actions": ["Talk"]
+        },
+        "13.ldecavel": {
+            "name": "ldecavel",
+            "type": "enemy",
+            "image_path": "../../assets/final/mobs/fight/ldecavel/ldecavel.png",
+            "actions": ["Talk", "Attack"]
+        },
+        "14.cobussie": {
+            "name": "cobussie",
+            "type": "dialogue",
+            "actions": ["Talk"]
+        },
+        "15.ibady": {
+            "name": "ibady",
+            "type": "enemy",
+            "actions": ["Talk", "Attack"]
+        },
+        "16.bokim": {
+            "name": "bokim",
+            "type": "dialogue",
+            "actions": ["Talk"]
         }
     },
     "items": {
-        "0.test sword": {
-            "name": "Rusty Sword",
-            "description": "An ancient, blunt weapon."
+        "1.objet_perdu": {
+            "name": "objet_perdu",
+            "description": "Il faudrait déposer cet objet quelque part où son propriétaire pourrait le retrouver...",
+            "image_path": "../../assets/final/items/lost_item.png"
+        },
+        "2.wrap_du_foyer": {
+            "name": "wrap_du_foyer",
+            "description": "un bon remontant pour réussir à continuer à faire ses heures",
+            "image_path": "../../assets/final/items/wrap.png"
+        },
+        "3.t_shirt_bde": {
+            "name": "t_shirt_bde",
+            "description": "dans ce tissu on se sent solide comme un rock",
+            "image_path": "../../assets/final/items/t_shirt.png"
         }
     },
     "rooms": {
+        "1.cluster_du_bas": { "image_path": "../../assets/final/cluster_du_bas.jpg" },
+        "2.pature": { "image_path": "../../assets/final/pature.jpeg" },
+        "3.devant_l_ecole": { "image_path": "../../assets/final/devant_l_ecole.jpg" },
+        "4.devant_le_bocal": { "image_path": "../../assets/final/devant_bocal.jpg" },
+        "5.cluster_du_haut": { "image_path": "../../assets/final/cluster_du_haut.jpeg" },
+        "6.afk": { "image_path": "../../assets/final/afk.jpg" },
         "7.entree": {},
-        "3.devant_l_ecole": {
-            "image_path": "../../assets/final/devant_l_ecole.jpg"
-        },
-        "4.devant_le_bocal": {
-            "image_path": "../../assets/final/devant_bocal.jpg"
-        }
+        "8.cantina": { "image_path": "../../assets/final/cantina.jpeg" },
+        "9.foyer": {}
     }
 }
