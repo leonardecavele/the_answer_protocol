@@ -28,12 +28,9 @@ impl App {
                     .ui
                     .remove_notification(crate::constants::NOTIF_ID_CONNECTION_ATTEMPT);
 
-                self.state.ui.push_notification(
-                    None,
-                    crate::events::types::NotificationType::Information,
-                    "Connected to the server successfully!".to_string(),
-                    None,
-                );
+                self.state.ui.push(crate::states::ui::Notification::info(
+                    "Connected to the server successfully!",
+                ));
 
                 self.state.network.server_ip = server_ip;
                 self.state.network.server_port = server_port;
@@ -47,12 +44,12 @@ impl App {
                     .ui
                     .remove_notification(crate::constants::NOTIF_ID_CONNECTION_ATTEMPT);
 
-                self.state.ui.push_notification(
-                    None,
-                    crate::events::types::NotificationType::Error,
-                    format!("Connection failed: {}", error_message),
-                    None,
-                );
+                self.state
+                    .ui
+                    .push(crate::states::ui::Notification::error(format!(
+                        "Connection failed: {}",
+                        error_message
+                    )));
             }
             NetworkEvent::ConnectionLost { reason } => {
                 info!("Connection lost: {}", reason);

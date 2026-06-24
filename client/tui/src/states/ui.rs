@@ -10,6 +10,43 @@ pub struct Notification {
 }
 
 impl Notification {
+    pub fn info(message: impl Into<String>) -> Self {
+        Self::new(
+            None,
+            message.into(),
+            NotificationType::Information,
+            crate::constants::NOTIF_DEFAULT_DURATION_MS,
+        )
+    }
+
+    pub fn warning(message: impl Into<String>) -> Self {
+        Self::new(
+            None,
+            message.into(),
+            NotificationType::Warning,
+            crate::constants::NOTIF_DEFAULT_DURATION_MS,
+        )
+    }
+
+    pub fn error(message: impl Into<String>) -> Self {
+        Self::new(
+            None,
+            message.into(),
+            NotificationType::Error,
+            crate::constants::NOTIF_DEFAULT_DURATION_MS,
+        )
+    }
+
+    pub fn with_id(mut self, id: impl Into<String>) -> Self {
+        self.id = id.into();
+        self
+    }
+
+    pub fn with_duration(mut self, ms: u64) -> Self {
+        self.expires_at = Instant::now() + Duration::from_millis(ms);
+        self
+    }
+
     pub fn new(
         id_opt: Option<String>,
         message: String,
@@ -40,20 +77,8 @@ impl UiState {
         }
     }
 
-    pub fn push_notification(
-        &mut self,
-        id_opt: Option<String>,
-        notification_type: NotificationType,
-        message: String,
-        duration_ms: Option<u64>,
-    ) {
-        let duration = duration_ms.unwrap_or(5000);
-        self.notifications.push(Notification::new(
-            id_opt,
-            message,
-            notification_type,
-            duration,
-        ));
+    pub fn push(&mut self, notification: Notification) {
+        self.notifications.push(notification);
     }
 
     pub fn remove_notification(&mut self, target_id: &str) {

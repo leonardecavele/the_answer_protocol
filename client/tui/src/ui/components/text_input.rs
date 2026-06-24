@@ -10,7 +10,6 @@ pub struct TextInputComponent {
     pub label: String,
     pub value: String,
     pub is_focused: bool,
-    pub last_area: Option<Rect>,
 }
 
 impl TextInputComponent {
@@ -19,7 +18,6 @@ impl TextInputComponent {
             label: label.to_string(),
             value: String::new(),
             is_focused: false,
-            last_area: None,
         }
     }
 }

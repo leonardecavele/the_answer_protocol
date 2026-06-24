@@ -192,20 +192,15 @@ impl AppView for LoginView {
                     let port = self.port_input.inner.value.clone();
 
                     if name.is_empty() || ip.is_empty() || port.is_empty() {
-                        state.ui.push_notification(
-                            None,
-                            crate::events::types::NotificationType::Warning,
-                            "All fields must be filled.".to_string(),
-                            None,
-                        );
+                        state.ui.push(crate::states::ui::Notification::warning(
+                            "All fields must be filled",
+                        ));
                     } else {
-                        state.ui.push_notification(
-                            Some(crate::constants::NOTIF_ID_CONNECTION_ATTEMPT.to_string()),
-                            crate::events::types::NotificationType::Information,
-                            format!("Connecting to {}:{}...", ip, port),
-                            None,
+                        state.ui.push(
+                            crate::states::ui::Notification::info("Connecting...")
+                                .with_id(crate::constants::NOTIF_ID_CONNECTION_ATTEMPT)
+                                .with_duration(60000),
                         );
-
                         let _ = event_sender.try_send(crate::events::ApplicationEvent::Network(
                             crate::events::NetworkEvent::ConnectionAttemptStarted {
                                 server_ip: ip,

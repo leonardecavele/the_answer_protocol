@@ -1,6 +1,5 @@
 use crate::constants::{MAX_EVENT_HISTORY, TICK_RATE};
 use crate::errors::ApplicationError;
-use crate::events::NotificationType;
 use crate::events::{ApplicationEvent, EventBroker, SystemEvent};
 use crate::network::NetworkManager;
 use crate::states::app::AppState;
@@ -89,12 +88,9 @@ impl App {
             }
             ApplicationEvent::ApiResponse(envelope) => {
                 if let Some(error) = envelope.response.get_error() {
-                    self.state.ui.push_notification(
-                        None,
-                        NotificationType::Warning,
-                        error.message.clone(),
-                        None,
-                    );
+                    self.state
+                        .ui
+                        .push(crate::states::ui::Notification::warning(error.to_string()));
                 } else {
                     self.handle_api_response(envelope);
                 }

@@ -22,8 +22,8 @@ pub trait Component {
     /// Renders the component on the given area.
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect);
 
-    /// Indique si ce composant agit comme une "Modale" bloquante.
-    /// S'il est bloquant, le gestionnaire principal arrêtera de propager l'événement.
+    /// Indicates whether this component acts as a blocking "Modal".
+    /// If it is blocking, the main event handler will stop propagating the event.
     fn is_blocking(&self, _state: &AppState) -> bool {
         false
     }
