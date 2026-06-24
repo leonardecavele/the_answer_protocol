@@ -391,19 +391,19 @@
       "max_hp": null,
       "dialogs": [
         [
-          "Coucou !",
-          "Est-ce que tu sais qu'on est juste dans un jeu ?",
-          "Tu ne peux pas le battre pour sortir tu peux juste quitter.",
-          "Mais si tu veux tu peux gagner de l'expérience en te battant.",
-          "Il y a 6 monstres que tu peux combattre.",
-          "Ibady, Ldecavel, Mdourdoi, Acampion, Crappo et Enchevri.",
-          "Certains d'entre eux peuvent te faire gagner des items.",
-          "Iris fait gagner des wraps qui régénèrent ta vie.",
-          "Matthieu fait gagner des t-shirts qui te permettent de subir moins de dégats.",
-          "Tu peux trouver un objet perdu en face du cluster du bas.",
-          "Il te permettra de débloquer les quêtes de Nathan devant le bocal.",
-          "Et surtout ne parle jamais à Vquetier si ton temps est compté.",
-          "Bon courage !"
+			"- 안녕!",
+			"- 사실 우리가 게임 속에 있다는 거 알고 있어?",
+			"- 이 게임은 깨서 나갈 수 없고, 나가고 싶으면 그냥 게임을 종료해야 해.",
+			"- 그래도 원한다면 몬스터들과 싸우면서 경험치를 얻을 수 있어.",
+			"- 싸울 수 있는 몬스터는 총 6마리!",
+			"- Ibady, Ldecavel, Mdourdoi, Acampion, Crappo, 그리고 Enchevri야!",
+			"- 그들 중 몇몇은 쓰러뜨리면 아이템을 떨어뜨리기도 해.",
+			"- Iris를 쓰러뜨리면 체력을 회복시켜주는 스낵랩을 얻을 수 있어.",
+			"- Matthieu를 쓰러뜨리면 받는 피해를 줄여주는 티셔츠를 얻을 수 있어.",
+			"- 아래층 클러스터 근처에서는 잃어버린 물건 하나를 찾을 수 있어.",
+			"- 그걸 찾으면 bocal 앞에 있는 Nathan의 퀘스트를 시작할 수 있어!",
+			"- 아, 그리고 정말 중요한 거! 시간이 없다면 Vqeutier한테는 절대 말 걸지 마!!",
+			"- 행운을 빌어!"
         ]
       ],
       "quests": [],
