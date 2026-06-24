@@ -33,6 +33,24 @@ impl App {
             ApiResponse::GroupLeave(Ok(_res)) => {
                 self.state.game.group_members.clear();
             }
+            ApiResponse::GlobalChat(Ok(_)) => {
+                if let api_client::protocol::command::enums::ApiRequest::GlobalChat(cmd) = envelope.original_request {
+                    self.state.game.chat_history.push(crate::states::game::ChatMessage {
+                        channel: crate::states::game::ChatChannel::Global,
+                        sender: "You".to_string(),
+                        content: cmd.message.clone(),
+                    });
+                }
+            }
+            ApiResponse::PrivateChat(Ok(_)) => {
+                if let api_client::protocol::command::enums::ApiRequest::PrivateChat(cmd) = envelope.original_request {
+                    self.state.game.chat_history.push(crate::states::game::ChatMessage {
+                        channel: crate::states::game::ChatChannel::Private(cmd.to.clone()),
+                        sender: format!("(You) to {}", cmd.to),
+                        content: cmd.message.clone(),
+                    });
+                }
+            }
             ApiResponse::Look(Ok(look_res)) => {
                 self.state.game.current_room_id = Some(look_res.room.id.clone());
                 self.state.game.current_room_name = Some(look_res.room.name.clone());

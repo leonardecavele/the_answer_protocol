@@ -39,7 +39,7 @@ impl Component for NotificationComponent {
             .take(MAX_VISIBLE_NOTIFICATIONS)
             .collect::<Vec<_>>();
 
-        let mut current_y = 0;
+        let mut current_y = area.height;
 
         for notif in notifs_to_draw {
             let color = match notif.notification_type {
@@ -74,12 +74,18 @@ impl Component for NotificationComponent {
                 .block(block)
                 .alignment(Alignment::Left);
 
-            // Position at top right
+            // Position at bottom right (grow upwards)
             let x = if area.width > width {
                 area.width - width
             } else {
                 0
             };
+
+            if current_y < height {
+                break;
+            }
+            
+            current_y -= height;
 
             let notif_area = Rect {
                 x,
@@ -93,14 +99,6 @@ impl Component for NotificationComponent {
 
             frame.render_widget(Clear, notif_area);
             frame.render_widget(paragraph, notif_area);
-
-            // Shift the next notification downwards
-            current_y += height;
-
-            // Protection against overflow
-            if current_y > area.height {
-                break;
-            }
         }
     }
 

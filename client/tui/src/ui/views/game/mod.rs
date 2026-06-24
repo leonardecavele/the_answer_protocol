@@ -81,9 +81,9 @@ impl AppView for GameView {
         if self.show_chat {
             let center_area = horizontal_chunks[1];
             // Position chat overlay at the bottom right of the center area
-            // Let's say it takes 50% width and 50% height of the center area
-            let chat_width = center_area.width / 2;
-            let chat_height = center_area.height / 2;
+            // 80% width and 80% height of the center area
+            let chat_width = (center_area.width * 8) / 10;
+            let chat_height = (center_area.height * 8) / 10;
             let chat_area = Rect {
                 x: center_area.x + center_area.width - chat_width,
                 y: center_area.y + center_area.height - chat_height,
