@@ -24,6 +24,7 @@ pub struct GameState {
     pub current_room_id: Option<String>,
     pub current_room_name: Option<String>,
     pub current_room_description: Option<String>,
+    pub current_room_exits: std::collections::HashMap<String, String>,
     pub focused_entity_id: Option<String>,
     pub action_logs: Vec<String>,
 }
@@ -41,6 +42,7 @@ impl GameState {
             current_room_id: None,
             current_room_name: None,
             current_room_description: None,
+            current_room_exits: std::collections::HashMap::new(),
             focused_entity_id: None,
             action_logs: Vec::new(),
         }

@@ -4,7 +4,7 @@ use crate::ui::components::Component;
 use ratatui::{
     Frame,
     layout::{Alignment, Rect},
-    style::{Color, Style},
+    style::{Color, Modifier, Style},
     widgets::{Paragraph, Clear},
 };
 
@@ -132,6 +132,69 @@ impl Component for RightPanelComponent {
                 Paragraph::new(focus_text).style(Style::default().fg(Color::Yellow)),
                 focus_area,
             );
+
+            let exit_style = Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD);
+
+            if state.game.current_room_exits.contains_key("NORTH") {
+                let text = " [North] ";
+                let w = text.len() as u16;
+                let x = inner_area.x + inner_area.width.saturating_sub(w) / 2;
+                let area = Rect { x, y: inner_area.y, width: w, height: 1 };
+                frame.render_widget(Clear, area);
+                frame.render_widget(Paragraph::new(text).style(exit_style), area);
+            }
+            if state.game.current_room_exits.contains_key("SOUTH") {
+                let text = " [South] ";
+                let w = text.len() as u16;
+                let x = inner_area.x + inner_area.width.saturating_sub(w) / 2;
+                let y = inner_area.y + inner_area.height.saturating_sub(1);
+                let area = Rect { x, y, width: w, height: 1 };
+                frame.render_widget(Clear, area);
+                frame.render_widget(Paragraph::new(text).style(exit_style), area);
+            }
+            if state.game.current_room_exits.contains_key("EAST") {
+                let text = " [East] ";
+                let w = text.len() as u16;
+                let x = inner_area.x + inner_area.width.saturating_sub(w);
+                let y = inner_area.y + inner_area.height / 2;
+                let area = Rect { x, y, width: w, height: 1 };
+                frame.render_widget(Clear, area);
+                frame.render_widget(Paragraph::new(text).style(exit_style), area);
+            }
+            if state.game.current_room_exits.contains_key("WEST") {
+                let text = " [West] ";
+                let w = text.len() as u16;
+                let x = inner_area.x;
+                let y = inner_area.y + inner_area.height / 2;
+                let area = Rect { x, y, width: w, height: 1 };
+                frame.render_widget(Clear, area);
+                frame.render_widget(Paragraph::new(text).style(exit_style), area);
+            }
         }
+    }
+
+    fn handle_terminal_event(
+        &mut self,
+        state: &mut AppState,
+        event: &crossterm::event::Event,
+        event_sender: &tokio::sync::mpsc::Sender<crate::events::ApplicationEvent>,
+    ) -> bool {
+        if state.ui.current_focus == crate::states::ui::GameFocus::RightPanel {
+            if let crossterm::event::Event::Key(key) = event {
+                let direction = match key.code {
+                    crossterm::event::KeyCode::Up => "NORTH",
+                    crossterm::event::KeyCode::Down => "SOUTH",
+                    crossterm::event::KeyCode::Right => "EAST",
+                    crossterm::event::KeyCode::Left => "WEST",
+                    _ => return false,
+                };
+                
+                if state.game.current_room_exits.contains_key(direction) {
+                    let _ = event_sender.try_send(crate::events::ApplicationEvent::SendRawCommand(format!("MOVE {}", direction)));
+                    return true;
+                }
+            }
+        }
+        false
     }
 }

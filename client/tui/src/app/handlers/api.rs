@@ -11,6 +11,7 @@ impl App {
                 self.state.game.current_room_description = Some(look_res.room.description.clone());
                 self.state.game.room_players = look_res.players.clone();
                 self.state.game.room_npcs = look_res.npcs.clone();
+                self.state.game.current_room_exits = look_res.room.exits.clone();
             }
             ApiResponse::Move(Ok(_move_res)) => {
                 // We successfully moved. Wait for ServerEvent::Room to update UI,
