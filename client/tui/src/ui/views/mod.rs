@@ -23,4 +23,7 @@ pub trait AppView {
         event: &CrosstermEvent,
         event_sender: &mpsc::Sender<ApplicationEvent>,
     );
+
+    /// Called on every system tick.
+    fn on_tick(&mut self, _state: &mut AppState) {}
 }

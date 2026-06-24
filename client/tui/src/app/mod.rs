@@ -88,6 +88,8 @@ impl App {
                     .ui
                     .notifications
                     .retain(|n| Instant::now() < n.expires_at);
+                
+                self.active_view.on_tick(&mut self.state);
             }
             ApplicationEvent::Terminal(crossterm_event) => {
                 self.handle_terminal_event(crossterm_event);

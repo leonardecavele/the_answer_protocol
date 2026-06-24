@@ -43,6 +43,8 @@ impl Component for FooterComponent {
                 if !command.is_empty() {
                     self.input.inner.value.clear();
                     let _ = event_sender.try_send(crate::events::ApplicationEvent::SendRawCommand(command));
+                } else {
+                    state.ui.current_focus = crate::states::ui::GameFocus::RightPanel;
                 }
                 return true;
             }

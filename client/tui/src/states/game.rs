@@ -1,3 +1,42 @@
+use std::time::Instant;
+
+pub const END_OF_DIALOGUE_TAG: &str = "[end of dialogue]";
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum DialogueClearMode {
+    AlwaysClear,
+    ClearOnEndTag,
+}
+
+impl Default for DialogueClearMode {
+    fn default() -> Self {
+        DialogueClearMode::ClearOnEndTag
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct DialogueState {
+    pub npc_id: String,
+    pub npc_name: String,
+    pub full_text: String,
+    pub visible_chars: usize,
+    pub ends_dialog: bool,
+    pub last_tick: Instant,
+}
+
+impl DialogueState {
+    pub fn new(npc_id: String, npc_name: String, full_text: String, ends_dialog: bool) -> Self {
+        Self {
+            npc_id,
+            npc_name,
+            full_text,
+            visible_chars: 0,
+            ends_dialog,
+            last_tick: Instant::now(),
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum ChatChannel {
     Global,
@@ -27,6 +66,8 @@ pub struct GameState {
     pub current_room_exits: std::collections::HashMap<String, String>,
     pub focused_entity_id: Option<String>,
     pub action_logs: Vec<String>,
+    pub active_dialogue: Option<DialogueState>,
+    pub dialogue_clear_mode: DialogueClearMode,
 }
 
 impl GameState {
@@ -45,6 +86,8 @@ impl GameState {
             current_room_exits: std::collections::HashMap::new(),
             focused_entity_id: None,
             action_logs: Vec::new(),
+            active_dialogue: None,
+            dialogue_clear_mode: DialogueClearMode::default(),
         }
     }
 

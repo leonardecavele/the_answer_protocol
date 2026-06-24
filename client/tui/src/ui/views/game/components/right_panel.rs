@@ -180,6 +180,11 @@ impl Component for RightPanelComponent {
     ) -> bool {
         if state.ui.current_focus == crate::states::ui::GameFocus::RightPanel {
             if let crossterm::event::Event::Key(key) = event {
+                if key.code == crossterm::event::KeyCode::Enter {
+                    state.ui.current_focus = crate::states::ui::GameFocus::NpcList;
+                    return true;
+                }
+                
                 let direction = match key.code {
                     crossterm::event::KeyCode::Up => "NORTH",
                     crossterm::event::KeyCode::Down => "SOUTH",

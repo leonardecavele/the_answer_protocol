@@ -38,4 +38,7 @@ pub trait Component {
     ) -> bool {
         false
     }
+
+    /// Called on every system tick (e.g. 60 times a second).
+    fn on_tick(&mut self, _state: &mut AppState) {}
 }

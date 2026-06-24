@@ -6,7 +6,7 @@ use crate::ui::components::Component;
 use crate::ui::views::AppView;
 use components::{
     CenterPanelComponent, ChatOverlayComponent, FooterComponent, HeaderComponent,
-    LeftPanelComponent, RightPanelComponent, NpcActionPopup,
+    LeftPanelComponent, RightPanelComponent, NpcActionPopup, DialoguePopupComponent,
 };
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
 use ratatui::Frame;
@@ -22,6 +22,7 @@ pub struct GameView {
     right_panel: RightPanelComponent,
     chat_overlay: ChatOverlayComponent,
     npc_popup: NpcActionPopup,
+    dialogue_popup: DialoguePopupComponent,
     show_chat: bool,
     right_panel_area: Option<Rect>,
     footer_area: Option<Rect>,
@@ -37,6 +38,7 @@ impl GameView {
             right_panel: RightPanelComponent::new(),
             chat_overlay: ChatOverlayComponent::new(),
             npc_popup: NpcActionPopup::new(),
+            dialogue_popup: DialoguePopupComponent::new(),
             show_chat: false,
             right_panel_area: None,
             footer_area: None,
@@ -96,6 +98,16 @@ impl AppView for GameView {
         if state.ui.active_npc_popup.is_some() {
             self.npc_popup.draw(state, frame, area);
         }
+
+        if state.game.active_dialogue.is_some() {
+            self.dialogue_popup.draw(state, frame, area);
+        }
+    }
+
+    fn on_tick(&mut self, state: &mut AppState) {
+        if state.game.active_dialogue.is_some() {
+            self.dialogue_popup.on_tick(state);
+        }
     }
 
     fn handle_terminal_event(
@@ -104,6 +116,11 @@ impl AppView for GameView {
         event: &CrosstermEvent,
         event_sender: &mpsc::Sender<ApplicationEvent>,
     ) {
+        if state.game.active_dialogue.is_some() {
+            self.dialogue_popup.handle_terminal_event(state, event, event_sender);
+            return;
+        }
+
         if state.ui.active_npc_popup.is_some() {
             self.npc_popup.handle_terminal_event(state, event, event_sender);
             return;
@@ -137,6 +154,16 @@ impl AppView for GameView {
                 if let Some(r) = self.left_panel.npcs_area {
                     if crate::ui::components::is_mouse_in_rect(mouse.column, mouse.row, r) {
                         state.ui.current_focus = crate::states::ui::GameFocus::NpcList;
+                        
+                        // Select the clicked NPC
+                        let rel_y = mouse.row.saturating_sub(r.y);
+                        // The border is at rel_y == 0
+                        if rel_y > 0 {
+                            let index = (rel_y - 1) as usize;
+                            if index < state.game.room_npcs.len() {
+                                self.left_panel.selected_npc_index = Some(index);
+                            }
+                        }
                     }
                 }
                 if let Some(r) = self.right_panel_area {
