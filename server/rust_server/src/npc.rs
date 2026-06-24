@@ -2,6 +2,7 @@ use json::JsonValue;
 use tracing::error;
 
 use crate::constantes::{NPC_MOB, NPC_QUEST_GIVER, NPC_TALKER};
+use crate::quests::Questid;
 use crate::room::RoomName;
 
 type NpcType = u8;
@@ -9,7 +10,6 @@ pub type NpcId = u32;
 
 // for now, use this. later create Dialog and Questid structs
 pub type Dialog = String;
-pub type Questid = u32;
 
 #[derive(Clone)]
 pub struct Npc {
@@ -51,8 +51,8 @@ impl Npc {
         let quests = if json["quests"].is_array() && !json["quests"].is_empty() {
             let mut quests = Vec::new();
             for item in json["quests"].members() {
-                if let Some(id) = item.as_u32() {
-                    quests.push(id);
+                if let Some(id) = item.as_str() {
+                    quests.push(id.to_string());
                 }
             }
             Some(quests)

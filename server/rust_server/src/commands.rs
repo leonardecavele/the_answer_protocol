@@ -409,7 +409,7 @@ impl GameManager {
                 )
                 .dump();
             }
-            // "QUEST" => {},
+            "QUEST" => { return "".to_string(); }
             // "QUESTS" => {},
             _ => {
                 println!("Unknown command: {}", command_name);

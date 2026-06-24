@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-pub const HARDCODED_PLAYER_ROOM: &str = "room_test";
+pub const PLAYER_ROOM_SPAWN: &str = "entree";
 pub const TICK_TIME_AMPLIFICATION: u64 = 1;
 pub const TICK_RATE: u16 = 10; // 48
 pub const TICK_TIME: Duration =
@@ -37,7 +37,6 @@ pub enum ErrorCode {
     SendFailed,
     InvalidCommand,
     InvalidQuestion,
-    
 }
 
 impl ErrorCode {
@@ -62,6 +61,24 @@ impl ErrorCode {
             Self::SendFailed => 901,
             Self::InvalidQuestion => 998,
             Self::InvalidCommand => 999,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub enum LOOT{
+    XP,
+    TShirt,
+    Bottle,
+}
+
+impl LOOT{
+    pub fn from_string(s: &str) -> Option<Self> {
+        match s.to_uppercase().as_str() {
+            "XP" => Some(Self::XP),
+            "TSHIRT" => Some(Self::TShirt),
+            "BOTTLE" => Some(Self::Bottle),
+            _ => None,
         }
     }
 }

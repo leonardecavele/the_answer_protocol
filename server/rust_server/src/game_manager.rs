@@ -32,38 +32,14 @@ impl GameManager {
         writer_stream: TcpStream,
         parser: Parser,
     ) -> Self {
-        let mut starting_items = HashMap::new();
-        let item_id: ItemId = 0;
-        let item = Item::new(
-            item_id,
-            "test sword".to_string(),
-            "A sword made for testing".to_string(),
-        );
-
-        starting_items.insert(item_id, item);
-        let mut starting_rooms: HashMap<RoomId, Room> = HashMap::new();
-        let room_name: RoomName = "room_test".to_string();
-        let room_name2: RoomName = "room_test2".to_string();
-
-        let mut room_exits = HashMap::new();
-        room_exits.insert("NORTH".to_string(), room_name2.clone());
-
-        let mut room_exits2 = HashMap::new();
-        room_exits2.insert("SOUTH".to_string(), room_name.clone());
-
-        let mut room = Room::new(0, room_name.clone(), "nothing".to_string(), room_exits);
-        let room2 = Room::new(1, room_name2.clone(), "nothing".to_string(), room_exits2);
-        room.add_item(item_id);
-        starting_rooms.insert(room.get_id(), room);
-        starting_rooms.insert(room2.get_id(), room2);
 
         let mut manager = Self {
             players: HashMap::new(),
             players_by_name: HashMap::new(),
             next_player_id: 0,
             next_item_id: 0,
-            all_items: starting_items,
-            all_rooms: starting_rooms,
+            all_items: parser.get_items().clone(),
+            all_rooms: parser.get_rooms().clone(),
             all_npcs: parser.get_npcs().clone(),
             mpsc_receiver,
             writer_stream,
@@ -71,9 +47,10 @@ impl GameManager {
         };
 
         manager.next_player_id = manager.restore_next_player_id();
-        manager.next_item_id = manager.restore_next_item_id();
+        manager.next_item_id = manager.restore_next_item_id(&manager);
         return manager;
     }
+
 
     pub fn get_players(&self) -> &HashMap<PlayerId, Player> {
         return &self.players;
@@ -109,8 +86,11 @@ impl GameManager {
         return 0;
     }
 
-    fn restore_next_item_id(&self) -> ItemId {
-        return 0;
+    fn restore_next_item_id(&self, manager: &GameManager) -> ItemId {
+        //if a save is present take it else:
+        // 
+        // +1 because the ids start at 1 
+        (manager.all_items.len() + 1usize) as ItemId
     }
     pub fn get_all_items(&mut self) -> &mut HashMap<ItemId, Item> {
         return &mut self.all_items;

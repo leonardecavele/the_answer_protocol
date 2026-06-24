@@ -1,5 +1,6 @@
 pub type ItemId = u64;
 
+#[derive(Clone)]
 pub struct Item {
     id: ItemId,
     name: String,

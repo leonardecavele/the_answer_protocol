@@ -4,6 +4,7 @@ use crate::items::ItemId;
 use std::collections::HashMap;
 pub type RoomName = String;
 pub type RoomId = u32;
+#[derive(Clone)]
 pub struct Room {
     id: RoomId,
     name: String,

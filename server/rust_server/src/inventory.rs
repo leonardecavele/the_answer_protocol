@@ -2,6 +2,7 @@ use crate::items::ItemId;
 use std::collections::HashSet;
 // use json::object;
 
+#[derive(Clone)]
 pub struct Inventory {
     items: HashSet<ItemId>,
 }

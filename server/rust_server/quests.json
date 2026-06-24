@@ -1,0 +1,21 @@
+{
+  "quests": [
+    {
+      "name": "a",
+      "description": "",
+      "loots": {}
+    },
+    {
+      "name": "b",
+      "description": "",
+      "loots": {}
+    },
+    {
+      "name": "c",
+      "description": "",
+      "loots": {
+        "XP": { "qty": 0, "chance": 100.0 }
+      }
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 use crate::constantes::{
-    HARDCODED_PLAYER_ROOM, NO_MORE_MESSAGES, PLAYER_STARTING_HP, PLAYER_STARTING_MAX_HP,
+    PLAYER_ROOM_SPAWN, NO_MORE_MESSAGES, PLAYER_STARTING_HP, PLAYER_STARTING_MAX_HP,
 };
 use crate::inventory::Inventory;
 use crate::items::ItemId;
@@ -28,7 +28,7 @@ impl Player {
             hp: PLAYER_STARTING_HP,
             max_hp: PLAYER_STARTING_MAX_HP,
             inventory: Inventory::new(),
-            current_room: HARDCODED_PLAYER_ROOM.to_string(),
+            current_room: PLAYER_ROOM_SPAWN.to_string(),
             dialogs_index: HashMap::new(),
         }
     }

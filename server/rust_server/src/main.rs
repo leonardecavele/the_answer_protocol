@@ -40,7 +40,7 @@ fn main() -> std::io::Result<()> {
         .with_timer(timer)
         .init();
     
-    let mut parser = Parser::new("npcs.json");
+    let mut parser = Parser::new("npcs.json", "items.json", "rooms.json", "quests.json");
     
     match parser.parse_npcs(){
         Ok(()) => {
@@ -51,7 +51,32 @@ fn main() -> std::io::Result<()> {
         }
     }
     
+    match parser.parse_items(){
+        Ok(()) => {
+            info!("Successfully loaded {} items.", parser.get_items().len());
+        }
+        Err(err) => {
+            error!("Error parsing items: {}", err);
+        }
+    }
 
+    match parser.parse_rooms(){
+        Ok(()) => {
+            info!("Successfully loaded {} rooms.", parser.get_rooms().len());
+        }
+        Err(err) => {
+            error!("Error parsing rooms: {}", err);
+        }
+    }
+
+    match parser.parse_quests(){
+        Ok(()) => {
+            info!("Successfully loaded {} quests.", parser.get_quests().len());
+        }
+        Err(err) => {
+            error!("Error parsing quests: {}", err);
+        }
+    }
 
     let listener = TcpListener::bind("0.0.0.0:38801")?;
 
