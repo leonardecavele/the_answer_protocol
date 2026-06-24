@@ -24,6 +24,20 @@ impl App {
                 server_port,
                 player_name,
             } => {
+                if let Some(network_manager) = &self.network_manager {
+                    let req = api_client::protocol::command::enums::ApiRequest::Who(
+                        api_client::protocol::command::core::who::WhoCommand,
+                    );
+                    network_manager
+                        .send_command(crate::network::envelopes::RequestEnvelope::new(req));
+
+                    let req = api_client::protocol::command::enums::ApiRequest::Status(
+                        api_client::protocol::command::resource_interaction::status::StatusCommand,
+                    );
+                    network_manager
+                        .send_command(crate::network::envelopes::RequestEnvelope::new(req));
+                }
+
                 self.state
                     .ui
                     .remove_notification(crate::network::manager::NOTIF_ID_CONNECTION_ATTEMPT);

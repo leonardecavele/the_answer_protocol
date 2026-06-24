@@ -5,6 +5,34 @@ use api_client::protocol::command::enums::ApiResponse;
 impl App {
     pub fn handle_api_response(&mut self, envelope: ResponseEnvelope) {
         match envelope.response {
+            ApiResponse::Connect(Ok(connect_res)) => {
+                self.state.game.player_name = Some(connect_res.player_name);
+            }
+            ApiResponse::Who(Ok(who_res)) => {
+                self.state.game.online_players_count = who_res.player_count;
+            }
+            ApiResponse::Status(Ok(status_res)) => {
+                self.state.game.hp = status_res.player_status.hp;
+                self.state.game.max_hp = status_res.player_status.max_hp;
+            }
+            ApiResponse::GroupCreate(Ok(_res)) => {
+                self.state.game.group_members.clear();
+                if let Some(name) = &self.state.game.player_name {
+                    self.state.game.group_members.push(name.clone());
+                }
+            }
+            ApiResponse::GroupJoin(Ok(_res)) => {
+                if let api_client::protocol::command::enums::ApiRequest::GroupJoin(cmd) = envelope.original_request {
+                    self.state.game.group_members.clear();
+                    self.state.game.group_members.push(cmd.leader_name);
+                    if let Some(name) = &self.state.game.player_name {
+                        self.state.game.group_members.push(name.clone());
+                    }
+                }
+            }
+            ApiResponse::GroupLeave(Ok(_res)) => {
+                self.state.game.group_members.clear();
+            }
             ApiResponse::Look(Ok(look_res)) => {
                 self.state.game.current_room_id = Some(look_res.room.id.clone());
                 self.state.game.current_room_name = Some(look_res.room.name.clone());
@@ -65,6 +93,9 @@ impl App {
                     let display_name = self.state.game.manifest.get_npc_name(&cmd.npc_name);
 
                     let res = attack_res.combat_result;
+                    
+                    // Update HP manually from attack result
+                    self.state.game.hp = res.attacker_hp;
 
                     let text = match res.status.eq_ignore_ascii_case("Victory") {
                         true => {
