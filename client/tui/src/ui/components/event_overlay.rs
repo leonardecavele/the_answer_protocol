@@ -5,7 +5,7 @@ use crossterm::event::Event as CrosstermEvent;
 use ratatui::Frame;
 use ratatui::layout::Rect;
 use ratatui::style::{Color, Style};
-use ratatui::widgets::{Block, Borders, Clear, List, ListItem};
+use ratatui::widgets::{Block, Borders, Clear};
 
 pub struct EventOverlayComponent;
 

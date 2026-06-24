@@ -25,6 +25,8 @@ pub struct NpcEntry {
     #[serde(rename = "type", default)]
     pub npc_type: NpcType,
     pub image_path: Option<String>,
+    #[serde(default)]
+    pub actions: Vec<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]

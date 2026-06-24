@@ -6,7 +6,7 @@ use crate::ui::components::Component;
 use crate::ui::views::AppView;
 use components::{
     CenterPanelComponent, ChatOverlayComponent, FooterComponent, HeaderComponent,
-    LeftPanelComponent, RightPanelComponent,
+    LeftPanelComponent, RightPanelComponent, NpcActionPopup,
 };
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
 use ratatui::Frame;
@@ -21,6 +21,7 @@ pub struct GameView {
     center_panel: CenterPanelComponent,
     right_panel: RightPanelComponent,
     chat_overlay: ChatOverlayComponent,
+    npc_popup: NpcActionPopup,
     show_chat: bool,
     right_panel_area: Option<Rect>,
     footer_area: Option<Rect>,
@@ -35,6 +36,7 @@ impl GameView {
             center_panel: CenterPanelComponent::new(),
             right_panel: RightPanelComponent::new(),
             chat_overlay: ChatOverlayComponent::new(),
+            npc_popup: NpcActionPopup::new(),
             show_chat: false,
             right_panel_area: None,
             footer_area: None,
@@ -90,6 +92,10 @@ impl AppView for GameView {
             frame.render_widget(Clear, chat_area);
             self.chat_overlay.draw(state, frame, chat_area);
         }
+
+        if state.ui.active_npc_popup.is_some() {
+            self.npc_popup.draw(state, frame, area);
+        }
     }
 
     fn handle_terminal_event(
@@ -98,6 +104,11 @@ impl AppView for GameView {
         event: &CrosstermEvent,
         event_sender: &mpsc::Sender<ApplicationEvent>,
     ) {
+        if state.ui.active_npc_popup.is_some() {
+            self.npc_popup.handle_terminal_event(state, event, event_sender);
+            return;
+        }
+
         if let CrosstermEvent::Key(key) = event {
             if key.code == KeyCode::F(1) {
                 self.show_chat = !self.show_chat;

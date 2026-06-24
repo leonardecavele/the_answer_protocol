@@ -88,6 +88,7 @@ pub struct UiState {
     pub image_picker: Picker,
     pub image_cache: RefCell<HashMap<String, Option<(StatefulProtocol, u32, u32)>>>,
     pub current_focus: GameFocus,
+    pub active_npc_popup: Option<String>,
 }
 
 impl UiState {
@@ -101,6 +102,7 @@ impl UiState {
             image_picker: picker,
             image_cache: RefCell::new(HashMap::new()),
             current_focus: GameFocus::default(),
+            active_npc_popup: None,
         }
     }
 

@@ -1,5 +1,4 @@
 use crate::states::app::AppState;
-use crate::states::ui::Notification;
 use crate::ui::components::Component;
 use ratatui::{
     Frame,

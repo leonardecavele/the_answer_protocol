@@ -1,40 +1,43 @@
 {
-  "npcs": {
-    "11.crappo": {
-      "name": "crappo",
-      "type": "enemy",
-		"image_path": "../../assets/final/mobs/ayteyssi/ayteyssi.png"
+    "npcs": {
+        "11.crappo": {
+            "name": "crappo",
+            "type": "enemy",
+            "image_path": "../../assets/final/mobs/ayteyssi/ayteyssi.png",
+			"actions": ["Attack"]
+        },
+        "12.ayteyssi": {
+            "name": "ayteyssi",
+            "type": "dialogue",
+            "image_path": "../../assets/final/mobs/talk/ayteyssi/ayteyssi.png",
+			"actions": ["Talk"]
+        },
+        "5.gagulhon": {
+            "name": "gagulhon",
+            "type": "dialogue",
+            "image_path": "../../assets/final/mobs/talk/gagulhon/gagulhon1.png",
+			"actions": ["Talk"]
+        },
+        "6.ndalailallema": {
+            "name": "dalailallema",
+            "type": "quest_giver",
+            "image_path": "../../assets/final/mobs/quest/ndalailallema/ndalailallema.png",
+			"actions": ["Talk"]
+        }
     },
-	  "12.ayteyssi": {
-		  "name": "ayteyssi",
-		  "type": "dialogue",
-		  "image_path": "../../assets/final/mobs/talk/ayteyssi/ayteyssi.png"
-	  },
-	  "5.gagulhon": {
-		  "name": "gagulhon",
-		  "type": "dialogue",
-		  "image_path": "../../assets/final/mobs/talk/gagulhon/gagulhon1.png"
-	  },
-	  "6.ndalailallema": {
-		  "name": "dalailallema",
-		  "type": "quest_giver",
-		  "image_path": "../../assets/final/mobs/quest/ndalailallema/ndalailallema.png"
-	  }
-  },
-  "items": {
-    "0.test sword": {
-      "name": "Rusty Sword",
-      "description": "An ancient, blunt weapon."
+    "items": {
+        "0.test sword": {
+            "name": "Rusty Sword",
+            "description": "An ancient, blunt weapon."
+        }
+    },
+    "rooms": {
+        "7.entree": {},
+        "3.devant_l_ecole": {
+            "image_path": "../../assets/final/devant_l_ecole.jpg"
+        },
+        "4.devant_le_bocal": {
+            "image_path": "../../assets/final/devant_bocal.jpg"
+        }
     }
-  },
-  "rooms": {
-    "7.entree": {
-    },
-	  "3.devant_l_ecole": {
-		  "image_path": "../../assets/final/devant_l_ecole.jpg"
-	  },
-	  "4.devant_le_bocal": {
-		  "image_path": "../../assets/final/devant_bocal.jpg"
-	  }
-  }
 }
