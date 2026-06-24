@@ -51,7 +51,7 @@ impl Command for LookCommand {
                 }
 
                 let look_response: LookResponse =
-                    serde_json::from_str(response.arguments.join("").as_str())
+                    serde_json::from_str(response.arguments.join(" ").as_str())
                         .map_err(|e| CommandError::invalid_json_response(e))?;
 
                 Ok(look_response)
