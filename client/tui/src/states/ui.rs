@@ -2,6 +2,8 @@ use crate::events::types::NotificationType;
 use std::time::{Duration, Instant};
 use uuid::Uuid;
 
+pub const NOTIF_DEFAULT_DURATION_MS: u64 = 5000;
+
 pub struct Notification {
     pub id: String,
     pub message: String,
@@ -15,7 +17,7 @@ impl Notification {
             None,
             message.into(),
             NotificationType::Information,
-            crate::constants::NOTIF_DEFAULT_DURATION_MS,
+            NOTIF_DEFAULT_DURATION_MS,
         )
     }
 
@@ -24,7 +26,7 @@ impl Notification {
             None,
             message.into(),
             NotificationType::Warning,
-            crate::constants::NOTIF_DEFAULT_DURATION_MS,
+            NOTIF_DEFAULT_DURATION_MS,
         )
     }
 
@@ -33,7 +35,7 @@ impl Notification {
             None,
             message.into(),
             NotificationType::Error,
-            crate::constants::NOTIF_DEFAULT_DURATION_MS,
+            NOTIF_DEFAULT_DURATION_MS,
         )
     }
 

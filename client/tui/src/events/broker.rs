@@ -5,6 +5,10 @@ use futures::StreamExt;
 use std::time::Duration;
 use tokio::sync::mpsc;
 use tokio::task::JoinHandle;
+use tokio::time::{interval_at, Instant};
+
+pub const TICK_RATE: Duration = Duration::from_millis(500);
+pub const MAX_EVENTS_BUS: usize = 100;
 
 /// The EventBroker is responsible for collecting asynchronous events
 /// (like terminal inputs and ticks) and funneling them into a single channel.
@@ -21,17 +25,19 @@ impl EventBroker {
     /// Creates a new EventBroker.
     /// Spawns a Tokio task that will emit `ApplicationEvent::Tick`
     /// at the specified `tick_rate` and `ApplicationEvent::Terminal` for user inputs.
-    pub fn new(tick_rate: Duration) -> Self {
+    pub fn new() -> Self {
         // Create an mpsc channel with a reasonable capacity.
-        // We use 65536 to ensure the channel doesn't block easily.
-        let (sender, receiver) = mpsc::channel(2 ^ 16);
+        let (sender, receiver) = mpsc::channel(MAX_EVENTS_BUS);
 
         let task_sender = sender.clone();
 
         // Spawn the background task
         let background_task = tokio::spawn(async move {
             let mut event_stream = EventStream::new();
-            let mut tick_interval = tokio::time::interval(tick_rate);
+            let mut tick_interval = interval_at(
+                Instant::now() + TICK_RATE,
+                TICK_RATE,
+            );
 
             loop {
                 tokio::select! {

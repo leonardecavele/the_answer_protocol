@@ -1,5 +1,4 @@
 pub mod app;
-pub mod constants;
 pub mod errors;
 pub mod events;
 pub mod network;
@@ -16,6 +15,19 @@ use crossterm::terminal::{
 use ratatui::Terminal;
 use ratatui::backend::CrosstermBackend;
 use std::{io, panic};
+use clap::Parser;
+
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+struct Cli {
+    /// L'adresse IP du serveur auquel se connecter.
+    #[arg(long, default_value = "127.0.0.1")]
+    ip: String,
+
+    /// Le port du serveur.
+    #[arg(long, default_value = "38800")]
+    port: String,
+}
 
 fn terminal_setup() -> io::Result<Terminal<CrosstermBackend<io::Stdout>>> {
     enable_raw_mode()?;
@@ -49,12 +61,11 @@ fn setup_panic_hook() {
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     setup_panic_hook();
 
+    let cli = Cli::parse();
+
     let mut terminal = terminal_setup()?;
 
-    let mut app = App::new(
-        crate::constants::DEFAULT_SERVER_IP.to_string(),
-        crate::constants::DEFAULT_SERVER_PORT.to_string(),
-    );
+    let mut app = App::new(cli.ip, cli.port);
     let res = app.run(&mut terminal).await;
 
     terminal_restore(terminal)?;

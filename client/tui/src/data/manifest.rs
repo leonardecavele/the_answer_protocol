@@ -2,6 +2,8 @@ use std::collections::HashMap;
 use std::fs;
 use serde::{Deserialize, Serialize};
 
+pub const ASSETS_PATH_MANIFEST: &str = "assets/manifest.json";
+
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum NpcType {
@@ -48,8 +50,8 @@ pub struct Manifest {
 
 impl Manifest {
     pub fn load() -> Result<Self, String> {
-        let content = fs::read_to_string(crate::constants::ASSETS_PATH_MANIFEST)
-            .map_err(|e| format!("Failed to read {}: {}", crate::constants::ASSETS_PATH_MANIFEST, e))?;
+        let content = fs::read_to_string(ASSETS_PATH_MANIFEST)
+            .map_err(|e| format!("Failed to read {}: {}", ASSETS_PATH_MANIFEST, e))?;
 
         let manifest = serde_json::from_str(&content)
             .map_err(|e| format!("Invalid JSON in manifest.json: {}", e))?;

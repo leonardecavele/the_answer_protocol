@@ -3,6 +3,8 @@ use crate::network::envelopes::{RequestEnvelope, ResponseEnvelope};
 use tokio::sync::mpsc;
 use tokio::task::JoinHandle;
 
+pub const NOTIF_ID_CONNECTION_ATTEMPT: &str = "notif_connection_attempt";
+
 /// The NetworkManager is responsible for handling the connection to the game server.
 /// It runs in a background Tokio task to ensure the UI never freezes during I/O.
 pub struct NetworkManager {

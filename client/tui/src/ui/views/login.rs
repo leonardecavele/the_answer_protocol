@@ -25,7 +25,7 @@ pub struct LoginView {
 }
 
 impl LoginView {
-    pub fn new() -> Self {
+    pub fn new(ip: String, port: String) -> Self {
         let mut view = Self {
             current_focus: LoginFocus::PlayerName,
             name_input: Interactive::new(TextInputComponent::new("Player Name")),
@@ -34,8 +34,8 @@ impl LoginView {
             connect_button: Interactive::new(ButtonComponent::new("Connect")),
         };
         // Set initial value for defaults
-        view.ip_input.inner.value = "127.0.0.1".to_string();
-        view.port_input.inner.value = "38800".to_string();
+        view.ip_input.inner.value = ip;
+        view.port_input.inner.value = port;
 
         view.update_focus();
         view
@@ -198,7 +198,7 @@ impl AppView for LoginView {
                     } else {
                         state.ui.push(
                             crate::states::ui::Notification::info("Connecting...")
-                                .with_id(crate::constants::NOTIF_ID_CONNECTION_ATTEMPT)
+                                .with_id(crate::network::manager::NOTIF_ID_CONNECTION_ATTEMPT)
                                 .with_duration(60000),
                         );
                         let _ = event_sender.try_send(crate::events::ApplicationEvent::Network(

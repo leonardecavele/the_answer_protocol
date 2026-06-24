@@ -26,7 +26,7 @@ impl App {
             } => {
                 self.state
                     .ui
-                    .remove_notification(crate::constants::NOTIF_ID_CONNECTION_ATTEMPT);
+                    .remove_notification(crate::network::manager::NOTIF_ID_CONNECTION_ATTEMPT);
 
                 self.state.ui.push(crate::states::ui::Notification::info(
                     "Connected to the server successfully!",
@@ -42,7 +42,7 @@ impl App {
                 self.network_manager = None;
                 self.state
                     .ui
-                    .remove_notification(crate::constants::NOTIF_ID_CONNECTION_ATTEMPT);
+                    .remove_notification(crate::network::manager::NOTIF_ID_CONNECTION_ATTEMPT);
 
                 self.state
                     .ui

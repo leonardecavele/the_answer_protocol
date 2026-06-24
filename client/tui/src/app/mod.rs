@@ -1,4 +1,3 @@
-use crate::constants::{MAX_EVENT_HISTORY, TICK_RATE};
 use crate::errors::ApplicationError;
 use crate::events::{ApplicationEvent, EventBroker, SystemEvent};
 use crate::network::NetworkManager;
@@ -14,6 +13,8 @@ use std::io;
 use std::time::Instant;
 
 pub mod handlers;
+
+pub const MAX_EVENT_HISTORY: usize = 100;
 
 pub struct App {
     pub state: AppState,
@@ -32,7 +33,7 @@ impl App {
             Err(e) => (crate::data::manifest::Manifest::default(), Some(e)),
         };
 
-        let mut state = AppState::new(ip, port, manifest);
+        let mut state = AppState::new(ip.clone(), port.clone(), manifest);
         if let Some(e) = err {
              state.ui.push(
                  crate::states::ui::Notification::error(e)
@@ -42,9 +43,9 @@ impl App {
 
         Self {
             state,
-            event_broker: EventBroker::new(TICK_RATE),
+            event_broker: EventBroker::new(),
             network_manager: None,
-            active_view: Box::new(LoginView::new()),
+            active_view: Box::new(LoginView::new(ip, port)),
             event_overlay: EventOverlayComponent::new(),
             notification_overlay: NotificationComponent::new(),
         }

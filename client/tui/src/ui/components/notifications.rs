@@ -1,4 +1,3 @@
-use crate::constants::MAX_VISIBLE_NOTIFICATIONS;
 use crate::events::types::NotificationType;
 use crate::states::app::AppState;
 use crate::ui::components::Component;
@@ -7,6 +6,8 @@ use ratatui::Frame;
 use ratatui::layout::{Alignment, Rect};
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::widgets::{Block, Borders, Clear, Paragraph, Wrap};
+
+pub const MAX_VISIBLE_NOTIFICATIONS: usize = 5;
 
 pub struct NotificationComponent {
     /// Stores the area (Rect) associated with the ID (String) of each visible notification
