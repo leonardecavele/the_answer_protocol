@@ -22,6 +22,8 @@ pub struct GameState {
     pub manifest: crate::data::manifest::Manifest,
     pub room_npcs: Vec<String>,
     pub current_room_id: Option<String>,
+    pub current_room_name: Option<String>,
+    pub current_room_description: Option<String>,
     pub focused_entity_id: Option<String>,
     pub action_logs: Vec<String>,
 }
@@ -37,6 +39,8 @@ impl GameState {
             manifest,
             room_npcs: Vec::new(),
             current_room_id: None,
+            current_room_name: None,
+            current_room_description: None,
             focused_entity_id: None,
             action_logs: Vec::new(),
         }

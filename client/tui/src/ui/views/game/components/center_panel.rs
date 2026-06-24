@@ -20,13 +20,13 @@ impl Component for CenterPanelComponent {
             .borders(Borders::ALL)
             .title(" Action History ");
         
-        let logs: Vec<ratatui::text::Line> = state.game.action_logs
-            .iter()
-            .map(|log| ratatui::text::Line::from(log.as_str()))
-            .collect();
+        let inner_area = block.inner(area);
+        let max_width = inner_area.width as usize;
+
+        let visual_lines = crate::ui::utils::wrap_slice_to_lines(&state.game.action_logs, max_width);
         
-        let logs_count = logs.len() as u16;
-        let inner_height = area.height.saturating_sub(2);
+        let logs_count = visual_lines.len() as u16;
+        let inner_height = inner_area.height;
         
         // Auto-scroll to bottom
         let scroll = if logs_count > inner_height {
@@ -35,9 +35,8 @@ impl Component for CenterPanelComponent {
             0
         };
 
-        let list = ratatui::widgets::Paragraph::new(logs)
+        let list = ratatui::widgets::Paragraph::new(visual_lines)
             .block(block)
-            .wrap(ratatui::widgets::Wrap { trim: true })
             .scroll((scroll, 0));
 
         frame.render_widget(list, area);

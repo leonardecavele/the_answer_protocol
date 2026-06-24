@@ -48,18 +48,25 @@ impl Component for EventOverlayComponent {
             .borders(Borders::ALL)
             .style(Style::default().fg(Color::LightMagenta));
 
-        let items: Vec<ListItem> = state
-            .ui
-            .event_history
-            .iter()
-            .map(|evt| ListItem::new(evt.clone()))
-            .collect();
+        let inner_area = block.inner(overlay_area);
+        let max_width = inner_area.width as usize;
+        let visual_lines = crate::ui::utils::wrap_slice_to_lines(&state.ui.event_history, max_width);
 
-        let list = List::new(items).block(block);
+        let lines_count = visual_lines.len() as u16;
+        let inner_height = inner_area.height;
+        let scroll = if lines_count > inner_height {
+            lines_count - inner_height
+        } else {
+            0
+        };
 
-        // Clear the area and draw the list
+        let paragraph = ratatui::widgets::Paragraph::new(visual_lines)
+            .block(block)
+            .scroll((scroll, 0));
+
+        // Clear the area and draw the paragraph
         frame.render_widget(Clear, overlay_area);
-        frame.render_widget(list, overlay_area);
+        frame.render_widget(paragraph, overlay_area);
     }
 
     fn is_blocking(&self, state: &AppState) -> bool {

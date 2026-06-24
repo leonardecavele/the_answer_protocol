@@ -55,7 +55,6 @@ impl Component for NotificationComponent {
             // Add "[X] " to indicate that it can be closed
             let text = format!("[X] {}", notif.message);
 
-            // Dynamic width (max 30% of terminal width, minimum 20 chars)
             let mut max_width = (area.width as f32 * 0.3) as u16;
             max_width = std::cmp::max(max_width, 20);
 
@@ -64,21 +63,16 @@ impl Component for NotificationComponent {
             // Limit width if text is smaller than max_width
             let width = std::cmp::min(max_width, text_length + 2); // +2 for borders
 
-            // Dynamic height calculation
             let inner_width = width.saturating_sub(2).max(1);
 
-            // Integer math ceiling formula: (A + B - 1) / B
-            let mut lines = (text_length + inner_width - 1) / inner_width;
+            let visual_lines = crate::ui::utils::wrap_str_to_lines(&text, inner_width as usize);
+            let lines_count = visual_lines.len() as u16;
 
-            // Account for manual newlines
-            lines += text.matches('\n').count() as u16;
+            let height = lines_count + 2; // +2 for top/bottom borders
 
-            let height = lines + 2; // +2 for top/bottom borders
-
-            let paragraph = Paragraph::new(text)
+            let paragraph = Paragraph::new(visual_lines)
                 .block(block)
-                .alignment(Alignment::Left)
-                .wrap(Wrap { trim: true });
+                .alignment(Alignment::Left);
 
             // Position at top right
             let x = if area.width > width {

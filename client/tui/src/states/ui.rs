@@ -73,7 +73,7 @@ pub struct UiState {
     pub show_event_overlay: bool,
     pub event_history: Vec<String>,
     pub image_picker: Picker,
-    pub image_cache: RefCell<HashMap<String, Option<StatefulProtocol>>>,
+    pub image_cache: RefCell<HashMap<String, Option<(StatefulProtocol, u32, u32)>>>,
 }
 
 impl UiState {

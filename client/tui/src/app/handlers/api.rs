@@ -7,6 +7,8 @@ impl App {
         match envelope.response {
             ApiResponse::Look(Ok(look_res)) => {
                 self.state.game.current_room_id = Some(look_res.room.id.clone());
+                self.state.game.current_room_name = Some(look_res.room.name.clone());
+                self.state.game.current_room_description = Some(look_res.room.description.clone());
                 self.state.game.room_players = look_res.players.clone();
                 self.state.game.room_npcs = look_res.npcs.clone();
             }

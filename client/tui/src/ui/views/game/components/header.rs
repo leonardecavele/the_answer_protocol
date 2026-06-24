@@ -15,8 +15,25 @@ impl HeaderComponent {
 }
 
 impl Component for HeaderComponent {
-    fn draw(&mut self, _state: &AppState, frame: &mut Frame, area: Rect) {
-        let block = Block::default().borders(Borders::ALL).title(" Header ");
-        frame.render_widget(block, area);
+    fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
+        let title = match &state.game.current_room_name {
+            Some(name) => format!(" {} ", name),
+            None => " Cluster 6 (the backrooms) ".to_string(),
+        };
+
+        let description = match &state.game.current_room_description {
+            Some(desc) => desc.as_str(),
+            None => "",
+        };
+
+        let block = Block::default().borders(Borders::ALL).title(title);
+        
+        let inner_area = block.inner(area);
+        let visual_lines = crate::ui::utils::wrap_str_to_lines(description, inner_area.width as usize);
+
+        let paragraph = ratatui::widgets::Paragraph::new(visual_lines)
+            .block(block);
+
+        frame.render_widget(paragraph, area);
     }
 }

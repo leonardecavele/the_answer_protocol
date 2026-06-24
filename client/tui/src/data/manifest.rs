@@ -36,8 +36,6 @@ pub struct ItemEntry {
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct RoomEntry {
-    pub name: String,
-    pub description: String,
     pub image_path: Option<String>,
 }
 

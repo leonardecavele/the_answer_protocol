@@ -44,7 +44,7 @@ impl AppView for GameView {
         let vertical_chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
-                Constraint::Length(3),
+                Constraint::Length(5),
                 Constraint::Min(1),
                 Constraint::Length(3),
             ])
@@ -55,8 +55,8 @@ impl AppView for GameView {
             .direction(Direction::Horizontal)
             .constraints([
                 Constraint::Percentage(20),
-                Constraint::Percentage(60),
-                Constraint::Percentage(20),
+                Constraint::Percentage(40),
+                Constraint::Percentage(40),
             ])
             .split(vertical_chunks[1]);
 
