@@ -2,7 +2,6 @@ use crate::constantes::{TICK_TIME, TickResult};
 use crate::game_manager::GameManager;
 use std::sync::mpsc;
 use std::time::Instant;
-use tracing::info;
 
 impl GameManager {
     pub fn apply_players_changes(&mut self, tick_timer: Instant) -> std::io::Result<TickResult> {
@@ -18,6 +17,7 @@ impl GameManager {
                 Err(mpsc::RecvTimeoutError::Timeout) => break,
                 Err(mpsc::RecvTimeoutError::Disconnected) => return Ok(TickResult::Exit),
             };
+
         }
         return Ok(TickResult::TickEnd);
     }

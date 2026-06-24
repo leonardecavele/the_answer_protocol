@@ -1,6 +1,7 @@
-use crate::constantes::{BASE_COMMAND_RESPONSE, ErrorCode};
+use crate::constantes::{BASE_COMMAND_RESPONSE, ErrorCode, NPC_MOB};
 use crate::game_manager::GameManager;
 use crate::items::{Item, ItemId};
+use crate::npc::{Npc, NpcId};
 use crate::room::Room;
 use json::{JsonValue, object};
 use tracing::{error, info};
@@ -42,11 +43,12 @@ impl GameManager {
 
     fn generate_event_json(
         &self,
-        players: &Vec<String>,
+        players: &mut Vec<String>,
         emitted_by: &str,
         event_name: &str,
         data: &str,
     ) -> JsonValue {
+        players.retain(|player| player != emitted_by);
         return object! {
             "players": players.as_slice(),
             "emitted_by": emitted_by,
@@ -139,7 +141,7 @@ impl GameManager {
                     room_items_str,
                 ) = {
                     let player = self.get_player_from_name(player_name).unwrap();
-                    let room = self.get_room(player.get_current_room()).unwrap();
+                    let room = self.get_room_by_name(player.get_current_room()).unwrap();
                     (
                         room.get_id(),
                         room.get_name(),
@@ -159,7 +161,7 @@ impl GameManager {
                     },
                     "players": JsonValue::from(room_players),
                     "items": JsonValue::from(room_items_str),
-                    "npcs": JsonValue::from(self.get_npcs_in_room(player_room_name))
+                    "npcs": JsonValue::from(self.get_npcs_in_room_as_protocol_representations(player_room_name))
                 };
                 return generate_json(
                     player_name,
@@ -191,7 +193,7 @@ impl GameManager {
                             .dump();
                     }
                     let room_to_go = room_to_go_wrapped.unwrap().clone();
-                    let room_id = self.get_room(room_to_go.as_str()).unwrap().get_id();
+                    let room_id = self.get_room_by_name(room_to_go.as_str()).unwrap().get_id();
                     (room_to_go, room_id)
                 };
 
@@ -202,13 +204,15 @@ impl GameManager {
                     self.get_all_players_at_room(player.get_current_room());
 
                 // tick events part
-                current_room_players.retain(|x| *x != player_name);
-                last_room_players.retain(|x| *x != player_name);
-                
+
                 let room_leave_diff =
-                    self.generate_event_json(&last_room_players, player_name, "ROOM", "LEAVE");
-                let room_enter_diff =
-                    self.generate_event_json(&current_room_players, player_name, "ROOM", "ENTER");
+                    self.generate_event_json(&mut last_room_players, player_name, "ROOM", "LEAVE");
+                let room_enter_diff = self.generate_event_json(
+                    &mut current_room_players,
+                    player_name,
+                    "ROOM",
+                    "ENTER",
+                );
 
                 info!("before add_diff");
                 self.add_diff_to_tick(room_leave_diff);
@@ -216,7 +220,13 @@ impl GameManager {
 
                 info!("after add_diff");
                 let room_repr = Room::protocol_representation(room_to_go_id, room_to_go);
-                return generate_json(player_name, command_name, ErrorCode::NoError, room_repr.as_str()).dump();
+                return generate_json(
+                    player_name,
+                    command_name,
+                    ErrorCode::NoError,
+                    room_repr.as_str(),
+                )
+                .dump();
             }
 
             "QUIT" => {
@@ -224,19 +234,48 @@ impl GameManager {
                 return BASE_COMMAND_RESPONSE.to_string();
             }
 
-            // "TALK" => {
-            //     let (player_id, player_room) = {
-            //         let player = self.get_player_from_name(player_name).unwrap();
-            //         (player.get_id(), player.get_current_room().to_string())
-            //     };
-            //     let target_npc = data;
-            //     let npc_id = Npc::convert_to_id(target_npc);
-            //     let npc = self.game_manager.get_npc(npc_id);
-            //     if npc.is_none() {
-            //         return generate_json(player_name, command_name, ErrorCode::NpcNotFound, "").dump();
-            //     }
+            "TALK" => {
+                let target_npc = data;
+                let player_room = {
+                    self.get_player_from_name(player_name)
+                        .unwrap()
+                        .get_current_room()
+                };
+                let parsed_repr: Option<(NpcId, String)> =
+                    Npc::parse_protocol_representation(target_npc);
+                if parsed_repr.is_none() {
+                    return generate_json(player_name, command_name, ErrorCode::NpcNotFound, "")
+                        .dump();
+                }
+                let (npc_id, npc_name) = parsed_repr.unwrap();
+                let npc = self.get_npc(npc_id);
+                if npc.is_none() {
+                    return generate_json(player_name, command_name, ErrorCode::NpcNotFound, "")
+                        .dump();
+                }
 
-            // }
+                let npc_unwrap = npc.unwrap().clone();
+                if npc_unwrap.get_name() != npc_name {
+                    return generate_json(player_name, command_name, ErrorCode::NpcNotFound, "")
+                        .dump();
+                }
+                if !self.npc_is_in_room(npc_id, player_room) {
+                    return generate_json(player_name, command_name, ErrorCode::NpcNotInRoom, "")
+                        .dump();
+                }
+
+                let dialog = {
+                    let player = self.get_mut_player_from_name(player_name).unwrap();
+                    player.talk_with(&npc_unwrap)
+                };
+                return generate_json(
+                    player_name,
+                    command_name,
+                    ErrorCode::NoError,
+                    dialog.as_str(),
+                )
+                .dump();
+            }
             // TAKE format : global_id.item_type ( ex: "12.legendary sword")
             "TAKE" => {
                 let (player_id, player_room) = {
@@ -252,7 +291,7 @@ impl GameManager {
                 let (item_id, item_name) = parsed_item.unwrap();
 
                 let room_name: String = {
-                    let room: &Room = self.get_room(player_room.as_str()).unwrap();
+                    let room: &Room = self.get_room_by_name(player_room.as_str()).unwrap();
                     if !self.item_exists_with_name(item_id, item_name.as_str())
                         || !room.contains_item(item_id)
                     {
@@ -271,9 +310,8 @@ impl GameManager {
                 self.add_item_to_player(player_id, item_id);
 
                 let mut players_to_send = self.get_all_players_at_room(player_room.as_str());
-                players_to_send.retain(|name| name != player_name);
                 let events_json =
-                    self.generate_event_json(&players_to_send, player_name, "TAKE", item);
+                    self.generate_event_json(&mut players_to_send, player_name, "TAKE", item);
                 self.add_diff_to_tick(events_json);
 
                 return generate_json(
@@ -312,9 +350,8 @@ impl GameManager {
                 self.add_item_to_room(&room_name, item_id);
 
                 let mut players_to_send = self.get_all_players_at_room(room_name.as_str());
-                players_to_send.retain(|p| p != player_name);
                 let events_json =
-                    self.generate_event_json(&players_to_send, player_name, "DROP", item);
+                    self.generate_event_json(&mut players_to_send, player_name, "DROP", item);
                 self.add_diff_to_tick(events_json);
 
                 return generate_json(player_name, command_name, ErrorCode::NoError, item).dump();
@@ -329,8 +366,49 @@ impl GameManager {
                 )
                 .dump();
             }
-            // "ATTACK" => {},
-            // "STATUS" => {},
+            "ATTACK" => {
+                let player_id = self.get_player_id(player_name);
+                let target_npc = data;
+                let npc_wrapped = Npc::parse_protocol_representation(target_npc);
+                let player_room = {
+                    self.get_player_from_name(player_name)
+                        .unwrap()
+                        .get_current_room()
+                };
+                if npc_wrapped.is_none() {
+                    return generate_json(player_name, command_name, ErrorCode::NpcNotFound, "")
+                        .dump();
+                }
+                let (npc_id, _) = npc_wrapped.unwrap();
+                if !self.npc_is_in_room(npc_id, player_room) {
+                    return generate_json(player_name, command_name, ErrorCode::NpcNotInRoom, "")
+                        .dump();
+                }
+                let npc_type = self.get_npc_type(npc_id);
+                if (npc_type & NPC_MOB) == 0 {
+                    return generate_json(player_name, command_name, ErrorCode::NpcNotHostile, "")
+                        .dump();
+                }
+                let combat_result = self.player_attacks_npc(*player_id.unwrap(), npc_id);
+
+                return generate_json(
+                    player_name,
+                    command_name,
+                    ErrorCode::NoError,
+                    combat_result.as_str(),
+                )
+                .dump();
+            }
+            "STATUS" => {
+                let player_status = self.get_player_status_as_string(player_name);
+                return generate_json(
+                    player_name,
+                    command_name,
+                    ErrorCode::NoError,
+                    player_status.as_str(),
+                )
+                .dump();
+            }
             // "QUEST" => {},
             // "QUESTS" => {},
             _ => {

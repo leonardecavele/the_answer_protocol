@@ -89,13 +89,27 @@ impl Npc {
     pub fn get_max_hp(&self) -> Option<u32> {
         self.max_hp
     }
+
+    pub fn set_hp(&mut self, hp: Option<u32>) {
+        self.hp = hp;
+    }
     pub fn get_dialog(&self, index: usize) -> Option<&Dialog> {
         self.dialogs.as_ref()?.get(index)
     }
     pub fn get_spawn_room(&self) -> &str {
         &self.room_spawn
     }
-    // pub fn convert_to_id(name: &str) -> NpcId {
-    // )
-    // }
+    pub fn parse_protocol_representation(protocol_name: &str) -> Option<(NpcId, String)> {
+        if let Some((id, name)) = protocol_name.split_once('.') {
+            id.parse::<NpcId>().ok().map(|id| (id, name.to_string()))
+        } else {
+            None
+        }
+    }
+    pub fn get_protocol_representation(&self) -> String {
+        format!("{}.{}", self.id, self.name)
+    }
+    pub fn get_dialogs(&self) -> Option<&Vec<Dialog>> {
+        self.dialogs.as_ref()
+    }
 }
