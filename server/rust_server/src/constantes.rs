@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-pub const HARDCODED_PLAYER_ROOM: &str = "room_test";
+pub const PLAYER_ROOM_SPAWN: &str = "entree";
 pub const TICK_TIME_AMPLIFICATION: u64 = 1;
 pub const TICK_RATE: u16 = 10; // 48
 pub const TICK_TIME: Duration =
@@ -28,6 +28,7 @@ pub enum ErrorCode {
     ItemNotFound,
     ItemNotInInventory,
     NpcNotFound,
+    NpcNotInRoom,
     GroupNotFound,
     NoSuchGroup,
     NpcNotHostile,
@@ -55,6 +56,7 @@ impl ErrorCode {
             | Self::NoSuchGroup => 404,
             Self::NpcNotHostile => 405,
             Self::NoQuestAvailable => 406,
+            Self::NpcNotInRoom => 407,
             Self::ConnectionFailed => 900,
             Self::SendFailed => 901,
             Self::InvalidQuestion => 998,
@@ -63,6 +65,28 @@ impl ErrorCode {
     }
 }
 
-pub const NPC_QUEST_GIVER: u8 = 1 << 0; 
-pub const NPC_MOB: u8         = 1 << 1; 
-pub const NPC_TALKER: u8      = 1 << 2;
+#[derive(Clone, Copy, Debug)]
+pub enum LOOT{
+    XP,
+    TShirt,
+    Bottle,
+}
+
+impl LOOT{
+    pub fn from_string(s: &str) -> Option<Self> {
+        match s.to_uppercase().as_str() {
+            "XP" => Some(Self::XP),
+            "TSHIRT" => Some(Self::TShirt),
+            "BOTTLE" => Some(Self::Bottle),
+            _ => None,
+        }
+    }
+}
+
+pub const NPC_QUEST_GIVER: u8 = 1 << 0;
+pub const NPC_MOB: u8 = 1 << 1;
+pub const NPC_TALKER: u8 = 1 << 2;
+
+pub const NO_MORE_MESSAGES: &str = "[end of dialogue]";
+pub const PLAYER_STARTING_MAX_HP: u32 = 100;
+pub const PLAYER_STARTING_HP: u32 = PLAYER_STARTING_MAX_HP;

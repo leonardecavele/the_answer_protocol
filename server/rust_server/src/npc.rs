@@ -2,6 +2,7 @@ use json::JsonValue;
 use tracing::error;
 
 use crate::constantes::{NPC_MOB, NPC_QUEST_GIVER, NPC_TALKER};
+use crate::quests::Questid;
 use crate::room::RoomName;
 
 type NpcType = u8;
@@ -9,7 +10,6 @@ pub type NpcId = u32;
 
 // for now, use this. later create Dialog and Questid structs
 pub type Dialog = String;
-pub type Questid = u32;
 
 #[derive(Clone)]
 pub struct Npc {
@@ -51,8 +51,8 @@ impl Npc {
         let quests = if json["quests"].is_array() && !json["quests"].is_empty() {
             let mut quests = Vec::new();
             for item in json["quests"].members() {
-                if let Some(id) = item.as_u32() {
-                    quests.push(id);
+                if let Some(id) = item.as_str() {
+                    quests.push(id.to_string());
                 }
             }
             Some(quests)
@@ -89,13 +89,27 @@ impl Npc {
     pub fn get_max_hp(&self) -> Option<u32> {
         self.max_hp
     }
+
+    pub fn set_hp(&mut self, hp: Option<u32>) {
+        self.hp = hp;
+    }
     pub fn get_dialog(&self, index: usize) -> Option<&Dialog> {
         self.dialogs.as_ref()?.get(index)
     }
     pub fn get_spawn_room(&self) -> &str {
         &self.room_spawn
     }
-    // pub fn convert_to_id(name: &str) -> NpcId {
-    // )
-    // }
+    pub fn parse_protocol_representation(protocol_name: &str) -> Option<(NpcId, String)> {
+        if let Some((id, name)) = protocol_name.split_once('.') {
+            id.parse::<NpcId>().ok().map(|id| (id, name.to_string()))
+        } else {
+            None
+        }
+    }
+    pub fn get_protocol_representation(&self) -> String {
+        format!("{}.{}", self.id, self.name)
+    }
+    pub fn get_dialogs(&self) -> Option<&Vec<Dialog>> {
+        self.dialogs.as_ref()
+    }
 }

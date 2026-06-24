@@ -1,23 +1,67 @@
 use std::collections::HashMap;
 use std::fs;
+use crate::items::{ItemId, Item};
 use crate::npc::{Npc, NpcId};
+use crate::room::{RoomId, Room};
+use crate::quests::{Questid, Quest};
 
 pub struct Parser {
     npcs: HashMap<NpcId, Npc>,
-    file_path: String,
+    ncps_file: String,
+    items: HashMap<ItemId, Item>,
+    items_file: String,
+    rooms: HashMap<RoomId, Room>,
+    rooms_file: String,
+    quests: HashMap<Questid, Quest>,
+    quests_file: String,
 }
 
 impl Parser {
-    pub fn new(file_path: &str) -> Self {
+    pub fn new(npcs_path: &str, items_path: &str, rooms_path: &str, quests_path: &str) -> Self {
         Self {
             npcs: HashMap::new(),
-            file_path: file_path.to_string(),
+            ncps_file: npcs_path.to_string(),
+            items: HashMap::new(),
+            items_file: items_path.to_string(),
+            rooms: HashMap::new(),
+            rooms_file: rooms_path.to_string(),
+            quests: HashMap::new(),
+            quests_file: quests_path.to_string(),
         }
     }
 
+    pub fn parse_quests(&mut self) -> Result<(), String> {
+        let content = fs::read_to_string(&self.quests_file)
+            .map_err(|e| format!("Failed to read file '{}': {}", self.quests_file, e))?;
+        
+        let parsed = json::parse(&content)
+            .map_err(|e| format!("Failed to parse JSON: {}", e))?;
+
+        let mut quests = HashMap::new();
+        
+        if parsed["quests"].is_array() {
+            for item in parsed["quests"].members() {
+                if let Some(quest) = Quest::new(item) {
+                    quests.insert(quest.get_id().clone(), quest);
+                } else {
+                    return Err("an invalid quest was found".to_string());
+                }
+            }
+        } else {
+            return Err("JSON does not contain 'quests' array".to_string());
+        }
+
+        self.quests = quests;
+        Ok(())
+    }
+
+    pub fn get_quests(&self) -> &HashMap<Questid, Quest> {
+        &self.quests
+    }
+
     pub fn parse_npcs(&mut self) -> Result<(), String> {
-        let content = fs::read_to_string(&self.file_path)
-            .map_err(|e| format!("Failed to read file '{}': {}", self.file_path, e))?;
+        let content = fs::read_to_string(&self.ncps_file)
+            .map_err(|e| format!("Failed to read file '{}': {}", self.ncps_file, e))?;
         
         let parsed = json::parse(&content)
             .map_err(|e| format!("Failed to parse JSON: {}", e))?;
@@ -42,5 +86,82 @@ impl Parser {
     }
     pub fn get_npcs(&self) -> &HashMap<NpcId, Npc> {
         &self.npcs
+    }
+
+    pub fn parse_items(&mut self) -> Result<(), String> {
+        let content = fs::read_to_string(&self.items_file)
+            .map_err(|e| format!("Failed to read file '{}': {}", self.items_file, e))?;
+        
+        let parsed = json::parse(&content)
+            .map_err(|e| format!("Failed to parse JSON: {}", e))?;
+
+        let mut items = HashMap::new();
+        
+        if parsed["items"].is_array() {
+            for item in parsed["items"].members() {
+                let id = item["id"].as_u64();
+                let name = item["name"].as_str();
+                let description = item["description"].as_str();
+
+                if let (Some(id), Some(name), Some(description)) = (id, name, description) {
+                    let parsed_item = Item::new(id, name.to_string(), description.to_string());
+                    items.insert(parsed_item.get_id(), parsed_item);
+                } else {
+                    return Err("an invalid item was found".to_string());
+                }
+            }
+        } else {
+            return Err("JSON does not contain 'items' array".to_string());
+        }
+
+        self.items = items;
+        Ok(())
+    }
+
+    pub fn get_items(&self) -> &HashMap<ItemId, Item> {
+        &self.items
+    }
+
+    pub fn parse_rooms(&mut self) -> Result<(), String> {
+        let content = fs::read_to_string(&self.rooms_file)
+            .map_err(|e| format!("Failed to read file '{}': {}", self.rooms_file, e))?;
+        
+        let parsed = json::parse(&content)
+            .map_err(|e| format!("Failed to parse JSON: {}", e))?;
+
+        let mut rooms = HashMap::new();
+        
+        if parsed["rooms"].is_array() {
+            for room in parsed["rooms"].members() {
+                let id = room["id"].as_u32();
+                let name = room["name"].as_str();
+                let description = room["description"].as_str();
+
+                if let (Some(id), Some(name), Some(description)) = (id, name, description) {
+                    let mut exits = HashMap::new();
+                    if room["exits"].is_object() {
+                        for (dir, dest) in room["exits"].entries() {
+                            if let Some(dest_str) = dest.as_str() {
+                                exits.insert(dir.to_uppercase(), dest_str.to_string());
+                            }
+                        }
+                    }
+
+                    let parsed_room = Room::new(id, name.to_string(), description.to_string(), exits);
+                    rooms.insert(parsed_room.get_id(), parsed_room);
+                } else {
+                    return Err("an invalid room was found".to_string());
+                }
+            }
+        } else {
+            return Err("JSON does not contain 'rooms' array".to_string());
+        }
+
+        self.rooms = rooms;
+        Ok(())
+    }
+
+    pub fn get_rooms(&self) -> &HashMap<RoomId, Room> {
+        &self.rooms
     }
 }

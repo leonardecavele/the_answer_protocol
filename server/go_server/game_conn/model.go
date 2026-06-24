@@ -24,3 +24,8 @@ type AnswerFromGameServer struct {
 	Data     string `json:"data"`
 	Id       string `json:"id"`
 }
+
+type FightInstance struct {
+	MobId   string   `json:"mob_id"`
+	Players []string `json:"players"`
+}

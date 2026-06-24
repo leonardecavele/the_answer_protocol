@@ -1,10 +1,10 @@
 use crate::constantes::Direction;
+use crate::inventory::Inventory;
 use crate::items::{Item, ItemId};
 use crate::npc::{Npc, NpcId};
 use crate::parser::Parser;
-use crate::inventory::Inventory;
 use crate::player::{Player, PlayerCount, PlayerId};
-use crate::room::{Room, RoomName};
+use crate::room::{Room, RoomId, RoomName};
 use json::JsonValue;
 use json::object;
 use std::collections::HashMap;
@@ -19,7 +19,7 @@ pub struct GameManager {
     next_player_id: PlayerCount,
     next_item_id: ItemId,
     all_items: HashMap<ItemId, Item>,
-    all_rooms: HashMap<RoomName, Room>,
+    all_rooms: HashMap<RoomId, Room>,
     all_npcs: HashMap<NpcId, Npc>,
     mpsc_receiver: mpsc::Receiver<String>,
     writer_stream: TcpStream,
@@ -32,38 +32,14 @@ impl GameManager {
         writer_stream: TcpStream,
         parser: Parser,
     ) -> Self {
-        let mut starting_items = HashMap::new();
-        let item_id: ItemId = 0;
-        let item = Item::new(
-            item_id,
-            "test sword".to_string(),
-            "A sword made for testing".to_string(),
-        );
-
-        starting_items.insert(item_id, item);
-        let mut starting_rooms: HashMap<String, Room> = HashMap::new();
-        let room_name: RoomName = "room_test".to_string();
-        let room_name2: RoomName = "room_test2".to_string();
-
-        let mut room_exits = HashMap::new();
-        room_exits.insert("NORTH".to_string(), room_name2.clone());
-
-        let mut room_exits2 = HashMap::new();
-        room_exits2.insert("SOUTH".to_string(), room_name.clone());
-
-        let mut room = Room::new(0, room_name.clone(), "nothing".to_string(), room_exits);
-        let room2 = Room::new(1, room_name2.clone(), "nothing".to_string(), room_exits2);
-        room.add_item(item_id);
-        starting_rooms.insert(room_name, room);
-        starting_rooms.insert(room_name2, room2);
 
         let mut manager = Self {
             players: HashMap::new(),
             players_by_name: HashMap::new(),
             next_player_id: 0,
             next_item_id: 0,
-            all_items: starting_items,
-            all_rooms: starting_rooms,
+            all_items: parser.get_items().clone(),
+            all_rooms: parser.get_rooms().clone(),
             all_npcs: parser.get_npcs().clone(),
             mpsc_receiver,
             writer_stream,
@@ -71,9 +47,10 @@ impl GameManager {
         };
 
         manager.next_player_id = manager.restore_next_player_id();
-        manager.next_item_id = manager.restore_next_item_id();
+        manager.next_item_id = manager.restore_next_item_id(&manager);
         return manager;
     }
+
 
     pub fn get_players(&self) -> &HashMap<PlayerId, Player> {
         return &self.players;
@@ -109,8 +86,11 @@ impl GameManager {
         return 0;
     }
 
-    fn restore_next_item_id(&self) -> ItemId {
-        return 0;
+    fn restore_next_item_id(&self, manager: &GameManager) -> ItemId {
+        //if a save is present take it else:
+        // 
+        // +1 because the ids start at 1 
+        (manager.all_items.len() + 1usize) as ItemId
     }
     pub fn get_all_items(&mut self) -> &mut HashMap<ItemId, Item> {
         return &mut self.all_items;
@@ -205,17 +185,29 @@ impl GameManager {
         .dump();
     }
 
-    pub fn get_room(&self, room_name: &str) -> Option<&Room> {
-        self.all_rooms.get(room_name)
+    pub fn get_room_by_name(&self, room_name: &str) -> Option<&Room> {
+        self.all_rooms
+            .values()
+            .find(|room| room.get_name() == room_name)
+    }
+
+    pub fn get_mut_room_by_name(&mut self, room_name: &str) -> Option<&mut Room> {
+        self.all_rooms
+            .values_mut()
+            .find(|room| room.get_name() == room_name)
+    }
+
+    pub fn get_room(&self, room_id: RoomId) -> Option<&Room> {
+        self.all_rooms.get(&room_id)
     }
 
     pub fn remove_item_from_room(&mut self, room_name: &str, item_id: ItemId) {
-        let room = self.all_rooms.get_mut(room_name).unwrap();
+        let room = self.get_mut_room_by_name(room_name).unwrap();
         room.remove_item(item_id);
     }
 
     pub fn add_item_to_room(&mut self, room_name: &str, item_id: ItemId) {
-        let room = self.all_rooms.get_mut(room_name).unwrap();
+        let room = self.get_mut_room_by_name(room_name).unwrap();
         room.add_item(item_id);
     }
 
@@ -244,11 +236,7 @@ impl GameManager {
                 item_id = Some(item.get_id());
             }
         }
-        if count == 1 {
-            item_id
-        } else {
-            None
-        }
+        if count == 1 { item_id } else { None }
     }
 
     pub fn item_exists_with_name(&self, item_id: ItemId, item_name: &str) -> bool {
@@ -261,7 +249,7 @@ impl GameManager {
         room_name: &str,
         direction: &Direction,
     ) -> Option<&RoomName> {
-        let room = self.get_room(room_name);
+        let room = self.get_room_by_name(room_name);
         match room {
             Some(room) => room.get_neighbor_room_name(direction),
             _none => None,
@@ -297,16 +285,21 @@ impl GameManager {
         return players;
     }
 
+    pub fn npc_is_in_room(&self, npc_id: NpcId, room_name: &str) -> bool {
+        self.get_npc(npc_id)
+            .map_or(false, |npc| npc.get_spawn_room() == room_name)
+    }
+
     pub fn move_player_to_room(&mut self, player_name: &str, room_name: &str) {
         let player = self.get_mut_player_from_name(player_name).unwrap();
         player.move_to_room(&room_name.to_string());
     }
 
-    pub fn get_npcs_in_room(&self, room_name: &str) -> Vec<String> {
+    pub fn get_npcs_in_room_as_protocol_representations(&self, room_name: &str) -> Vec<String> {
         self.all_npcs
             .values()
             .filter(|&npc| npc.get_spawn_room() == room_name)
-            .map(|npc| npc.get_name().to_string())
+            .map(|npc| npc.get_protocol_representation())
             .collect()
     }
 
@@ -319,5 +312,64 @@ impl GameManager {
             .iter()
             .map(|item_id| format!("{}.{}", item_id, self.get_item_name(item_id)))
             .collect()
+    }
+
+    pub fn get_player_status_as_string(&self, player_name: &str) -> String {
+        let player = self.get_player_from_name(player_name).unwrap();
+        let hp = player.get_hp();
+        let max_hp = player.get_max_hp();
+        let percentage_hp = hp as f64 / max_hp as f64 * 100.0;
+        let status = if percentage_hp >= 80.0 {
+            "healthy"
+        } else if percentage_hp >= 50.0 {
+            "normal"
+        } else {
+            "critical"
+        };
+
+        format!(
+            "{{\"hp\":{}, \"max_hp\":{}, \"status\":\"{}\"}}",
+            player.get_hp(),
+            player.get_max_hp(),
+            status
+        )
+    }
+
+    pub fn get_mut_npc(&mut self, npc_id: NpcId) -> Option<&mut Npc> {
+        self.all_npcs.get_mut(&npc_id)
+    }
+
+    pub fn get_npc_type(&self, npc_id: NpcId) -> u8 {
+        self.all_npcs
+            .get(&npc_id)
+            .map(|npc| npc.get_npc_type())
+            .unwrap()
+    }
+
+    pub fn kill_npc(&mut self, npc_id: NpcId) {
+        self.all_npcs.remove(&npc_id);
+    }
+
+    pub fn player_attacks_npc(&mut self, player_id: PlayerId, npc_id: NpcId) -> String {
+        let player_damage = 10;
+        let player_hp = self.get_player(player_id).unwrap().get_hp();
+        let npc = self.get_mut_npc(npc_id).unwrap();
+        let hp = npc.get_hp().unwrap();
+
+        let new_npc_hp = if hp > player_damage {
+            hp - player_damage
+        } else {
+            0
+        };
+
+        let status = if new_npc_hp > 0 { "combat" } else { "victory" };
+        npc.set_hp(Some(new_npc_hp));
+        if new_npc_hp == 0 {
+            self.kill_npc(npc_id);
+        }
+        return format!(
+            "{{\"attacker_hp\":{}, \"target_hp\":{}, \"damage\":{}, \"status\":\"{}\"}}",
+            player_hp, new_npc_hp, player_damage, status
+        );
     }
 }
