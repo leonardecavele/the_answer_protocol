@@ -119,6 +119,14 @@ impl App {
                         ));
                 }
             }
+            ApiResponse::Take(Ok(take_res)) => {
+                self.state.game.inventory.push(take_res.item_identifier.clone());
+                self.state.game.current_room_items.retain(|i| i != &take_res.item_identifier);
+            },
+            ApiResponse::Drop(Ok(drop_res)) => {
+                self.state.game.current_room_items.push(drop_res.item_identifier.clone());
+                self.state.game.inventory.retain(|item| !item.eq(&drop_res.item_identifier));
+            }
             ApiResponse::Attack(Ok(attack_res)) => {
                 if let api_client::protocol::command::enums::ApiRequest::Attack(cmd) =
                     envelope.original_request
@@ -163,7 +171,15 @@ impl App {
                 self.state.should_quit = true;
             }
             // Add other successful response handlers here as needed
-            _ => {}
+            response => {
+                self.state.ui.event_history.insert(
+                    0,
+                    format!(
+                        "Missing handle response for command: {:?} -- Response: {:?}",
+                        envelope.original_request, response
+                    ),
+                );
+            }
         }
     }
 }
