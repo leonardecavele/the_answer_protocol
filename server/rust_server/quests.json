@@ -1,21 +1,46 @@
 {
   "quests": [
     {
-      "name": "a",
-      "description": "",
-      "loots": {}
-    },
-    {
-      "name": "b",
-      "description": "",
-      "loots": {}
-    },
-    {
-      "name": "c",
-      "description": "",
+      "name": "Librairie Quarante-Deux",
+      "description": "Donnez un coup de main à Mdourdoi avec sa libft sans faire aucune erreur.",
       "loots": {
-        "XP": { "qty": 50, "chance": 100.0 }
+		  "XP": { "qty": 142, "chance": 100.0 }
+	  }
+    },
+    {
+      "name": "Tunnel",
+      "description": "Parlez à Vquetier si vous osez.",
+      "loots": {
+		  "XP": { "qty": 242, "chance": 100.0 }
+	  }
+    },
+    {
+      "name": "Caillou Papier Ciseaux",
+      "description": "Battez Ldecavel (triple champion du monde en pierre feuille ciseaux) en cantina du premier coup.",
+      "loots": {
+        "XP": { "qty": 130, "chance": 100.0 }
       }
-    }
+    },
+	{
+      "name": "Normi-quoi ?",
+      "description": "Aidez Enchevri à mettre son code à la norme en moins d'une minute. Il ne sait plus s'y prendre depuis qu'il a touché au cpp.",
+      "loots": {
+        "XP": { "qty": 100, "chance": 100.0 }
+      }
+	},
+	{
+	  "name": "Les braves n'ont pas peur de l'échec.",
+	  "description": "Battez Acampion en moins de 20 tours.",
+	  "loots": {
+		"XP": { "qty": 150, "chance": 100.0 }
+	  }
+	},
+	{
+	  "name": "Des wraps ! Plus de wraps !",
+	  "description": "Réussissez à aider Iris en moins de 2 secondes.",
+	  "loots": {
+		"XP": { "qty": 130, "chance": 100.0 }
+	  }
+	}
   ]
 }
