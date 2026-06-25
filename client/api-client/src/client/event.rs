@@ -85,7 +85,7 @@ impl From<ServerResponse> for ServerEvent {
                     message: message.join(" "),
                 }))
             }
-            ["GROUPMOVE", direction] => {
+            ["GROUPMOVE", _, direction] => {
                 ServerEvent::Group(GroupEvent::Move(direction.to_string()))
             }
 
