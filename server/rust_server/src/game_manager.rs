@@ -187,10 +187,8 @@ impl GameManager {
             .iter()
             .map(|item_id| format!("{}.{}", item_id, self.get_item_name(item_id)))
             .collect();
-        return object! {
-            "items": items
-        }
-        .dump();
+
+        return format!("{:?}", items);
     }
 
     pub fn get_room_by_name(&self, room_name: &str) -> Option<&Room> {
