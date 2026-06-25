@@ -211,7 +211,7 @@ impl GameManager {
 
         let json_object = json.unwrap();
 
-        let group_command_json_validity = self.validate_group_command_json(&json_object);
+        let group_command_json_validity = self.validate_grouped_command(&json_object);
         if group_command_json_validity == ErrorCode::NoError {
             return self.handle_group_command(&json_object);
         }
