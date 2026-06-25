@@ -38,7 +38,7 @@
             "name": "ndalailallema",
             "type": "quest_giver",
             "image_path": "../../assets/final/mobs/quest/ndalailallema/ndalailallema.png",
-            "actions": ["Talk"]
+            "actions": ["Talk", "Quest"]
         },
         "7.gabach": {
             "name": "gabach",
