@@ -83,33 +83,13 @@ func handleMoveCommand(args string, client *session.Client, gameServer *game_con
 		return protocol.ResponseNotGroupLeader, nil
 	}
 
-	if err := gameServer.WriteCommand(game_conn.CommandToGameServer{
-		Player:    client.Username,
-		Command:   "MOVE",
-		Arguments: args,
-	}); err != nil {
+	if err := sendGroupedOrSolo("MOVE", args, client, gameServer); err != nil {
 		return "", err
 	}
 
 	response, errorResponse := readGameServerCommand("MOVE", client)
 	if errorResponse != "" {
 		return errorResponse, nil
-	}
-
-	if client.Group != nil {
-		clients := client.Group.GroupedClients()
-		for _, c := range clients {
-			if c == client {
-				continue
-			}
-			if err := gameServer.WriteCommand(game_conn.CommandToGameServer{
-				Player:    c.Username,
-				Command:   "MOVE",
-				Arguments: args,
-			}); err != nil {
-				return "", err
-			}
-		}
 	}
 
 	return "OK " + "room=" + response.Data, nil

@@ -1,7 +1,6 @@
 package tap_commands
 
 import (
-	"encoding/json"
 	"go_server/game_conn"
 	"go_server/protocol"
 	"go_server/session"
@@ -37,28 +36,7 @@ func handleAggroCommand(args string, client *session.Client, gameServer *game_co
 		return protocol.ResponseNotGroupLeader, nil
 	}
 
-	groupedClients := client.Group.GroupedClients()
-
-	players := make([]string, 0, len(groupedClients))
-	for _, groupedClient := range groupedClients {
-		players = append(players, groupedClient.Username)
-	}
-
-	fight := game_conn.FightInstance{
-		MobId:   args,
-		Players: players,
-	}
-
-	data, err := json.Marshal(fight)
-	if err != nil {
-		return "", err
-	}
-
-	if err := gameServer.WriteCommand(game_conn.CommandToGameServer{
-		Player:    client.Username,
-		Command:   "AGGRO",
-		Arguments: string(data),
-	}); err != nil {
+	if err := sendGroupedOrSolo("AGGRO", args, client, gameServer); err != nil {
 		return "", err
 	}
 

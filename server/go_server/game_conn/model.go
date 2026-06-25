@@ -6,6 +6,13 @@ type CommandToGameServer struct {
 	Arguments string `json:"data"`
 }
 
+type GroupedCommandToGameServer struct {
+	Leader         string   `json:"leader"`
+	GroupedPlayers []string `json:"grouped_players"`
+	Command        string   `json:"command"`
+	Arguments      string   `json:"data"`
+}
+
 type CommandFromGameServer struct {
 	Player    string `json:"player"`
 	Command   string `json:"command"`
@@ -23,9 +30,4 @@ type AnswerFromGameServer struct {
 	Question string `json:"question"`
 	Data     string `json:"data"`
 	Id       string `json:"id"`
-}
-
-type FightInstance struct {
-	MobId   string   `json:"mob_id"`
-	Players []string `json:"players"`
 }

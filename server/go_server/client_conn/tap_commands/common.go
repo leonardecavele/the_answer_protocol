@@ -82,6 +82,32 @@ func isOk(args string, client *session.Client, gameServer *game_conn.GameServerM
 	return "", nil
 }
 
+func sendGroupedOrSolo(command string, args string, client *session.Client, gameServer *game_conn.GameServerManager) error {
+	if client.Group == nil {
+		return gameServer.WriteCommand(game_conn.CommandToGameServer{
+			Player:    client.Username,
+			Command:   command,
+			Arguments: args,
+		})
+	}
+
+	groupedClients := client.Group.GroupedClients()
+	groupedPlayers := make([]string, 0, len(groupedClients))
+	for _, groupedClient := range groupedClients {
+		if groupedClient == client {
+			continue
+		}
+		groupedPlayers = append(groupedPlayers, groupedClient.Username)
+	}
+
+	return gameServer.WriteCommand(game_conn.GroupedCommandToGameServer{
+		Leader:         client.Username,
+		GroupedPlayers: groupedPlayers,
+		Command:        command,
+		Arguments:      args,
+	})
+}
+
 func readGameServerCommand(command string, client *session.Client) (game_conn.CommandFromGameServer, string) {
 	response, ok := client.ReadCommandTimeout(config.GameServerCommandTimeout)
 	if !ok {
