@@ -1,8 +1,8 @@
+use crate::client::{event, Client};
+use crate::protocol::response::ServerResponse;
 use tokio::sync::broadcast;
 use tokio::task::JoinHandle;
 use tracing::{debug, warn};
-use crate::client::{event, Client};
-use crate::protocol::response::ServerResponse;
 
 #[derive(Debug, Clone)]
 pub struct ChatMessage {
@@ -23,6 +23,7 @@ pub enum GroupEvent {
     Join(String),
     Leave(String),
     Chat(ChatMessage),
+    Move(String),
 }
 
 #[derive(Debug, Clone)]
@@ -52,12 +53,7 @@ impl From<ServerResponse> for ServerEvent {
             ["ROOM", name, "LEAVE"] => {
                 ServerEvent::Room(RoomEvent::PresenceLeave(name.to_string()))
             }
-            ["ROOM", "PRESENCE", "ENTER", name] => {
-                ServerEvent::Room(RoomEvent::PresenceEnter(name.to_string()))
-            }
-            ["ROOM", "PRESENCE", "LEAVE", name] => {
-                ServerEvent::Room(RoomEvent::PresenceLeave(name.to_string()))
-            }
+
             ["ROOM", "CHAT", sender, message @ ..] => {
                 ServerEvent::Room(RoomEvent::Chat(ChatMessage {
                     sender: sender.to_string(),
@@ -66,36 +62,31 @@ impl From<ServerResponse> for ServerEvent {
             }
 
             // Global events
-            ["GLOBAL", "CHAT", sender, message @ ..] => {
-                ServerEvent::GlobalChat(ChatMessage {
-                    sender: sender.to_string(),
-                    message: message.join(" "),
-                })
-            }
+            ["GLOBAL", "CHAT", sender, message @ ..] => ServerEvent::GlobalChat(ChatMessage {
+                sender: sender.to_string(),
+                message: message.join(" "),
+            }),
 
             // Private events
-            ["PRIVATE", "CHAT", sender, message @ ..] => {
-                ServerEvent::PrivateChat(ChatMessage {
-                    sender: sender.to_string(),
-                    message: message.join(" "),
-                })
-            }
+            ["PRIVATE", "CHAT", sender, message @ ..] => ServerEvent::PrivateChat(ChatMessage {
+                sender: sender.to_string(),
+                message: message.join(" "),
+            }),
 
             // Group events
             ["GROUP", "INVITE", leader] => {
                 ServerEvent::Group(GroupEvent::Invite(leader.to_string()))
             }
-            ["GROUP", "JOIN", user] => {
-                ServerEvent::Group(GroupEvent::Join(user.to_string()))
-            }
-            ["GROUP", "LEAVE", user, ..] => {
-                ServerEvent::Group(GroupEvent::Leave(user.to_string()))
-            }
+            ["GROUP", "JOIN", user] => ServerEvent::Group(GroupEvent::Join(user.to_string())),
+            ["GROUP", "LEAVE", user, ..] => ServerEvent::Group(GroupEvent::Leave(user.to_string())),
             ["GROUP", "CHAT", sender, message @ ..] => {
                 ServerEvent::Group(GroupEvent::Chat(ChatMessage {
                     sender: sender.to_string(),
                     message: message.join(" "),
                 }))
+            }
+            ["GROUPMOVE", direction] => {
+                ServerEvent::Group(GroupEvent::Move(direction.to_string()))
             }
 
             // Stats events

@@ -51,27 +51,6 @@ impl App {
                             "{} left the room.",
                             name
                         )));
-
-                    if let Some(network_manager) = &self.network_manager {
-                        if let Some(leader) = self.state.game.group_leader.as_ref() {
-                            let is_leader = leader.eq_ignore_ascii_case(&name);
-                            let is_self = self.state.game.player_name.as_ref()
-                                .map_or(false, |p| p.eq_ignore_ascii_case(&name));
-
-                            if is_leader && !is_self {
-                                let req_look =
-                                    api_client::protocol::command::enums::ApiRequest::Look(
-                                        api_client::protocol::command::core::look::LookCommand,
-                                    );
-                                // TD: review this code (maybe wait another event for relook?)
-                                let sender = network_manager.command_sender.clone();
-                                tokio::spawn(async move {
-                                    tokio::time::sleep(std::time::Duration::from_millis(1000)).await;
-                                    let _ = sender.send(crate::network::envelopes::RequestEnvelope::new(req_look)).await;
-                                });
-                            }
-                        }
-                    }
                 }
                 RoomEvent::Chat(chat) => {
                     self.state.game.chat_history.push(ChatMessage {
@@ -116,6 +95,24 @@ impl App {
                         sender: chat.sender,
                         content: chat.message,
                     });
+                }
+                GroupEvent::Move(direction) => {
+                    if let Some(network_manager) = &self.network_manager {
+                        let req_look = api_client::protocol::command::enums::ApiRequest::Look(
+                            api_client::protocol::command::core::look::LookCommand,
+                        );
+
+                        self.state
+                            .ui
+                            .push(crate::states::ui::Notification::info(format!(
+                                "group moved to {}.",
+                                direction
+                            )));
+
+                        let _ = network_manager.send_command(
+                            crate::network::envelopes::RequestEnvelope::new(req_look),
+                        );
+                    }
                 }
             },
             ServerEvent::GlobalChat(chat) => {
