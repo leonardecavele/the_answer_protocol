@@ -74,10 +74,7 @@ impl App {
         if !matches!(event, ApplicationEvent::Tick)
             && !matches!(event, ApplicationEvent::Terminal(_))
         {
-            self.state
-                .ui
-                .event_history
-                .insert(0, format!("{:?}", event));
+            self.state.ui.event_history.push(format!("{:?}", event));
             if self.state.ui.event_history.len() > MAX_EVENT_HISTORY {
                 self.state.ui.event_history.truncate(MAX_EVENT_HISTORY);
             }
