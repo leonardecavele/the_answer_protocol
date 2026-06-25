@@ -57,6 +57,19 @@ impl GameManager {
         };
     }
 
+    fn validate_grouped_command(&self, parsed_json: &JsonValue) -> ErrorCode {
+        if !parsed_json.has_key("leader")
+            || !parsed_json.has_key("grouped_players")
+            || !parsed_json.has_key("command")
+            || !parsed_json.has_key("data")
+        {
+            // error!("invalid json: {}", parsed_json.dump());
+            return ErrorCode::InvalidGroupCommand;
+        } else {
+            return ErrorCode::NoError;
+        }
+    }
+
     fn validate_question_json(&self, parsed_json: &JsonValue) -> ErrorCode {
         if !parsed_json.has_key("question")
             || !parsed_json.has_key("data")
@@ -67,6 +80,81 @@ impl GameManager {
         } else {
             return ErrorCode::NoError;
         }
+    }
+
+
+    pub fn group_command_move(&mut self, leader: String, command_name: &str, additional_players: Vec<String>, direction: &str) -> String {
+        if direction != "NORTH"
+            && direction != "SOUTH"
+            && direction != "EAST"
+            && direction != "WEST"
+        {
+            return generate_json(&leader, "GROUP", ErrorCode::NoExit, "").dump();
+        }
+
+        let player = self.get_player_from_name(&leader).unwrap();
+        let last_room_players = self.get_all_players_at_room(player.get_current_room());
+        let (room_to_go, room_to_go_id) = {
+            let current_player_room_name = player.get_current_room();
+            let room_to_go_wrapped = self
+                .get_neighbor_room_name(current_player_room_name, &direction.to_string());
+            if room_to_go_wrapped.is_none() {
+                return generate_json(&leader, command_name, ErrorCode::NoExit, "")
+                    .dump();
+            }
+            let room_to_go = room_to_go_wrapped.unwrap().clone();
+            let room_id = self.get_room_by_name(room_to_go.as_str()).unwrap().get_id();
+            (room_to_go, room_id)
+        };
+
+        let mut all_moving_players = vec![leader.clone()];
+        all_moving_players.extend(additional_players.clone());
+
+        for p in &all_moving_players {
+            self.move_player_to_room(p, room_to_go.as_str());
+        }
+
+        let current_room_players = self.get_all_players_at_room(&room_to_go);
+
+        let room_repr = Room::protocol_representation(room_to_go_id, room_to_go.clone());
+
+        let spectators_leave: Vec<String> = last_room_players
+            .into_iter()
+            .filter(|p| !all_moving_players.contains(p))
+            .collect();
+
+        let spectators_enter: Vec<String> = current_room_players
+            .into_iter()
+            .filter(|p| !all_moving_players.contains(p))
+            .collect();
+
+        for p in &all_moving_players {
+            let mut lrp = spectators_leave.clone();
+            let leave_diff = self.generate_event_json(&mut lrp, p, "ROOM", "LEAVE");
+            self.add_diff_to_tick(leave_diff);
+
+            let mut crp = spectators_enter.clone();
+            let enter_diff = self.generate_event_json(&mut crp, p, "ROOM", "ENTER");
+            self.add_diff_to_tick(enter_diff);
+
+            if p != &leader {
+                let move_event = object! {
+                    "players": vec![p.as_str()],
+                    "emitted_by": leader.as_str(),
+                    "event_name": "GROUPMOVE",
+                    "data": direction
+                };
+                self.add_diff_to_tick(move_event);
+            }
+        }
+
+        return generate_json(
+            &leader,
+            command_name,
+            ErrorCode::NoError,
+            room_repr.as_str(),
+        )
+        .dump();
     }
 
     pub fn handle_server_question(&mut self, parsed_json: &JsonValue) -> String {
@@ -89,6 +177,26 @@ impl GameManager {
         }
     }
 
+    pub fn handle_group_command(&mut self, json_object: &JsonValue) -> String {
+        let leader = json_object["leader"].as_str().unwrap();
+        let grouped_players = json_object["grouped_players"]
+            .members()
+            .map(|x| x.as_str().unwrap().to_string())
+            .collect::<Vec<String>>();
+        let command_name = json_object["command"].as_str().unwrap();
+        let data = json_object["data"].as_str().unwrap();
+
+        match command_name {
+            "MOVE" => {
+                return self.group_command_move(leader.to_string(), command_name, grouped_players, data);
+            }
+            _ => {
+                error!("unknown group command: {}", command_name);
+                return "".to_string();
+            }
+        }
+    }
+
     pub fn handle_message(&mut self, msg: String) -> String {
         /*
         read the message, simulate the corresponding action and return the response
@@ -102,6 +210,11 @@ impl GameManager {
         }
 
         let json_object = json.unwrap();
+
+        let group_command_json_validity = self.validate_command_json(&json_object);
+        if group_command_json_validity == ErrorCode::NoError {
+            return self.handle_group_command(&json_object);
+        }
 
         let server_question_json = self.validate_question_json(&json_object);
         if server_question_json == ErrorCode::NoError {
@@ -172,61 +285,7 @@ impl GameManager {
                 .dump();
             }
             "MOVE" => {
-                let direction = data;
-                if direction != "NORTH"
-                    && direction != "SOUTH"
-                    && direction != "EAST"
-                    && direction != "WEST"
-                {
-                    return generate_json(player_name, command_name, ErrorCode::NoExit, "").dump();
-                }
-
-                let player = self.get_player_from_name(player_name).unwrap();
-                let mut last_room_players = self.get_all_players_at_room(player.get_current_room());
-                let (room_to_go, room_to_go_id) = {
-                    let player = self.get_player_from_name(player_name).unwrap();
-                    let current_player_room_name = player.get_current_room();
-                    let room_to_go_wrapped = self
-                        .get_neighbor_room_name(current_player_room_name, &direction.to_string());
-                    if room_to_go_wrapped.is_none() {
-                        return generate_json(player_name, command_name, ErrorCode::NoExit, "")
-                            .dump();
-                    }
-                    let room_to_go = room_to_go_wrapped.unwrap().clone();
-                    let room_id = self.get_room_by_name(room_to_go.as_str()).unwrap().get_id();
-                    (room_to_go, room_id)
-                };
-
-                self.move_player_to_room(player_name, room_to_go.as_str());
-
-                let player = self.get_player_from_name(player_name).unwrap();
-                let mut current_room_players =
-                    self.get_all_players_at_room(player.get_current_room());
-
-                // tick events part
-
-                let room_leave_diff =
-                    self.generate_event_json(&mut last_room_players, player_name, "ROOM", "LEAVE");
-                let room_enter_diff = self.generate_event_json(
-                    &mut current_room_players,
-                    player_name,
-                    "ROOM",
-                    "ENTER",
-                );
-
-                info!("before add_diff");
-                self.add_diff_to_tick(room_leave_diff);
-                self.add_diff_to_tick(room_enter_diff);
-
-                info!("after add_diff");
-                let room_repr = Room::protocol_representation(room_to_go_id, room_to_go);
-                return generate_json(
-                    player_name,
-                    command_name,
-                    ErrorCode::NoError,
-                    room_repr.as_str(),
-                )
-                .dump();
+                return self.group_command_move(player_name.to_string(), command_name, vec![], data);
             }
 
             "QUIT" => {
@@ -409,7 +468,16 @@ impl GameManager {
                 )
                 .dump();
             }
-            "QUEST" => { return "".to_string(); }
+            "QUEST" => {
+                let quest = "".to_string();
+                return generate_json(
+                    player_name,
+                    command_name,
+                    ErrorCode::NoError,
+                    quest.as_str(),
+                )
+                .dump();
+            }
             // "QUESTS" => {},
             _ => {
                 println!("Unknown command: {}", command_name);

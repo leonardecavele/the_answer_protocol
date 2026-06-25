@@ -4,9 +4,11 @@ use crate::items::{Item, ItemId};
 use crate::npc::{Npc, NpcId};
 use crate::parser::Parser;
 use crate::player::{Player, PlayerCount, PlayerId};
+use crate::quests::{Quest, Questid};
 use crate::room::{Room, RoomId, RoomName};
 use json::JsonValue;
 use json::object;
+use tracing_subscriber::fmt::format;
 use std::collections::HashMap;
 use std::io::Write;
 use std::net::TcpStream;
@@ -21,6 +23,7 @@ pub struct GameManager {
     all_items: HashMap<ItemId, Item>,
     all_rooms: HashMap<RoomId, Room>,
     all_npcs: HashMap<NpcId, Npc>,
+    all_quests: HashMap<Questid, Quest>,
     mpsc_receiver: mpsc::Receiver<String>,
     writer_stream: TcpStream,
     tick_diff: HashMap<String, JsonValue>,
@@ -41,6 +44,7 @@ impl GameManager {
             all_items: parser.get_items().clone(),
             all_rooms: parser.get_rooms().clone(),
             all_npcs: parser.get_npcs().clone(),
+            all_quests: parser.get_quests().clone(),
             mpsc_receiver,
             writer_stream,
             tick_diff: HashMap::new(),
@@ -94,6 +98,10 @@ impl GameManager {
     }
     pub fn get_all_items(&mut self) -> &mut HashMap<ItemId, Item> {
         return &mut self.all_items;
+    }
+
+    pub fn get_all_quests(&mut self) -> &mut HashMap<Questid, Quest> {
+        return &mut self.all_quests;
     }
 
     // fn change_player_name(&mut self, player_id: PlayerId, new_name: String) -> bool {
