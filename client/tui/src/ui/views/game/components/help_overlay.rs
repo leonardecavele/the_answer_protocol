@@ -53,6 +53,7 @@ impl Component for HelpOverlayComponent {
             Line::from(vec![Span::styled("Global", Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD))]),
             Line::from("  ctrl+c: quit game"),
             Line::from("  ctrl+h: toggle help"),
+            Line::from("  ctrl+e: toggle event overlay"),
             Line::from("  f1: toggle chat overlay"),
             Line::from("  mouse click: focus panels (input, room npcs, image)"),
             Line::from(""),
