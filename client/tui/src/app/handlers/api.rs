@@ -147,6 +147,9 @@ impl App {
                     self.state.game.log_action(text);
                 }
             }
+            ApiResponse::Quit(Ok(_)) => {
+                self.state.should_quit = true;
+            }
             // Add other successful response handlers here as needed
             _ => {}
         }
