@@ -28,14 +28,14 @@ impl Component for RightPanelComponent {
 
         // Priority 1: focused entity
         if let Some(focused_id) = &state.game.focused_entity_id {
-            if self.last_entity.as_deref() != Some(focused_id.as_str()) {
-                self.last_entity = Some(focused_id.clone());
-                self.animation_start = std::time::Instant::now();
-            }
-
             text_fallback = Some(" No image available for this NPC. ");
             if let Some(npc) = state.game.manifest.npcs.get(focused_id) {
                 if let (Some(paths), Some(speed)) = (&npc.image_paths, npc.animation_speed_ms) {
+                    if self.last_entity.as_deref() != Some(focused_id.as_str()) {
+                        self.last_entity = Some(focused_id.clone());
+                        self.animation_start = std::time::Instant::now();
+                    }
+
                     if !paths.is_empty() {
                         let elapsed_ms = self.animation_start.elapsed().as_millis() as u64;
                         let frame_index = (elapsed_ms / speed) % paths.len() as u64;
@@ -75,6 +75,8 @@ impl Component for RightPanelComponent {
             let mut cache = state.ui.image_cache.borrow_mut();
 
             if !cache.contains_key(&path) {
+                let start_loading = std::time::Instant::now();
+
                 match image::open(&path) {
                     Ok(dyn_img) => {
                         let width = dyn_img.width();
@@ -86,6 +88,8 @@ impl Component for RightPanelComponent {
                         cache.insert(path.clone(), None);
                     }
                 }
+
+                self.animation_start -= std::time::Instant::now() - start_loading;
             }
 
             if let Some(Some((protocol, img_width, img_height))) = cache.get_mut(&path) {
