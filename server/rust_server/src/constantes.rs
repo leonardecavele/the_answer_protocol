@@ -37,6 +37,7 @@ pub enum ErrorCode {
     SendFailed,
     InvalidCommand,
     InvalidQuestion,
+    InvalidGroupCommand,
 }
 
 impl ErrorCode {
@@ -59,6 +60,7 @@ impl ErrorCode {
             Self::NpcNotInRoom => 407,
             Self::ConnectionFailed => 900,
             Self::SendFailed => 901,
+            Self::InvalidGroupCommand => 997,
             Self::InvalidQuestion => 998,
             Self::InvalidCommand => 999,
         }

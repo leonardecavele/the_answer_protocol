@@ -6,7 +6,6 @@
 //     instances: HashMap<NpcId, Vec<PlayerId>>,
 // }
 
-
 // impl CombatInstanceManager {
 //     pub fn new(npc_id: NpcId, players_ids: Vec<PlayerId>) -> Option<Self> {
 //         let mut instances = HashMap::new();
