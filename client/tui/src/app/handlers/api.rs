@@ -67,18 +67,6 @@ impl App {
                 self.state.game.room_npcs = look_res.npcs.clone();
                 self.state.game.current_room_items = look_res.items.clone();
                 self.state.game.current_room_exits = look_res.room.exits.clone();
-
-                if let Some(network_manager) = &self.network_manager {
-                    let req_inv = api_client::protocol::command::enums::ApiRequest::Inventory(
-                        api_client::protocol::command::resource_interaction::inventory::InventoryCommand,
-                    );
-                    network_manager.send_command(crate::network::envelopes::RequestEnvelope::new(req_inv));
-
-                    let req_quests = api_client::protocol::command::enums::ApiRequest::Quests(
-                        api_client::protocol::command::resource_interaction::quests::QuestsCommand,
-                    );
-                    network_manager.send_command(crate::network::envelopes::RequestEnvelope::new(req_quests));
-                }
             }
             ApiResponse::Move(Ok(_move_res)) => {
                 self.state.game.focused_entity_id = None;

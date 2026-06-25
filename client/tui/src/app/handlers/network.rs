@@ -36,6 +36,18 @@ impl App {
                     );
                     network_manager
                         .send_command(crate::network::envelopes::RequestEnvelope::new(req));
+
+                    let req_inv = api_client::protocol::command::enums::ApiRequest::Inventory(
+                        api_client::protocol::command::resource_interaction::inventory::InventoryCommand,
+                    );
+                    network_manager
+                        .send_command(crate::network::envelopes::RequestEnvelope::new(req_inv));
+
+                    let req_quests = api_client::protocol::command::enums::ApiRequest::Quests(
+                        api_client::protocol::command::resource_interaction::quests::QuestsCommand,
+                    );
+                    network_manager
+                        .send_command(crate::network::envelopes::RequestEnvelope::new(req_quests));
                 }
 
                 self.state
