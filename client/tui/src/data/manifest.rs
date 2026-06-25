@@ -1,6 +1,6 @@
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
-use serde::{Deserialize, Serialize};
 
 pub const ASSETS_PATH_MANIFEST: &str = "assets/manifest.json";
 
@@ -65,7 +65,8 @@ impl Manifest {
     }
 
     pub fn get_npc_name(&self, id: &str) -> String {
-        self.npcs.get(id)
+        self.npcs
+            .get(id)
             .map(|n| n.name.clone())
             .unwrap_or_else(|| id.to_string())
     }

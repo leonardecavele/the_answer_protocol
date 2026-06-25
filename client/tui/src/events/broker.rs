@@ -5,7 +5,7 @@ use futures::StreamExt;
 use std::time::Duration;
 use tokio::sync::mpsc;
 use tokio::task::JoinHandle;
-use tokio::time::{interval_at, Instant};
+use tokio::time::{Instant, interval_at};
 
 pub const TICK_RATE: Duration = Duration::from_millis(5);
 pub const MAX_EVENTS_BUS: usize = 100;
@@ -34,10 +34,7 @@ impl EventBroker {
         // Spawn the background task
         let background_task = tokio::spawn(async move {
             let mut event_stream = EventStream::new();
-            let mut tick_interval = interval_at(
-                Instant::now() + TICK_RATE,
-                TICK_RATE,
-            );
+            let mut tick_interval = interval_at(Instant::now() + TICK_RATE, TICK_RATE);
 
             loop {
                 tokio::select! {

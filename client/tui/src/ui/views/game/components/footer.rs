@@ -30,7 +30,7 @@ impl Component for FooterComponent {
         event_sender: &tokio::sync::mpsc::Sender<crate::events::ApplicationEvent>,
     ) -> bool {
         // We don't handle mouse focus here anymore, GameView handles it for us.
-        
+
         // Intercept the Enter key BEFORE passing it to TextInputComponent
         // (Because TextInput doesn't handle Enter, it returns false)
         if state.ui.current_focus == crate::states::ui::GameFocus::Input {
@@ -42,7 +42,8 @@ impl Component for FooterComponent {
                 let command = self.input.inner.value.trim().to_string();
                 if !command.is_empty() {
                     self.input.inner.value.clear();
-                    let _ = event_sender.try_send(crate::events::ApplicationEvent::SendRawCommand(command));
+                    let _ = event_sender
+                        .try_send(crate::events::ApplicationEvent::SendRawCommand(command));
                 } else {
                     state.ui.current_focus = crate::states::ui::GameFocus::RightPanel;
                 }

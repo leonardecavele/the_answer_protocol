@@ -21,7 +21,10 @@ impl Component for HeaderComponent {
             None => " Cluster 6 (the backrooms) ".to_string(),
         };
 
-        let stats_text = format!(" HP: {}/{} | Online: {} ", state.game.hp, state.game.max_hp, state.game.online_players_count);
+        let stats_text = format!(
+            " HP: {}/{} | Online: {} ",
+            state.game.hp, state.game.max_hp, state.game.online_players_count
+        );
 
         let description = match &state.game.current_room_description {
             Some(desc) => desc.as_str(),
@@ -31,13 +34,15 @@ impl Component for HeaderComponent {
         let block = Block::default()
             .borders(Borders::ALL)
             .title(ratatui::text::Line::from(title).alignment(ratatui::layout::Alignment::Left))
-            .title(ratatui::text::Line::from(stats_text).alignment(ratatui::layout::Alignment::Right));
-        
-        let inner_area = block.inner(area);
-        let visual_lines = crate::ui::utils::wrap_str_to_lines(description, inner_area.width as usize);
+            .title(
+                ratatui::text::Line::from(stats_text).alignment(ratatui::layout::Alignment::Right),
+            );
 
-        let paragraph = ratatui::widgets::Paragraph::new(visual_lines)
-            .block(block);
+        let inner_area = block.inner(area);
+        let visual_lines =
+            crate::ui::utils::wrap_str_to_lines(description, inner_area.width as usize);
+
+        let paragraph = ratatui::widgets::Paragraph::new(visual_lines).block(block);
 
         frame.render_widget(paragraph, area);
     }

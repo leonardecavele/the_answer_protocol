@@ -8,8 +8,8 @@ use ratatui::{
     style::{Color, Style},
     widgets::{Block, Borders, Clear, Paragraph},
 };
-use tokio::sync::mpsc;
 use std::time::Instant;
+use tokio::sync::mpsc;
 
 pub const CHAR_DELAY_MS: u128 = 2;
 
@@ -29,13 +29,22 @@ impl Component for DialoguePopupComponent {
             let width = area.width.saturating_sub(4);
             let x = area.x + 2;
             let y = area.y + area.height.saturating_sub(popup_height);
-            let popup_area = Rect { x, y, width, height: popup_height };
+            let popup_area = Rect {
+                x,
+                y,
+                width,
+                height: popup_height,
+            };
 
             frame.render_widget(Clear, popup_area);
 
-            let visible_text: String = dialog.full_text.chars().take(dialog.visible_chars).collect();
+            let visible_text: String = dialog
+                .full_text
+                .chars()
+                .take(dialog.visible_chars)
+                .collect();
             let mut display_text = visible_text;
-            
+
             if dialog.visible_chars == dialog.full_text.len() {
                 display_text.push_str("\n\n(Press Enter to continue)");
             }
@@ -68,9 +77,10 @@ impl Component for DialoguePopupComponent {
                     } else {
                         // Close dialog
                         state.game.active_dialogue = None;
-                        let should_clear = dialog.ends_dialog 
-                            || state.game.dialogue_clear_mode == crate::states::game::DialogueClearMode::AlwaysClear;
-                        
+                        let should_clear = dialog.ends_dialog
+                            || state.game.dialogue_clear_mode
+                                == crate::states::game::DialogueClearMode::AlwaysClear;
+
                         if should_clear {
                             state.game.focused_entity_id = None;
                         }

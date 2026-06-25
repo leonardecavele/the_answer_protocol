@@ -50,7 +50,8 @@ impl Component for EventOverlayComponent {
 
         let inner_area = block.inner(overlay_area);
         let max_width = inner_area.width as usize;
-        let visual_lines = crate::ui::utils::wrap_slice_to_lines(&state.ui.event_history, max_width);
+        let visual_lines =
+            crate::ui::utils::wrap_slice_to_lines(&state.ui.event_history, max_width);
 
         let lines_count = visual_lines.len() as u16;
         let inner_height = inner_area.height;

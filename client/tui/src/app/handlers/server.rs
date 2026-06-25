@@ -16,7 +16,8 @@ impl App {
                     )));
             }
             ServerEvent::Quit(name) => {
-                self.state.game.online_players_count = self.state.game.online_players_count.saturating_sub(1);
+                self.state.game.online_players_count =
+                    self.state.game.online_players_count.saturating_sub(1);
                 self.state.game.room_players.retain(|p| p != &name);
                 self.state.game.group_members.retain(|p| p != &name);
                 self.state

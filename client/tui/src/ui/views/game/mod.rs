@@ -5,8 +5,8 @@ use crate::states::app::AppState;
 use crate::ui::components::Component;
 use crate::ui::views::AppView;
 use components::{
-    CenterPanelComponent, ChatOverlayComponent, FooterComponent, HeaderComponent,
-    LeftPanelComponent, RightPanelComponent, NpcActionPopup, DialoguePopupComponent,
+    CenterPanelComponent, ChatOverlayComponent, DialoguePopupComponent, FooterComponent,
+    HeaderComponent, LeftPanelComponent, NpcActionPopup, RightPanelComponent,
 };
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
 use ratatui::Frame;
@@ -117,12 +117,14 @@ impl AppView for GameView {
         event_sender: &mpsc::Sender<ApplicationEvent>,
     ) {
         if state.game.active_dialogue.is_some() {
-            self.dialogue_popup.handle_terminal_event(state, event, event_sender);
+            self.dialogue_popup
+                .handle_terminal_event(state, event, event_sender);
             return;
         }
 
         if state.ui.active_npc_popup.is_some() {
-            self.npc_popup.handle_terminal_event(state, event, event_sender);
+            self.npc_popup
+                .handle_terminal_event(state, event, event_sender);
             return;
         }
 
@@ -134,7 +136,9 @@ impl AppView for GameView {
             if key.code == KeyCode::Tab {
                 state.ui.current_focus = match state.ui.current_focus {
                     crate::states::ui::GameFocus::Input => crate::states::ui::GameFocus::NpcList,
-                    crate::states::ui::GameFocus::NpcList => crate::states::ui::GameFocus::RightPanel,
+                    crate::states::ui::GameFocus::NpcList => {
+                        crate::states::ui::GameFocus::RightPanel
+                    }
                     crate::states::ui::GameFocus::RightPanel => crate::states::ui::GameFocus::Input,
                 };
                 return;
@@ -142,7 +146,9 @@ impl AppView for GameView {
             if key.code == KeyCode::BackTab {
                 state.ui.current_focus = match state.ui.current_focus {
                     crate::states::ui::GameFocus::Input => crate::states::ui::GameFocus::RightPanel,
-                    crate::states::ui::GameFocus::RightPanel => crate::states::ui::GameFocus::NpcList,
+                    crate::states::ui::GameFocus::RightPanel => {
+                        crate::states::ui::GameFocus::NpcList
+                    }
                     crate::states::ui::GameFocus::NpcList => crate::states::ui::GameFocus::Input,
                 };
                 return;
@@ -150,11 +156,13 @@ impl AppView for GameView {
         }
 
         if let CrosstermEvent::Mouse(mouse) = event {
-            if mouse.kind == crossterm::event::MouseEventKind::Down(crossterm::event::MouseButton::Left) {
+            if mouse.kind
+                == crossterm::event::MouseEventKind::Down(crossterm::event::MouseButton::Left)
+            {
                 if let Some(r) = self.left_panel.npcs_area {
                     if crate::ui::components::is_mouse_in_rect(mouse.column, mouse.row, r) {
                         state.ui.current_focus = crate::states::ui::GameFocus::NpcList;
-                        
+
                         // Select the clicked NPC
                         let rel_y = mouse.row.saturating_sub(r.y);
                         // The border is at rel_y == 0

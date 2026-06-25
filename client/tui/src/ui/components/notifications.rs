@@ -84,7 +84,7 @@ impl Component for NotificationComponent {
             if current_y < height {
                 break;
             }
-            
+
             current_y -= height;
 
             let notif_area = Rect {

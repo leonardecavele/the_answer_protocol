@@ -1,9 +1,9 @@
 use crate::events::types::NotificationType;
-use std::time::{Duration, Instant};
-use std::cell::RefCell;
-use std::collections::HashMap;
 use ratatui_image::picker::Picker;
 use ratatui_image::protocol::StatefulProtocol;
+use std::cell::RefCell;
+use std::collections::HashMap;
+use std::time::{Duration, Instant};
 use uuid::Uuid;
 
 pub const NOTIF_DEFAULT_DURATION_MS: u64 = 5000;

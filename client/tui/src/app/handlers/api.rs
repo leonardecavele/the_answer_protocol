@@ -22,7 +22,9 @@ impl App {
                 }
             }
             ApiResponse::GroupJoin(Ok(_res)) => {
-                if let api_client::protocol::command::enums::ApiRequest::GroupJoin(cmd) = envelope.original_request {
+                if let api_client::protocol::command::enums::ApiRequest::GroupJoin(cmd) =
+                    envelope.original_request
+                {
                     self.state.game.group_members.clear();
                     self.state.game.group_members.push(cmd.leader_name);
                     if let Some(name) = &self.state.game.player_name {
@@ -34,21 +36,31 @@ impl App {
                 self.state.game.group_members.clear();
             }
             ApiResponse::GlobalChat(Ok(_)) => {
-                if let api_client::protocol::command::enums::ApiRequest::GlobalChat(cmd) = envelope.original_request {
-                    self.state.game.chat_history.push(crate::states::game::ChatMessage {
-                        channel: crate::states::game::ChatChannel::Global,
-                        sender: "You".to_string(),
-                        content: cmd.message.clone(),
-                    });
+                if let api_client::protocol::command::enums::ApiRequest::GlobalChat(cmd) =
+                    envelope.original_request
+                {
+                    self.state
+                        .game
+                        .chat_history
+                        .push(crate::states::game::ChatMessage {
+                            channel: crate::states::game::ChatChannel::Global,
+                            sender: "You".to_string(),
+                            content: cmd.message.clone(),
+                        });
                 }
             }
             ApiResponse::PrivateChat(Ok(_)) => {
-                if let api_client::protocol::command::enums::ApiRequest::PrivateChat(cmd) = envelope.original_request {
-                    self.state.game.chat_history.push(crate::states::game::ChatMessage {
-                        channel: crate::states::game::ChatChannel::Private(cmd.to.clone()),
-                        sender: format!("(You) to {}", cmd.to),
-                        content: cmd.message.clone(),
-                    });
+                if let api_client::protocol::command::enums::ApiRequest::PrivateChat(cmd) =
+                    envelope.original_request
+                {
+                    self.state
+                        .game
+                        .chat_history
+                        .push(crate::states::game::ChatMessage {
+                            channel: crate::states::game::ChatChannel::Private(cmd.to.clone()),
+                            sender: format!("(You) to {}", cmd.to),
+                            content: cmd.message.clone(),
+                        });
                 }
             }
             ApiResponse::Look(Ok(look_res)) => {
@@ -87,7 +99,7 @@ impl App {
                         text = text
                             .replace(crate::states::game::END_OF_DIALOGUE_TAG, "")
                             .trim()
-                            .to_string(); 
+                            .to_string();
                     }
 
                     self.state.game.focused_entity_id = Some(cmd.npc_name.clone());
@@ -116,7 +128,7 @@ impl App {
                     let display_name = self.state.game.manifest.get_npc_name(&cmd.npc_name);
 
                     let res = attack_res.combat_result;
-                    
+
                     // Update HP manually from attack result
                     self.state.game.hp = res.attacker_hp;
 

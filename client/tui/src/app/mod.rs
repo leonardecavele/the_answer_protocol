@@ -35,10 +35,9 @@ impl App {
 
         let mut state = AppState::new(ip.clone(), port.clone(), manifest);
         if let Some(e) = err {
-             state.ui.push(
-                 crate::states::ui::Notification::error(e)
-                     .with_duration(10000)
-             );
+            state
+                .ui
+                .push(crate::states::ui::Notification::error(e).with_duration(10000));
         }
 
         Self {
@@ -72,7 +71,9 @@ impl App {
     }
 
     fn update(&mut self, event: ApplicationEvent) {
-        if !matches!(event, ApplicationEvent::Tick) && !matches!(event, ApplicationEvent::Terminal(_)) {
+        if !matches!(event, ApplicationEvent::Tick)
+            && !matches!(event, ApplicationEvent::Terminal(_))
+        {
             self.state
                 .ui
                 .event_history
@@ -88,7 +89,7 @@ impl App {
                     .ui
                     .notifications
                     .retain(|n| Instant::now() < n.expires_at);
-                
+
                 self.active_view.on_tick(&mut self.state);
             }
             ApplicationEvent::Terminal(crossterm_event) => {
@@ -112,16 +113,20 @@ impl App {
                 }
             }
             ApplicationEvent::SendRawCommand(command) => {
-                if let Some(request) = api_client::protocol::command::enums::ApiRequest::parse(&command) {
+                if let Some(request) =
+                    api_client::protocol::command::enums::ApiRequest::parse(&command)
+                {
                     if let Some(network_manager) = &self.network_manager {
                         let envelope = crate::network::envelopes::RequestEnvelope::new(request);
                         network_manager.send_command(envelope);
                     }
                 } else {
-                    self.state.ui.push(crate::states::ui::Notification::warning(format!(
-                        "Unknown or invalid command: {}",
-                        command
-                    )));
+                    self.state
+                        .ui
+                        .push(crate::states::ui::Notification::warning(format!(
+                            "Unknown or invalid command: {}",
+                            command
+                        )));
                 }
             }
         }

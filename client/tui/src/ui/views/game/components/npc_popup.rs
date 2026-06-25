@@ -43,12 +43,17 @@ impl Component for NpcActionPopup {
         };
 
         let actions = self.get_available_actions(state, npc_id);
-        
+
         let width = 30;
         let height = actions.len() as u16 + 2; // +2 for borders
         let x = area.x + (area.width.saturating_sub(width)) / 2;
         let y = area.y + (area.height.saturating_sub(height)) / 2;
-        let popup_area = Rect { x, y, width, height };
+        let popup_area = Rect {
+            x,
+            y,
+            width,
+            height,
+        };
 
         let display_name = state
             .game
@@ -110,11 +115,12 @@ impl Component for NpcActionPopup {
                     return true;
                 }
                 KeyCode::Down => {
-                    self.selected_action_index = if self.selected_action_index >= count.saturating_sub(1) {
-                        0
-                    } else {
-                        self.selected_action_index + 1
-                    };
+                    self.selected_action_index =
+                        if self.selected_action_index >= count.saturating_sub(1) {
+                            0
+                        } else {
+                            self.selected_action_index + 1
+                        };
                     return true;
                 }
                 KeyCode::Esc => {

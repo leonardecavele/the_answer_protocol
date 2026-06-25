@@ -4,7 +4,7 @@ use ratatui::{
     Frame,
     layout::{Alignment, Rect},
     style::{Color, Modifier, Style},
-    widgets::{Paragraph, Clear},
+    widgets::{Clear, Paragraph},
 };
 
 pub struct RightPanelComponent {
@@ -112,7 +112,8 @@ impl Component for RightPanelComponent {
                     }
                 }
 
-                let image_widget = ratatui_image::StatefulImage::default().resize(ratatui_image::Resize::Scale(None));
+                let image_widget = ratatui_image::StatefulImage::default()
+                    .resize(ratatui_image::Resize::Scale(None));
                 frame.render_stateful_widget(image_widget, image_area, protocol);
             } else if let Some(text) = text_fallback {
                 let visual_lines =
@@ -154,13 +155,20 @@ impl Component for RightPanelComponent {
                 focus_area,
             );
 
-            let exit_style = Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD);
+            let exit_style = Style::default()
+                .fg(Color::Yellow)
+                .add_modifier(Modifier::BOLD);
 
             if state.game.current_room_exits.contains_key("NORTH") {
                 let text = " [North] ";
                 let w = text.len() as u16;
                 let x = inner_area.x + inner_area.width.saturating_sub(w) / 2;
-                let area = Rect { x, y: inner_area.y, width: w, height: 1 };
+                let area = Rect {
+                    x,
+                    y: inner_area.y,
+                    width: w,
+                    height: 1,
+                };
                 frame.render_widget(Clear, area);
                 frame.render_widget(Paragraph::new(text).style(exit_style), area);
             }
@@ -169,7 +177,12 @@ impl Component for RightPanelComponent {
                 let w = text.len() as u16;
                 let x = inner_area.x + inner_area.width.saturating_sub(w) / 2;
                 let y = inner_area.y + inner_area.height.saturating_sub(1);
-                let area = Rect { x, y, width: w, height: 1 };
+                let area = Rect {
+                    x,
+                    y,
+                    width: w,
+                    height: 1,
+                };
                 frame.render_widget(Clear, area);
                 frame.render_widget(Paragraph::new(text).style(exit_style), area);
             }
@@ -178,7 +191,12 @@ impl Component for RightPanelComponent {
                 let w = text.len() as u16;
                 let x = inner_area.x + inner_area.width.saturating_sub(w);
                 let y = inner_area.y + inner_area.height / 2;
-                let area = Rect { x, y, width: w, height: 1 };
+                let area = Rect {
+                    x,
+                    y,
+                    width: w,
+                    height: 1,
+                };
                 frame.render_widget(Clear, area);
                 frame.render_widget(Paragraph::new(text).style(exit_style), area);
             }
@@ -187,7 +205,12 @@ impl Component for RightPanelComponent {
                 let w = text.len() as u16;
                 let x = inner_area.x;
                 let y = inner_area.y + inner_area.height / 2;
-                let area = Rect { x, y, width: w, height: 1 };
+                let area = Rect {
+                    x,
+                    y,
+                    width: w,
+                    height: 1,
+                };
                 frame.render_widget(Clear, area);
                 frame.render_widget(Paragraph::new(text).style(exit_style), area);
             }
@@ -206,7 +229,7 @@ impl Component for RightPanelComponent {
                     state.ui.current_focus = crate::states::ui::GameFocus::NpcList;
                     return true;
                 }
-                
+
                 let direction = match key.code {
                     crossterm::event::KeyCode::Up => "NORTH",
                     crossterm::event::KeyCode::Down => "SOUTH",
@@ -214,9 +237,11 @@ impl Component for RightPanelComponent {
                     crossterm::event::KeyCode::Left => "WEST",
                     _ => return false,
                 };
-                
+
                 if state.game.current_room_exits.contains_key(direction) {
-                    let _ = event_sender.try_send(crate::events::ApplicationEvent::SendRawCommand(format!("MOVE {}", direction)));
+                    let _ = event_sender.try_send(crate::events::ApplicationEvent::SendRawCommand(
+                        format!("MOVE {}", direction),
+                    ));
                     return true;
                 }
             }

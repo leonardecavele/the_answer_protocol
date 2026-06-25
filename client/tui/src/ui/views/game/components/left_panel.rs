@@ -1,6 +1,6 @@
+use crate::data::manifest::NpcType;
 use crate::states::app::AppState;
 use crate::ui::components::Component;
-use crate::data::manifest::NpcType;
 use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect},
@@ -16,7 +16,10 @@ pub struct LeftPanelComponent {
 
 impl LeftPanelComponent {
     pub fn new() -> Self {
-        Self { npcs_area: None, selected_npc_index: None }
+        Self {
+            npcs_area: None,
+            selected_npc_index: None,
+        }
     }
 }
 
@@ -44,8 +47,11 @@ impl Component for LeftPanelComponent {
                 ListItem::new(Span::styled(format!("• {}", name), style))
             })
             .collect();
-        let players_list = List::new(players_items)
-            .block(Block::default().borders(Borders::ALL).title(" Room Players "));
+        let players_list = List::new(players_items).block(
+            Block::default()
+                .borders(Borders::ALL)
+                .title(" Room Players "),
+        );
         frame.render_widget(players_list, chunks[0]);
 
         // 2. Room NPCs
@@ -54,11 +60,10 @@ impl Component for LeftPanelComponent {
             .room_npcs
             .iter()
             .map(|npc_id| {
-                let (display_name, npc_type) =
-                    match state.game.manifest.npcs.get(npc_id) {
-                        Some(entry) => (entry.name.clone(), entry.npc_type.clone()),
-                        None => (npc_id.clone(), NpcType::Normal),
-                    };
+                let (display_name, npc_type) = match state.game.manifest.npcs.get(npc_id) {
+                    Some(entry) => (entry.name.clone(), entry.npc_type.clone()),
+                    None => (npc_id.clone(), NpcType::Normal),
+                };
 
                 let color = match npc_type {
                     NpcType::Enemy => Color::Red,
@@ -80,10 +85,7 @@ impl Component for LeftPanelComponent {
                     }
                 }
 
-                ListItem::new(Span::styled(
-                    format!("• {}", display_name),
-                    style,
-                ))
+                ListItem::new(Span::styled(format!("• {}", display_name), style))
             })
             .collect();
         let mut npcs_block = Block::default().borders(Borders::ALL).title(" Room NPCs ");
@@ -106,8 +108,11 @@ impl Component for LeftPanelComponent {
                 ))
             })
             .collect();
-        let group_list = List::new(group_items)
-            .block(Block::default().borders(Borders::ALL).title(" Group Members "));
+        let group_list = List::new(group_items).block(
+            Block::default()
+                .borders(Borders::ALL)
+                .title(" Group Members "),
+        );
         frame.render_widget(group_list, chunks[2]);
     }
 
@@ -127,12 +132,20 @@ impl Component for LeftPanelComponent {
                 match key.code {
                     crossterm::event::KeyCode::Up => {
                         let current = self.selected_npc_index.unwrap_or(0);
-                        self.selected_npc_index = Some(if current == 0 { npc_count - 1 } else { current - 1 });
+                        self.selected_npc_index = Some(if current == 0 {
+                            npc_count - 1
+                        } else {
+                            current - 1
+                        });
                         return true;
                     }
                     crossterm::event::KeyCode::Down => {
                         let current = self.selected_npc_index.unwrap_or(npc_count - 1);
-                        self.selected_npc_index = Some(if current >= npc_count - 1 { 0 } else { current + 1 });
+                        self.selected_npc_index = Some(if current >= npc_count - 1 {
+                            0
+                        } else {
+                            current + 1
+                        });
                         return true;
                     }
                     crossterm::event::KeyCode::Enter => {
