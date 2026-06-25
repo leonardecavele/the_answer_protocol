@@ -14,7 +14,7 @@
       "name": "c",
       "description": "",
       "loots": {
-        "XP": { "qty": 0, "chance": 100.0 }
+        "XP": { "qty": 50, "chance": 100.0 }
       }
     }
   ]
