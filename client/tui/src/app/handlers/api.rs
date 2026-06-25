@@ -15,25 +15,21 @@ impl App {
                 self.state.game.hp = status_res.player_status.hp;
                 self.state.game.max_hp = status_res.player_status.max_hp;
             }
-            ApiResponse::GroupCreate(Ok(_res)) => {
-                self.state.game.group_members.clear();
-                if let Some(name) = &self.state.game.player_name {
-                    self.state.game.group_members.push(name.clone());
-                }
+            ApiResponse::GroupCreate(Ok(res)) => {
+                self.state.game.group_id = Some(res.group_id.clone());
+                self.state.game.group_leader = self.state.game.player_name.clone();
             }
-            ApiResponse::GroupJoin(Ok(_res)) => {
+            ApiResponse::GroupJoin(Ok(res)) => {
                 if let api_client::protocol::command::enums::ApiRequest::GroupJoin(cmd) =
                     envelope.original_request
                 {
-                    self.state.game.group_members.clear();
-                    self.state.game.group_members.push(cmd.leader_name);
-                    if let Some(name) = &self.state.game.player_name {
-                        self.state.game.group_members.push(name.clone());
-                    }
+                    self.state.game.group_id = Some(res.group_id.clone());
+                    self.state.game.group_leader = Some(cmd.leader_name);
                 }
             }
             ApiResponse::GroupLeave(Ok(_res)) => {
-                self.state.game.group_members.clear();
+                self.state.game.group_id = None;
+                self.state.game.group_leader = None;
             }
             ApiResponse::GlobalChat(Ok(_)) => {
                 if let api_client::protocol::command::enums::ApiRequest::GlobalChat(cmd) =
@@ -69,7 +65,20 @@ impl App {
                 self.state.game.current_room_description = Some(look_res.room.description.clone());
                 self.state.game.room_players = look_res.players.clone();
                 self.state.game.room_npcs = look_res.npcs.clone();
+                self.state.game.current_room_items = look_res.items.clone();
                 self.state.game.current_room_exits = look_res.room.exits.clone();
+
+                if let Some(network_manager) = &self.network_manager {
+                    let req_inv = api_client::protocol::command::enums::ApiRequest::Inventory(
+                        api_client::protocol::command::resource_interaction::inventory::InventoryCommand,
+                    );
+                    network_manager.send_command(crate::network::envelopes::RequestEnvelope::new(req_inv));
+
+                    let req_quests = api_client::protocol::command::enums::ApiRequest::Quests(
+                        api_client::protocol::command::resource_interaction::quests::QuestsCommand,
+                    );
+                    network_manager.send_command(crate::network::envelopes::RequestEnvelope::new(req_quests));
+                }
             }
             ApiResponse::Move(Ok(_move_res)) => {
                 self.state.game.focused_entity_id = None;
@@ -81,8 +90,11 @@ impl App {
                     network_manager.send_command(envelope);
                 }
             }
-            ApiResponse::Inventory(Ok(_inv_res)) => {
-                // Update inventory
+            ApiResponse::Inventory(Ok(inv_res)) => {
+                self.state.game.inventory = inv_res.inventory.clone();
+            }
+            ApiResponse::Quests(Ok(quests_res)) => {
+                self.state.game.quests = quests_res.quest_list.clone();
             }
             ApiResponse::Talk(Ok(talk_res)) => {
                 if let api_client::protocol::command::enums::ApiRequest::Talk(cmd) =

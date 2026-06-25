@@ -46,6 +46,12 @@ impl From<ServerResponse> for ServerEvent {
             ["QUIT", name] => ServerEvent::Quit(name.to_string()),
 
             // Room events
+            ["ROOM", name, "ENTER"] => {
+                ServerEvent::Room(RoomEvent::PresenceEnter(name.to_string()))
+            }
+            ["ROOM", name, "LEAVE"] => {
+                ServerEvent::Room(RoomEvent::PresenceLeave(name.to_string()))
+            }
             ["ROOM", "PRESENCE", "ENTER", name] => {
                 ServerEvent::Room(RoomEvent::PresenceEnter(name.to_string()))
             }

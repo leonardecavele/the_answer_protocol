@@ -13,6 +13,8 @@ pub enum GameFocus {
     Input,
     RightPanel,
     NpcList,
+    RoomItemsList,
+    InventoryGrid,
 }
 
 impl Default for GameFocus {
@@ -89,6 +91,7 @@ pub struct UiState {
     pub image_cache: RefCell<HashMap<String, Option<(StatefulProtocol, u32, u32)>>>,
     pub current_focus: GameFocus,
     pub active_npc_popup: Option<String>,
+    pub active_item_popup: Option<String>,
     pub show_help_overlay: bool,
 }
 
@@ -104,6 +107,7 @@ impl UiState {
             image_cache: RefCell::new(HashMap::new()),
             current_focus: GameFocus::default(),
             active_npc_popup: None,
+            active_item_popup: None,
             show_help_overlay: false,
         }
     }

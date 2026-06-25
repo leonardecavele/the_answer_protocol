@@ -19,7 +19,10 @@ impl App {
                 self.state.game.online_players_count =
                     self.state.game.online_players_count.saturating_sub(1);
                 self.state.game.room_players.retain(|p| p != &name);
-                self.state.game.group_members.retain(|p| p != &name);
+                if self.state.game.group_leader.as_ref() == Some(&name) {
+                    self.state.game.group_id = None;
+                    self.state.game.group_leader = None;
+                }
                 self.state
                     .ui
                     .push(crate::states::ui::Notification::info(format!(
@@ -32,6 +35,7 @@ impl App {
                     if !self.state.game.room_players.contains(&name) {
                         self.state.game.room_players.push(name.clone());
                     }
+
                     self.state
                         .ui
                         .push(crate::states::ui::Notification::info(format!(
@@ -47,6 +51,27 @@ impl App {
                             "{} left the room.",
                             name
                         )));
+
+                    if let Some(network_manager) = &self.network_manager {
+                        if let Some(leader) = self.state.game.group_leader.as_ref() {
+                            let is_leader = leader.eq_ignore_ascii_case(&name);
+                            let is_self = self.state.game.player_name.as_ref()
+                                .map_or(false, |p| p.eq_ignore_ascii_case(&name));
+
+                            if is_leader && !is_self {
+                                let req_look =
+                                    api_client::protocol::command::enums::ApiRequest::Look(
+                                        api_client::protocol::command::core::look::LookCommand,
+                                    );
+                                // TD: review this code (maybe wait another event for relook?)
+                                let sender = network_manager.command_sender.clone();
+                                tokio::spawn(async move {
+                                    tokio::time::sleep(std::time::Duration::from_millis(1000)).await;
+                                    let _ = sender.send(crate::network::envelopes::RequestEnvelope::new(req_look)).await;
+                                });
+                            }
+                        }
+                    }
                 }
                 RoomEvent::Chat(chat) => {
                     self.state.game.chat_history.push(ChatMessage {
@@ -66,9 +91,6 @@ impl App {
                         )));
                 }
                 GroupEvent::Join(user) => {
-                    if !self.state.game.group_members.contains(&user) {
-                        self.state.game.group_members.push(user.clone());
-                    }
                     self.state
                         .ui
                         .push(crate::states::ui::Notification::info(format!(
@@ -77,7 +99,10 @@ impl App {
                         )));
                 }
                 GroupEvent::Leave(user) => {
-                    self.state.game.group_members.retain(|p| p != &user);
+                    if self.state.game.group_leader.as_ref() == Some(&user) {
+                        self.state.game.group_id = None;
+                        self.state.game.group_leader = None;
+                    }
                     self.state
                         .ui
                         .push(crate::states::ui::Notification::info(format!(

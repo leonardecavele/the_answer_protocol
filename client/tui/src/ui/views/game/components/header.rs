@@ -21,10 +21,24 @@ impl Component for HeaderComponent {
             None => " Cluster 6 (the backrooms) ".to_string(),
         };
 
-        let stats_text = format!(
+        let mut stats_text = format!(
             " HP: {}/{} | Online: {} ",
             state.game.hp, state.game.max_hp, state.game.online_players_count
         );
+
+        if let Some(group_id) = &state.game.group_id {
+            if let Some(leader_name) = &state.game.group_leader {
+                let display_leader = if Some(leader_name) == state.game.player_name.as_ref() {
+                    "[You]"
+                } else {
+                    leader_name.as_str()
+                };
+                stats_text = format!(
+                    " Group: {} | Leader: {} | HP: {}/{} | Online: {} ",
+                    group_id, display_leader, state.game.hp, state.game.max_hp, state.game.online_players_count
+                );
+            }
+        }
 
         let description = match &state.game.current_room_description {
             Some(desc) => desc.as_str(),

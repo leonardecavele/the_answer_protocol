@@ -56,12 +56,16 @@ pub struct GameState {
     pub player_name: Option<String>,
     pub chat_history: Vec<ChatMessage>,
     pub room_players: Vec<String>,
-    pub group_members: Vec<String>,
+    pub group_id: Option<String>,
+    pub group_leader: Option<String>,
     pub online_players_count: u32,
     pub hp: u32,
     pub max_hp: u32,
     pub manifest: crate::data::manifest::Manifest,
     pub room_npcs: Vec<String>,
+    pub current_room_items: Vec<String>,
+    pub inventory: Vec<String>,
+    pub quests: Vec<api_client::protocol::command::resource_interaction::quests::QuestListEntry>,
     pub current_room_id: Option<String>,
     pub current_room_name: Option<String>,
     pub current_room_description: Option<String>,
@@ -70,6 +74,8 @@ pub struct GameState {
     pub action_logs: Vec<String>,
     pub active_dialogue: Option<DialogueState>,
     pub dialogue_clear_mode: DialogueClearMode,
+    pub room_item_cursor: usize,
+    pub inventory_cursor: usize,
 }
 
 impl GameState {
@@ -78,12 +84,16 @@ impl GameState {
             player_name: None,
             chat_history: Vec::new(),
             room_players: Vec::new(),
-            group_members: Vec::new(),
+            group_id: None,
+            group_leader: None,
             online_players_count: 1,
             hp: 100,
             max_hp: 100,
             manifest,
             room_npcs: Vec::new(),
+            current_room_items: Vec::new(),
+            inventory: Vec::new(),
+            quests: Vec::new(),
             current_room_id: None,
             current_room_name: None,
             current_room_description: None,
@@ -92,6 +102,8 @@ impl GameState {
             action_logs: Vec::new(),
             active_dialogue: None,
             dialogue_clear_mode: DialogueClearMode::default(),
+            room_item_cursor: 0,
+            inventory_cursor: 0,
         }
     }
 

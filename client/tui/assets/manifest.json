@@ -122,5 +122,6 @@
         "7.entree": {},
         "8.cantina": { "image_path": "../../assets/final/cantina.jpeg" },
         "9.foyer": {}
-    }
+    },
+    "quests": {}
 }

@@ -5,6 +5,7 @@ pub mod footer;
 pub mod header;
 pub mod left_panel;
 pub mod npc_popup;
+pub mod item_popup;
 pub mod right_panel;
 pub mod help_overlay;
 
@@ -15,5 +16,6 @@ pub use footer::FooterComponent;
 pub use header::HeaderComponent;
 pub use left_panel::LeftPanelComponent;
 pub use npc_popup::NpcActionPopup;
+pub use item_popup::ItemPopupComponent;
 pub use right_panel::RightPanelComponent;
 pub use help_overlay::HelpOverlayComponent;
