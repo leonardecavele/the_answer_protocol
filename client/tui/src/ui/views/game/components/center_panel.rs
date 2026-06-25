@@ -18,7 +18,8 @@ impl Component for CenterPanelComponent {
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
         let block = Block::default()
             .borders(Borders::ALL)
-            .title(" Action History ");
+            .title(" Action History ")
+            .title_bottom(ratatui::text::Line::from(" Press Ctrl + H to open help ").alignment(ratatui::layout::Alignment::Center));
 
         let inner_area = block.inner(area);
         let max_width = inner_area.width as usize;

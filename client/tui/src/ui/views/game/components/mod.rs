@@ -6,6 +6,7 @@ pub mod header;
 pub mod left_panel;
 pub mod npc_popup;
 pub mod right_panel;
+pub mod help_overlay;
 
 pub use center_panel::CenterPanelComponent;
 pub use chat_overlay::ChatOverlayComponent;
@@ -15,3 +16,4 @@ pub use header::HeaderComponent;
 pub use left_panel::LeftPanelComponent;
 pub use npc_popup::NpcActionPopup;
 pub use right_panel::RightPanelComponent;
+pub use help_overlay::HelpOverlayComponent;

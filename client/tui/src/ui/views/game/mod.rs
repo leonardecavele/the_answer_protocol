@@ -6,7 +6,7 @@ use crate::ui::components::Component;
 use crate::ui::views::AppView;
 use components::{
     CenterPanelComponent, ChatOverlayComponent, DialoguePopupComponent, FooterComponent,
-    HeaderComponent, LeftPanelComponent, NpcActionPopup, RightPanelComponent,
+    HeaderComponent, LeftPanelComponent, NpcActionPopup, RightPanelComponent, HelpOverlayComponent,
 };
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
 use ratatui::Frame;
@@ -23,6 +23,7 @@ pub struct GameView {
     chat_overlay: ChatOverlayComponent,
     npc_popup: NpcActionPopup,
     dialogue_popup: DialoguePopupComponent,
+    help_overlay: HelpOverlayComponent,
     show_chat: bool,
     right_panel_area: Option<Rect>,
     footer_area: Option<Rect>,
@@ -39,6 +40,7 @@ impl GameView {
             chat_overlay: ChatOverlayComponent::new(),
             npc_popup: NpcActionPopup::new(),
             dialogue_popup: DialoguePopupComponent::new(),
+            help_overlay: HelpOverlayComponent::new(),
             show_chat: false,
             right_panel_area: None,
             footer_area: None,
@@ -102,6 +104,10 @@ impl AppView for GameView {
         if state.game.active_dialogue.is_some() {
             self.dialogue_popup.draw(state, frame, area);
         }
+
+        if state.ui.show_help_overlay {
+            self.help_overlay.draw(state, frame, area);
+        }
     }
 
     fn on_tick(&mut self, state: &mut AppState) {
@@ -125,6 +131,24 @@ impl AppView for GameView {
         if state.ui.active_npc_popup.is_some() {
             self.npc_popup
                 .handle_terminal_event(state, event, event_sender);
+            return;
+        }
+
+        if let CrosstermEvent::Key(key) = event {
+            if key.code == KeyCode::Char('h') && key.modifiers.contains(crossterm::event::KeyModifiers::CONTROL) {
+                state.ui.show_help_overlay = !state.ui.show_help_overlay;
+                return;
+            }
+        }
+
+        if state.ui.show_help_overlay {
+            if let CrosstermEvent::Key(key) = event {
+                if key.code == KeyCode::Esc {
+                    state.ui.show_help_overlay = false;
+                    return;
+                }
+            }
+            self.help_overlay.handle_terminal_event(state, event, event_sender);
             return;
         }
 
