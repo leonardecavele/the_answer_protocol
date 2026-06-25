@@ -25,10 +25,10 @@ impl Component for DialoguePopupComponent {
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
         if let Some(dialog) = &state.game.active_dialogue {
             // Place it at the bottom of the right panel, or bottom of the provided area
-            let popup_height = 8;
+            let popup_height = 6;
             let width = area.width.saturating_sub(4);
             let x = area.x + 2;
-            let y = area.y + area.height.saturating_sub(popup_height + 2);
+            let y = area.y + area.height.saturating_sub(popup_height);
             let popup_area = Rect { x, y, width, height: popup_height };
 
             frame.render_widget(Clear, popup_area);

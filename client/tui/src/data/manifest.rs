@@ -25,6 +25,8 @@ pub struct NpcEntry {
     #[serde(rename = "type", default)]
     pub npc_type: NpcType,
     pub image_path: Option<String>,
+    pub image_paths: Option<Vec<String>>,
+    pub animation_speed_ms: Option<u64>,
     #[serde(default)]
     pub actions: Vec<String>,
 }

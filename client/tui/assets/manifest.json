@@ -27,7 +27,11 @@
         "5.gagulhon": {
             "name": "gagulhon",
             "type": "dialogue",
-            "image_path": "../../assets/final/mobs/talk/gagulhon/gagulhon1.png",
+            "image_paths": [
+                "../../assets/final/mobs/talk/gagulhon/gagulhon1.png",
+                "../../assets/final/mobs/talk/gagulhon/gagulhon2.png"
+            ],
+            "animation_speed_ms": 500,
             "actions": ["Talk"]
         },
         "6.ndalailallema": {

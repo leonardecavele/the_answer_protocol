@@ -7,11 +7,17 @@ use ratatui::{
     widgets::{Paragraph, Clear},
 };
 
-pub struct RightPanelComponent;
+pub struct RightPanelComponent {
+    animation_start: std::time::Instant,
+    last_entity: Option<String>,
+}
 
 impl RightPanelComponent {
     pub fn new() -> Self {
-        Self
+        Self {
+            animation_start: std::time::Instant::now(),
+            last_entity: None,
+        }
     }
 }
 
@@ -22,9 +28,21 @@ impl Component for RightPanelComponent {
 
         // Priority 1: focused entity
         if let Some(focused_id) = &state.game.focused_entity_id {
+            if self.last_entity.as_deref() != Some(focused_id.as_str()) {
+                self.last_entity = Some(focused_id.clone());
+                self.animation_start = std::time::Instant::now();
+            }
+
             text_fallback = Some(" No image available for this NPC. ");
             if let Some(npc) = state.game.manifest.npcs.get(focused_id) {
-                if let Some(path) = &npc.image_path {
+                if let (Some(paths), Some(speed)) = (&npc.image_paths, npc.animation_speed_ms) {
+                    if !paths.is_empty() {
+                        let elapsed_ms = self.animation_start.elapsed().as_millis() as u64;
+                        let frame_index = (elapsed_ms / speed) % paths.len() as u64;
+                        path_to_load = Some(paths[frame_index as usize].clone());
+                        text_fallback = Some(" Image cannot be loaded (invalid path). ");
+                    }
+                } else if let Some(path) = &npc.image_path {
                     path_to_load = Some(path.clone());
                     text_fallback = Some(" Image cannot be loaded (invalid path). ");
                 }

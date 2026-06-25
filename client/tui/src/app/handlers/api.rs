@@ -78,11 +78,16 @@ impl App {
                 {
                     let mut text = talk_res.dialogue.clone();
                     let ends_dialog = text.contains(crate::states::game::END_OF_DIALOGUE_TAG);
-                    if ends_dialog {
+                    if ends_dialog && text.starts_with(crate::states::game::END_OF_DIALOGUE_TAG) {
                         text = text
                             .replace(crate::states::game::END_OF_DIALOGUE_TAG, "**nothing**")
                             .trim()
                             .to_string();
+                    } else if ends_dialog {
+                        text = text
+                            .replace(crate::states::game::END_OF_DIALOGUE_TAG, "")
+                            .trim()
+                            .to_string(); 
                     }
 
                     self.state.game.focused_entity_id = Some(cmd.npc_name.clone());
