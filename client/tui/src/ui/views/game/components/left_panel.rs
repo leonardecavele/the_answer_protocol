@@ -85,7 +85,7 @@ impl Component for LeftPanelComponent {
                     }
                 }
 
-                ListItem::new(Span::styled(format!("• {}", display_name), style))
+                ListItem::new(Span::styled(format!("• {} ({})", display_name, npc_id), style))
             })
             .collect();
         let mut npcs_block = Block::default().borders(Borders::ALL).title(" Room NPCs ");
