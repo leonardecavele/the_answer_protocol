@@ -1,139 +1,77 @@
-use api_client::client::Client;
-use api_client::client::connect::ClientConnect;
-use api_client::error::TapError;
-use std::env;
-use std::process::exit;
-use std::time::Instant;
-use time::macros::format_description;
-use tracing::{error, info};
-use tracing_subscriber::EnvFilter;
-use tracing_subscriber::fmt::time::LocalTime;
+pub mod app;
+pub mod data;
+pub mod errors;
+pub mod events;
+pub mod network;
+pub mod states;
+pub mod ui;
 
-pub enum Command {
-    Quit,
+use crate::app::App;
+use clap::Parser;
+use crossterm::event::{DisableMouseCapture, EnableMouseCapture};
+use crossterm::execute;
+use crossterm::terminal::{
+    EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode,
+};
+use ratatui::Terminal;
+use ratatui::backend::CrosstermBackend;
+use std::{io, panic};
+
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+struct Cli {
+    /// L'adresse IP du serveur auquel se connecter.
+    #[arg(long, default_value = "127.0.0.1")]
+    ip: String,
+
+    /// Le port du serveur.
+    #[arg(long, default_value = "38800")]
+    port: String,
 }
 
-const SERVER_ADDRESS: &str = "127.0.0.1:3000";
-const PLAYER: &str = "DefaultPlayer";
+fn terminal_setup() -> io::Result<Terminal<CrosstermBackend<io::Stdout>>> {
+    enable_raw_mode()?;
+    let mut stdout = io::stdout();
+    execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
+    let backend = CrosstermBackend::new(stdout);
+    Terminal::new(backend)
+}
+
+fn terminal_restore(mut terminal: Terminal<CrosstermBackend<io::Stdout>>) -> io::Result<()> {
+    disable_raw_mode()?;
+    execute!(
+        terminal.backend_mut(),
+        LeaveAlternateScreen,
+        DisableMouseCapture
+    )?;
+    terminal.show_cursor()?;
+    Ok(())
+}
+
+fn setup_panic_hook() {
+    let original_hook = panic::take_hook();
+    panic::set_hook(Box::new(move |panic_info| {
+        let _ = disable_raw_mode();
+        let _ = execute!(io::stdout(), LeaveAlternateScreen, DisableMouseCapture);
+        original_hook(panic_info);
+    }));
+}
 
 #[tokio::main]
-async fn main() {
-    let time_format = format_description!("[hour]:[minute]:[second].[subsecond digits:6]");
-    let timer = LocalTime::new(time_format);
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    setup_panic_hook();
 
-    tracing_subscriber::fmt()
-        .with_env_filter(
-            EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info")),
-        )
-        .with_timer(timer)
-        .init();
+    let cli = Cli::parse();
 
-    if let Err(e) = test_single_connection().await {
-        error!("{} (exiting)", e);
-    }
-    // if let Err(e) = test_multiple_connections().await {
-    //     error!("{} (exiting)", e);
-    // }
-}
+    let mut terminal = terminal_setup()?;
 
-fn get_player_name(suffix: Option<String>) -> String {
-    let player = env::var("PLAYER")
-        .ok()
-        .unwrap_or_else(|| PLAYER.to_string());
-    match suffix {
-        Some(v) => String::from(format!("{}_{}", player, v)),
-        None => player,
-    }
-}
+    let mut app = App::new(cli.ip, cli.port);
+    let res = app.run(&mut terminal).await;
 
-#[allow(dead_code)]
-async fn test_multiple_connections() -> Result<(), TapError> {
-    let mut clients: Vec<Client> = vec![];
+    terminal_restore(terminal)?;
 
-    for i in 0..3 {
-        let player = get_player_name(Some(i.to_string()));
-
-        let mut client = ClientConnect::connect(SERVER_ADDRESS).await?;
-
-        let player_name = player.clone();
-        client
-            .on_event(move |event| info!("[new event for {}]: {:?}", player_name, event.arguments));
-
-        player_connect(&mut client, player).await?;
-        player_look(&mut client).await?;
-
-        clients.push(client);
-    }
-
-    for client in clients {
-        client.quit().await;
-    }
-
-    Ok(())
-}
-
-#[allow(dead_code)]
-async fn test_single_connection() -> Result<(), TapError> {
-    let player = get_player_name(None);
-
-    let mut client = ClientConnect::connect(SERVER_ADDRESS).await?;
-
-    let player_name = player.clone();
-    client.on_event(move |event| info!("[new event for {}]: {:?}", player_name, event.arguments));
-
-    player_connect(&mut client, player).await?;
-
-    let iterations = 10000;
-    info!(
-        "Démarrage du benchmark pour {} requêtes LOOK...",
-        iterations
-    );
-    let start_time = Instant::now();
-
-    for i in 0..200 {
-        player_look(&mut client).await?;
-        info!("loop {}", i);
-    }
-
-    let duration = start_time.elapsed();
-
-    info!(
-        "Benchmark terminé : {} requêtes en {:.2?}. (Moyenne : {:.2?} / requête)",
-        iterations,
-        duration,
-        duration / iterations
-    );
-
-    client.quit().await;
-
-    Ok(())
-}
-
-async fn player_connect(client: &mut Client, player: String) -> Result<(), TapError> {
-    let result = client.connect(player).await?;
-
-    match result {
-        Ok(response) => {
-            println!("connected to the server as {}.", response.player_name);
-        }
-        Err(e) => {
-            error!("{}", e);
-        }
-    }
-
-    Ok(())
-}
-
-async fn player_look(client: &mut Client) -> Result<(), TapError> {
-    let result = client.look().await?;
-
-    match result {
-        Ok(response) => {
-            println!("look response: {}.", response.json_data);
-        }
-        Err(e) => {
-            error!("{}", e);
-        }
+    if let Err(err) = res {
+        eprintln!("Application Exited with Error: {:?}", err);
     }
 
     Ok(())

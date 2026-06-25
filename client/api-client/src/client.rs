@@ -1,39 +1,40 @@
 pub mod api;
 pub mod connect;
-pub mod dispatcher;
+pub mod event;
+pub mod bridge;
 
+use crate::protocol::command::enums::{ApiRequest, ApiResponse};
+use crate::client::event::ServerEvent;
 use crate::error::{CommandError, InternalError, TapError};
 use crate::protocol::command::Command;
 use crate::protocol::request::Request;
-use crate::protocol::response::{Opcode, ServerResponse};
-use dispatcher::EventDispatcher;
-use tokio::sync::mpsc;
+use crate::protocol::response::Opcode;
+use event::EventDispatcher;
+use tokio::sync::mpsc::Sender;
 use tokio::task::JoinHandle;
 use tracing::info;
 
+struct BridgeHandle {
+    task: JoinHandle<()>,
+    command_sender: Sender<Request>,
+    event_dispatcher: EventDispatcher,
+}
 #[derive(Debug)]
 pub struct ServerInfo {
     pub addr: String,
     pub protocol_version: u32,
 }
-
-struct BridgeState {
-    bridge_task: JoinHandle<()>,
-    command_sender: mpsc::Sender<Request>,
-}
-
 pub struct Client {
     pub server: ServerInfo,
-    bridge: BridgeState,
-    event_dispatcher: EventDispatcher,
+    bridge: BridgeHandle,
 }
 
 impl Client {
     pub fn on_event<F>(&mut self, handler: F)
     where
-        F: Fn(ServerResponse) + Send + 'static,
+        F: FnMut(ServerEvent) + Send + 'static,
     {
-        self.event_dispatcher.subscribe(handler);
+        self.bridge.event_dispatcher.subscribe(handler);
     }
 
     async fn request<C: Command>(
@@ -75,13 +76,43 @@ impl Client {
             Err(e) => Ok(Err(e)),
         }
     }
+
+    pub async fn execute_request(&self, request: ApiRequest) -> Result<ApiResponse, TapError> {
+        match request {
+            ApiRequest::Connect(cmd) => Ok(ApiResponse::Connect(self.request(cmd).await?)),
+            ApiRequest::Quit(cmd) => Ok(ApiResponse::Quit(self.request(cmd).await?)),
+            ApiRequest::Look(cmd) => Ok(ApiResponse::Look(self.request(cmd).await?)),
+            ApiRequest::Move(cmd) => Ok(ApiResponse::Move(self.request(cmd).await?)),
+            ApiRequest::Who(cmd) => Ok(ApiResponse::Who(self.request(cmd).await?)),
+            ApiRequest::GlobalChat(cmd) => Ok(ApiResponse::GlobalChat(self.request(cmd).await?)),
+            ApiRequest::PrivateChat(cmd) => Ok(ApiResponse::PrivateChat(self.request(cmd).await?)),
+            ApiRequest::Take(cmd) => Ok(ApiResponse::Take(self.request(cmd).await?)),
+            ApiRequest::Drop(cmd) => Ok(ApiResponse::Drop(self.request(cmd).await?)),
+            ApiRequest::Inventory(cmd) => Ok(ApiResponse::Inventory(self.request(cmd).await?)),
+            ApiRequest::Status(cmd) => Ok(ApiResponse::Status(self.request(cmd).await?)),
+            ApiRequest::Talk(cmd) => Ok(ApiResponse::Talk(self.request(cmd).await?)),
+            ApiRequest::Attack(cmd) => Ok(ApiResponse::Attack(self.request(cmd).await?)),
+            ApiRequest::Quest(cmd) => Ok(ApiResponse::Quest(self.request(cmd).await?)),
+            ApiRequest::Quests(cmd) => Ok(ApiResponse::Quests(self.request(cmd).await?)),
+            ApiRequest::GroupCreate(cmd) => Ok(ApiResponse::GroupCreate(self.request(cmd).await?)),
+            ApiRequest::GroupJoin(cmd) => Ok(ApiResponse::GroupJoin(self.request(cmd).await?)),
+            ApiRequest::GroupLeave(cmd) => Ok(ApiResponse::GroupLeave(self.request(cmd).await?)),
+            ApiRequest::GroupInvite(cmd) => Ok(ApiResponse::GroupInvite(self.request(cmd).await?)),
+        }
+    }
+
+    pub fn is_connected(&self) -> bool {
+        !self.bridge.task.is_finished()
+    }
+
+    pub fn close(self) {
+        drop(self)
+    }
 }
 
 impl Drop for Client {
     fn drop(&mut self) {
-        self.bridge.bridge_task.abort();
-        self.event_dispatcher.shutdown();
-
-        info!("APIClient dropped: background tasks aborted");
+        self.bridge.task.abort();
+        info!("Api client dropped :: background tasks properly stopped.");
     }
 }

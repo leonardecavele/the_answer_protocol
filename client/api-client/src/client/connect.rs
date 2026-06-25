@@ -1,7 +1,7 @@
-use crate::client::dispatcher::EventDispatcher;
-use crate::client::{BridgeState, Client, ServerInfo};
+use crate::client::bridge::Bridge;
+use crate::client::event::{EventDispatcher, ServerEvent};
+use crate::client::{BridgeHandle, Client, ServerInfo};
 use crate::error::{InternalError, NetworkError, TapError};
-use crate::network::bridge::Bridge;
 use crate::protocol::handshake::HandshakeResponse;
 use crate::protocol::request::Request;
 use crate::protocol::response::ServerResponse;
@@ -25,7 +25,7 @@ impl ClientConnect {
         info!("successfully connected to TCP socket at {}", server_addr);
 
         let (request_sender, request_receiver) = mpsc::channel::<Request>(2048);
-        let (event_broadcast_sender, _) = broadcast::channel::<ServerResponse>(2048);
+        let (event_broadcast_sender, _) = broadcast::channel::<ServerEvent>(2048);
         let (handshake_request, handshake_receiver) = Request::handshake();
         let bridge_handler = Self::start_bridge(
             socket,
@@ -42,17 +42,19 @@ impl ClientConnect {
             handshake.server_protocol_version
         );
 
-        Ok(Client {
+        let client = Client {
             server: ServerInfo {
                 addr: server_addr,
                 protocol_version: handshake.server_protocol_version,
             },
-            bridge: BridgeState {
-                bridge_task: bridge_handler,
+            bridge: BridgeHandle {
+                task: bridge_handler,
                 command_sender: request_sender,
+                event_dispatcher: EventDispatcher::new(event_broadcast_sender),
             },
-            event_dispatcher: EventDispatcher::new(event_broadcast_sender),
-        })
+        };
+
+        Ok(client)
     }
 
     async fn connect_tcp<A: ToSocketAddrs + Clone + Display>(
@@ -65,7 +67,7 @@ impl ClientConnect {
 
         // let max_attempt: u32 = u32::MAX;
         let max_attempt: u32 = 3;
-        let timeout_before_retry: u64 = 5;
+        let timeout_before_retry_ms: u64 = 1000;
 
         for attempt in 1..=max_attempt {
             let connection_future = TcpStream::connect(addr.clone());
@@ -86,7 +88,7 @@ impl ClientConnect {
                     }
                     info!(
                         "failed to connect to {}, retrying in {} milliseconds..",
-                        addr, timeout_before_retry
+                        addr, timeout_before_retry_ms
                     );
                 }
                 Err(_) => {
@@ -97,12 +99,12 @@ impl ClientConnect {
                     }
                     info!(
                         "connection to {} timed out, retrying in {} milliseconds..",
-                        addr, timeout_before_retry
+                        addr, timeout_before_retry_ms
                     );
                 }
             }
 
-            tokio::time::sleep(Duration::from_millis(timeout_before_retry)).await;
+            tokio::time::sleep(Duration::from_millis(timeout_before_retry_ms)).await;
         }
 
         Err(NetworkError::ConnectionTimeout {
@@ -113,7 +115,7 @@ impl ClientConnect {
     async fn start_bridge(
         socket: Framed<TcpStream, LinesCodec>,
         handshake_request: Request,
-        event_sender: broadcast::Sender<ServerResponse>,
+        event_sender: broadcast::Sender<ServerEvent>,
         command_receiver: mpsc::Receiver<Request>,
     ) -> Result<JoinHandle<()>, InternalError> {
         let (ready_sender, ready_receiver) = oneshot::channel::<()>();
