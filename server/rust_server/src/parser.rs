@@ -147,7 +147,16 @@ impl Parser {
                         }
                     }
 
-                    let parsed_room = Room::new(id, name.to_string(), description.to_string(), exits);
+                    let mut parsed_room = Room::new(id, name.to_string(), description.to_string(), exits);
+
+                    if room["items"].is_array() {
+                        for item_id_json in room["items"].members() {
+                            if let Some(item_id) = item_id_json.as_u64() {
+                                parsed_room.add_item(item_id as ItemId);
+                            }
+                        }
+                    }
+
                     rooms.insert(parsed_room.get_id(), parsed_room);
                 } else {
                     return Err("an invalid room was found".to_string());
