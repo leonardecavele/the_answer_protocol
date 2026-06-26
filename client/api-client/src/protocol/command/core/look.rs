@@ -63,5 +63,4 @@ impl Command for LookCommand {
     fn from_str(_args: &str) -> Option<Self> {
         Some(Self)
     }
-
 }

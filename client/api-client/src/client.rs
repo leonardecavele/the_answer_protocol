@@ -1,12 +1,12 @@
 pub mod api;
+pub mod bridge;
 pub mod connect;
 pub mod event;
-pub mod bridge;
 
-use crate::protocol::command::enums::{ApiRequest, ApiResponse};
 use crate::client::event::ServerEvent;
 use crate::error::{CommandError, InternalError, TapError};
 use crate::protocol::command::Command;
+use crate::protocol::command::enums::{ApiRequest, ApiResponse};
 use crate::protocol::request::Request;
 use crate::protocol::response::Opcode;
 use event::EventDispatcher;

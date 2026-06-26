@@ -53,10 +53,11 @@ impl Command for ConnectCommand {
     }
 
     fn from_str(args: &str) -> Option<Self> {
-        if args.trim().is_empty() { return None; }
+        if args.trim().is_empty() {
+            return None;
+        }
         Some(Self {
             player_name: args.trim().to_string(),
         })
     }
-
 }

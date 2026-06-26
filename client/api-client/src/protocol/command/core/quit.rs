@@ -42,5 +42,4 @@ impl Command for QuitCommand {
     fn from_str(_args: &str) -> Option<Self> {
         Some(Self)
     }
-
 }

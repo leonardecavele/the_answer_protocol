@@ -36,12 +36,11 @@ impl Command for QuestsCommand {
     ) -> Result<Self::ResponseData, CommandError> {
         match server_info.protocol_version {
             1 => {
-                let quest_list: Vec<QuestListEntry> = serde_json::from_str(response.arguments.join(" ").as_str())
-                    .map_err(|e| CommandError::invalid_json_response(e))?;
-                
-                Ok(QuestsResponse {
-                    quest_list,
-                })
+                let quest_list: Vec<QuestListEntry> =
+                    serde_json::from_str(response.arguments.join(" ").as_str())
+                        .map_err(|e| CommandError::invalid_json_response(e))?;
+
+                Ok(QuestsResponse { quest_list })
             }
             v => Err(CommandError::version_not_implemented(v)),
         }
@@ -50,5 +49,4 @@ impl Command for QuestsCommand {
     fn from_str(_args: &str) -> Option<Self> {
         Some(Self)
     }
-
 }

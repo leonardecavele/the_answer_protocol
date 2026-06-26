@@ -34,18 +34,18 @@ impl Command for GroupCreateCommand {
                         message: "invalid arguments".to_string(),
                     });
                 }
-                
+
                 let group_id = match response.arguments[0].strip_prefix("group=") {
                     Some(id) => id.to_string(),
-                    None => return Err(CommandError {
-                        code: None,
-                        message: "invalid arguments: missing 'group=' prefix".to_string(),
-                    }),
+                    None => {
+                        return Err(CommandError {
+                            code: None,
+                            message: "invalid arguments: missing 'group=' prefix".to_string(),
+                        });
+                    }
                 };
-                
-                Ok(GroupCreateResponse {
-                    group_id,
-                })
+
+                Ok(GroupCreateResponse { group_id })
             }
             v => Err(CommandError::version_not_implemented(v)),
         }
@@ -61,5 +61,4 @@ impl Command for GroupCreateCommand {
     fn from_str(_args: &str) -> Option<Self> {
         Some(Self)
     }
-
 }

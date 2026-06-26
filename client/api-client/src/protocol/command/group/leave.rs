@@ -41,5 +41,4 @@ impl Command for GroupLeaveCommand {
     fn from_str(_args: &str) -> Option<Self> {
         Some(Self)
     }
-
 }

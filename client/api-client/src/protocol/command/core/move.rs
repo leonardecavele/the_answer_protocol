@@ -40,15 +40,15 @@ impl Command for MoveCommand {
 
                 let room_id = match response.arguments[0].strip_prefix("room=") {
                     Some(id) => id.to_string(),
-                    None => return Err(CommandError {
-                        code: None,
-                        message: "invalid arguments: missing 'room=' prefix".to_string(),
-                    }),
+                    None => {
+                        return Err(CommandError {
+                            code: None,
+                            message: "invalid arguments: missing 'room=' prefix".to_string(),
+                        });
+                    }
                 };
 
-                Ok(MoveResponse {
-                    room_id,
-                })
+                Ok(MoveResponse { room_id })
             }
             v => Err(CommandError::version_not_implemented(v)),
         }
@@ -62,10 +62,11 @@ impl Command for MoveCommand {
     }
 
     fn from_str(args: &str) -> Option<Self> {
-        if args.trim().is_empty() { return None; }
+        if args.trim().is_empty() {
+            return None;
+        }
         Some(Self {
             direction: args.trim().to_string(),
         })
     }
-
 }

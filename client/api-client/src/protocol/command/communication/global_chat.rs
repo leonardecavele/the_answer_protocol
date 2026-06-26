@@ -49,10 +49,11 @@ impl Command for GlobalChatCommand {
     }
 
     fn from_str(args: &str) -> Option<Self> {
-        if args.trim().is_empty() { return None; }
+        if args.trim().is_empty() {
+            return None;
+        }
         Some(Self {
             message: args.trim().to_string(),
         })
     }
-
 }

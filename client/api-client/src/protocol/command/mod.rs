@@ -1,8 +1,8 @@
 pub mod communication;
 pub mod core;
+pub mod enums;
 pub mod group;
 pub mod resource_interaction;
-pub mod enums;
 
 use crate::client::ServerInfo;
 use crate::error::CommandError;
@@ -22,7 +22,10 @@ pub trait Command {
 
     fn refine_error(&self, _server_info: &ServerInfo, _error: &mut CommandError) {}
 
-    fn from_str(args: &str) -> Option<Self> where Self: Sized {
+    fn from_str(args: &str) -> Option<Self>
+    where
+        Self: Sized,
+    {
         let _ = args;
         None
     }

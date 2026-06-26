@@ -34,24 +34,26 @@ impl Command for WhoCommand {
                         message: "invalid arguments".to_string(),
                     });
                 }
-                
+
                 let player_count = match response.arguments[0].strip_prefix("players=") {
                     Some(count_str) => match count_str.parse::<u32>() {
                         Ok(c) => c,
-                        Err(_) => return Err(CommandError {
-                            code: None,
-                            message: "invalid arguments: invalid number format".to_string(),
-                        }),
+                        Err(_) => {
+                            return Err(CommandError {
+                                code: None,
+                                message: "invalid arguments: invalid number format".to_string(),
+                            });
+                        }
                     },
-                    None => return Err(CommandError {
-                        code: None,
-                        message: "invalid arguments: missing 'players=' prefix".to_string(),
-                    }),
+                    None => {
+                        return Err(CommandError {
+                            code: None,
+                            message: "invalid arguments: missing 'players=' prefix".to_string(),
+                        });
+                    }
                 };
-                
-                Ok(WhoResponse {
-                    player_count,
-                })
+
+                Ok(WhoResponse { player_count })
             }
             v => Err(CommandError::version_not_implemented(v)),
         }
@@ -60,5 +62,4 @@ impl Command for WhoCommand {
     fn from_str(_args: &str) -> Option<Self> {
         Some(Self)
     }
-
 }

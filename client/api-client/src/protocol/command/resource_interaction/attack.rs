@@ -39,12 +39,11 @@ impl Command for AttackCommand {
     ) -> Result<Self::ResponseData, CommandError> {
         match server_info.protocol_version {
             1 => {
-                let combat_result: CombatResult = serde_json::from_str(response.arguments.join(" ").as_str())
-                    .map_err(|e| CommandError::invalid_json_response(e))?;
-                
-                Ok(AttackResponse {
-                    combat_result,
-                })
+                let combat_result: CombatResult =
+                    serde_json::from_str(response.arguments.join(" ").as_str())
+                        .map_err(|e| CommandError::invalid_json_response(e))?;
+
+                Ok(AttackResponse { combat_result })
             }
             v => Err(CommandError::version_not_implemented(v)),
         }
@@ -59,10 +58,11 @@ impl Command for AttackCommand {
     }
 
     fn from_str(args: &str) -> Option<Self> {
-        if args.trim().is_empty() { return None; }
+        if args.trim().is_empty() {
+            return None;
+        }
         Some(Self {
             npc_name: args.trim().to_string(),
         })
     }
-
 }

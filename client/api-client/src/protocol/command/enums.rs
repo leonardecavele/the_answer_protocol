@@ -5,8 +5,8 @@ use crate::protocol::command::communication::global_chat::GlobalChatCommand;
 use crate::protocol::command::communication::private_chat::PrivateChatCommand;
 use crate::protocol::command::core::connect::ConnectCommand;
 use crate::protocol::command::core::look::LookCommand;
-use crate::protocol::command::core::quit::QuitCommand;
 use crate::protocol::command::core::r#move::MoveCommand;
+use crate::protocol::command::core::quit::QuitCommand;
 use crate::protocol::command::core::who::WhoCommand;
 use crate::protocol::command::group::create::GroupCreateCommand;
 use crate::protocol::command::group::invite::GroupInviteCommand;
@@ -22,12 +22,13 @@ use crate::protocol::command::resource_interaction::take::TakeCommand;
 use crate::protocol::command::resource_interaction::talk::TalkCommand;
 
 // Response Imports
+use crate::protocol::command::Command;
 use crate::protocol::command::communication::global_chat::GlobalChatResponse;
 use crate::protocol::command::communication::private_chat::PrivateChatResponse;
 use crate::protocol::command::core::connect::ConnectResponse;
 use crate::protocol::command::core::look::LookResponse;
-use crate::protocol::command::core::quit::QuitResponse;
 use crate::protocol::command::core::r#move::MoveResponse;
+use crate::protocol::command::core::quit::QuitResponse;
 use crate::protocol::command::core::who::WhoResponse;
 use crate::protocol::command::group::create::GroupCreateResponse;
 use crate::protocol::command::group::invite::GroupInviteResponse;
@@ -41,7 +42,6 @@ use crate::protocol::command::resource_interaction::quests::QuestsResponse;
 use crate::protocol::command::resource_interaction::status::StatusResponse;
 use crate::protocol::command::resource_interaction::take::TakeResponse;
 use crate::protocol::command::resource_interaction::talk::TalkResponse;
-use crate::protocol::command::Command;
 
 macro_rules! define_api_protocol {
     (

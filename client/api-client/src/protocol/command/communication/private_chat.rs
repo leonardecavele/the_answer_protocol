@@ -56,5 +56,4 @@ impl Command for PrivateChatCommand {
             message: message.trim().to_string(),
         })
     }
-
 }

@@ -1,4 +1,4 @@
-use crate::client::{event, Client};
+use crate::client::{Client, event};
 use crate::protocol::response::ServerResponse;
 use tokio::sync::broadcast;
 use tokio::task::JoinHandle;
@@ -66,7 +66,7 @@ impl From<ServerResponse> for ServerEvent {
             ["TAKE", player, item @ ..] => {
                 ServerEvent::Room(RoomEvent::Take(player.to_string(), item.join(" ")))
             }
-            
+
             ["DROP", player, item @ ..] => {
                 ServerEvent::Room(RoomEvent::Drop(player.to_string(), item.join(" ")))
             }

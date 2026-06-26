@@ -2,8 +2,8 @@ use crate::client::event::ServerEvent;
 use crate::error::{InternalError, NetworkError, TapError};
 use crate::protocol::request::Request;
 use crate::protocol::response::{Opcode, ServerResponse};
-use futures::stream::StreamExt;
 use futures::SinkExt;
+use futures::stream::StreamExt;
 use tokio::net::TcpStream;
 use tokio::sync::broadcast;
 use tokio::sync::mpsc::Receiver;
@@ -157,5 +157,4 @@ impl Bridge {
 
         Ok(true)
     }
-
 }

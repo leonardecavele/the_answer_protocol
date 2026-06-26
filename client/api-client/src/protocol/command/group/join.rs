@@ -43,7 +43,7 @@ impl Command for GroupJoinCommand {
                         return Err(CommandError {
                             code: None,
                             message: "invalid arguments: missing 'group=' prefix".to_string(),
-                        })
+                        });
                     }
                 };
 
@@ -68,10 +68,11 @@ impl Command for GroupJoinCommand {
     }
 
     fn from_str(args: &str) -> Option<Self> {
-        if args.trim().is_empty() { return None; }
+        if args.trim().is_empty() {
+            return None;
+        }
         Some(Self {
             leader_name: args.trim().to_string(),
         })
     }
-
 }

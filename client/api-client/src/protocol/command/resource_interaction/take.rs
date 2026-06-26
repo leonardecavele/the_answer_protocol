@@ -36,18 +36,18 @@ impl Command for TakeCommand {
                         message: "invalid arguments".to_string(),
                     });
                 }
-                
+
                 let item_identifier = match response.arguments[0].strip_prefix("taken=") {
                     Some(id) => id.to_string(),
-                    None => return Err(CommandError {
-                        code: None,
-                        message: "invalid arguments: missing 'taken=' prefix".to_string(),
-                    }),
+                    None => {
+                        return Err(CommandError {
+                            code: None,
+                            message: "invalid arguments: missing 'taken=' prefix".to_string(),
+                        });
+                    }
                 };
-                
-                Ok(TakeResponse {
-                    item_identifier,
-                })
+
+                Ok(TakeResponse { item_identifier })
             }
             v => Err(CommandError::version_not_implemented(v)),
         }
@@ -61,10 +61,11 @@ impl Command for TakeCommand {
     }
 
     fn from_str(args: &str) -> Option<Self> {
-        if args.trim().is_empty() { return None; }
+        if args.trim().is_empty() {
+            return None;
+        }
         Some(Self {
             item_identifier: args.trim().to_string(),
         })
     }
-
 }

@@ -36,7 +36,7 @@ impl Command for TalkCommand {
                         message: "invalid arguments".to_string(),
                     });
                 }
-                
+
                 Ok(TalkResponse {
                     dialogue: response.arguments.join(" "),
                 })
@@ -53,10 +53,11 @@ impl Command for TalkCommand {
     }
 
     fn from_str(args: &str) -> Option<Self> {
-        if args.trim().is_empty() { return None; }
+        if args.trim().is_empty() {
+            return None;
+        }
         Some(Self {
             npc_name: args.trim().to_string(),
         })
     }
-
 }

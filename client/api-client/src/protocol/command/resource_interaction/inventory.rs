@@ -29,12 +29,11 @@ impl Command for InventoryCommand {
     ) -> Result<Self::ResponseData, CommandError> {
         match server_info.protocol_version {
             1 => {
-                let inventory: Vec<String> = serde_json::from_str(response.arguments.join(" ").as_str())
-                    .map_err(|e| CommandError::invalid_json_response(e))?;
-                
-                Ok(InventoryResponse {
-                    inventory,
-                })
+                let inventory: Vec<String> =
+                    serde_json::from_str(response.arguments.join(" ").as_str())
+                        .map_err(|e| CommandError::invalid_json_response(e))?;
+
+                Ok(InventoryResponse { inventory })
             }
             v => Err(CommandError::version_not_implemented(v)),
         }
@@ -43,5 +42,4 @@ impl Command for InventoryCommand {
     fn from_str(_args: &str) -> Option<Self> {
         Some(Self)
     }
-
 }
