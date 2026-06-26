@@ -1,9 +1,6 @@
 use crate::states::app::AppState;
 use crate::ui::components::Component;
-use ratatui::{
-    Frame,
-    layout::Rect,
-};
+use ratatui::{Frame, layout::Rect};
 
 pub struct ChatOverlayComponent {
     scroll_offset: u16,

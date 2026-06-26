@@ -1,4 +1,4 @@
-use crate::events::{ApplicationEvent, NetworkEvent};
+use crate::events::{ApiEvent, ApplicationEvent, NetworkEvent};
 use crate::network::envelopes::{RequestEnvelope, ResponseEnvelope};
 use tokio::sync::mpsc;
 use tokio::task::JoinHandle;
@@ -48,8 +48,8 @@ impl NetworkManager {
                                         "Received event from server: {:?}",
                                         server_event
                                     );
-                                    let _ = _event_sender.try_send(ApplicationEvent::Network(
-                                        NetworkEvent::ServerPayloadReceived(server_event),
+                                    let _ = _event_sender.try_send(ApplicationEvent::Api(
+                                        ApiEvent::Server(server_event),
                                     ));
                                 }
                             });
@@ -57,15 +57,20 @@ impl NetworkManager {
                             // Command loop
                             while let Some(envelope) = command_rx.recv().await {
                                 let original_request = envelope.request.clone();
+
+                                let _ = event_sender.try_send(ApplicationEvent::Api(
+                                    ApiEvent::LogApiRequest(envelope.clone()),
+                                ));
+
                                 match client.execute_request(envelope.request).await {
                                     Ok(api_response) => {
-                                        let _ = event_sender.try_send(
-                                            ApplicationEvent::ApiResponse(ResponseEnvelope {
+                                        let _ = event_sender.try_send(ApplicationEvent::Api(
+                                            ApiEvent::ApiResponse(ResponseEnvelope {
                                                 id: envelope.id,
                                                 response: api_response,
                                                 original_request,
                                             }),
-                                        );
+                                        ));
                                     }
                                     Err(tap_error) => {
                                         let _ = event_sender.try_send(ApplicationEvent::Network(

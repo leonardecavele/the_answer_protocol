@@ -7,7 +7,7 @@ use tokio::sync::mpsc;
 use tokio::task::JoinHandle;
 use tokio::time::{Instant, interval_at};
 
-pub const TICK_RATE: Duration = Duration::from_millis(5);
+pub const TICK_RATE: Duration = Duration::from_millis(10);
 pub const MAX_EVENTS_BUS: usize = 100;
 
 /// The EventBroker is responsible for collecting asynchronous events

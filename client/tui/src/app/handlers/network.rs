@@ -4,6 +4,8 @@ use tracing::info;
 
 impl App {
     pub(crate) fn handle_network_event(&mut self, event: NetworkEvent) {
+        self.push_event("network", format!("{:?}", event));
+
         match event {
             NetworkEvent::ConnectionAttemptStarted {
                 server_ip,
@@ -79,9 +81,6 @@ impl App {
             }
             NetworkEvent::ConnectionLost { reason } => {
                 info!("Connection lost: {}", reason);
-            }
-            NetworkEvent::ServerPayloadReceived(server_event) => {
-                self.handle_server_event(server_event);
             }
         }
     }

@@ -1,6 +1,8 @@
 use api_client::protocol::command::enums::{ApiRequest, ApiResponse};
+use std::fmt::Debug;
 use uuid::Uuid;
 
+#[derive(Debug, Clone)]
 pub struct RequestEnvelope {
     pub id: Uuid,
     pub request: ApiRequest,

@@ -4,7 +4,7 @@ use ratatui::{
 };
 
 pub const BORDER_COLOR: Color = Color::Gray;
-pub const OVERLAY_BORDER_COLOR: Color = Color::Yellow;
+pub const OVERLAY_BORDER_COLOR: Color = Color::Magenta;
 
 pub fn default_block<'a>() -> Block<'a> {
     Block::default()

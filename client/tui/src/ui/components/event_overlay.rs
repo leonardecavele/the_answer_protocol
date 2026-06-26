@@ -102,7 +102,7 @@ impl Component for EventOverlayComponent {
             .ui
             .event_history
             .iter()
-            .map(|line| format!("• {}\n", line))
+            .map(|line| format!("• {}", line))
             .collect::<Vec<_>>();
 
         let visual_lines = crate::ui::utils::wrap_slice_to_lines(lines, max_width);

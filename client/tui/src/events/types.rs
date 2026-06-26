@@ -1,4 +1,4 @@
-use crate::network::envelopes::ResponseEnvelope;
+use crate::network::envelopes::{RequestEnvelope, ResponseEnvelope};
 use api_client::client::event::ServerEvent;
 use crossterm::event::Event as CrosstermEvent;
 
@@ -7,16 +7,16 @@ use crossterm::event::Event as CrosstermEvent;
 pub enum ApplicationEvent {
     Terminal(CrosstermEvent),
     Tick,
-    System(SystemEvent),
     Network(NetworkEvent),
-    ApiResponse(ResponseEnvelope),
     SendRawCommand(String),
+    Api(ApiEvent),
 }
 
-/// Events related to the application lifecycle and system level actions.
 #[derive(Debug, Clone)]
-pub enum SystemEvent {
-    QuitRequested,
+pub enum ApiEvent {
+    LogApiRequest(RequestEnvelope),
+    ApiResponse(ResponseEnvelope),
+    Server(ServerEvent),
 }
 
 /// Events strictly related to the network layer status and data.
@@ -38,8 +38,6 @@ pub enum NetworkEvent {
     ConnectionLost {
         reason: String,
     },
-    /// Raw payload from the API client before processing
-    ServerPayloadReceived(ServerEvent),
 }
 
 #[derive(Debug, Clone, Copy)]
