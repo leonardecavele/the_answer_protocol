@@ -107,8 +107,8 @@ define_api_protocol! {
     Attack(AttackCommand, AttackResponse) => "attack",
     Quest(QuestCommand, QuestResponse) => "quest",
     Quests(QuestsCommand, QuestsResponse) => "quests",
-    GroupCreate(GroupCreateCommand, GroupCreateResponse) => "group_create",
-    GroupJoin(GroupJoinCommand, GroupJoinResponse) => "group_join",
-    GroupLeave(GroupLeaveCommand, GroupLeaveResponse) => "group_leave",
-    GroupInvite(GroupInviteCommand, GroupInviteResponse) => "group_invite",
+    GroupCreate(GroupCreateCommand, GroupCreateResponse) => "gc",
+    GroupJoin(GroupJoinCommand, GroupJoinResponse) => "gj",
+    GroupLeave(GroupLeaveCommand, GroupLeaveResponse) => "gl",
+    GroupInvite(GroupInviteCommand, GroupInviteResponse) => "gi",
 }
