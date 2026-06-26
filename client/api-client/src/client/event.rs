@@ -15,6 +15,8 @@ pub enum RoomEvent {
     PresenceEnter(String),
     PresenceLeave(String),
     Chat(ChatMessage),
+    Take(String, String),
+    Drop(String, String),
 }
 
 #[derive(Debug, Clone)]
@@ -59,6 +61,14 @@ impl From<ServerResponse> for ServerEvent {
                     sender: sender.to_string(),
                     message: message.join(" "),
                 }))
+            }
+
+            ["TAKE", player, item @ ..] => {
+                ServerEvent::Room(RoomEvent::Take(player.to_string(), item.join(" ")))
+            }
+            
+            ["DROP", player, item @ ..] => {
+                ServerEvent::Room(RoomEvent::Drop(player.to_string(), item.join(" ")))
             }
 
             // Global events

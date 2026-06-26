@@ -59,6 +59,24 @@ impl App {
                         content: chat.message,
                     });
                 }
+                RoomEvent::Take(player, item) => {
+                    self.state.game.current_room_items.retain(|id| id != &item);
+                    self.state
+                        .ui
+                        .push(crate::states::ui::Notification::info(format!(
+                            "{} took {}.",
+                            player, item
+                        )));
+                }
+                RoomEvent::Drop(player, item) => {
+                    self.state.game.current_room_items.push(item.clone());
+                    self.state
+                        .ui
+                        .push(crate::states::ui::Notification::info(format!(
+                            "{} dropped {}.",
+                            player, item
+                        )));
+                }
             },
             ServerEvent::Group(group_event) => match group_event {
                 GroupEvent::Invite(leader) => {
