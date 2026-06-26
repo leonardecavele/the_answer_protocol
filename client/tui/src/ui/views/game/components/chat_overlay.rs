@@ -22,8 +22,7 @@ impl ChatOverlayComponent {
 
 impl Component for ChatOverlayComponent {
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
-        let block = Block::default()
-            .borders(Borders::ALL)
+        let block = crate::ui::theme::overlay_block()
             .title(" Chat Overlay (F1 to hide) ");
 
         let inner_area = block.inner(area);

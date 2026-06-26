@@ -63,13 +63,23 @@ impl AppView for GameView {
             ])
             .split(area);
 
+        let available_height = vertical_chunks[1].height;
+        let mut right_width_constraint = Constraint::Percentage(40);
+        
+        if let Some(desired_width) = self.right_panel.get_desired_width(state, available_height) {
+            let max_width = (area.width * 40) / 100;
+            let min_width = (area.width * 20) / 100;
+            let final_width = desired_width.clamp(min_width, max_width);
+            right_width_constraint = Constraint::Length(final_width);
+        }
+
         // Horizontal layout for the center part
         let horizontal_chunks = Layout::default()
             .direction(Direction::Horizontal)
             .constraints([
                 Constraint::Percentage(20),
-                Constraint::Percentage(40),
-                Constraint::Percentage(40),
+                Constraint::Min(1),
+                right_width_constraint,
             ])
             .split(vertical_chunks[1]);
 

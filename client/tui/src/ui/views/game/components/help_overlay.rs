@@ -42,9 +42,7 @@ impl Component for HelpOverlayComponent {
         // Clear the background
         frame.render_widget(Clear, popup_area);
 
-        let block = Block::default()
-            .borders(Borders::ALL)
-            .border_style(Style::default().fg(Color::Cyan))
+        let block = crate::ui::theme::overlay_block()
             .title(Line::from(" Keyboard Shortcuts ").alignment(Alignment::Center))
             .title_bottom(Line::from(" Press Ctrl+H to close ").alignment(Alignment::Center));
 

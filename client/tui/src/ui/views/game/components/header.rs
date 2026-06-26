@@ -2,7 +2,9 @@ use crate::states::app::AppState;
 use crate::ui::components::Component;
 use ratatui::{
     Frame,
-    layout::Rect,
+    layout::{Rect, Alignment},
+    style::{Color, Modifier, Style},
+    text::{Line, Span},
     widgets::{Block, Borders},
 };
 
@@ -16,15 +18,42 @@ impl HeaderComponent {
 
 impl Component for HeaderComponent {
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
-        let title = match &state.game.current_room_name {
-            Some(name) => format!(" {} ", name),
-            None => " Cluster 6 (the backrooms) ".to_string(),
+        let room_name = match &state.game.current_room_name {
+            Some(name) => name.as_str(),
+            None => "Cluster 6 (the backrooms)",
         };
 
-        let mut stats_text = format!(
-            " HP: {}/{} | Online: {} ",
-            state.game.hp, state.game.max_hp, state.game.online_players_count
-        );
+        let title_line = Line::from(vec![
+            Span::styled(" Room: ", Style::default().add_modifier(Modifier::BOLD)),
+            Span::styled(room_name, Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)),
+            Span::raw(" "),
+        ]);
+
+        let hp_color = if state.game.max_hp == 0 {
+            Color::White
+        } else {
+            let percentage = (state.game.hp as f32 / state.game.max_hp as f32) * 100.0;
+            if percentage > 50.0 {
+                Color::Green
+            } else if percentage > 25.0 {
+                Color::Yellow
+            } else {
+                Color::Red
+            }
+        };
+
+        let stats_line = Line::from(vec![
+            Span::styled(" HP: ", Style::default().add_modifier(Modifier::BOLD)),
+            Span::styled(
+                format!("{}/{}", state.game.hp, state.game.max_hp),
+                Style::default().fg(hp_color).add_modifier(Modifier::BOLD),
+            ),
+            Span::raw(format!(" | Online: {} ", state.game.online_players_count)),
+        ]);
+
+        let mut block = crate::ui::theme::default_block()
+            .title(title_line.alignment(Alignment::Left))
+            .title(stats_line.alignment(Alignment::Right));
 
         if let Some(group_id) = &state.game.group_id {
             if let Some(leader_name) = &state.game.group_leader {
@@ -33,10 +62,20 @@ impl Component for HeaderComponent {
                 } else {
                     leader_name.as_str()
                 };
-                stats_text = format!(
-                    " Group: {} | Leader: {} | HP: {}/{} | Online: {} ",
-                    group_id, display_leader, state.game.hp, state.game.max_hp, state.game.online_players_count
-                );
+
+                let short_id = if group_id.len() > 8 {
+                    format!("{}...", &group_id[..8])
+                } else {
+                    group_id.clone()
+                };
+
+                let group_line = Line::from(vec![
+                    Span::raw(format!(" Group: {} | Leader: ", short_id)),
+                    Span::styled(display_leader, Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)),
+                    Span::raw(" "),
+                ]);
+
+                block = block.title_bottom(group_line.alignment(Alignment::Right));
             }
         }
 
@@ -44,13 +83,6 @@ impl Component for HeaderComponent {
             Some(desc) => desc.as_str(),
             None => "",
         };
-
-        let block = Block::default()
-            .borders(Borders::ALL)
-            .title(ratatui::text::Line::from(title).alignment(ratatui::layout::Alignment::Left))
-            .title(
-                ratatui::text::Line::from(stats_text).alignment(ratatui::layout::Alignment::Right),
-            );
 
         let inner_area = block.inner(area);
         let visual_lines =

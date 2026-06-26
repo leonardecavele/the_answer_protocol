@@ -51,8 +51,7 @@ impl Component for LeftPanelComponent {
             })
             .collect();
         let players_list = List::new(players_items).block(
-            Block::default()
-                .borders(Borders::ALL)
+            crate::ui::theme::default_block()
                 .title(" Room Players "),
         );
         frame.render_widget(players_list, chunks[0]);
@@ -91,7 +90,7 @@ impl Component for LeftPanelComponent {
                 ListItem::new(Span::styled(format!("• {} ({})", display_name, npc_id), style))
             })
             .collect();
-        let mut npcs_block = Block::default().borders(Borders::ALL).title(" Room NPCs ");
+        let mut npcs_block = crate::ui::theme::default_block().title(" Room NPCs ");
         if state.ui.current_focus == crate::states::ui::GameFocus::NpcList {
             npcs_block = npcs_block.border_style(Style::default().fg(Color::Yellow));
         }
@@ -109,7 +108,7 @@ impl Component for LeftPanelComponent {
             }
             ListItem::new(Span::styled(format!("• {} ({})", display_name, item_id), style))
         }).collect();
-        let mut items_block = Block::default().borders(Borders::ALL).title(" Room Items ");
+        let mut items_block = crate::ui::theme::default_block().title(" Room Items ");
         if state.ui.current_focus == crate::states::ui::GameFocus::RoomItemsList {
             items_block = items_block.border_style(Style::default().fg(Color::Yellow));
         }
@@ -124,7 +123,7 @@ impl Component for LeftPanelComponent {
             let style = if is_done { Style::default().fg(Color::Green) } else { Style::default().fg(Color::Yellow) };
             ListItem::new(Span::styled(format!("[{}] {}", q.status.to_uppercase(), desc), style))
         }).collect();
-        let quests_block = Block::default().borders(Borders::ALL).title(" Quests ");
+        let quests_block = crate::ui::theme::default_block().title(" Quests ");
         let quests_list = List::new(quests_items).block(quests_block);
         frame.render_widget(quests_list, chunks[3]);
     }

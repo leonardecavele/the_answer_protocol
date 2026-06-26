@@ -91,9 +91,8 @@ impl Component for EventOverlayComponent {
             height: overlay_height,
         };
 
-        let block = Block::default()
+        let block = crate::ui::theme::overlay_block()
             .title(" Event History Overlay (Press Ctrl+E or Esc to close) ")
-            .borders(Borders::ALL)
             .style(Style::default().fg(Color::LightMagenta));
 
         let inner_area = block.inner(overlay_area);

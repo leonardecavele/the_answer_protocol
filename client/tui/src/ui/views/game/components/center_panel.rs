@@ -36,8 +36,7 @@ impl Component for CenterPanelComponent {
         self.inventory_area = Some(inventory_area);
 
         // 1. Action History
-        let history_block = Block::default()
-            .borders(Borders::ALL)
+        let history_block = crate::ui::theme::default_block()
             .title(" Action History ")
             .title_bottom(ratatui::text::Line::from(" Press Ctrl + H to open help ").alignment(ratatui::layout::Alignment::Center));
 
@@ -62,15 +61,10 @@ impl Component for CenterPanelComponent {
 
         frame.render_widget(history_list, history_area);
 
-        // 2. Inventory Grid
-        let mut inv_style = Style::default();
+        let mut inv_block = crate::ui::theme::default_block().title(" Inventory ");
         if state.ui.current_focus == crate::states::ui::GameFocus::InventoryGrid {
-            inv_style = inv_style.fg(Color::Yellow);
+            inv_block = inv_block.border_style(Style::default().fg(Color::Yellow));
         }
-        let inv_block = Block::default()
-            .borders(Borders::ALL)
-            .border_style(inv_style)
-            .title(" Inventory ");
         
         let inv_inner = inv_block.inner(inventory_area);
         frame.render_widget(inv_block, inventory_area);

@@ -80,8 +80,7 @@ impl Component for NpcActionPopup {
             .collect();
 
         let list = List::new(items).block(
-            Block::default()
-                .borders(Borders::ALL)
+            crate::ui::theme::overlay_block()
                 .title(title)
                 .style(Style::default().fg(Color::Yellow)),
         );

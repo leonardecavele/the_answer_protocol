@@ -49,8 +49,7 @@ impl Component for DialoguePopupComponent {
                 display_text.push_str("\n\n(Press Enter to continue)");
             }
 
-            let block = Block::default()
-                .borders(Borders::ALL)
+            let block = crate::ui::theme::overlay_block()
                 .title(format!(" {} ", dialog.npc_name))
                 .style(Style::default().fg(Color::Yellow));
 

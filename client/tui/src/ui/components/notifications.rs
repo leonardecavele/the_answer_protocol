@@ -48,8 +48,7 @@ impl Component for NotificationComponent {
                 NotificationType::Error => Color::Red,
             };
 
-            let block = Block::default()
-                .borders(Borders::ALL)
+            let block = crate::ui::theme::default_block()
                 .style(Style::default().fg(color).add_modifier(Modifier::BOLD));
 
             // Add "[X] " to indicate that it can be closed

@@ -42,7 +42,7 @@ impl InteractiveComponent for ButtonComponent {
             style = style.fg(Color::Green).add_modifier(Modifier::BOLD);
         }
 
-        let block = Block::default().borders(Borders::ALL).style(style);
+        let block = crate::ui::theme::default_block().style(style);
 
         let display_text = if self.is_focused {
             format!("> {} <", self.label)

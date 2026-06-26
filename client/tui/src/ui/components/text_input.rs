@@ -24,16 +24,15 @@ impl TextInputComponent {
 
 impl InteractiveComponent for TextInputComponent {
     fn render(&mut self, _state: &AppState, frame: &mut Frame, area: Rect) {
-        let border_color = if self.is_focused {
+        let text_color = if self.is_focused {
             Color::Cyan
         } else {
-            Color::DarkGray
+            Color::Gray
         };
 
-        let block = Block::default()
+        let block = crate::ui::theme::default_block()
             .title(format!(" {} ", self.label.as_str()))
-            .borders(Borders::ALL)
-            .style(Style::default().fg(border_color));
+            .style(Style::default().fg(text_color));
 
         let display_text = if self.is_focused {
             format!("{}█", self.value)
