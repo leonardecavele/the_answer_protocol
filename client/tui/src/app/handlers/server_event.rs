@@ -96,16 +96,33 @@ impl App {
                         )));
                 }
                 GroupEvent::Leave(user) => {
-                    if self.state.game.group_leader.as_ref() == Some(&user) {
+                    if self.state.game.group_leader.as_ref() == Some(&user.to_uppercase()) {
                         self.state.game.group_id = None;
                         self.state.game.group_leader = None;
-                    }
-                    self.state
-                        .ui
-                        .push(crate::states::ui::Notification::info(format!(
+
+                        self.state.game.log_action(format!(
+                            "Leader {} left. The group has been disbanded.",
+                            user
+                        ));
+
+                        self.state
+                            .ui
+                            .push(crate::states::ui::Notification::info(format!(
+                                "Leader {} left. The group has been disbanded.",
+                                user
+                            )));
+                    } else {
+                        self.state.game.log_action(format!(
                             "{} left the group.",
                             user
-                        )));
+                        ));
+                        self.state
+                            .ui
+                            .push(crate::states::ui::Notification::info(format!(
+                                "{} left the group.",
+                                user
+                            )));
+                    }
                 }
                 GroupEvent::Chat(chat) => {
                     self.state.game.chat_history.push(ChatMessage {

@@ -24,7 +24,7 @@ impl App {
                     envelope.original_request
                 {
                     self.state.game.group_id = Some(res.group_id.clone());
-                    self.state.game.group_leader = Some(cmd.leader_name);
+                    self.state.game.group_leader = Some(cmd.leader_name.to_uppercase());
                 }
             }
             ApiResponse::GroupLeave(Ok(_res)) => {
