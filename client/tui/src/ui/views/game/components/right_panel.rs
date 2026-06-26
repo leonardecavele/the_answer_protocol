@@ -41,7 +41,8 @@ impl RightPanelComponent {
 
     pub fn get_path_to_load(&mut self, state: &AppState) -> (Option<String>, Option<&'static str>) {
         let mut path_to_load: Option<String> = None;
-        let mut text_fallback: Option<&'static str> = Some(" You are lost and have your eyes closed. ");
+        let mut text_fallback: Option<&'static str> =
+            Some(" You are lost and have your eyes closed. ");
 
         if let Some(focused_id) = &state.game.focused_entity_id {
             text_fallback = Some(" No image available for this NPC. ");
@@ -120,13 +121,15 @@ impl Component for RightPanelComponent {
                 if img_aspect > area_aspect {
                     let render_height = (inner_area.width as f32 / img_aspect) as u16;
                     if actual_image_area.height > render_height {
-                        actual_image_area.y += (actual_image_area.height.saturating_sub(render_height)) / 2;
+                        actual_image_area.y +=
+                            (actual_image_area.height.saturating_sub(render_height)) / 2;
                         actual_image_area.height = render_height;
                     }
                 } else {
                     let render_width = (inner_area.height as f32 * img_aspect) as u16;
                     if actual_image_area.width > render_width {
-                        actual_image_area.x += (actual_image_area.width.saturating_sub(render_width)) / 2;
+                        actual_image_area.x +=
+                            (actual_image_area.width.saturating_sub(render_width)) / 2;
                         actual_image_area.width = render_width;
                     }
                 }

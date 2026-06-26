@@ -3,7 +3,6 @@ use crate::ui::components::Component;
 use ratatui::{
     Frame,
     layout::Rect,
-    widgets::{Block, Borders},
 };
 
 pub struct ChatOverlayComponent {
@@ -22,8 +21,7 @@ impl ChatOverlayComponent {
 
 impl Component for ChatOverlayComponent {
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
-        let block = crate::ui::theme::overlay_block()
-            .title(" Chat Overlay (F1 to hide) ");
+        let block = crate::ui::theme::overlay_block().title(" Chat Overlay (F1 to hide) ");
 
         let inner_area = block.inner(area);
         let max_width = inner_area.width as usize;

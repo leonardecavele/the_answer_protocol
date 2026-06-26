@@ -120,12 +120,24 @@ impl App {
                 }
             }
             ApiResponse::Take(Ok(take_res)) => {
-                self.state.game.inventory.push(take_res.item_identifier.clone());
-                self.state.game.current_room_items.retain(|i| i != &take_res.item_identifier);
-            },
+                self.state
+                    .game
+                    .inventory
+                    .push(take_res.item_identifier.clone());
+                self.state
+                    .game
+                    .current_room_items
+                    .retain(|i| i != &take_res.item_identifier);
+            }
             ApiResponse::Drop(Ok(drop_res)) => {
-                self.state.game.current_room_items.push(drop_res.item_identifier.clone());
-                self.state.game.inventory.retain(|item| !item.eq(&drop_res.item_identifier));
+                self.state
+                    .game
+                    .current_room_items
+                    .push(drop_res.item_identifier.clone());
+                self.state
+                    .game
+                    .inventory
+                    .retain(|item| !item.eq(&drop_res.item_identifier));
             }
             ApiResponse::Attack(Ok(attack_res)) => {
                 if let api_client::protocol::command::enums::ApiRequest::Attack(cmd) =

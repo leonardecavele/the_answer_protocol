@@ -65,7 +65,7 @@ impl AppView for GameView {
 
         let available_height = vertical_chunks[1].height;
         let mut right_width_constraint = Constraint::Percentage(40);
-        
+
         if let Some(desired_width) = self.right_panel.get_desired_width(state, available_height) {
             let max_width = (area.width * 40) / 100;
             let min_width = (area.width * 20) / 100;
@@ -158,7 +158,11 @@ impl AppView for GameView {
         }
 
         if let CrosstermEvent::Key(key) = event {
-            if key.code == KeyCode::Char('h') && key.modifiers.contains(crossterm::event::KeyModifiers::CONTROL) {
+            if key.code == KeyCode::Char('h')
+                && key
+                    .modifiers
+                    .contains(crossterm::event::KeyModifiers::CONTROL)
+            {
                 state.ui.show_help_overlay = !state.ui.show_help_overlay;
                 return;
             }
@@ -171,7 +175,8 @@ impl AppView for GameView {
                     return;
                 }
             }
-            self.help_overlay.handle_terminal_event(state, event, event_sender);
+            self.help_overlay
+                .handle_terminal_event(state, event, event_sender);
             return;
         }
 
@@ -183,9 +188,15 @@ impl AppView for GameView {
             if key.code == KeyCode::Tab {
                 state.ui.current_focus = match state.ui.current_focus {
                     crate::states::ui::GameFocus::Input => crate::states::ui::GameFocus::NpcList,
-                    crate::states::ui::GameFocus::NpcList => crate::states::ui::GameFocus::RoomItemsList,
-                    crate::states::ui::GameFocus::RoomItemsList => crate::states::ui::GameFocus::InventoryGrid,
-                    crate::states::ui::GameFocus::InventoryGrid => crate::states::ui::GameFocus::RightPanel,
+                    crate::states::ui::GameFocus::NpcList => {
+                        crate::states::ui::GameFocus::RoomItemsList
+                    }
+                    crate::states::ui::GameFocus::RoomItemsList => {
+                        crate::states::ui::GameFocus::InventoryGrid
+                    }
+                    crate::states::ui::GameFocus::InventoryGrid => {
+                        crate::states::ui::GameFocus::RightPanel
+                    }
                     crate::states::ui::GameFocus::RightPanel => crate::states::ui::GameFocus::Input,
                 };
                 return;
@@ -193,9 +204,15 @@ impl AppView for GameView {
             if key.code == KeyCode::BackTab {
                 state.ui.current_focus = match state.ui.current_focus {
                     crate::states::ui::GameFocus::Input => crate::states::ui::GameFocus::RightPanel,
-                    crate::states::ui::GameFocus::RightPanel => crate::states::ui::GameFocus::InventoryGrid,
-                    crate::states::ui::GameFocus::InventoryGrid => crate::states::ui::GameFocus::RoomItemsList,
-                    crate::states::ui::GameFocus::RoomItemsList => crate::states::ui::GameFocus::NpcList,
+                    crate::states::ui::GameFocus::RightPanel => {
+                        crate::states::ui::GameFocus::InventoryGrid
+                    }
+                    crate::states::ui::GameFocus::InventoryGrid => {
+                        crate::states::ui::GameFocus::RoomItemsList
+                    }
+                    crate::states::ui::GameFocus::RoomItemsList => {
+                        crate::states::ui::GameFocus::NpcList
+                    }
                     crate::states::ui::GameFocus::NpcList => crate::states::ui::GameFocus::Input,
                 };
                 return;
@@ -221,7 +238,7 @@ impl AppView for GameView {
                         }
                     }
                 }
-                
+
                 if let Some(r) = self.left_panel.items_area {
                     if crate::ui::components::is_mouse_in_rect(mouse.column, mouse.row, r) {
                         state.ui.current_focus = crate::states::ui::GameFocus::RoomItemsList;
@@ -239,7 +256,7 @@ impl AppView for GameView {
                 if let Some(r) = self.center_panel.inventory_area {
                     if crate::ui::components::is_mouse_in_rect(mouse.column, mouse.row, r) {
                         state.ui.current_focus = crate::states::ui::GameFocus::InventoryGrid;
-                        
+
                         let rel_x = mouse.column.saturating_sub(r.x);
                         let rel_y = mouse.row.saturating_sub(r.y);
                         if rel_x > 0 && rel_y > 0 {

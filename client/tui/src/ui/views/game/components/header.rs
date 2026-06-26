@@ -2,10 +2,9 @@ use crate::states::app::AppState;
 use crate::ui::components::Component;
 use ratatui::{
     Frame,
-    layout::{Rect, Alignment},
+    layout::{Alignment, Rect},
     style::{Color, Modifier, Style},
     text::{Line, Span},
-    widgets::{Block, Borders},
 };
 
 pub struct HeaderComponent;
@@ -25,7 +24,12 @@ impl Component for HeaderComponent {
 
         let title_line = Line::from(vec![
             Span::styled(" Room: ", Style::default().add_modifier(Modifier::BOLD)),
-            Span::styled(room_name, Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)),
+            Span::styled(
+                room_name,
+                Style::default()
+                    .fg(Color::Cyan)
+                    .add_modifier(Modifier::BOLD),
+            ),
             Span::raw(" "),
         ]);
 
@@ -71,7 +75,12 @@ impl Component for HeaderComponent {
 
                 let group_line = Line::from(vec![
                     Span::raw(format!(" Group: {} | Leader: ", short_id)),
-                    Span::styled(display_leader, Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)),
+                    Span::styled(
+                        display_leader,
+                        Style::default()
+                            .fg(Color::Yellow)
+                            .add_modifier(Modifier::BOLD),
+                    ),
                     Span::raw(" "),
                 ]);
 

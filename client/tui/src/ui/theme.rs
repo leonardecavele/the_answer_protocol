@@ -1,6 +1,6 @@
 use ratatui::{
     style::{Color, Style},
-    widgets::{Block, Borders, BorderType},
+    widgets::{Block, BorderType, Borders},
 };
 
 pub const BORDER_COLOR: Color = Color::Gray;

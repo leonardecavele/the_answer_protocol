@@ -6,7 +6,7 @@ use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::Span,
-    widgets::{Block, Borders, List, ListItem},
+    widgets::{List, ListItem},
 };
 
 pub struct LeftPanelComponent {
@@ -50,10 +50,8 @@ impl Component for LeftPanelComponent {
                 ListItem::new(Span::styled(format!("• {}", name), style))
             })
             .collect();
-        let players_list = List::new(players_items).block(
-            crate::ui::theme::default_block()
-                .title(" Room Players "),
-        );
+        let players_list = List::new(players_items)
+            .block(crate::ui::theme::default_block().title(" Room Players "));
         frame.render_widget(players_list, chunks[0]);
 
         // 2. Room NPCs
@@ -87,7 +85,10 @@ impl Component for LeftPanelComponent {
                     }
                 }
 
-                ListItem::new(Span::styled(format!("• {} ({})", display_name, npc_id), style))
+                ListItem::new(Span::styled(
+                    format!("• {} ({})", display_name, npc_id),
+                    style,
+                ))
             })
             .collect();
         let mut npcs_block = crate::ui::theme::default_block().title(" Room NPCs ");
@@ -99,15 +100,32 @@ impl Component for LeftPanelComponent {
         self.npcs_area = Some(chunks[1]);
 
         // 3. Room Items
-        let items: Vec<ListItem> = state.game.current_room_items.iter().enumerate().map(|(idx, item_id)| {
-            let display_name = state.game.manifest.items.get(item_id).map(|i| i.name.clone()).unwrap_or_else(|| item_id.clone());
-            let mut style = Style::default().fg(Color::Cyan);
-            
-            if state.game.room_item_cursor == idx && state.ui.current_focus == crate::states::ui::GameFocus::RoomItemsList {
-                style = style.add_modifier(Modifier::REVERSED);
-            }
-            ListItem::new(Span::styled(format!("• {} ({})", display_name, item_id), style))
-        }).collect();
+        let items: Vec<ListItem> = state
+            .game
+            .current_room_items
+            .iter()
+            .enumerate()
+            .map(|(idx, item_id)| {
+                let display_name = state
+                    .game
+                    .manifest
+                    .items
+                    .get(item_id)
+                    .map(|i| i.name.clone())
+                    .unwrap_or_else(|| item_id.clone());
+                let mut style = Style::default().fg(Color::Cyan);
+
+                if state.game.room_item_cursor == idx
+                    && state.ui.current_focus == crate::states::ui::GameFocus::RoomItemsList
+                {
+                    style = style.add_modifier(Modifier::REVERSED);
+                }
+                ListItem::new(Span::styled(
+                    format!("• {} ({})", display_name, item_id),
+                    style,
+                ))
+            })
+            .collect();
         let mut items_block = crate::ui::theme::default_block().title(" Room Items ");
         if state.ui.current_focus == crate::states::ui::GameFocus::RoomItemsList {
             items_block = items_block.border_style(Style::default().fg(Color::Yellow));
@@ -117,12 +135,30 @@ impl Component for LeftPanelComponent {
         self.items_area = Some(chunks[2]);
 
         // 4. Quests
-        let quests_items: Vec<ListItem> = state.game.quests.iter().map(|q| {
-            let desc = state.game.manifest.quests.get(&q.quest_id).map(|c| c.description.clone()).unwrap_or_else(|| q.quest_id.clone());
-            let is_done = q.status.eq_ignore_ascii_case("completed");
-            let style = if is_done { Style::default().fg(Color::Green) } else { Style::default().fg(Color::Yellow) };
-            ListItem::new(Span::styled(format!("[{}] {}", q.status.to_uppercase(), desc), style))
-        }).collect();
+        let quests_items: Vec<ListItem> = state
+            .game
+            .quests
+            .iter()
+            .map(|q| {
+                let desc = state
+                    .game
+                    .manifest
+                    .quests
+                    .get(&q.quest_id)
+                    .map(|c| c.description.clone())
+                    .unwrap_or_else(|| q.quest_id.clone());
+                let is_done = q.status.eq_ignore_ascii_case("completed");
+                let style = if is_done {
+                    Style::default().fg(Color::Green)
+                } else {
+                    Style::default().fg(Color::Yellow)
+                };
+                ListItem::new(Span::styled(
+                    format!("[{}] {}", q.status.to_uppercase(), desc),
+                    style,
+                ))
+            })
+            .collect();
         let quests_block = crate::ui::theme::default_block().title(" Quests ");
         let quests_list = List::new(quests_items).block(quests_block);
         frame.render_widget(quests_list, chunks[3]);
@@ -193,7 +229,11 @@ impl Component for LeftPanelComponent {
                             return true;
                         }
                         crossterm::event::KeyCode::Enter => {
-                            if let Some(item_id) = state.game.current_room_items.get(state.game.room_item_cursor) {
+                            if let Some(item_id) = state
+                                .game
+                                .current_room_items
+                                .get(state.game.room_item_cursor)
+                            {
                                 state.ui.active_item_popup = Some(item_id.clone());
                                 return true;
                             }

@@ -112,10 +112,9 @@ impl App {
                                 user
                             )));
                     } else {
-                        self.state.game.log_action(format!(
-                            "{} left the group.",
-                            user
-                        ));
+                        self.state
+                            .game
+                            .log_action(format!("{} left the group.", user));
                         self.state
                             .ui
                             .push(crate::states::ui::Notification::info(format!(

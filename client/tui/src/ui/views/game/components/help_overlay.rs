@@ -5,7 +5,7 @@ use ratatui::{
     layout::{Alignment, Rect},
     style::{Color, Modifier, Style},
     text::{Line, Span},
-    widgets::{Block, Borders, Clear, Paragraph},
+    widgets::{Clear, Paragraph},
 };
 
 pub struct HelpOverlayComponent {
@@ -48,30 +48,60 @@ impl Component for HelpOverlayComponent {
 
         // Create lines of help text
         let lines = vec![
-            Line::from(vec![Span::styled("Global", Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD))]),
+            Line::from(vec![Span::styled(
+                "Global",
+                Style::default()
+                    .fg(Color::Yellow)
+                    .add_modifier(Modifier::BOLD),
+            )]),
             Line::from("  ctrl+c: quit game"),
             Line::from("  ctrl+h: toggle help"),
             Line::from("  ctrl+e: toggle event overlay"),
             Line::from("  f1: toggle chat overlay"),
             Line::from("  mouse click: focus panels (input, room npcs, image)"),
             Line::from(""),
-            Line::from(vec![Span::styled("Input panel", Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD))]),
+            Line::from(vec![Span::styled(
+                "Input panel",
+                Style::default()
+                    .fg(Color::Yellow)
+                    .add_modifier(Modifier::BOLD),
+            )]),
             Line::from("  enter: send command / focus right panel"),
             Line::from(""),
-            Line::from(vec![Span::styled("Right panel (details/movement)", Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD))]),
+            Line::from(vec![Span::styled(
+                "Right panel (details/movement)",
+                Style::default()
+                    .fg(Color::Yellow)
+                    .add_modifier(Modifier::BOLD),
+            )]),
             Line::from("  up/down/left/right: move north/south/west/east"),
             Line::from("  enter: focus room npcs list"),
             Line::from(""),
-            Line::from(vec![Span::styled("Room npcs list", Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD))]),
+            Line::from(vec![Span::styled(
+                "Room npcs list",
+                Style::default()
+                    .fg(Color::Yellow)
+                    .add_modifier(Modifier::BOLD),
+            )]),
             Line::from("  up/down: select npc"),
             Line::from("  enter: open interaction menu"),
             Line::from(""),
-            Line::from(vec![Span::styled("Interaction menus & chat", Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD))]),
+            Line::from(vec![Span::styled(
+                "Interaction menus & chat",
+                Style::default()
+                    .fg(Color::Yellow)
+                    .add_modifier(Modifier::BOLD),
+            )]),
             Line::from("  esc: close menus"),
             Line::from("  up/down: change action (talk/attack) / scroll chat"),
             Line::from("  enter: execute action / next dialogue"),
             Line::from(""),
-            Line::from(vec![Span::styled("Text commands (input)", Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD))]),
+            Line::from(vec![Span::styled(
+                "Text commands (input)",
+                Style::default()
+                    .fg(Color::Yellow)
+                    .add_modifier(Modifier::BOLD),
+            )]),
             Line::from("  connect : connect to server"),
             Line::from("  quit : disconnect and close the game"),
             Line::from("  look : look around the room"),
@@ -92,7 +122,12 @@ impl Component for HelpOverlayComponent {
             Line::from("  group_invite <name> : invite a player to your group"),
             Line::from("  group_leave : leave your current group"),
             Line::from(""),
-            Line::from(vec![Span::styled("Hud & status", Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD))]),
+            Line::from(vec![Span::styled(
+                "Hud & status",
+                Style::default()
+                    .fg(Color::Yellow)
+                    .add_modifier(Modifier::BOLD),
+            )]),
             Line::from("  top right : your hp and max hp"),
             Line::from("  top right : online players count"),
             Line::from("  bottom right : notifications (disappear after 5s)"),
@@ -122,40 +157,36 @@ impl Component for HelpOverlayComponent {
         _event_sender: &tokio::sync::mpsc::Sender<crate::events::ApplicationEvent>,
     ) -> bool {
         match event {
-            crossterm::event::Event::Key(key) => {
-                match key.code {
-                    crossterm::event::KeyCode::Up => {
-                        self.scroll = self.scroll.saturating_sub(1);
-                        true
-                    }
-                    crossterm::event::KeyCode::Down => {
-                        self.scroll = self.scroll.saturating_add(1);
-                        true
-                    }
-                    crossterm::event::KeyCode::PageUp => {
-                        self.scroll = self.scroll.saturating_sub(5);
-                        true
-                    }
-                    crossterm::event::KeyCode::PageDown => {
-                        self.scroll = self.scroll.saturating_add(5);
-                        true
-                    }
-                    _ => false,
+            crossterm::event::Event::Key(key) => match key.code {
+                crossterm::event::KeyCode::Up => {
+                    self.scroll = self.scroll.saturating_sub(1);
+                    true
                 }
-            }
-            crossterm::event::Event::Mouse(mouse) => {
-                match mouse.kind {
-                    crossterm::event::MouseEventKind::ScrollUp => {
-                        self.scroll = self.scroll.saturating_sub(1);
-                        true
-                    }
-                    crossterm::event::MouseEventKind::ScrollDown => {
-                        self.scroll = self.scroll.saturating_add(1);
-                        true
-                    }
-                    _ => false,
+                crossterm::event::KeyCode::Down => {
+                    self.scroll = self.scroll.saturating_add(1);
+                    true
                 }
-            }
+                crossterm::event::KeyCode::PageUp => {
+                    self.scroll = self.scroll.saturating_sub(5);
+                    true
+                }
+                crossterm::event::KeyCode::PageDown => {
+                    self.scroll = self.scroll.saturating_add(5);
+                    true
+                }
+                _ => false,
+            },
+            crossterm::event::Event::Mouse(mouse) => match mouse.kind {
+                crossterm::event::MouseEventKind::ScrollUp => {
+                    self.scroll = self.scroll.saturating_sub(1);
+                    true
+                }
+                crossterm::event::MouseEventKind::ScrollDown => {
+                    self.scroll = self.scroll.saturating_add(1);
+                    true
+                }
+                _ => false,
+            },
             _ => false,
         }
     }

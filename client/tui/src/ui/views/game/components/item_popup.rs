@@ -7,7 +7,7 @@ use ratatui::{
     layout::Rect,
     style::{Color, Modifier, Style},
     text::Span,
-    widgets::{Block, Borders, Clear, List, ListItem},
+    widgets::{Clear, List, ListItem},
 };
 use tokio::sync::mpsc;
 

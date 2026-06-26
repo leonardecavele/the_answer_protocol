@@ -4,7 +4,6 @@ use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
-    widgets::{Block, Borders},
 };
 
 pub struct CenterPanelComponent {
@@ -25,10 +24,7 @@ impl Component for CenterPanelComponent {
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
-            .constraints([
-                Constraint::Percentage(70),
-                Constraint::Percentage(30),
-            ])
+            .constraints([Constraint::Percentage(70), Constraint::Percentage(30)])
             .split(area);
 
         let history_area = chunks[0];
@@ -38,7 +34,10 @@ impl Component for CenterPanelComponent {
         // 1. Action History
         let history_block = crate::ui::theme::default_block()
             .title(" Action History ")
-            .title_bottom(ratatui::text::Line::from(" Press Ctrl + H to open help ").alignment(ratatui::layout::Alignment::Center));
+            .title_bottom(
+                ratatui::text::Line::from(" Press Ctrl + H to open help ")
+                    .alignment(ratatui::layout::Alignment::Center),
+            );
 
         let inner_history_area = history_block.inner(history_area);
         let max_width = inner_history_area.width as usize;
@@ -65,7 +64,7 @@ impl Component for CenterPanelComponent {
         if state.ui.current_focus == crate::states::ui::GameFocus::InventoryGrid {
             inv_block = inv_block.border_style(Style::default().fg(Color::Yellow));
         }
-        
+
         let inv_inner = inv_block.inner(inventory_area);
         frame.render_widget(inv_block, inventory_area);
 
@@ -144,7 +143,9 @@ impl Component for CenterPanelComponent {
 
             let text = format!("{}\n{}", display_name, item_id);
             let mut p_style = Style::default();
-            if state.ui.current_focus == crate::states::ui::GameFocus::InventoryGrid && state.game.inventory_cursor == idx {
+            if state.ui.current_focus == crate::states::ui::GameFocus::InventoryGrid
+                && state.game.inventory_cursor == idx
+            {
                 p_style = p_style.add_modifier(Modifier::REVERSED).fg(Color::Yellow);
             }
             let paragraph = ratatui::widgets::Paragraph::new(text)
@@ -196,7 +197,9 @@ impl Component for CenterPanelComponent {
                             return true;
                         }
                         crossterm::event::KeyCode::Enter => {
-                            if let Some(item_id) = state.game.inventory.get(state.game.inventory_cursor) {
+                            if let Some(item_id) =
+                                state.game.inventory.get(state.game.inventory_cursor)
+                            {
                                 state.ui.active_item_popup = Some(item_id.clone());
                                 return true;
                             }

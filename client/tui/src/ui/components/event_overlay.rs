@@ -4,7 +4,7 @@ use crossterm::event::{Event as CrosstermEvent, KeyCode, MouseEventKind};
 use ratatui::Frame;
 use ratatui::layout::Rect;
 use ratatui::style::{Color, Style};
-use ratatui::widgets::{Block, Borders, Clear};
+use ratatui::widgets::Clear;
 
 pub struct EventOverlayComponent {
     pub scroll: Option<u16>,
@@ -70,7 +70,7 @@ impl Component for EventOverlayComponent {
                 _ => {}
             }
         }
-        
+
         true // Intercepte tous les événements sous l'overlay
     }
 
@@ -108,10 +108,10 @@ impl Component for EventOverlayComponent {
         let visual_lines = crate::ui::utils::wrap_slice_to_lines(lines, max_width);
         let lines_count = visual_lines.len() as u16;
         let inner_height = inner_area.height;
-        
+
         let max_scroll = lines_count.saturating_sub(inner_height);
         self.last_max_scroll = max_scroll;
-        
+
         let scroll_y = match self.scroll {
             None => max_scroll,
             Some(mut s) => {

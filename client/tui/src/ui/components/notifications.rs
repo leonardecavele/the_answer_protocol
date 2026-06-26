@@ -5,7 +5,7 @@ use crossterm::event::{Event as CrosstermEvent, MouseEvent, MouseEventKind};
 use ratatui::Frame;
 use ratatui::layout::{Alignment, Rect};
 use ratatui::style::{Color, Modifier, Style};
-use ratatui::widgets::{Block, Borders, Clear, Paragraph};
+use ratatui::widgets::{Clear, Paragraph};
 
 pub const MAX_VISIBLE_NOTIFICATIONS: usize = 5;
 
