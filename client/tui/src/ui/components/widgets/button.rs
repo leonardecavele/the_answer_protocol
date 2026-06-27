@@ -1,10 +1,13 @@
 use crate::states::app::AppState;
+use crate::ui::components::Lifecycle;
 use crate::ui::components::interactive::InteractiveComponent;
+use crate::ui::theme::default_block;
 use crossterm::event::{Event as CrosstermEvent, KeyCode, KeyEvent};
 use ratatui::Frame;
 use ratatui::layout::{Alignment, Rect};
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::widgets::Paragraph;
+use tokio::sync::mpsc::Sender;
 
 pub struct ButtonComponent {
     pub label: String,
@@ -42,7 +45,7 @@ impl InteractiveComponent for ButtonComponent {
             style = style.fg(Color::Green).add_modifier(Modifier::BOLD);
         }
 
-        let block = crate::ui::theme::default_block().style(style);
+        let block = default_block().style(style);
 
         let display_text = if self.is_focused {
             format!("> {} <", self.label)
@@ -57,11 +60,11 @@ impl InteractiveComponent for ButtonComponent {
         frame.render_widget(paragraph, area);
     }
 
-    fn handle_terminal_event(
+    fn handle_interactive_event(
         &mut self,
         _state: &mut AppState,
         event: &CrosstermEvent,
-        _event_sender: &tokio::sync::mpsc::Sender<crate::events::ApplicationEvent>,
+        _event_sender: &Sender<crate::events::ApplicationEvent>,
         _is_hovered: bool,
     ) -> bool {
         if !self.is_focused {
@@ -78,3 +81,5 @@ impl InteractiveComponent for ButtonComponent {
         false
     }
 }
+
+impl Lifecycle for ButtonComponent {}

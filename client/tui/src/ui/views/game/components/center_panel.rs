@@ -1,10 +1,21 @@
+use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
+use crate::states::ui::GameFocus;
 use crate::ui::components::Component;
+use crate::ui::components::Lifecycle;
+use crate::ui::theme::default_block;
+use ratatui::layout::Alignment;
+use ratatui::widgets::Paragraph;
 use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
 };
+use ratatui_image::{Resize, StatefulImage};
+use tokio::sync::mpsc::Sender;
+
+const INVENTORY_ITEM_WIDTH: u16 = 20;
+const INVENTORY_ITEM_HEIGHT: u16 = 10;
 
 pub struct CenterPanelComponent {
     pub inventory_cols: usize,
@@ -32,12 +43,9 @@ impl Component for CenterPanelComponent {
         self.inventory_area = Some(inventory_area);
 
         // 1. Action History
-        let history_block = crate::ui::theme::default_block()
-            .title(" Action History ")
-            .title_bottom(
-                ratatui::text::Line::from(" Press Ctrl + H to open help ")
-                    .alignment(ratatui::layout::Alignment::Center),
-            );
+        let history_block = default_block().title(" Action History ").title_bottom(
+            ratatui::text::Line::from(" Press Ctrl + H to open help ").alignment(Alignment::Center),
+        );
 
         let inner_history_area = history_block.inner(history_area);
         let max_width = inner_history_area.width as usize;
@@ -54,14 +62,14 @@ impl Component for CenterPanelComponent {
             0
         };
 
-        let history_list = ratatui::widgets::Paragraph::new(visual_lines)
+        let history_list = Paragraph::new(visual_lines)
             .block(history_block)
             .scroll((scroll, 0));
 
         frame.render_widget(history_list, history_area);
 
-        let mut inv_block = crate::ui::theme::default_block().title(" Inventory ");
-        if state.ui.current_focus == crate::states::ui::GameFocus::InventoryGrid {
+        let mut inv_block = default_block().title(" Inventory ");
+        if state.ui.current_focus == GameFocus::InventoryGrid {
             inv_block = inv_block.border_style(Style::default().fg(Color::Yellow));
         }
 
@@ -69,23 +77,20 @@ impl Component for CenterPanelComponent {
         frame.render_widget(inv_block, inventory_area);
 
         if state.game.inventory.is_empty() {
-            let p = ratatui::widgets::Paragraph::new(" Your inventory is empty. ")
-                .alignment(ratatui::layout::Alignment::Center);
+            let p = Paragraph::new(" Your inventory is empty. ").alignment(Alignment::Center);
             frame.render_widget(p, inv_inner);
             return;
         }
 
-        let item_width = 20;
-        let item_height = 10;
-        let cols = (inv_inner.width / item_width).max(1) as usize;
+        let cols = (inv_inner.width / INVENTORY_ITEM_WIDTH).max(1) as usize;
         self.inventory_cols = cols;
 
         for (idx, item_id) in state.game.inventory.iter().enumerate() {
             let row = idx / cols;
             let col = idx % cols;
 
-            let cell_x = inv_inner.x + (col as u16) * item_width;
-            let cell_y = inv_inner.y + (row as u16) * item_height;
+            let cell_x = inv_inner.x + (col as u16) * INVENTORY_ITEM_WIDTH;
+            let cell_y = inv_inner.y + (row as u16) * INVENTORY_ITEM_HEIGHT;
 
             if cell_y >= inv_inner.bottom() {
                 break;
@@ -94,8 +99,8 @@ impl Component for CenterPanelComponent {
             let cell_area = Rect {
                 x: cell_x,
                 y: cell_y,
-                width: item_width.min(inv_inner.right().saturating_sub(cell_x)),
-                height: item_height.min(inv_inner.bottom().saturating_sub(cell_y)),
+                width: INVENTORY_ITEM_WIDTH.min(inv_inner.right().saturating_sub(cell_x)),
+                height: INVENTORY_ITEM_HEIGHT.min(inv_inner.bottom().saturating_sub(cell_y)),
             };
 
             let text_height = 2;
@@ -135,33 +140,34 @@ impl Component for CenterPanelComponent {
                     }
                 }
                 if let Some(Some((protocol, _, _))) = cache.get_mut(&path) {
-                    let image_widget = ratatui_image::StatefulImage::default()
-                        .resize(ratatui_image::Resize::Fit(None));
+                    let image_widget = StatefulImage::default().resize(Resize::Fit(None));
                     frame.render_stateful_widget(image_widget, image_area, protocol);
                 }
             }
 
             let text = format!("{}\n{}", display_name, item_id);
             let mut p_style = Style::default();
-            if state.ui.current_focus == crate::states::ui::GameFocus::InventoryGrid
+            if state.ui.current_focus == GameFocus::InventoryGrid
                 && state.game.inventory_cursor == idx
             {
                 p_style = p_style.add_modifier(Modifier::REVERSED).fg(Color::Yellow);
             }
-            let paragraph = ratatui::widgets::Paragraph::new(text)
-                .alignment(ratatui::layout::Alignment::Center)
+            let paragraph = Paragraph::new(text)
+                .alignment(Alignment::Center)
                 .style(p_style);
             frame.render_widget(paragraph, text_area);
         }
     }
+}
 
+impl Lifecycle for CenterPanelComponent {
     fn handle_terminal_event(
         &mut self,
         state: &mut AppState,
         event: &crossterm::event::Event,
-        _event_sender: &tokio::sync::mpsc::Sender<crate::events::ApplicationEvent>,
+        _event_sender: &Sender<ApplicationEvent>,
     ) -> bool {
-        if state.ui.current_focus == crate::states::ui::GameFocus::InventoryGrid {
+        if state.ui.current_focus == GameFocus::InventoryGrid {
             if let crossterm::event::Event::Key(key) = event {
                 let inv_count = state.game.inventory.len();
                 if inv_count > 0 {

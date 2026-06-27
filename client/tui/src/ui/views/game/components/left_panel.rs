@@ -1,6 +1,10 @@
 use crate::data::manifest::NpcType;
+use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
+use crate::states::ui::GameFocus;
 use crate::ui::components::Component;
+use crate::ui::components::Lifecycle;
+use crate::ui::theme::default_block;
 use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect},
@@ -8,6 +12,7 @@ use ratatui::{
     text::Span,
     widgets::{List, ListItem},
 };
+use tokio::sync::mpsc::Sender;
 
 pub struct LeftPanelComponent {
     pub npcs_area: Option<Rect>,
@@ -50,8 +55,7 @@ impl Component for LeftPanelComponent {
                 ListItem::new(Span::styled(format!("• {}", name), style))
             })
             .collect();
-        let players_list = List::new(players_items)
-            .block(crate::ui::theme::default_block().title(" Room Players "));
+        let players_list = List::new(players_items).block(default_block().title(" Room Players "));
         frame.render_widget(players_list, chunks[0]);
 
         // 2. Room NPCs
@@ -78,7 +82,7 @@ impl Component for LeftPanelComponent {
                     // Find the actual index of the npc_id in the room_npcs list
                     if let Some(idx) = state.game.room_npcs.iter().position(|id| id == npc_id) {
                         if idx == selected_idx {
-                            if state.ui.current_focus == crate::states::ui::GameFocus::NpcList {
+                            if state.ui.current_focus == GameFocus::NpcList {
                                 style = style.add_modifier(Modifier::REVERSED);
                             }
                         }
@@ -91,8 +95,8 @@ impl Component for LeftPanelComponent {
                 ))
             })
             .collect();
-        let mut npcs_block = crate::ui::theme::default_block().title(" Room NPCs ");
-        if state.ui.current_focus == crate::states::ui::GameFocus::NpcList {
+        let mut npcs_block = default_block().title(" Room NPCs ");
+        if state.ui.current_focus == GameFocus::NpcList {
             npcs_block = npcs_block.border_style(Style::default().fg(Color::Yellow));
         }
         let npcs_list = List::new(npcs_items).block(npcs_block);
@@ -116,7 +120,7 @@ impl Component for LeftPanelComponent {
                 let mut style = Style::default().fg(Color::Cyan);
 
                 if state.game.room_item_cursor == idx
-                    && state.ui.current_focus == crate::states::ui::GameFocus::RoomItemsList
+                    && state.ui.current_focus == GameFocus::RoomItemsList
                 {
                     style = style.add_modifier(Modifier::REVERSED);
                 }
@@ -126,8 +130,8 @@ impl Component for LeftPanelComponent {
                 ))
             })
             .collect();
-        let mut items_block = crate::ui::theme::default_block().title(" Room Items ");
-        if state.ui.current_focus == crate::states::ui::GameFocus::RoomItemsList {
+        let mut items_block = default_block().title(" Room Items ");
+        if state.ui.current_focus == GameFocus::RoomItemsList {
             items_block = items_block.border_style(Style::default().fg(Color::Yellow));
         }
         let items_list = List::new(items).block(items_block);
@@ -159,18 +163,20 @@ impl Component for LeftPanelComponent {
                 ))
             })
             .collect();
-        let quests_block = crate::ui::theme::default_block().title(" Quests ");
+        let quests_block = default_block().title(" Quests ");
         let quests_list = List::new(quests_items).block(quests_block);
         frame.render_widget(quests_list, chunks[3]);
     }
+}
 
+impl Lifecycle for LeftPanelComponent {
     fn handle_terminal_event(
         &mut self,
         state: &mut AppState,
         event: &crossterm::event::Event,
-        _event_sender: &tokio::sync::mpsc::Sender<crate::events::ApplicationEvent>,
+        _event_sender: &Sender<ApplicationEvent>,
     ) -> bool {
-        if state.ui.current_focus == crate::states::ui::GameFocus::NpcList {
+        if state.ui.current_focus == GameFocus::NpcList {
             if let crossterm::event::Event::Key(key) = event {
                 let npc_count = state.game.room_npcs.len();
                 if npc_count > 0 {
@@ -205,7 +211,7 @@ impl Component for LeftPanelComponent {
                     }
                 }
             }
-        } else if state.ui.current_focus == crate::states::ui::GameFocus::RoomItemsList {
+        } else if state.ui.current_focus == GameFocus::RoomItemsList {
             if let crossterm::event::Event::Key(key) = event {
                 let item_count = state.game.current_room_items.len();
                 if item_count > 0 {

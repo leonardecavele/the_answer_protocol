@@ -1,128 +1,57 @@
 use crate::states::app::AppState;
-use crate::ui::components::Component;
-use ratatui::{Frame, layout::Rect};
+use crate::states::game::ChatChannel;
+use crate::ui::components::Lifecycle;
+use crate::ui::components::scrollable::ScrollableComponent;
+use crate::ui::theme::overlay_block;
+use crate::ui::utils::wrap_str_to_lines;
+use ratatui::layout::Rect;
+use ratatui::text::Line;
+use ratatui::widgets::Block;
 
-pub struct ChatOverlayComponent {
-    scroll_offset: u16,
-    last_max_scroll: u16,
-}
+const CHAT_WIDTH_PERCENTAGE: u16 = 80;
+const CHAT_HEIGHT_PERCENTAGE: u16 = 80;
+
+pub struct ChatOverlayComponent;
 
 impl ChatOverlayComponent {
     pub fn new() -> Self {
-        Self {
-            scroll_offset: 0,
-            last_max_scroll: 0,
-        }
+        Self
     }
 }
 
-impl Component for ChatOverlayComponent {
-    fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
-        let block = crate::ui::theme::overlay_block().title(" Chat Overlay (F1 to hide) ");
+impl ScrollableComponent for ChatOverlayComponent {
+    fn get_area(&self, _state: &AppState, max_area: Rect) -> Rect {
+        let chat_width = (max_area.width * CHAT_WIDTH_PERCENTAGE) / 100;
+        let chat_height = (max_area.height * CHAT_HEIGHT_PERCENTAGE) / 100;
+        Rect {
+            x: max_area.x + max_area.width.saturating_sub(chat_width),
+            y: max_area.y + max_area.height.saturating_sub(chat_height),
+            width: chat_width,
+            height: chat_height,
+        }
+    }
 
-        let inner_area = block.inner(area);
-        let max_width = inner_area.width as usize;
+    fn get_block<'a>(&self, _state: &AppState) -> Block<'a> {
+        overlay_block().title(" Chat overlay (F1 to hide) ")
+    }
 
+    fn get_content<'a>(&self, state: &'a AppState, max_width: usize) -> Vec<Line<'a>> {
         let mut visual_lines = Vec::new();
 
         for msg in &state.game.chat_history {
-            let (prefix, color) = match &msg.channel {
-                crate::states::game::ChatChannel::Global => {
-                    ("[GLOBAL] ", ratatui::style::Color::Yellow)
-                }
-                crate::states::game::ChatChannel::Group => {
-                    ("[GROUP] ", ratatui::style::Color::LightGreen)
-                }
-                crate::states::game::ChatChannel::Room => {
-                    ("[ROOM] ", ratatui::style::Color::LightCyan)
-                }
-                crate::states::game::ChatChannel::Private(_) => {
-                    ("[PRIVATE] ", ratatui::style::Color::LightMagenta)
-                }
+            let (prefix, _) = match &msg.channel {
+                ChatChannel::Global => ("[GLOBAL] ", ratatui::style::Color::Yellow),
+                ChatChannel::Group => ("[GROUP] ", ratatui::style::Color::LightGreen),
+                ChatChannel::Room => ("[ROOM] ", ratatui::style::Color::LightCyan),
+                ChatChannel::Private(_) => ("[PRIVATE] ", ratatui::style::Color::LightMagenta),
             };
 
             let full_text = format!("{}{}: {}", prefix, msg.sender, msg.content);
-            let wrapped = textwrap::wrap(&full_text, max_width);
-
-            for w in wrapped {
-                visual_lines.push(
-                    ratatui::text::Line::from(w.into_owned())
-                        .style(ratatui::style::Style::default().fg(color)),
-                );
-            }
+            visual_lines.extend(wrap_str_to_lines(&full_text, max_width));
         }
 
-        let lines_count = visual_lines.len() as u16;
-        let inner_height = inner_area.height;
-
-        let max_scroll = if lines_count > inner_height {
-            lines_count - inner_height
-        } else {
-            0
-        };
-
-        self.last_max_scroll = max_scroll;
-
-        if self.scroll_offset > max_scroll {
-            self.scroll_offset = max_scroll;
-        }
-
-        let actual_scroll = max_scroll.saturating_sub(self.scroll_offset);
-
-        let paragraph = ratatui::widgets::Paragraph::new(visual_lines)
-            .block(block)
-            .scroll((actual_scroll, 0));
-
-        frame.render_widget(paragraph, area);
-    }
-
-    fn handle_terminal_event(
-        &mut self,
-        _state: &mut AppState,
-        event: &crossterm::event::Event,
-        _event_sender: &tokio::sync::mpsc::Sender<crate::events::ApplicationEvent>,
-    ) -> bool {
-        if let crossterm::event::Event::Key(key) = event {
-            match key.code {
-                crossterm::event::KeyCode::Up => {
-                    self.scroll_offset = self
-                        .scroll_offset
-                        .saturating_add(1)
-                        .min(self.last_max_scroll);
-                    return true;
-                }
-                crossterm::event::KeyCode::Down => {
-                    self.scroll_offset = self.scroll_offset.saturating_sub(1);
-                    return true;
-                }
-                crossterm::event::KeyCode::PageUp => {
-                    self.scroll_offset = self
-                        .scroll_offset
-                        .saturating_add(10)
-                        .min(self.last_max_scroll);
-                    return true;
-                }
-                crossterm::event::KeyCode::PageDown => {
-                    self.scroll_offset = self.scroll_offset.saturating_sub(10);
-                    return true;
-                }
-                _ => {}
-            }
-        }
-
-        if let crossterm::event::Event::Mouse(mouse) = event {
-            if mouse.kind == crossterm::event::MouseEventKind::ScrollUp {
-                self.scroll_offset = self
-                    .scroll_offset
-                    .saturating_add(1)
-                    .min(self.last_max_scroll);
-                return true;
-            } else if mouse.kind == crossterm::event::MouseEventKind::ScrollDown {
-                self.scroll_offset = self.scroll_offset.saturating_sub(1);
-                return true;
-            }
-        }
-
-        false
+        visual_lines
     }
 }
+
+impl Lifecycle for ChatOverlayComponent {}

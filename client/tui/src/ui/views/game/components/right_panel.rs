@@ -1,21 +1,28 @@
+use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
+use crate::states::ui::GameFocus;
 use crate::ui::components::Component;
+use crate::ui::components::Lifecycle;
+use crate::ui::utils::wrap_str_to_lines;
 use ratatui::{
     Frame,
     layout::{Alignment, Rect},
     style::{Color, Modifier, Style},
     widgets::{Clear, Paragraph},
 };
+use ratatui_image::{Resize, StatefulImage};
+use std::time::Instant;
+use tokio::sync::mpsc::Sender;
 
 pub struct RightPanelComponent {
-    animation_start: std::time::Instant,
+    animation_start: Instant,
     last_entity: Option<String>,
 }
 
 impl RightPanelComponent {
     pub fn new() -> Self {
         Self {
-            animation_start: std::time::Instant::now(),
+            animation_start: Instant::now(),
             last_entity: None,
         }
     }
@@ -23,7 +30,7 @@ impl RightPanelComponent {
     pub fn ensure_loaded(&mut self, state: &AppState, path: &str) {
         let mut cache = state.ui.image_cache.borrow_mut();
         if !cache.contains_key(path) {
-            let start_loading = std::time::Instant::now();
+            let start_loading = Instant::now();
             match image::open(path) {
                 Ok(dyn_img) => {
                     let width = dyn_img.width();
@@ -35,7 +42,7 @@ impl RightPanelComponent {
                     cache.insert(path.to_string(), None);
                 }
             }
-            self.animation_start -= std::time::Instant::now() - start_loading;
+            self.animation_start -= Instant::now() - start_loading;
         }
     }
 
@@ -50,7 +57,7 @@ impl RightPanelComponent {
                 if let (Some(paths), Some(speed)) = (&npc.image_paths, npc.animation_speed_ms) {
                     if self.last_entity.as_deref() != Some(focused_id.as_str()) {
                         self.last_entity = Some(focused_id.clone());
-                        self.animation_start = std::time::Instant::now();
+                        self.animation_start = Instant::now();
                     }
 
                     if !paths.is_empty() {
@@ -134,8 +141,7 @@ impl Component for RightPanelComponent {
                     }
                 }
 
-                let image_widget = ratatui_image::StatefulImage::default()
-                    .resize(ratatui_image::Resize::Scale(None));
+                let image_widget = StatefulImage::default().resize(Resize::Scale(None));
                 frame.render_stateful_widget(image_widget, actual_image_area, protocol);
             } else if let Some(text) = text_fallback {
                 let mut safe_area = inner_area;
@@ -148,8 +154,7 @@ impl Component for RightPanelComponent {
                     safe_area.width -= 16;
                 }
 
-                let visual_lines =
-                    crate::ui::utils::wrap_str_to_lines(text, safe_area.width as usize);
+                let visual_lines = wrap_str_to_lines(text, safe_area.width as usize);
                 let lines_count = visual_lines.len() as u16;
                 let p = Paragraph::new(visual_lines).alignment(Alignment::Center);
 
@@ -170,7 +175,7 @@ impl Component for RightPanelComponent {
                 safe_area.width -= 16;
             }
 
-            let visual_lines = crate::ui::utils::wrap_str_to_lines(text, safe_area.width as usize);
+            let visual_lines = wrap_str_to_lines(text, safe_area.width as usize);
             let lines_count = visual_lines.len() as u16;
             let p = Paragraph::new(visual_lines).alignment(Alignment::Center);
 
@@ -181,7 +186,7 @@ impl Component for RightPanelComponent {
             frame.render_widget(p, safe_area);
         }
 
-        if state.ui.current_focus == crate::states::ui::GameFocus::RightPanel {
+        if state.ui.current_focus == GameFocus::RightPanel {
             let focus_text = " [ FOCUS ] ";
             let focus_area = Rect {
                 x: inner_area.x + inner_area.width.saturating_sub(11),
@@ -256,17 +261,19 @@ impl Component for RightPanelComponent {
             }
         }
     }
+}
 
+impl Lifecycle for RightPanelComponent {
     fn handle_terminal_event(
         &mut self,
         state: &mut AppState,
         event: &crossterm::event::Event,
-        event_sender: &tokio::sync::mpsc::Sender<crate::events::ApplicationEvent>,
+        event_sender: &Sender<ApplicationEvent>,
     ) -> bool {
-        if state.ui.current_focus == crate::states::ui::GameFocus::RightPanel {
+        if state.ui.current_focus == GameFocus::RightPanel {
             if let crossterm::event::Event::Key(key) = event {
                 if key.code == crossterm::event::KeyCode::Enter {
-                    state.ui.current_focus = crate::states::ui::GameFocus::NpcList;
+                    state.ui.current_focus = GameFocus::NpcList;
                     return true;
                 }
 
@@ -279,9 +286,10 @@ impl Component for RightPanelComponent {
                 };
 
                 if state.game.current_room_exits.contains_key(direction) {
-                    let _ = event_sender.try_send(crate::events::ApplicationEvent::SendRawCommand(
-                        format!("MOVE {}", direction),
-                    ));
+                    let _ = event_sender.try_send(ApplicationEvent::SendRawCommand(format!(
+                        "MOVE {}",
+                        direction
+                    )));
                     return true;
                 }
             }

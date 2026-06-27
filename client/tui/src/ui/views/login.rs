@@ -1,12 +1,16 @@
+use crate::events::{ApplicationEvent, NetworkEvent};
 use crate::states::app::AppState;
+use crate::states::ui::Notification;
 use crate::ui::components::Component;
-use crate::ui::components::button::ButtonComponent;
+use crate::ui::components::Lifecycle;
 use crate::ui::components::interactive::Interactive;
-use crate::ui::components::text_input::TextInputComponent;
-use crate::ui::views::AppView;
+use crate::ui::components::widgets::button::ButtonComponent;
+use crate::ui::components::widgets::text_input::TextInputComponent;
 use crossterm::event::{Event as CrosstermEvent, KeyCode, KeyEvent, MouseEvent, MouseEventKind};
+use mpsc::Sender;
 use ratatui::Frame;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
+use tokio::sync::mpsc;
 
 #[derive(PartialEq)]
 pub enum LoginFocus {
@@ -69,7 +73,7 @@ impl LoginView {
     }
 }
 
-impl AppView for LoginView {
+impl Component for LoginView {
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
         // Create a centered layout
         let vertical_chunks = Layout::default()
@@ -114,30 +118,32 @@ impl AppView for LoginView {
 
         self.connect_button.draw(state, frame, button_area);
     }
+}
 
+impl Lifecycle for LoginView {
     fn handle_terminal_event(
         &mut self,
         state: &mut AppState,
         event: &CrosstermEvent,
-        event_sender: &tokio::sync::mpsc::Sender<crate::events::ApplicationEvent>,
-    ) {
+        event_sender: &Sender<ApplicationEvent>,
+    ) -> bool {
         match event {
             CrosstermEvent::Key(KeyEvent { code, .. }) => {
                 // Keyboard navigation
                 if *code == KeyCode::Tab || *code == KeyCode::Down {
                     self.cycle_focus_forward();
-                    return;
+                    return true;
                 }
                 if *code == KeyCode::BackTab || *code == KeyCode::Up {
                     self.cycle_focus_backward();
-                    return;
+                    return true;
                 }
 
                 if *code == KeyCode::Enter {
                     if self.current_focus != LoginFocus::ConnectButton {
                         self.current_focus = LoginFocus::ConnectButton;
                         self.update_focus();
-                        return;
+                        return true;
                     }
                 }
             }
@@ -149,15 +155,15 @@ impl AppView for LoginView {
                     if self.name_input.is_mouse_over(*column, *row) {
                         self.current_focus = LoginFocus::PlayerName;
                         self.update_focus();
-                        return;
+                        return true;
                     } else if self.ip_input.is_mouse_over(*column, *row) {
                         self.current_focus = LoginFocus::ServerIp;
                         self.update_focus();
-                        return;
+                        return true;
                     } else if self.port_input.is_mouse_over(*column, *row) {
                         self.current_focus = LoginFocus::ServerPort;
                         self.update_focus();
-                        return;
+                        return true;
                     } else if self.connect_button.is_mouse_over(*column, *row) {
                         self.current_focus = LoginFocus::ConnectButton;
                         self.update_focus();
@@ -192,17 +198,17 @@ impl AppView for LoginView {
                     let port = self.port_input.inner.value.clone();
 
                     if name.is_empty() || ip.is_empty() || port.is_empty() {
-                        state.ui.push(crate::states::ui::Notification::warning(
-                            "All fields must be filled",
-                        ));
+                        state
+                            .ui
+                            .push(Notification::warning("All fields must be filled"));
                     } else {
                         state.ui.push(
-                            crate::states::ui::Notification::info("Connecting...")
+                            Notification::info("Connecting...")
                                 .with_id(crate::network::manager::NOTIF_ID_CONNECTION_ATTEMPT)
                                 .with_duration(60000),
                         );
-                        let _ = event_sender.try_send(crate::events::ApplicationEvent::Network(
-                            crate::events::NetworkEvent::ConnectionAttemptStarted {
+                        let _ = event_sender.try_send(ApplicationEvent::Network(
+                            NetworkEvent::ConnectionAttemptStarted {
                                 server_ip: ip,
                                 server_port: port,
                                 player_name: name,
@@ -212,5 +218,6 @@ impl AppView for LoginView {
                 }
             }
         }
+        true
     }
 }

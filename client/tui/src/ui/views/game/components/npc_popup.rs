@@ -1,7 +1,10 @@
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
 use crate::ui::components::Component;
+use crate::ui::components::Lifecycle;
+use crate::ui::theme::overlay_block;
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
+use mpsc::Sender;
 use ratatui::{
     Frame,
     layout::Rect,
@@ -80,19 +83,21 @@ impl Component for NpcActionPopup {
             .collect();
 
         let list = List::new(items).block(
-            crate::ui::theme::overlay_block()
+            overlay_block()
                 .title(title)
                 .style(Style::default().fg(Color::Yellow)),
         );
 
         frame.render_widget(list, popup_area);
     }
+}
 
+impl Lifecycle for NpcActionPopup {
     fn handle_terminal_event(
         &mut self,
         state: &mut AppState,
         event: &CrosstermEvent,
-        event_sender: &mpsc::Sender<ApplicationEvent>,
+        event_sender: &Sender<ApplicationEvent>,
     ) -> bool {
         let npc_id = if let Some(id) = state.ui.active_npc_popup.clone() {
             id

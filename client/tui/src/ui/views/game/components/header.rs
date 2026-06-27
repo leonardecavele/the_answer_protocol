@@ -1,5 +1,9 @@
 use crate::states::app::AppState;
 use crate::ui::components::Component;
+use crate::ui::components::Lifecycle;
+use crate::ui::theme::default_block;
+use crate::ui::utils::wrap_str_to_lines;
+use ratatui::widgets::Paragraph;
 use ratatui::{
     Frame,
     layout::{Alignment, Rect},
@@ -55,7 +59,7 @@ impl Component for HeaderComponent {
             Span::raw(format!(" | Online: {} ", state.game.online_players_count)),
         ]);
 
-        let mut block = crate::ui::theme::default_block()
+        let mut block = default_block()
             .title(title_line.alignment(Alignment::Left))
             .title(stats_line.alignment(Alignment::Right));
 
@@ -94,11 +98,12 @@ impl Component for HeaderComponent {
         };
 
         let inner_area = block.inner(area);
-        let visual_lines =
-            crate::ui::utils::wrap_str_to_lines(description, inner_area.width as usize);
+        let visual_lines = wrap_str_to_lines(description, inner_area.width as usize);
 
-        let paragraph = ratatui::widgets::Paragraph::new(visual_lines).block(block);
+        let paragraph = Paragraph::new(visual_lines).block(block);
 
         frame.render_widget(paragraph, area);
     }
 }
+
+impl Lifecycle for HeaderComponent {}

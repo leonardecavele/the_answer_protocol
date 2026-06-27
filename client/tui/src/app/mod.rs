@@ -1,14 +1,18 @@
+use crate::data::manifest::Manifest;
 use crate::errors::ApplicationError;
 use crate::events::{ApplicationEvent, EventBroker};
 use crate::network::NetworkManager;
+use crate::network::envelopes::RequestEnvelope;
 use crate::states::app::AppState;
-use crate::ui::components::event_overlay::EventOverlayComponent;
-use crate::ui::components::notifications::NotificationComponent;
+use crate::states::ui::Notification;
 use crate::ui::components::Component;
-use crate::ui::views::AppView;
-use crate::ui::views::LoginView;
-use ratatui::backend::CrosstermBackend;
+use crate::ui::components::scrollable::Scrollable;
+use crate::ui::components::widgets::event_overlay::EventOverlayComponent;
+use crate::ui::components::widgets::notifications::NotificationComponent;
+use crate::ui::views::login::LoginView;
+use api_client::protocol::command::enums::ApiRequest;
 use ratatui::Terminal;
+use ratatui::backend::CrosstermBackend;
 use std::io;
 use std::time::Instant;
 
@@ -20,23 +24,23 @@ pub struct App {
     pub state: AppState,
     pub event_broker: EventBroker,
     pub network_manager: Option<NetworkManager>,
-    pub active_view: Box<dyn AppView>,
-    pub event_overlay: EventOverlayComponent,
+    pub active_view: Box<dyn Component>,
+    pub event_overlay: Scrollable<EventOverlayComponent>,
     pub notification_overlay: NotificationComponent,
 }
 
 impl App {
     pub fn new(ip: String, port: String) -> Self {
-        let (manifest, err) = match crate::data::manifest::Manifest::load() {
+        let (manifest, err) = match Manifest::load() {
             Ok(manifest) => (manifest, None),
-            Err(error) => (crate::data::manifest::Manifest::default(), Some(error)),
+            Err(error) => (Manifest::default(), Some(error)),
         };
 
         let mut state = AppState::new(ip.clone(), port.clone(), manifest);
         if let Some(error) = err {
             state
                 .ui
-                .push(crate::states::ui::Notification::error(error).with_duration(10000));
+                .push(Notification::error(error).with_duration(10000));
         }
 
         Self {
@@ -44,7 +48,7 @@ impl App {
             event_broker: EventBroker::new(),
             network_manager: None,
             active_view: Box::new(LoginView::new(ip, port)),
-            event_overlay: EventOverlayComponent::new(),
+            event_overlay: Scrollable::new(EventOverlayComponent::new()),
             notification_overlay: NotificationComponent::new(),
         }
     }
@@ -57,7 +61,9 @@ impl App {
             terminal.draw(|frame| {
                 let area = frame.area();
                 self.active_view.draw(&self.state, frame, area);
-                self.event_overlay.draw(&self.state, frame, area);
+                if self.state.ui.show_event_overlay {
+                    self.event_overlay.draw(&self.state, frame, area);
+                }
                 self.notification_overlay.draw(&self.state, frame, area);
             })?;
 
@@ -108,11 +114,11 @@ impl App {
     }
 
     fn handle_raw_command(&mut self, command: String) {
-        if let Some(request) = api_client::protocol::command::enums::ApiRequest::parse(&command) {
+        if let Some(request) = ApiRequest::parse(&command) {
             self.push_event("user input", command);
 
             if let Some(network_manager) = &self.network_manager {
-                let envelope = crate::network::envelopes::RequestEnvelope::new(request);
+                let envelope = RequestEnvelope::new(request);
                 network_manager.send_command(envelope);
             }
         } else {
@@ -121,12 +127,10 @@ impl App {
                 format!("Unknown or invalid command: {}", command),
             );
 
-            self.state
-                .ui
-                .push(crate::states::ui::Notification::warning(format!(
-                    "Unknown or invalid command: {}",
-                    command
-                )));
+            self.state.ui.push(Notification::warning(format!(
+                "Unknown or invalid command: {}",
+                command
+            )));
         }
     }
 }

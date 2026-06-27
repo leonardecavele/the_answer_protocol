@@ -1,53 +1,54 @@
+use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
-use crate::ui::components::Component;
+use crate::ui::components::Lifecycle;
+use crate::ui::components::scrollable::ScrollableComponent;
+use crate::ui::theme::overlay_block;
+use crossterm::event::{Event as CrosstermEvent, KeyCode};
+use mpsc::Sender;
 use ratatui::{
-    Frame,
     layout::{Alignment, Rect},
     style::{Color, Modifier, Style},
     text::{Line, Span},
-    widgets::{Clear, Paragraph},
+    widgets::Block,
 };
+use tokio::sync::mpsc;
 
-pub struct HelpOverlayComponent {
-    scroll: u16,
-}
+const HELP_WIDTH: u16 = 60;
+const HELP_HEIGHT: u16 = 20;
+
+pub struct HelpOverlayComponent;
 
 impl HelpOverlayComponent {
     pub fn new() -> Self {
-        Self { scroll: 0 }
+        Self
     }
 }
 
-impl Component for HelpOverlayComponent {
-    fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
+impl ScrollableComponent for HelpOverlayComponent {
+    fn get_area(&self, state: &AppState, max_area: Rect) -> Rect {
         if !state.ui.show_help_overlay {
-            self.scroll = 0;
-            return;
+            return Rect::default();
         }
 
-        // Create a centered box for the help menu
-        let popup_width = 60;
-        let popup_height = 20;
+        let x = max_area.width.saturating_sub(HELP_WIDTH) / 2;
+        let y = max_area.height.saturating_sub(HELP_HEIGHT) / 2;
 
-        let x = area.width.saturating_sub(popup_width) / 2;
-        let y = area.height.saturating_sub(popup_height) / 2;
+        Rect {
+            x: max_area.x + x,
+            y: max_area.y + y,
+            width: HELP_WIDTH,
+            height: HELP_HEIGHT,
+        }
+    }
 
-        let popup_area = Rect {
-            x: area.x + x,
-            y: area.y + y,
-            width: popup_width,
-            height: popup_height,
-        };
-
-        // Clear the background
-        frame.render_widget(Clear, popup_area);
-
-        let block = crate::ui::theme::overlay_block()
+    fn get_block<'a>(&self, _state: &AppState) -> Block<'a> {
+        overlay_block()
             .title(Line::from(" Keyboard Shortcuts ").alignment(Alignment::Center))
-            .title_bottom(Line::from(" Press Ctrl+H to close ").alignment(Alignment::Center));
+            .title_bottom(Line::from(" Press Ctrl+H to close ").alignment(Alignment::Center))
+    }
 
-        // Create lines of help text
-        let lines = vec![
+    fn get_content<'a>(&self, _state: &'a AppState, _max_width: usize) -> Vec<Line<'a>> {
+        vec![
             Line::from(vec![Span::styled(
                 "Global",
                 Style::default()
@@ -131,63 +132,23 @@ impl Component for HelpOverlayComponent {
             Line::from("  top right : your hp and max hp"),
             Line::from("  top right : online players count"),
             Line::from("  bottom right : notifications (disappear after 5s)"),
-        ];
-
-        let content_height = lines.len() as u16;
-        let visible_height = popup_height.saturating_sub(2); // subtract borders
-
-        // Clamp scroll to maximum possible
-        let max_scroll = content_height.saturating_sub(visible_height);
-        if self.scroll > max_scroll {
-            self.scroll = max_scroll;
-        }
-
-        let content = Paragraph::new(lines)
-            .block(block)
-            .alignment(Alignment::Left)
-            .scroll((self.scroll, 0));
-
-        frame.render_widget(content, popup_area);
+        ]
     }
+}
 
+impl Lifecycle for HelpOverlayComponent {
     fn handle_terminal_event(
         &mut self,
-        _state: &mut AppState,
-        event: &crossterm::event::Event,
-        _event_sender: &tokio::sync::mpsc::Sender<crate::events::ApplicationEvent>,
+        state: &mut AppState,
+        event: &CrosstermEvent,
+        _sender: &Sender<ApplicationEvent>,
     ) -> bool {
-        match event {
-            crossterm::event::Event::Key(key) => match key.code {
-                crossterm::event::KeyCode::Up => {
-                    self.scroll = self.scroll.saturating_sub(1);
-                    true
-                }
-                crossterm::event::KeyCode::Down => {
-                    self.scroll = self.scroll.saturating_add(1);
-                    true
-                }
-                crossterm::event::KeyCode::PageUp => {
-                    self.scroll = self.scroll.saturating_sub(5);
-                    true
-                }
-                crossterm::event::KeyCode::PageDown => {
-                    self.scroll = self.scroll.saturating_add(5);
-                    true
-                }
-                _ => false,
-            },
-            crossterm::event::Event::Mouse(mouse) => match mouse.kind {
-                crossterm::event::MouseEventKind::ScrollUp => {
-                    self.scroll = self.scroll.saturating_sub(1);
-                    true
-                }
-                crossterm::event::MouseEventKind::ScrollDown => {
-                    self.scroll = self.scroll.saturating_add(1);
-                    true
-                }
-                _ => false,
-            },
-            _ => false,
+        if let CrosstermEvent::Key(key) = event {
+            if key.code == KeyCode::Esc {
+                state.ui.show_help_overlay = false;
+                return true;
+            }
         }
+        false
     }
 }

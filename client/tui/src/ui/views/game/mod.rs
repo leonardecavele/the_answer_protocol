@@ -3,7 +3,11 @@ pub mod components;
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
 use crate::ui::components::Component;
-use crate::ui::views::AppView;
+use crate::ui::components::Lifecycle;
+use crate::ui::components::scrollable::Scrollable;
+
+use crate::states::ui::GameFocus;
+use crate::ui::components::interactive::is_mouse_in_rect;
 use components::{
     CenterPanelComponent, ChatOverlayComponent, DialoguePopupComponent, FooterComponent,
     HeaderComponent, HelpOverlayComponent, ItemPopupComponent, LeftPanelComponent, NpcActionPopup,
@@ -12,7 +16,6 @@ use components::{
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
 use ratatui::Frame;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
-use ratatui::widgets::Clear;
 use tokio::sync::mpsc;
 
 pub struct GameView {
@@ -21,11 +24,11 @@ pub struct GameView {
     left_panel: LeftPanelComponent,
     center_panel: CenterPanelComponent,
     right_panel: RightPanelComponent,
-    chat_overlay: ChatOverlayComponent,
+    chat_overlay: Scrollable<ChatOverlayComponent>,
     npc_popup: NpcActionPopup,
     item_popup: ItemPopupComponent,
-    dialogue_popup: DialoguePopupComponent,
-    help_overlay: HelpOverlayComponent,
+    dialogue_popup: Scrollable<DialoguePopupComponent>,
+    help_overlay: Scrollable<HelpOverlayComponent>,
     show_chat: bool,
     right_panel_area: Option<Rect>,
     footer_area: Option<Rect>,
@@ -39,11 +42,11 @@ impl GameView {
             left_panel: LeftPanelComponent::new(),
             center_panel: CenterPanelComponent::new(),
             right_panel: RightPanelComponent::new(),
-            chat_overlay: ChatOverlayComponent::new(),
+            chat_overlay: Scrollable::new(ChatOverlayComponent::new()),
             npc_popup: NpcActionPopup::new(),
             item_popup: ItemPopupComponent::new(),
-            dialogue_popup: DialoguePopupComponent::new(),
-            help_overlay: HelpOverlayComponent::new(),
+            dialogue_popup: Scrollable::new(DialoguePopupComponent::new()),
+            help_overlay: Scrollable::new(HelpOverlayComponent::new()),
             show_chat: false,
             right_panel_area: None,
             footer_area: None,
@@ -51,7 +54,7 @@ impl GameView {
     }
 }
 
-impl AppView for GameView {
+impl Component for GameView {
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
         // Vertical layout: Header (3), Center (rest), Footer (3)
         let vertical_chunks = Layout::default()
@@ -95,19 +98,7 @@ impl AppView for GameView {
         // Chat Overlay
         if self.show_chat {
             let center_area = horizontal_chunks[1];
-            // Position chat overlay at the bottom right of the center area
-            // 80% width and 80% height of the center area
-            let chat_width = (center_area.width * 8) / 10;
-            let chat_height = (center_area.height * 8) / 10;
-            let chat_area = Rect {
-                x: center_area.x + center_area.width - chat_width,
-                y: center_area.y + center_area.height - chat_height,
-                width: chat_width,
-                height: chat_height,
-            };
-
-            frame.render_widget(Clear, chat_area);
-            self.chat_overlay.draw(state, frame, chat_area);
+            self.chat_overlay.draw(state, frame, center_area);
         }
 
         if state.ui.active_npc_popup.is_some() {
@@ -126,7 +117,9 @@ impl AppView for GameView {
             self.help_overlay.draw(state, frame, area);
         }
     }
+}
 
+impl Lifecycle for GameView {
     fn on_tick(&mut self, state: &mut AppState) {
         if state.game.active_dialogue.is_some() {
             self.dialogue_popup.on_tick(state);
@@ -138,23 +131,23 @@ impl AppView for GameView {
         state: &mut AppState,
         event: &CrosstermEvent,
         event_sender: &mpsc::Sender<ApplicationEvent>,
-    ) {
+    ) -> bool {
         if state.game.active_dialogue.is_some() {
             self.dialogue_popup
                 .handle_terminal_event(state, event, event_sender);
-            return;
+            return true;
         }
 
         if state.ui.active_npc_popup.is_some() {
             self.npc_popup
                 .handle_terminal_event(state, event, event_sender);
-            return;
+            return true;
         }
 
         if state.ui.active_item_popup.is_some() {
             self.item_popup
                 .handle_terminal_event(state, event, event_sender);
-            return;
+            return true;
         }
 
         if let CrosstermEvent::Key(key) = event {
@@ -164,58 +157,40 @@ impl AppView for GameView {
                     .contains(crossterm::event::KeyModifiers::CONTROL)
             {
                 state.ui.show_help_overlay = !state.ui.show_help_overlay;
-                return;
+                return true;
             }
         }
 
         if state.ui.show_help_overlay {
-            if let CrosstermEvent::Key(key) = event {
-                if key.code == KeyCode::Esc {
-                    state.ui.show_help_overlay = false;
-                    return;
-                }
-            }
             self.help_overlay
                 .handle_terminal_event(state, event, event_sender);
-            return;
+            return true;
         }
 
         if let CrosstermEvent::Key(key) = event {
             if key.code == KeyCode::F(1) {
                 self.show_chat = !self.show_chat;
-                return;
+                return true;
             }
             if key.code == KeyCode::Tab {
                 state.ui.current_focus = match state.ui.current_focus {
-                    crate::states::ui::GameFocus::Input => crate::states::ui::GameFocus::NpcList,
-                    crate::states::ui::GameFocus::NpcList => {
-                        crate::states::ui::GameFocus::RoomItemsList
-                    }
-                    crate::states::ui::GameFocus::RoomItemsList => {
-                        crate::states::ui::GameFocus::InventoryGrid
-                    }
-                    crate::states::ui::GameFocus::InventoryGrid => {
-                        crate::states::ui::GameFocus::RightPanel
-                    }
-                    crate::states::ui::GameFocus::RightPanel => crate::states::ui::GameFocus::Input,
+                    GameFocus::Input => GameFocus::NpcList,
+                    GameFocus::NpcList => GameFocus::RoomItemsList,
+                    GameFocus::RoomItemsList => GameFocus::InventoryGrid,
+                    GameFocus::InventoryGrid => GameFocus::RightPanel,
+                    GameFocus::RightPanel => GameFocus::Input,
                 };
-                return;
+                return true;
             }
             if key.code == KeyCode::BackTab {
                 state.ui.current_focus = match state.ui.current_focus {
-                    crate::states::ui::GameFocus::Input => crate::states::ui::GameFocus::RightPanel,
-                    crate::states::ui::GameFocus::RightPanel => {
-                        crate::states::ui::GameFocus::InventoryGrid
-                    }
-                    crate::states::ui::GameFocus::InventoryGrid => {
-                        crate::states::ui::GameFocus::RoomItemsList
-                    }
-                    crate::states::ui::GameFocus::RoomItemsList => {
-                        crate::states::ui::GameFocus::NpcList
-                    }
-                    crate::states::ui::GameFocus::NpcList => crate::states::ui::GameFocus::Input,
+                    GameFocus::Input => GameFocus::RightPanel,
+                    GameFocus::RightPanel => GameFocus::InventoryGrid,
+                    GameFocus::InventoryGrid => GameFocus::RoomItemsList,
+                    GameFocus::RoomItemsList => GameFocus::NpcList,
+                    GameFocus::NpcList => GameFocus::Input,
                 };
-                return;
+                return true;
             }
         }
 
@@ -224,8 +199,8 @@ impl AppView for GameView {
                 == crossterm::event::MouseEventKind::Down(crossterm::event::MouseButton::Left)
             {
                 if let Some(r) = self.left_panel.npcs_area {
-                    if crate::ui::components::is_mouse_in_rect(mouse.column, mouse.row, r) {
-                        state.ui.current_focus = crate::states::ui::GameFocus::NpcList;
+                    if is_mouse_in_rect(mouse.column, mouse.row, r) {
+                        state.ui.current_focus = GameFocus::NpcList;
 
                         // Select the clicked NPC
                         let y = mouse.row.saturating_sub(r.y);
@@ -240,8 +215,8 @@ impl AppView for GameView {
                 }
 
                 if let Some(r) = self.left_panel.items_area {
-                    if crate::ui::components::is_mouse_in_rect(mouse.column, mouse.row, r) {
-                        state.ui.current_focus = crate::states::ui::GameFocus::RoomItemsList;
+                    if is_mouse_in_rect(mouse.column, mouse.row, r) {
+                        state.ui.current_focus = GameFocus::RoomItemsList;
 
                         let y = mouse.row.saturating_sub(r.y);
                         if y > 0 {
@@ -254,8 +229,8 @@ impl AppView for GameView {
                 }
 
                 if let Some(r) = self.center_panel.inventory_area {
-                    if crate::ui::components::is_mouse_in_rect(mouse.column, mouse.row, r) {
-                        state.ui.current_focus = crate::states::ui::GameFocus::InventoryGrid;
+                    if is_mouse_in_rect(mouse.column, mouse.row, r) {
+                        state.ui.current_focus = GameFocus::InventoryGrid;
 
                         let rel_x = mouse.column.saturating_sub(r.x);
                         let rel_y = mouse.row.saturating_sub(r.y);
@@ -272,13 +247,13 @@ impl AppView for GameView {
                 }
 
                 if let Some(r) = self.right_panel_area {
-                    if crate::ui::components::is_mouse_in_rect(mouse.column, mouse.row, r) {
-                        state.ui.current_focus = crate::states::ui::GameFocus::RightPanel;
+                    if is_mouse_in_rect(mouse.column, mouse.row, r) {
+                        state.ui.current_focus = GameFocus::RightPanel;
                     }
                 }
                 if let Some(r) = self.footer_area {
-                    if crate::ui::components::is_mouse_in_rect(mouse.column, mouse.row, r) {
-                        state.ui.current_focus = crate::states::ui::GameFocus::Input;
+                    if is_mouse_in_rect(mouse.column, mouse.row, r) {
+                        state.ui.current_focus = GameFocus::Input;
                     }
                 }
             }
@@ -290,7 +265,7 @@ impl AppView for GameView {
                 .chat_overlay
                 .handle_terminal_event(state, event, event_sender)
             {
-                return;
+                return true;
             }
         }
 
@@ -298,31 +273,32 @@ impl AppView for GameView {
             .footer
             .handle_terminal_event(state, event, event_sender)
         {
-            return;
+            return true;
         }
         if self
             .header
             .handle_terminal_event(state, event, event_sender)
         {
-            return;
+            return true;
         }
         if self
             .left_panel
             .handle_terminal_event(state, event, event_sender)
         {
-            return;
+            return true;
         }
         if self
             .center_panel
             .handle_terminal_event(state, event, event_sender)
         {
-            return;
+            return true;
         }
         if self
             .right_panel
             .handle_terminal_event(state, event, event_sender)
         {
-            return;
+            return true;
         }
+        false
     }
 }

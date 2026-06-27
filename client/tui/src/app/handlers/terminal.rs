@@ -1,5 +1,5 @@
 use crate::app::App;
-use crate::ui::components::Component;
+use crate::ui::components::Lifecycle;
 use crossterm::event::{Event as CrosstermEvent, KeyCode, KeyModifiers};
 
 impl App {
@@ -17,7 +17,7 @@ impl App {
             }
         }
 
-        if self.event_overlay.is_blocking(&self.state) {
+        if self.state.ui.show_event_overlay {
             let _ = self.event_overlay.handle_terminal_event(
                 &mut self.state,
                 &event,

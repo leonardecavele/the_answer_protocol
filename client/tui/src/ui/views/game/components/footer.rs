@@ -1,7 +1,10 @@
+use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
+use crate::states::ui::GameFocus;
 use crate::ui::components::Component;
+use crate::ui::components::Lifecycle;
 use crate::ui::components::interactive::Interactive;
-use crate::ui::components::text_input::TextInputComponent;
+use crate::ui::components::widgets::text_input::TextInputComponent;
 use crossterm::event::{Event as CrosstermEvent, KeyCode, KeyEvent};
 use ratatui::{Frame, layout::Rect};
 
@@ -19,21 +22,23 @@ impl FooterComponent {
 
 impl Component for FooterComponent {
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
-        self.input.inner.is_focused = state.ui.current_focus == crate::states::ui::GameFocus::Input;
+        self.input.inner.is_focused = state.ui.current_focus == GameFocus::Input;
         self.input.draw(state, frame, area);
     }
+}
 
+impl Lifecycle for FooterComponent {
     fn handle_terminal_event(
         &mut self,
         state: &mut AppState,
         event: &CrosstermEvent,
-        event_sender: &tokio::sync::mpsc::Sender<crate::events::ApplicationEvent>,
+        event_sender: &tokio::sync::mpsc::Sender<ApplicationEvent>,
     ) -> bool {
         // We don't handle mouse focus here anymore, GameView handles it for us.
 
         // Intercept the Enter key BEFORE passing it to TextInputComponent
         // (Because TextInput doesn't handle Enter, it returns false)
-        if state.ui.current_focus == crate::states::ui::GameFocus::Input {
+        if state.ui.current_focus == GameFocus::Input {
             if let CrosstermEvent::Key(KeyEvent {
                 code: KeyCode::Enter,
                 ..
@@ -42,17 +47,16 @@ impl Component for FooterComponent {
                 let command = self.input.inner.value.trim().to_string();
                 if !command.is_empty() {
                     self.input.inner.value.clear();
-                    let _ = event_sender
-                        .try_send(crate::events::ApplicationEvent::SendRawCommand(command));
+                    let _ = event_sender.try_send(ApplicationEvent::SendRawCommand(command));
                 } else {
-                    state.ui.current_focus = crate::states::ui::GameFocus::RightPanel;
+                    state.ui.current_focus = GameFocus::RightPanel;
                 }
                 return true;
             }
         }
 
         // Delegate to the interactive component (handles typing and backspace)
-        if state.ui.current_focus == crate::states::ui::GameFocus::Input {
+        if state.ui.current_focus == GameFocus::Input {
             self.input.handle_terminal_event(state, event, event_sender)
         } else {
             false

@@ -1,11 +1,18 @@
+use crate::events::ApplicationEvent;
 use crate::events::types::NotificationType;
 use crate::states::app::AppState;
 use crate::ui::components::Component;
-use crossterm::event::{Event as CrosstermEvent, MouseEvent, MouseEventKind};
+use crate::ui::components::Lifecycle;
+use crate::ui::components::interactive::is_mouse_in_rect;
+use crate::ui::theme::default_block;
+use crate::ui::utils::wrap_str_to_lines;
+use crossterm::event::{Event as CrosstermEvent, MouseButton, MouseEvent, MouseEventKind};
 use ratatui::Frame;
 use ratatui::layout::{Alignment, Rect};
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::widgets::{Clear, Paragraph};
+use std::cmp::min;
+use tokio::sync::mpsc::Sender;
 
 pub const MAX_VISIBLE_NOTIFICATIONS: usize = 5;
 
@@ -48,8 +55,8 @@ impl Component for NotificationComponent {
                 NotificationType::Error => Color::Red,
             };
 
-            let block = crate::ui::theme::default_block()
-                .style(Style::default().fg(color).add_modifier(Modifier::BOLD));
+            let block =
+                default_block().style(Style::default().fg(color).add_modifier(Modifier::BOLD));
 
             // Add "[X] " to indicate that it can be closed
             let text = format!("[X] {}", notif.message);
@@ -60,11 +67,11 @@ impl Component for NotificationComponent {
             let text_length = text.chars().count() as u16;
 
             // Limit width if text is smaller than max_width
-            let width = std::cmp::min(max_width, text_length + 2); // +2 for borders
+            let width = min(max_width, text_length + 2); // +2 for borders
 
             let inner_width = width.saturating_sub(2).max(1);
 
-            let visual_lines = crate::ui::utils::wrap_str_to_lines(&text, inner_width as usize);
+            let visual_lines = wrap_str_to_lines(&text, inner_width as usize);
             let lines_count = visual_lines.len() as u16;
 
             let height = lines_count + 2; // +2 for top/bottom borders
@@ -100,23 +107,25 @@ impl Component for NotificationComponent {
             frame.render_widget(paragraph, notif_area);
         }
     }
+}
 
+impl Lifecycle for NotificationComponent {
     fn handle_terminal_event(
         &mut self,
         state: &mut AppState,
         event: &CrosstermEvent,
-        _event_sender: &tokio::sync::mpsc::Sender<crate::events::ApplicationEvent>,
+        _event_sender: &Sender<ApplicationEvent>,
     ) -> bool {
         if let CrosstermEvent::Mouse(MouseEvent {
             kind, column, row, ..
         }) = event
         {
-            if *kind == MouseEventKind::Down(crossterm::event::MouseButton::Left) {
+            if *kind == MouseEventKind::Down(MouseButton::Left) {
                 // Find which notification was clicked
                 if let Some((clicked_id, _)) = self
                     .visible_areas
                     .iter()
-                    .find(|(_, area)| crate::ui::components::is_mouse_in_rect(*column, *row, *area))
+                    .find(|(_, area)| is_mouse_in_rect(*column, *row, *area))
                 {
                     // Remove the targeted notification from the state
                     let id_to_remove = clicked_id.clone();

@@ -1,17 +1,22 @@
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
-use crate::ui::components::Component;
+use crate::ui::components::Lifecycle;
+use crate::ui::components::scrollable::ScrollableComponent;
+use crate::ui::theme::overlay_block;
+use crate::ui::utils::wrap_str_to_lines;
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
+use mpsc::Sender;
 use ratatui::{
-    Frame,
     layout::Rect,
     style::{Color, Style},
-    widgets::{Clear, Paragraph},
+    text::Line,
+    widgets::{Block, Padding},
 };
 use std::time::Instant;
 use tokio::sync::mpsc;
 
 pub const CHAR_DELAY_MS: u128 = 2;
+const MAX_HEIGHT_PERCENTAGE: u16 = 40;
 
 pub struct DialoguePopupComponent;
 
@@ -21,23 +26,43 @@ impl DialoguePopupComponent {
     }
 }
 
-impl Component for DialoguePopupComponent {
-    fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
+impl ScrollableComponent for DialoguePopupComponent {
+    fn get_area(&self, state: &AppState, max_area: Rect) -> Rect {
+        let width = max_area.width.saturating_sub(4);
+        let x = max_area.x + 2;
+
+        let inner_width = width.saturating_sub(4).max(1);
+        let visual_lines = self.get_content(state, inner_width as usize);
+
+        let content_height = visual_lines.len() as u16;
+        let total_needed_height = content_height + 4; // 2 borders, 2 padding
+
+        let min_height = 6;
+        let max_height = max_area.height * MAX_HEIGHT_PERCENTAGE / 100;
+        let popup_height = total_needed_height.clamp(min_height, max_height);
+
+        let y = max_area.y + max_area.height.saturating_sub(popup_height);
+        Rect {
+            x,
+            y,
+            width,
+            height: popup_height,
+        }
+    }
+
+    fn get_block<'a>(&self, state: &AppState) -> Block<'a> {
         if let Some(dialog) = &state.game.active_dialogue {
-            // Place it at the bottom of the right panel, or bottom of the provided area
-            let popup_height = 6;
-            let width = area.width.saturating_sub(4);
-            let x = area.x + 2;
-            let y = area.y + area.height.saturating_sub(popup_height);
-            let popup_area = Rect {
-                x,
-                y,
-                width,
-                height: popup_height,
-            };
+            overlay_block()
+                .title(format!(" {} ", dialog.npc_name))
+                .style(Style::default().fg(Color::Yellow))
+                .padding(Padding::uniform(1))
+        } else {
+            overlay_block()
+        }
+    }
 
-            frame.render_widget(Clear, popup_area);
-
+    fn get_content<'a>(&self, state: &'a AppState, max_width: usize) -> Vec<Line<'a>> {
+        if let Some(dialog) = &state.game.active_dialogue {
             let visible_text: String = dialog
                 .full_text
                 .chars()
@@ -49,21 +74,19 @@ impl Component for DialoguePopupComponent {
                 display_text.push_str("\n\n(Press Enter to continue)");
             }
 
-            let block = crate::ui::theme::overlay_block()
-                .title(format!(" {} ", dialog.npc_name))
-                .style(Style::default().fg(Color::Yellow));
-
-            let paragraph = Paragraph::new(display_text).block(block);
-
-            frame.render_widget(paragraph, popup_area);
+            wrap_str_to_lines(&display_text, max_width)
+        } else {
+            Vec::new()
         }
     }
+}
 
+impl Lifecycle for DialoguePopupComponent {
     fn handle_terminal_event(
         &mut self,
         state: &mut AppState,
         event: &CrosstermEvent,
-        _event_sender: &mpsc::Sender<ApplicationEvent>,
+        _sender: &Sender<ApplicationEvent>,
     ) -> bool {
         if let Some(dialog) = state.game.active_dialogue.clone() {
             if let CrosstermEvent::Key(key) = event {
@@ -85,12 +108,10 @@ impl Component for DialoguePopupComponent {
                         }
                     }
                     return true;
-                } else {
-                    // Block all other keys
-                    return true;
                 }
             }
-            // Block mouse as well
+
+            // Block everything else when popup is active
             return true;
         }
         false
