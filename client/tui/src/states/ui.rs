@@ -15,6 +15,7 @@ pub enum GameFocus {
     NpcList,
     RoomItemsList,
     InventoryGrid,
+    ActionHistory,
 }
 
 impl Default for GameFocus {

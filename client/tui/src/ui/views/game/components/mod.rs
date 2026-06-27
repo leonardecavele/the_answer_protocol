@@ -1,9 +1,11 @@
+pub mod action_history;
 pub mod center_panel;
 pub mod chat_overlay;
 pub mod dialogue_popup;
 pub mod footer;
 pub mod header;
 pub mod help_overlay;
+pub mod inventory;
 pub mod item_popup;
 pub mod left_panel;
 pub mod npc_popup;

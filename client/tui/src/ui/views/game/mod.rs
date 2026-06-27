@@ -174,7 +174,8 @@ impl Lifecycle for GameView {
             }
             if key.code == KeyCode::Tab {
                 state.ui.current_focus = match state.ui.current_focus {
-                    GameFocus::Input => GameFocus::NpcList,
+                    GameFocus::Input => GameFocus::ActionHistory,
+                    GameFocus::ActionHistory => GameFocus::NpcList,
                     GameFocus::NpcList => GameFocus::RoomItemsList,
                     GameFocus::RoomItemsList => GameFocus::InventoryGrid,
                     GameFocus::InventoryGrid => GameFocus::RightPanel,
@@ -188,7 +189,8 @@ impl Lifecycle for GameView {
                     GameFocus::RightPanel => GameFocus::InventoryGrid,
                     GameFocus::InventoryGrid => GameFocus::RoomItemsList,
                     GameFocus::RoomItemsList => GameFocus::NpcList,
-                    GameFocus::NpcList => GameFocus::Input,
+                    GameFocus::NpcList => GameFocus::ActionHistory,
+                    GameFocus::ActionHistory => GameFocus::Input,
                 };
                 return true;
             }
@@ -228,6 +230,12 @@ impl Lifecycle for GameView {
                     }
                 }
 
+                if let Some(r) = self.center_panel.history_area {
+                    if is_mouse_in_rect(mouse.column, mouse.row, r) {
+                        state.ui.current_focus = GameFocus::ActionHistory;
+                    }
+                }
+
                 if let Some(r) = self.center_panel.inventory_area {
                     if is_mouse_in_rect(mouse.column, mouse.row, r) {
                         state.ui.current_focus = GameFocus::InventoryGrid;
@@ -237,7 +245,7 @@ impl Lifecycle for GameView {
                         if rel_x > 0 && rel_y > 0 {
                             let col = (rel_x - 1) as usize / 20; // item_width = 20
                             let row = (rel_y - 1) as usize / 10; // item_height = 10
-                            let cols = self.center_panel.inventory_cols.max(1);
+                            let cols = self.center_panel.inventory.inventory_cols.max(1);
                             let idx = row * cols + col;
                             if idx < state.game.inventory.len() {
                                 state.game.inventory_cursor = idx;
