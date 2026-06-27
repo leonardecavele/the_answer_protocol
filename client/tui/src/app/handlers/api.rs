@@ -47,14 +47,23 @@ impl App {
             }
             ApiResponse::Who(Ok(who_res)) => {
                 self.state.game.online_players_count = who_res.player_count;
+                self.state
+                    .game
+                    .log_action("You checked who is online.".to_string());
             }
             ApiResponse::Status(Ok(status_res)) => {
                 self.state.game.hp = status_res.player_status.hp;
                 self.state.game.max_hp = status_res.player_status.max_hp;
+                self.state
+                    .game
+                    .log_action("You checked your status.".to_string());
             }
             ApiResponse::GroupCreate(Ok(res)) => {
                 self.state.game.group_id = Some(res.group_id.clone());
                 self.state.game.group_leader = self.state.game.player_name.clone();
+                self.state
+                    .game
+                    .log_action(format!("You created group {}.", res.group_id));
             }
             ApiResponse::GroupJoin(Ok(res)) => {
                 if let api_client::protocol::command::enums::ApiRequest::GroupJoin(cmd) =
@@ -62,11 +71,17 @@ impl App {
                 {
                     self.state.game.group_id = Some(res.group_id.clone());
                     self.state.game.group_leader = Some(cmd.leader_name.to_uppercase());
+                    self.state
+                        .game
+                        .log_action("You joined the group.".to_string());
                 }
             }
             ApiResponse::GroupLeave(Ok(_res)) => {
                 self.state.game.group_id = None;
                 self.state.game.group_leader = None;
+                self.state
+                    .game
+                    .log_action("You left the group.".to_string());
             }
             ApiResponse::GlobalChat(Ok(_)) => {
                 if let api_client::protocol::command::enums::ApiRequest::GlobalChat(cmd) =
@@ -97,6 +112,9 @@ impl App {
                 }
             }
             ApiResponse::Look(Ok(look_res)) => {
+                self.state
+                    .game
+                    .log_action(format!("You looked at {}.", look_res.room.name));
                 self.state.game.current_room_id = Some(look_res.room.id.clone());
                 self.state.game.current_room_name = Some(look_res.room.name.clone());
                 self.state.game.current_room_description = Some(look_res.room.description.clone());
@@ -107,6 +125,13 @@ impl App {
             }
             ApiResponse::Move(Ok(_move_res)) => {
                 self.state.game.focused_entity_id = None;
+                if let api_client::protocol::command::enums::ApiRequest::Move(cmd) =
+                    envelope.original_request
+                {
+                    self.state
+                        .game
+                        .log_action(format!("You moved {}.", cmd.direction));
+                }
                 if let Some(network_manager) = &self.network_manager {
                     let req = api_client::protocol::command::enums::ApiRequest::Look(
                         api_client::protocol::command::core::look::LookCommand,
@@ -117,9 +142,15 @@ impl App {
             }
             ApiResponse::Inventory(Ok(inv_res)) => {
                 self.state.game.inventory = inv_res.inventory.clone();
+                self.state
+                    .game
+                    .log_action("You checked your inventory.".to_string());
             }
             ApiResponse::Quests(Ok(quests_res)) => {
                 self.state.game.quests = quests_res.quest_list.clone();
+                self.state
+                    .game
+                    .log_action("You checked your quests.".to_string());
             }
             ApiResponse::Talk(Ok(talk_res)) => {
                 if let api_client::protocol::command::enums::ApiRequest::Talk(cmd) =
@@ -145,6 +176,10 @@ impl App {
 
                     self.state
                         .game
+                        .log_action(format!("You talked to {}.", display_name));
+
+                    self.state
+                        .game
                         .log_action(format!("[{}] says: \"{}\"", display_name, text));
 
                     self.state.game.active_dialogue =
@@ -159,6 +194,9 @@ impl App {
             ApiResponse::Take(Ok(take_res)) => {
                 self.state
                     .game
+                    .log_action(format!("You took {}.", take_res.item_identifier));
+                self.state
+                    .game
                     .inventory
                     .push(take_res.item_identifier.clone());
                 self.state
@@ -167,6 +205,9 @@ impl App {
                     .retain(|i| i != &take_res.item_identifier);
             }
             ApiResponse::Drop(Ok(drop_res)) => {
+                self.state
+                    .game
+                    .log_action(format!("You dropped {}.", drop_res.item_identifier));
                 self.state
                     .game
                     .current_room_items
@@ -183,6 +224,10 @@ impl App {
                     self.state.game.focused_entity_id = Some(cmd.npc_name.clone());
 
                     let display_name = self.state.game.manifest.get_npc_name(&cmd.npc_name);
+
+                    self.state
+                        .game
+                        .log_action(format!("You attacked {}.", display_name));
 
                     let res = attack_res.combat_result;
 
@@ -239,11 +284,8 @@ impl App {
             ServerEvent::Connect(name) => {
                 self.state.game.online_players_count += 1;
                 self.state
-                    .ui
-                    .push(crate::states::ui::Notification::info(format!(
-                        "{} joined the server.",
-                        name
-                    )));
+                    .game
+                    .log_action(format!("{} joined the server.", name));
             }
             ServerEvent::Quit(name) => {
                 self.state.game.online_players_count =
@@ -254,11 +296,8 @@ impl App {
                     self.state.game.group_leader = None;
                 }
                 self.state
-                    .ui
-                    .push(crate::states::ui::Notification::info(format!(
-                        "{} disconnected.",
-                        name
-                    )));
+                    .game
+                    .log_action(format!("{} disconnected.", name));
             }
             ServerEvent::Room(room_event) => match room_event {
                 RoomEvent::PresenceEnter(name) => {
@@ -267,20 +306,14 @@ impl App {
                     }
 
                     self.state
-                        .ui
-                        .push(crate::states::ui::Notification::info(format!(
-                            "{} entered the room.",
-                            name
-                        )));
+                        .game
+                        .log_action(format!("{} entered the room.", name));
                 }
                 RoomEvent::PresenceLeave(name) => {
                     self.state.game.room_players.retain(|p| p != &name);
                     self.state
-                        .ui
-                        .push(crate::states::ui::Notification::info(format!(
-                            "{} left the room.",
-                            name
-                        )));
+                        .game
+                        .log_action(format!("{} left the room.", name));
                 }
                 RoomEvent::Chat(chat) => {
                     self.state.game.chat_history.push(ChatMessage {
@@ -292,20 +325,14 @@ impl App {
                 RoomEvent::Take(player, item) => {
                     self.state.game.current_room_items.retain(|id| id != &item);
                     self.state
-                        .ui
-                        .push(crate::states::ui::Notification::info(format!(
-                            "{} took {}.",
-                            player, item
-                        )));
+                        .game
+                        .log_action(format!("{} took {}.", player, item));
                 }
                 RoomEvent::Drop(player, item) => {
                     self.state.game.current_room_items.push(item.clone());
                     self.state
-                        .ui
-                        .push(crate::states::ui::Notification::info(format!(
-                            "{} dropped {}.",
-                            player, item
-                        )));
+                        .game
+                        .log_action(format!("{} dropped {}.", player, item));
                 }
             },
             ServerEvent::Group(group_event) => match group_event {
@@ -319,11 +346,8 @@ impl App {
                 }
                 GroupEvent::Join(user) => {
                     self.state
-                        .ui
-                        .push(crate::states::ui::Notification::info(format!(
-                            "{} joined the group.",
-                            user
-                        )));
+                        .game
+                        .log_action(format!("{} joined the group.", user));
                 }
                 GroupEvent::Leave(user) => {
                     if self.state.game.group_leader.as_ref() == Some(&user.to_uppercase()) {
@@ -334,23 +358,10 @@ impl App {
                             "Leader {} left. The group has been disbanded.",
                             user
                         ));
-
-                        self.state
-                            .ui
-                            .push(crate::states::ui::Notification::info(format!(
-                                "Leader {} left. The group has been disbanded.",
-                                user
-                            )));
                     } else {
                         self.state
                             .game
                             .log_action(format!("{} left the group.", user));
-                        self.state
-                            .ui
-                            .push(crate::states::ui::Notification::info(format!(
-                                "{} left the group.",
-                                user
-                            )));
                     }
                 }
                 GroupEvent::Chat(chat) => {
@@ -367,11 +378,8 @@ impl App {
                         );
 
                         self.state
-                            .ui
-                            .push(crate::states::ui::Notification::info(format!(
-                                "group moved to {}.",
-                                direction
-                            )));
+                            .game
+                            .log_action(format!("Group moved to {}.", direction));
 
                         let _ = network_manager.send_command(
                             crate::network::envelopes::RequestEnvelope::new(req_look),

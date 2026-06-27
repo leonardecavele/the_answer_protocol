@@ -76,10 +76,13 @@ impl App {
     }
 
     fn push_event(&mut self, title: &str, text: String) {
-        self.state
-            .ui
-            .event_history
-            .push(format!("[{}] {}", title.to_uppercase(), text));
+        let time_str = chrono::Local::now().format("%H:%M:%S").to_string();
+        self.state.ui.event_history.push(format!(
+            "[{}] [{}] {}",
+            time_str,
+            title.to_uppercase(),
+            text
+        ));
 
         let len = self.state.ui.event_history.len();
         if len > MAX_EVENT_HISTORY {

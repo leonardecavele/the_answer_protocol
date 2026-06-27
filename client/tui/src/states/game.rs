@@ -108,6 +108,7 @@ impl GameState {
     }
 
     pub fn log_action(&mut self, text: String) {
-        self.action_logs.push(text);
+        let time_str = chrono::Local::now().format("%H:%M:%S").to_string();
+        self.action_logs.push(format!("[{}] {}", time_str, text));
     }
 }

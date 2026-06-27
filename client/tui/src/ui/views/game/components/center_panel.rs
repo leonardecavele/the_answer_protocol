@@ -50,8 +50,14 @@ impl Component for CenterPanelComponent {
         let inner_history_area = history_block.inner(history_area);
         let max_width = inner_history_area.width as usize;
 
-        let visual_lines =
-            crate::ui::utils::wrap_slice_to_lines(&state.game.action_logs, max_width);
+        let raw_lines = state
+            .game
+            .action_logs
+            .iter()
+            .map(|line| format!("• {}\n", line))
+            .collect::<Vec<_>>();
+
+        let visual_lines = crate::ui::utils::wrap_slice_to_lines(&raw_lines, max_width);
 
         let logs_count = visual_lines.len() as u16;
         let inner_height = inner_history_area.height;
