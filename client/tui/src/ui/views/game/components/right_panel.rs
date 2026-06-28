@@ -3,14 +3,13 @@ use crate::states::app::AppState;
 use crate::states::ui::GameFocus;
 use crate::ui::components::Component;
 use crate::ui::components::Lifecycle;
-use crate::ui::utils::wrap_str_to_lines;
+use crate::ui::utils::{render_image, wrap_str_to_lines};
 use ratatui::{
     Frame,
     layout::{Alignment, Rect},
     style::{Color, Modifier, Style},
     widgets::{Clear, Paragraph},
 };
-use ratatui_image::{Resize, StatefulImage};
 use std::time::Instant;
 use tokio::sync::mpsc::Sender;
 
@@ -24,25 +23,6 @@ impl RightPanelComponent {
         Self {
             animation_start: Instant::now(),
             last_entity: None,
-        }
-    }
-
-    pub fn ensure_loaded(&mut self, state: &AppState, path: &str) {
-        let mut cache = state.ui.image_cache.borrow_mut();
-        if !cache.contains_key(path) {
-            let start_loading = Instant::now();
-            match image::open(path) {
-                Ok(dyn_img) => {
-                    let width = dyn_img.width();
-                    let height = dyn_img.height();
-                    let protocol = state.ui.image_picker.new_resize_protocol(dyn_img);
-                    cache.insert(path.to_string(), Some((protocol, width, height)));
-                }
-                Err(_) => {
-                    cache.insert(path.to_string(), None);
-                }
-            }
-            self.animation_start -= Instant::now() - start_loading;
         }
     }
 
@@ -98,10 +78,8 @@ impl RightPanelComponent {
     pub fn get_desired_width(&mut self, state: &AppState, available_height: u16) -> Option<u16> {
         let (path_to_load, _) = self.get_path_to_load(state);
         if let Some(path) = path_to_load {
-            self.ensure_loaded(state, &path);
-            let cache = state.ui.image_cache.borrow();
-            if let Some(Some((_, img_width, img_height))) = cache.get(&path) {
-                let img_aspect = (*img_width as f32) / (*img_height as f32 / 2.0);
+            if let Some((img_width, img_height)) = state.ui.get_image_dimensions(&path) {
+                let img_aspect = (img_width as f32) / (img_height as f32 / 2.0);
                 let render_width = (available_height as f32 * img_aspect) as u16;
                 return Some(render_width);
             }
@@ -118,11 +96,8 @@ impl Component for RightPanelComponent {
         let mut actual_image_area = inner_area;
 
         if let Some(path) = path_to_load {
-            self.ensure_loaded(state, &path);
-            let mut cache = state.ui.image_cache.borrow_mut();
-
-            if let Some(Some((protocol, img_width, img_height))) = cache.get_mut(&path) {
-                let img_aspect = (*img_width as f32) / (*img_height as f32 / 2.0);
+            if let Some((img_width, img_height)) = state.ui.get_image_dimensions(&path) {
+                let img_aspect = (img_width as f32) / (img_height as f32 / 2.0);
                 let area_aspect = (inner_area.width as f32) / (inner_area.height as f32);
 
                 if img_aspect > area_aspect {
@@ -140,30 +115,15 @@ impl Component for RightPanelComponent {
                         actual_image_area.width = render_width;
                     }
                 }
-
-                let image_widget = StatefulImage::default().resize(Resize::Scale(None));
-                frame.render_stateful_widget(image_widget, actual_image_area, protocol);
-            } else if let Some(text) = text_fallback {
-                let mut safe_area = inner_area;
-                if safe_area.height > 2 {
-                    safe_area.y += 1;
-                    safe_area.height -= 1;
-                }
-                if safe_area.width > 16 {
-                    safe_area.x += 8;
-                    safe_area.width -= 16;
-                }
-
-                let visual_lines = wrap_str_to_lines(text, safe_area.width as usize);
-                let lines_count = visual_lines.len() as u16;
-                let p = Paragraph::new(visual_lines).alignment(Alignment::Center);
-
-                if safe_area.height > lines_count {
-                    safe_area.y += safe_area.height.saturating_sub(lines_count) / 2;
-                    safe_area.height = lines_count;
-                }
-                frame.render_widget(p, safe_area);
             }
+
+            render_image(
+                state,
+                frame,
+                actual_image_area,
+                &path,
+                ratatui_image::Resize::Scale(None),
+            );
         } else if let Some(text) = text_fallback {
             let mut safe_area = inner_area;
             if safe_area.height > 2 {

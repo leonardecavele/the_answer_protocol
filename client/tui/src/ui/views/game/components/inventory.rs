@@ -11,8 +11,8 @@ use ratatui::{
     layout::Rect,
     style::{Color, Modifier, Style},
 };
-use ratatui_image::{Resize, StatefulImage};
 use tokio::sync::mpsc::Sender;
+use crate::ui::utils::render_image;
 
 const INVENTORY_ITEM_WIDTH: u16 = 20;
 const INVENTORY_ITEM_HEIGHT: u16 = 10;
@@ -95,21 +95,13 @@ impl Component for InventoryComponent {
             };
 
             if let Some(path) = path_to_load {
-                let mut cache = state.ui.image_cache.borrow_mut();
-                if !cache.contains_key(&path) {
-                    if let Ok(dyn_img) = image::open(&path) {
-                        let width = dyn_img.width();
-                        let height = dyn_img.height();
-                        let protocol = state.ui.image_picker.new_resize_protocol(dyn_img);
-                        cache.insert(path.clone(), Some((protocol, width, height)));
-                    } else {
-                        cache.insert(path.clone(), None);
-                    }
-                }
-                if let Some(Some((protocol, _, _))) = cache.get_mut(&path) {
-                    let image_widget = StatefulImage::default().resize(Resize::Fit(None));
-                    frame.render_stateful_widget(image_widget, image_area, protocol);
-                }
+                render_image(
+                    state,
+                    frame,
+                    image_area,
+                    &path,
+                    ratatui_image::Resize::Fit(None),
+                );
             }
 
             let text = format!("{}\n{}", display_name, item_id);

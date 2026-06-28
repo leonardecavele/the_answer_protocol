@@ -20,11 +20,9 @@ use std::{io, panic};
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Cli {
-    /// L'adresse IP du serveur auquel se connecter.
     #[arg(long, default_value = "127.0.0.1")]
     ip: String,
 
-    /// Le port du serveur.
     #[arg(long, default_value = "38800")]
     port: String,
 }

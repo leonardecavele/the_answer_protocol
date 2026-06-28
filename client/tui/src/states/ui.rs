@@ -120,4 +120,31 @@ impl UiState {
     pub fn remove_notification(&mut self, target_id: &str) {
         self.notifications.retain(|n| n.id != target_id);
     }
+
+    pub fn ensure_image_loaded(&self, path: &str) {
+        let mut cache = self.image_cache.borrow_mut();
+        if !cache.contains_key(path) {
+            match image::open(path) {
+                Ok(dyn_img) => {
+                    let w = dyn_img.width();
+                    let h = dyn_img.height();
+                    let protocol = self.image_picker.new_resize_protocol(dyn_img);
+                    cache.insert(path.to_string(), Some((protocol, w, h)));
+                }
+                Err(_) => {
+                    cache.insert(path.to_string(), None);
+                }
+            }
+        }
+    }
+
+    pub fn get_image_dimensions(&self, path: &str) -> Option<(u32, u32)> {
+        self.ensure_image_loaded(path);
+        let cache = self.image_cache.borrow();
+        if let Some(Some((_, w, h))) = cache.get(path) {
+            Some((*w, *h))
+        } else {
+            None
+        }
+    }
 }
