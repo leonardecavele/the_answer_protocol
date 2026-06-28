@@ -10,8 +10,8 @@ use crate::states::ui::GameFocus;
 use crate::ui::components::interactive::is_mouse_in_rect;
 use components::{
     CenterPanelComponent, ChatOverlayComponent, DialoguePopupComponent, FooterComponent,
-    HeaderComponent, HelpOverlayComponent, ItemPopupComponent, LeftPanelComponent, NpcActionPopup,
-    RightPanelComponent,
+    HeaderComponent, HelpOverlayComponent, ItemPopupComponent, ItemViewPopupComponent, LeftPanelComponent,
+    NpcActionPopup, RightPanelComponent,
 };
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
 use ratatui::Frame;
@@ -27,6 +27,7 @@ pub struct GameView {
     chat_overlay: Scrollable<ChatOverlayComponent>,
     npc_popup: NpcActionPopup,
     item_popup: ItemPopupComponent,
+    item_view_popup: ItemViewPopupComponent,
     dialogue_popup: Scrollable<DialoguePopupComponent>,
     help_overlay: Scrollable<HelpOverlayComponent>,
     show_chat: bool,
@@ -45,6 +46,7 @@ impl GameView {
             chat_overlay: Scrollable::new(ChatOverlayComponent::new()),
             npc_popup: NpcActionPopup::new(),
             item_popup: ItemPopupComponent::new(),
+            item_view_popup: ItemViewPopupComponent::new(),
             dialogue_popup: Scrollable::new(DialoguePopupComponent::new()),
             help_overlay: Scrollable::new(HelpOverlayComponent::new()),
             show_chat: false,
@@ -95,7 +97,10 @@ impl Component for GameView {
         self.right_panel_area = Some(horizontal_chunks[2]);
         self.footer_area = Some(vertical_chunks[2]);
 
-        // Chat Overlay
+        if state.ui.show_help_overlay {
+            self.help_overlay.draw(state, frame, area);
+        }
+
         if self.show_chat {
             let center_area = horizontal_chunks[1];
             self.chat_overlay.draw(state, frame, center_area);
@@ -113,8 +118,8 @@ impl Component for GameView {
             self.dialogue_popup.draw(state, frame, area);
         }
 
-        if state.ui.show_help_overlay {
-            self.help_overlay.draw(state, frame, area);
+        if state.ui.active_item_view_popup.is_some() {
+            self.item_view_popup.draw(state, frame, area);
         }
     }
 }
@@ -132,6 +137,21 @@ impl Lifecycle for GameView {
         event: &CrosstermEvent,
         event_sender: &mpsc::Sender<ApplicationEvent>,
     ) -> bool {
+        if state.ui.show_help_overlay {
+            self.help_overlay
+                .handle_terminal_event(state, event, event_sender);
+            return true;
+        }
+
+        if state.ui.active_item_view_popup.is_some() {
+            if self
+                .item_view_popup
+                .handle_terminal_event(state, event, event_sender)
+            {
+                return true;
+            }
+        }
+
         if state.game.active_dialogue.is_some() {
             self.dialogue_popup
                 .handle_terminal_event(state, event, event_sender);
@@ -159,12 +179,6 @@ impl Lifecycle for GameView {
                 state.ui.show_help_overlay = !state.ui.show_help_overlay;
                 return true;
             }
-        }
-
-        if state.ui.show_help_overlay {
-            self.help_overlay
-                .handle_terminal_event(state, event, event_sender);
-            return true;
         }
 
         if let CrosstermEvent::Key(key) = event {

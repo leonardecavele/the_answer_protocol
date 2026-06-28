@@ -12,10 +12,9 @@ use ratatui::{
     style::{Color, Modifier, Style},
 };
 use tokio::sync::mpsc::Sender;
-use crate::ui::utils::render_image;
 
 const INVENTORY_ITEM_WIDTH: u16 = 20;
-const INVENTORY_ITEM_HEIGHT: u16 = 10;
+const INVENTORY_ITEM_HEIGHT: u16 = 4;
 
 pub struct InventoryComponent {
     pub inventory_cols: usize,
@@ -49,18 +48,18 @@ impl Component for InventoryComponent {
             return;
         }
 
-        let cols = (inv_inner.width / INVENTORY_ITEM_WIDTH).max(1) as usize;
-        self.inventory_cols = cols;
+        self.inventory_cols = (inv_inner.width / INVENTORY_ITEM_WIDTH) as usize;
+        let cols = self.inventory_cols.max(1);
 
         for (idx, item_id) in state.game.inventory.iter().enumerate() {
-            let row = idx / cols;
             let col = idx % cols;
+            let row = idx / cols;
 
-            let cell_x = inv_inner.x + (col as u16) * INVENTORY_ITEM_WIDTH;
-            let cell_y = inv_inner.y + (row as u16) * INVENTORY_ITEM_HEIGHT;
+            let cell_x = inv_inner.x + (col as u16 * INVENTORY_ITEM_WIDTH);
+            let cell_y = inv_inner.y + (row as u16 * INVENTORY_ITEM_HEIGHT);
 
             if cell_y >= inv_inner.bottom() {
-                break;
+                continue; // Cannot fit more rows
             }
 
             let cell_area = Rect {
@@ -70,39 +69,11 @@ impl Component for InventoryComponent {
                 height: INVENTORY_ITEM_HEIGHT.min(inv_inner.bottom().saturating_sub(cell_y)),
             };
 
-            let text_height = 2;
-            let image_area = Rect {
-                x: cell_area.x,
-                y: cell_area.y,
-                width: cell_area.width,
-                height: cell_area.height.saturating_sub(text_height),
-            };
-            let text_area = Rect {
-                x: cell_area.x,
-                y: cell_area.y + image_area.height,
-                width: cell_area.width,
-                height: text_height.min(cell_area.height.saturating_sub(image_area.height)),
-            };
-
-            let mut path_to_load = None;
             let display_name = if let Some(item) = state.game.manifest.items.get(item_id) {
-                if let Some(path) = &item.image_path {
-                    path_to_load = Some(path.clone());
-                }
                 item.name.clone()
             } else {
                 item_id.clone()
             };
-
-            if let Some(path) = path_to_load {
-                render_image(
-                    state,
-                    frame,
-                    image_area,
-                    &path,
-                    ratatui_image::Resize::Fit(None),
-                );
-            }
 
             let text = format!("{}\n{}", display_name, item_id);
             let mut p_style = Style::default();
@@ -111,6 +82,14 @@ impl Component for InventoryComponent {
             {
                 p_style = p_style.add_modifier(Modifier::REVERSED).fg(Color::Yellow);
             }
+            
+            // Add vertical padding by rendering inside a smaller rect if possible
+            let mut text_area = cell_area;
+            if text_area.height >= 4 {
+                text_area.y += 1;
+                text_area.height -= 1;
+            }
+            
             let paragraph = Paragraph::new(text)
                 .alignment(Alignment::Center)
                 .style(p_style);

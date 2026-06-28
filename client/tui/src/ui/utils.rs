@@ -40,3 +40,30 @@ pub fn render_image(
         frame.render_stateful_widget(image_widget, area, protocol);
     }
 }
+
+/// Helper to compute the centered sub-area that respects the image's original aspect ratio.
+pub fn center_area_with_aspect_ratio(outer_area: Rect, img_width: u32, img_height: u32) -> Rect {
+    let mut centered_area = outer_area;
+    if img_height == 0 || outer_area.height == 0 {
+        return centered_area;
+    }
+    
+    let img_aspect = (img_width as f32) / (img_height as f32 / 2.0);
+    let area_aspect = (outer_area.width as f32) / (outer_area.height as f32);
+
+    if img_aspect > area_aspect {
+        let render_height = (outer_area.width as f32 / img_aspect) as u16;
+        if centered_area.height > render_height {
+            centered_area.y += (centered_area.height.saturating_sub(render_height)) / 2;
+            centered_area.height = render_height;
+        }
+    } else {
+        let render_width = (outer_area.height as f32 * img_aspect) as u16;
+        if centered_area.width > render_width {
+            centered_area.x += (centered_area.width.saturating_sub(render_width)) / 2;
+            centered_area.width = render_width;
+        }
+    }
+    
+    centered_area
+}

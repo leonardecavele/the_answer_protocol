@@ -33,6 +33,7 @@ impl ItemPopupComponent {
         if state.game.inventory.contains(&item_id.to_string()) {
             actions.push("DROP".to_string());
         }
+        actions.push("VIEW".to_string());
         actions.push("CANCEL".to_string());
         actions
     }
@@ -135,11 +136,20 @@ impl Lifecycle for ItemPopupComponent {
                 }
                 KeyCode::Enter => {
                     if let Some(act) = actions.get(self.selected_action_index) {
-                        if act != "CANCEL" {
-                            let cmd = format!("{} {}", act.to_uppercase(), item_id);
-                            let _ = event_sender.try_send(ApplicationEvent::SendRawCommand(cmd));
+                        match act.as_str() {
+                            "VIEW" => {
+                                state.ui.active_item_view_popup = Some(item_id.clone());
+                                return true;
+                            }
+                            "CANCEL" => {}
+                            _ => {
+                                let cmd = format!("{} {}", act.to_uppercase(), item_id);
+                                let _ =
+                                    event_sender.try_send(ApplicationEvent::SendRawCommand(cmd));
+                            }
                         }
                     }
+
                     state.ui.active_item_popup = None;
                     self.selected_action_index = 0;
                     return true;

@@ -93,6 +93,7 @@ pub struct UiState {
     pub current_focus: GameFocus,
     pub active_npc_popup: Option<String>,
     pub active_item_popup: Option<String>,
+    pub active_item_view_popup: Option<String>,
     pub show_help_overlay: bool,
 }
 
@@ -109,6 +110,7 @@ impl UiState {
             current_focus: GameFocus::default(),
             active_npc_popup: None,
             active_item_popup: None,
+            active_item_view_popup: None,
             show_help_overlay: false,
         }
     }

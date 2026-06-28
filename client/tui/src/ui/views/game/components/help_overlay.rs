@@ -144,9 +144,21 @@ impl Lifecycle for HelpOverlayComponent {
         _sender: &Sender<ApplicationEvent>,
     ) -> bool {
         if let CrosstermEvent::Key(key) = event {
-            if key.code == KeyCode::Esc {
-                state.ui.show_help_overlay = false;
-                return true;
+            match key.code {
+                KeyCode::Esc | KeyCode::Char('q') => {
+                    state.ui.show_help_overlay = false;
+                    return true;
+                }
+                KeyCode::Char('h') => {
+                    if key
+                        .modifiers
+                        .contains(crossterm::event::KeyModifiers::CONTROL)
+                    {
+                        state.ui.show_help_overlay = false;
+                        return true;
+                    }
+                }
+                _ => {}
             }
         }
         false

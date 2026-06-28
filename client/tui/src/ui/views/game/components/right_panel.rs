@@ -3,7 +3,7 @@ use crate::states::app::AppState;
 use crate::states::ui::GameFocus;
 use crate::ui::components::Component;
 use crate::ui::components::Lifecycle;
-use crate::ui::utils::{render_image, wrap_str_to_lines};
+use crate::ui::utils::{render_image, wrap_str_to_lines, center_area_with_aspect_ratio};
 use ratatui::{
     Frame,
     layout::{Alignment, Rect},
@@ -97,24 +97,7 @@ impl Component for RightPanelComponent {
 
         if let Some(path) = path_to_load {
             if let Some((img_width, img_height)) = state.ui.get_image_dimensions(&path) {
-                let img_aspect = (img_width as f32) / (img_height as f32 / 2.0);
-                let area_aspect = (inner_area.width as f32) / (inner_area.height as f32);
-
-                if img_aspect > area_aspect {
-                    let render_height = (inner_area.width as f32 / img_aspect) as u16;
-                    if actual_image_area.height > render_height {
-                        actual_image_area.y +=
-                            (actual_image_area.height.saturating_sub(render_height)) / 2;
-                        actual_image_area.height = render_height;
-                    }
-                } else {
-                    let render_width = (inner_area.height as f32 * img_aspect) as u16;
-                    if actual_image_area.width > render_width {
-                        actual_image_area.x +=
-                            (actual_image_area.width.saturating_sub(render_width)) / 2;
-                        actual_image_area.width = render_width;
-                    }
-                }
+                actual_image_area = center_area_with_aspect_ratio(inner_area, img_width, img_height);
             }
 
             render_image(
