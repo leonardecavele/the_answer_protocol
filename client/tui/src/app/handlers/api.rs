@@ -49,14 +49,14 @@ impl App {
                 self.state.game.online_players_count = who_res.player_count;
                 self.state
                     .game
-                    .log_action("You checked who is online.".to_string());
+                    .log_action("You checked who is here.".to_string());
             }
             ApiResponse::Status(Ok(status_res)) => {
                 self.state.game.hp = status_res.player_status.hp;
                 self.state.game.max_hp = status_res.player_status.max_hp;
                 self.state
                     .game
-                    .log_action("You checked your status.".to_string());
+                    .log_action("You checked your state.".to_string());
             }
             ApiResponse::GroupCreate(Ok(res)) => {
                 self.state.game.group_id = Some(res.group_id.clone());
