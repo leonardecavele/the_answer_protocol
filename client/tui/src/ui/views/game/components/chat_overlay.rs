@@ -5,6 +5,7 @@ use crate::ui::components::scrollable::ScrollableComponent;
 use crate::ui::theme::overlay_block;
 use crate::ui::utils::wrap_str_to_lines;
 use ratatui::layout::Rect;
+use ratatui::style::Color;
 use ratatui::text::Line;
 use ratatui::widgets::Block;
 
@@ -40,10 +41,10 @@ impl ScrollableComponent for ChatOverlayComponent {
 
         for msg in &state.game.chat_history {
             let (prefix, _) = match &msg.channel {
-                ChatChannel::Global => ("[GLOBAL] ", ratatui::style::Color::Yellow),
-                ChatChannel::Group => ("[GROUP] ", ratatui::style::Color::LightGreen),
-                ChatChannel::Room => ("[ROOM] ", ratatui::style::Color::LightCyan),
-                ChatChannel::Private(_) => ("[PRIVATE] ", ratatui::style::Color::LightMagenta),
+                ChatChannel::Global => ("[GLOBAL] ", Color::Yellow),
+                ChatChannel::Group => ("[GROUP] ", Color::LightGreen),
+                ChatChannel::Room => ("[ROOM] ", Color::LightCyan),
+                ChatChannel::Private(_) => ("[PRIVATE] ", Color::LightMagenta),
             };
 
             let full_text = format!("{}{}: {}", prefix, msg.sender, msg.content);

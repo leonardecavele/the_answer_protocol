@@ -32,6 +32,8 @@ impl LeftPanelComponent {
 
 impl Component for LeftPanelComponent {
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
+        // TODO: refactoriser cette fonction (decouper en plus petit bloc)
+
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([

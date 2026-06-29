@@ -1,9 +1,11 @@
 use crate::app::App;
 use crate::events::ApiEvent;
-use crate::network::envelopes::ResponseEnvelope;
-use crate::states::game::{ChatChannel, ChatMessage};
+use crate::network::envelopes::{RequestEnvelope, ResponseEnvelope};
+use crate::states::game::{ChatChannel, ChatMessage, DialogueState, END_OF_DIALOGUE_TAG};
+use crate::states::ui::Notification;
 use api_client::client::event::{GroupEvent, RoomEvent, ServerEvent};
-use api_client::protocol::command::enums::ApiResponse;
+use api_client::protocol::command::core::look::LookCommand;
+use api_client::protocol::command::enums::{ApiRequest, ApiResponse};
 
 impl App {
     pub(crate) fn handle_api_event(&mut self, api_event: ApiEvent) {
@@ -29,9 +31,7 @@ impl App {
                 "api response",
                 format!("[ERROR] {} - {}", envelope.id, error),
             );
-            self.state
-                .ui
-                .push(crate::states::ui::Notification::warning(error.to_string()));
+            self.state.ui.push(Notification::warning(error.to_string()));
 
             return;
         }
@@ -66,14 +66,12 @@ impl App {
                     .log_action(format!("You created group {}.", res.group_id));
             }
             ApiResponse::GroupJoin(Ok(res)) => {
-                if let api_client::protocol::command::enums::ApiRequest::GroupJoin(cmd) =
-                    envelope.original_request
-                {
+                if let ApiRequest::GroupJoin(cmd) = envelope.original_request {
                     self.state.game.group_id = Some(res.group_id.clone());
                     self.state.game.group_leader = Some(cmd.leader_name.to_uppercase());
                     self.state
                         .game
-                        .log_action("You joined the group.".to_string());
+                        .log_action(format!("You joined the group of {}.", cmd.leader_name));
                 }
             }
             ApiResponse::GroupLeave(Ok(_res)) => {
@@ -84,31 +82,21 @@ impl App {
                     .log_action("You left the group.".to_string());
             }
             ApiResponse::GlobalChat(Ok(_)) => {
-                if let api_client::protocol::command::enums::ApiRequest::GlobalChat(cmd) =
-                    envelope.original_request
-                {
-                    self.state
-                        .game
-                        .chat_history
-                        .push(crate::states::game::ChatMessage {
-                            channel: crate::states::game::ChatChannel::Global,
-                            sender: "You".to_string(),
-                            content: cmd.message.clone(),
-                        });
+                if let ApiRequest::GlobalChat(cmd) = envelope.original_request {
+                    self.state.game.chat_history.push(ChatMessage {
+                        channel: ChatChannel::Global,
+                        sender: "You".to_string(),
+                        content: cmd.message.clone(),
+                    });
                 }
             }
             ApiResponse::PrivateChat(Ok(_)) => {
-                if let api_client::protocol::command::enums::ApiRequest::PrivateChat(cmd) =
-                    envelope.original_request
-                {
-                    self.state
-                        .game
-                        .chat_history
-                        .push(crate::states::game::ChatMessage {
-                            channel: crate::states::game::ChatChannel::Private(cmd.to.clone()),
-                            sender: format!("(You) to {}", cmd.to),
-                            content: cmd.message.clone(),
-                        });
+                if let ApiRequest::PrivateChat(cmd) = envelope.original_request {
+                    self.state.game.chat_history.push(ChatMessage {
+                        channel: ChatChannel::Private(cmd.to.clone()),
+                        sender: format!("(You) to {}", cmd.to),
+                        content: cmd.message.clone(),
+                    });
                 }
             }
             ApiResponse::Look(Ok(look_res)) => {
@@ -125,18 +113,14 @@ impl App {
             }
             ApiResponse::Move(Ok(_move_res)) => {
                 self.state.game.focused_entity_id = None;
-                if let api_client::protocol::command::enums::ApiRequest::Move(cmd) =
-                    envelope.original_request
-                {
+                if let ApiRequest::Move(cmd) = envelope.original_request {
                     self.state
                         .game
                         .log_action(format!("You moved {}.", cmd.direction));
                 }
                 if let Some(network_manager) = &self.network_manager {
-                    let req = api_client::protocol::command::enums::ApiRequest::Look(
-                        api_client::protocol::command::core::look::LookCommand,
-                    );
-                    let envelope = crate::network::envelopes::RequestEnvelope::new(req);
+                    let req = ApiRequest::Look(LookCommand);
+                    let envelope = RequestEnvelope::new(req);
                     network_manager.send_command(envelope);
                 }
             }
@@ -153,21 +137,16 @@ impl App {
                     .log_action("You checked your quests.".to_string());
             }
             ApiResponse::Talk(Ok(talk_res)) => {
-                if let api_client::protocol::command::enums::ApiRequest::Talk(cmd) =
-                    envelope.original_request
-                {
+                if let ApiRequest::Talk(cmd) = envelope.original_request {
                     let mut text = talk_res.dialogue.clone();
-                    let ends_dialog = text.contains(crate::states::game::END_OF_DIALOGUE_TAG);
-                    if ends_dialog && text.starts_with(crate::states::game::END_OF_DIALOGUE_TAG) {
+                    let ends_dialog = text.contains(END_OF_DIALOGUE_TAG);
+                    if ends_dialog && text.starts_with(END_OF_DIALOGUE_TAG) {
                         text = text
-                            .replace(crate::states::game::END_OF_DIALOGUE_TAG, "**nothing**")
+                            .replace(END_OF_DIALOGUE_TAG, "**nothing**")
                             .trim()
                             .to_string();
                     } else if ends_dialog {
-                        text = text
-                            .replace(crate::states::game::END_OF_DIALOGUE_TAG, "")
-                            .trim()
-                            .to_string();
+                        text = text.replace(END_OF_DIALOGUE_TAG, "").trim().to_string();
                     }
 
                     self.state.game.focused_entity_id = Some(cmd.npc_name.clone());
@@ -182,13 +161,12 @@ impl App {
                         .game
                         .log_action(format!("[{}] says: \"{}\"", display_name, text));
 
-                    self.state.game.active_dialogue =
-                        Some(crate::states::game::DialogueState::new(
-                            cmd.npc_name,
-                            display_name,
-                            text,
-                            ends_dialog,
-                        ));
+                    self.state.game.active_dialogue = Some(DialogueState::new(
+                        cmd.npc_name,
+                        display_name,
+                        text,
+                        ends_dialog,
+                    ));
                 }
             }
             ApiResponse::Take(Ok(take_res)) => {
@@ -218,9 +196,7 @@ impl App {
                     .retain(|item| !item.eq(&drop_res.item_identifier));
             }
             ApiResponse::Attack(Ok(attack_res)) => {
-                if let api_client::protocol::command::enums::ApiRequest::Attack(cmd) =
-                    envelope.original_request
-                {
+                if let ApiRequest::Attack(cmd) = envelope.original_request {
                     self.state.game.focused_entity_id = Some(cmd.npc_name.clone());
 
                     let display_name = self.state.game.manifest.get_npc_name(&cmd.npc_name);
@@ -231,7 +207,6 @@ impl App {
 
                     let res = attack_res.combat_result;
 
-                    // Update HP manually from attack result
                     self.state.game.hp = res.attacker_hp;
 
                     let text = match res.status.eq_ignore_ascii_case("Victory") {
@@ -250,13 +225,12 @@ impl App {
                         }
                     };
 
-                    self.state.game.active_dialogue =
-                        Some(crate::states::game::DialogueState::new(
-                            cmd.npc_name,
-                            display_name.clone(),
-                            text.clone(),
-                            true,
-                        ));
+                    self.state.game.active_dialogue = Some(DialogueState::new(
+                        cmd.npc_name,
+                        display_name.clone(),
+                        text.clone(),
+                        true,
+                    ));
 
                     self.state.game.log_action(text);
                 }
@@ -337,12 +311,10 @@ impl App {
             },
             ServerEvent::Group(group_event) => match group_event {
                 GroupEvent::Invite(leader) => {
-                    self.state
-                        .ui
-                        .push(crate::states::ui::Notification::info(format!(
-                            "You are invited to a group by {}.",
-                            leader
-                        )));
+                    self.state.ui.push(Notification::info(format!(
+                        "You are invited to a group by {}.",
+                        leader
+                    )));
                 }
                 GroupEvent::Join(user) => {
                     self.state
@@ -373,17 +345,13 @@ impl App {
                 }
                 GroupEvent::Move(direction) => {
                     if let Some(network_manager) = &self.network_manager {
-                        let req_look = api_client::protocol::command::enums::ApiRequest::Look(
-                            api_client::protocol::command::core::look::LookCommand,
-                        );
+                        let req_look = ApiRequest::Look(LookCommand);
 
                         self.state
                             .game
                             .log_action(format!("Group moved to {}.", direction));
 
-                        let _ = network_manager.send_command(
-                            crate::network::envelopes::RequestEnvelope::new(req_look),
-                        );
+                        let _ = network_manager.send_command(RequestEnvelope::new(req_look));
                     }
                 }
             },
@@ -400,12 +368,10 @@ impl App {
                     sender: chat.sender.clone(),
                     content: chat.message,
                 });
-                self.state
-                    .ui
-                    .push(crate::states::ui::Notification::info(format!(
-                        "New private message from {}.",
-                        chat.sender
-                    )));
+                self.state.ui.push(Notification::info(format!(
+                    "New private message from {}.",
+                    chat.sender
+                )));
             }
             ServerEvent::Stats(count) => {
                 self.state.game.online_players_count = count;
@@ -413,10 +379,7 @@ impl App {
             ServerEvent::Unknown(raw) => {
                 self.state
                     .ui
-                    .push(crate::states::ui::Notification::warning(format!(
-                        "Unknown event: {}",
-                        raw
-                    )));
+                    .push(Notification::warning(format!("Unknown event: {}", raw)));
             }
         }
     }

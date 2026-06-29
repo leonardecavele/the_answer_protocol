@@ -155,11 +155,10 @@ impl Lifecycle for ItemPopupComponent {
                     return true;
                 }
                 _ => {
-                    // Block all other keys
                     return true;
                 }
             }
         }
-        true // Block mouse clicks too while popup is active
+        true
     }
 }

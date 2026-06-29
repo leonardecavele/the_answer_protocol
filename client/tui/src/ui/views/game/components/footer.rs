@@ -15,7 +15,7 @@ pub struct FooterComponent {
 impl FooterComponent {
     pub fn new() -> Self {
         let mut input = Interactive::new(TextInputComponent::new("Command"));
-        input.inner.is_focused = true; // Focused by default
+        input.inner.is_focused = true;
         Self { input }
     }
 }
@@ -34,10 +34,6 @@ impl Lifecycle for FooterComponent {
         event: &CrosstermEvent,
         event_sender: &tokio::sync::mpsc::Sender<ApplicationEvent>,
     ) -> bool {
-        // We don't handle mouse focus here anymore, GameView handles it for us.
-
-        // Intercept the Enter key BEFORE passing it to TextInputComponent
-        // (Because TextInput doesn't handle Enter, it returns false)
         if state.ui.current_focus == GameFocus::Input {
             if let CrosstermEvent::Key(KeyEvent {
                 code: KeyCode::Enter,
@@ -55,7 +51,6 @@ impl Lifecycle for FooterComponent {
             }
         }
 
-        // Delegate to the interactive component (handles typing and backspace)
         if state.ui.current_focus == GameFocus::Input {
             self.input.handle_terminal_event(state, event, event_sender)
         } else {

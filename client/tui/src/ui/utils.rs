@@ -1,7 +1,7 @@
-use ratatui::text::Line;
 use crate::states::app::AppState;
-use ratatui::layout::Rect;
 use ratatui::Frame;
+use ratatui::layout::Rect;
+use ratatui::text::Line;
 use ratatui_image::{Resize, StatefulImage};
 
 /// Wrap text efficiently to match the exact visual lines it will take on screen.
@@ -26,13 +26,7 @@ pub fn wrap_slice_to_lines(strs: &[String], max_width: usize) -> Vec<Line<'stati
 }
 
 /// Renders an image using ratatui-image, handling caching automatically
-pub fn render_image(
-    state: &AppState,
-    frame: &mut Frame,
-    area: Rect,
-    path: &str,
-    resize: Resize,
-) {
+pub fn render_image(state: &AppState, frame: &mut Frame, area: Rect, path: &str, resize: Resize) {
     state.ui.ensure_image_loaded(path);
     let mut cache = state.ui.image_cache.borrow_mut();
     if let Some(Some((protocol, _, _))) = cache.get_mut(path) {
@@ -47,7 +41,7 @@ pub fn center_area_with_aspect_ratio(outer_area: Rect, img_width: u32, img_heigh
     if img_height == 0 || outer_area.height == 0 {
         return centered_area;
     }
-    
+
     let img_aspect = (img_width as f32) / (img_height as f32 / 2.0);
     let area_aspect = (outer_area.width as f32) / (outer_area.height as f32);
 
@@ -64,6 +58,6 @@ pub fn center_area_with_aspect_ratio(outer_area: Rect, img_width: u32, img_heigh
             centered_area.width = render_width;
         }
     }
-    
+
     centered_area
 }

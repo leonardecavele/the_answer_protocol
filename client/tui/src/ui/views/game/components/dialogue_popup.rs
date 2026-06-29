@@ -1,5 +1,6 @@
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
+use crate::states::game::DialogueClearMode;
 use crate::ui::components::Lifecycle;
 use crate::ui::components::scrollable::ScrollableComponent;
 use crate::ui::theme::overlay_block;
@@ -92,16 +93,13 @@ impl Lifecycle for DialoguePopupComponent {
             if let CrosstermEvent::Key(key) = event {
                 if key.code == KeyCode::Enter {
                     if dialog.visible_chars < dialog.full_text.len() {
-                        // Skip animation
                         if let Some(ref mut d) = state.game.active_dialogue {
                             d.visible_chars = d.full_text.len();
                         }
                     } else {
-                        // Close dialog
                         state.game.active_dialogue = None;
                         let should_clear = dialog.ends_dialog
-                            || state.game.dialogue_clear_mode
-                                == crate::states::game::DialogueClearMode::AlwaysClear;
+                            || state.game.dialogue_clear_mode == DialogueClearMode::AlwaysClear;
 
                         if should_clear {
                             state.game.focused_entity_id = None;
@@ -111,7 +109,6 @@ impl Lifecycle for DialoguePopupComponent {
                 }
             }
 
-            // Block everything else when popup is active
             return true;
         }
         false

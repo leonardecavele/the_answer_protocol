@@ -8,10 +8,11 @@ use crate::ui::components::scrollable::Scrollable;
 
 use crate::states::ui::GameFocus;
 use crate::ui::components::interactive::is_mouse_in_rect;
+use crate::ui::views::game::components::{INVENTORY_ITEM_HEIGHT, INVENTORY_ITEM_WIDTH};
 use components::{
     CenterPanelComponent, ChatOverlayComponent, DialoguePopupComponent, FooterComponent,
-    HeaderComponent, HelpOverlayComponent, ItemPopupComponent, ItemViewPopupComponent, LeftPanelComponent,
-    NpcActionPopup, RightPanelComponent,
+    HeaderComponent, HelpOverlayComponent, ItemPopupComponent, ItemViewPopupComponent,
+    LeftPanelComponent, NpcActionPopup, RightPanelComponent,
 };
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
 use ratatui::Frame;
@@ -257,8 +258,8 @@ impl Lifecycle for GameView {
                         let rel_x = mouse.column.saturating_sub(r.x);
                         let rel_y = mouse.row.saturating_sub(r.y);
                         if rel_x > 0 && rel_y > 0 {
-                            let col = (rel_x - 1) as usize / 20; // item_width = 20
-                            let row = (rel_y - 1) as usize / 10; // item_height = 10
+                            let col = (rel_x - 1) as usize / INVENTORY_ITEM_WIDTH as usize;
+                            let row = (rel_y - 1) as usize / INVENTORY_ITEM_HEIGHT as usize;
                             let cols = self.center_panel.inventory.inventory_cols.max(1);
                             let idx = row * cols + col;
                             if idx < state.game.inventory.len() {
@@ -281,7 +282,6 @@ impl Lifecycle for GameView {
             }
         }
 
-        // Pass event to components (Chat overlay gets priority if visible)
         if self.show_chat {
             if self
                 .chat_overlay

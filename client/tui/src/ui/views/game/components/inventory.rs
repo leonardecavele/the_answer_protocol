@@ -13,8 +13,8 @@ use ratatui::{
 };
 use tokio::sync::mpsc::Sender;
 
-const INVENTORY_ITEM_WIDTH: u16 = 20;
-const INVENTORY_ITEM_HEIGHT: u16 = 4;
+pub const INVENTORY_ITEM_WIDTH: u16 = 20;
+pub const INVENTORY_ITEM_HEIGHT: u16 = 4;
 
 pub struct InventoryComponent {
     pub inventory_cols: usize,
@@ -82,14 +82,13 @@ impl Component for InventoryComponent {
             {
                 p_style = p_style.add_modifier(Modifier::REVERSED).fg(Color::Yellow);
             }
-            
-            // Add vertical padding by rendering inside a smaller rect if possible
+
             let mut text_area = cell_area;
             if text_area.height >= 4 {
                 text_area.y += 1;
                 text_area.height -= 1;
             }
-            
+
             let paragraph = Paragraph::new(text)
                 .alignment(Alignment::Center)
                 .style(p_style);

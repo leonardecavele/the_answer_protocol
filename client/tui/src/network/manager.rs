@@ -1,22 +1,20 @@
 use crate::events::{ApiEvent, ApplicationEvent, NetworkEvent};
 use crate::network::envelopes::{RequestEnvelope, ResponseEnvelope};
+use api_client::client::connect::ClientConnect;
+use mpsc::Sender;
 use tokio::sync::mpsc;
 use tokio::task::JoinHandle;
 
 pub const NOTIF_ID_CONNECTION_ATTEMPT: &str = "notif_connection_attempt";
 
-/// The NetworkManager is responsible for handling the connection to the game server.
-/// It runs in a background Tokio task to ensure the UI never freezes during I/O.
 pub struct NetworkManager {
     background_task: JoinHandle<()>,
-    pub command_sender: mpsc::Sender<RequestEnvelope>,
+    pub command_sender: Sender<RequestEnvelope>,
 }
 
 impl NetworkManager {
-    /// Spawns the background network task.
-    /// Takes a clone of the event broker sender to push network events to the main loop.
     pub fn start(
-        event_sender: mpsc::Sender<ApplicationEvent>,
+        event_sender: Sender<ApplicationEvent>,
         server_ip: String,
         server_port: String,
         player_name: String,
@@ -26,9 +24,8 @@ impl NetworkManager {
         let background_task = tokio::spawn(async move {
             let server_address = format!("{}:{}", server_ip, server_port);
 
-            match api_client::client::connect::ClientConnect::connect(&server_address).await {
+            match ClientConnect::connect(&server_address).await {
                 Ok(mut client) => {
-                    // TCP Handshake OK. Step 2: Logical authentication
                     match client.connect(player_name.clone()).await {
                         Ok(Ok(_connect_response)) => {
                             let _ = event_sender

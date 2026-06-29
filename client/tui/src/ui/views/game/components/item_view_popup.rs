@@ -2,13 +2,13 @@ use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
 use crate::ui::components::{Component, Lifecycle};
 use crate::ui::theme::overlay_block;
-use crate::ui::utils::{render_image, wrap_str_to_lines};
+use crate::ui::utils::{center_area_with_aspect_ratio, render_image, wrap_str_to_lines};
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
 use ratatui::{
+    Frame,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Color, Style},
     widgets::{Clear, Paragraph},
-    Frame,
 };
 use tokio::sync::mpsc::Sender;
 
@@ -83,11 +83,8 @@ impl Component for ItemViewPopupComponent {
 
         if let Some(path) = image_path {
             if let Some((img_width, img_height)) = state.ui.get_image_dimensions(&path) {
-                actual_image_area = crate::ui::utils::center_area_with_aspect_ratio(
-                    actual_image_area,
-                    img_width,
-                    img_height,
-                );
+                actual_image_area =
+                    center_area_with_aspect_ratio(actual_image_area, img_width, img_height);
             }
 
             render_image(
@@ -138,7 +135,6 @@ impl Lifecycle for ItemViewPopupComponent {
             }
         }
 
-        // Always block underlying events when this popup is open
         true
     }
 }

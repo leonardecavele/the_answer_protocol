@@ -1,3 +1,6 @@
+use crate::data::manifest::Manifest;
+use api_client::protocol::command::resource_interaction::quests::QuestListEntry;
+use std::collections::HashMap;
 use std::time::Instant;
 
 pub const END_OF_DIALOGUE_TAG: &str = "[end of dialogue]";
@@ -61,15 +64,15 @@ pub struct GameState {
     pub online_players_count: u32,
     pub hp: u32,
     pub max_hp: u32,
-    pub manifest: crate::data::manifest::Manifest,
+    pub manifest: Manifest,
     pub room_npcs: Vec<String>,
     pub current_room_items: Vec<String>,
     pub inventory: Vec<String>,
-    pub quests: Vec<api_client::protocol::command::resource_interaction::quests::QuestListEntry>,
+    pub quests: Vec<QuestListEntry>,
     pub current_room_id: Option<String>,
     pub current_room_name: Option<String>,
     pub current_room_description: Option<String>,
-    pub current_room_exits: std::collections::HashMap<String, String>,
+    pub current_room_exits: HashMap<String, String>,
     pub focused_entity_id: Option<String>,
     pub action_logs: Vec<String>,
     pub active_dialogue: Option<DialogueState>,
@@ -79,7 +82,7 @@ pub struct GameState {
 }
 
 impl GameState {
-    pub fn new(manifest: crate::data::manifest::Manifest) -> Self {
+    pub fn new(manifest: Manifest) -> Self {
         Self {
             player_name: None,
             chat_history: Vec::new(),
@@ -97,7 +100,7 @@ impl GameState {
             current_room_id: None,
             current_room_name: None,
             current_room_description: None,
-            current_room_exits: std::collections::HashMap::new(),
+            current_room_exits: HashMap::new(),
             focused_entity_id: None,
             action_logs: Vec::new(),
             active_dialogue: None,

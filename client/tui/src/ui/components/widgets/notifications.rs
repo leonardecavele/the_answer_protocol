@@ -15,10 +15,10 @@ use std::cmp::min;
 use tokio::sync::mpsc::Sender;
 
 pub const MAX_VISIBLE_NOTIFICATIONS: usize = 5;
+pub type NotificationID = String;
 
 pub struct NotificationComponent {
-    /// Stores the area (Rect) associated with the ID (String) of each visible notification
-    pub visible_areas: Vec<(String, Rect)>,
+    pub visible_areas: Vec<(NotificationID, Rect)>,
 }
 
 impl NotificationComponent {
@@ -66,7 +66,6 @@ impl Component for NotificationComponent {
 
             let text_length = text.chars().count() as u16;
 
-            // Limit width if text is smaller than max_width
             let width = min(max_width, text_length + 2); // +2 for borders
 
             let inner_width = width.saturating_sub(2).max(1);
@@ -80,7 +79,6 @@ impl Component for NotificationComponent {
                 .block(block)
                 .alignment(Alignment::Left);
 
-            // Position at bottom right (grow upwards)
             let x = if area.width > width {
                 area.width - width
             } else {
@@ -100,7 +98,6 @@ impl Component for NotificationComponent {
                 height,
             };
 
-            // Memorize the clickable area
             self.visible_areas.push((notif.id.clone(), notif_area));
 
             frame.render_widget(Clear, notif_area);

@@ -3,6 +3,7 @@ use crate::states::ui::GameFocus;
 use crate::ui::components::Lifecycle;
 use crate::ui::components::scrollable::ScrollableComponent;
 use crate::ui::theme::default_block;
+use crate::ui::utils::wrap_slice_to_lines;
 use ratatui::layout::Alignment;
 use ratatui::style::{Color, Style};
 use ratatui::text::Line;
@@ -37,6 +38,6 @@ impl ScrollableComponent for ActionHistoryComponent {
             .map(|line| format!("• {}", line))
             .collect::<Vec<_>>();
 
-        crate::ui::utils::wrap_slice_to_lines(&raw_lines, max_width)
+        wrap_slice_to_lines(&raw_lines, max_width)
     }
 }

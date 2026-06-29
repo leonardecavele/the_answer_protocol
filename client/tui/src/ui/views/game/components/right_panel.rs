@@ -3,7 +3,7 @@ use crate::states::app::AppState;
 use crate::states::ui::GameFocus;
 use crate::ui::components::Component;
 use crate::ui::components::Lifecycle;
-use crate::ui::utils::{render_image, wrap_str_to_lines, center_area_with_aspect_ratio};
+use crate::ui::utils::{center_area_with_aspect_ratio, render_image, wrap_str_to_lines};
 use ratatui::{
     Frame,
     layout::{Alignment, Rect},
@@ -97,7 +97,8 @@ impl Component for RightPanelComponent {
 
         if let Some(path) = path_to_load {
             if let Some((img_width, img_height)) = state.ui.get_image_dimensions(&path) {
-                actual_image_area = center_area_with_aspect_ratio(inner_area, img_width, img_height);
+                actual_image_area =
+                    center_area_with_aspect_ratio(inner_area, img_width, img_height);
             }
 
             render_image(
