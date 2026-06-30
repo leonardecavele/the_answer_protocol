@@ -1,6 +1,7 @@
 use std::time::Duration;
 
-pub const PLAYER_ROOM_SPAWN: &str = "entree";
+pub const LOST_ITEM: u8 = 1;
+pub const PLAYER_ROOM_SPAWN: &str = "devant_l_ecole";
 pub const TICK_TIME_AMPLIFICATION: u64 = 1;
 pub const TICK_RATE: u16 = 10; // 48
 pub const TICK_TIME: Duration =

@@ -106,24 +106,6 @@ impl GameManager {
         return &mut self.all_quests;
     }
 
-    // fn change_player_name(&mut self, player_id: PlayerId, new_name: String) -> bool {
-    //     if !self.players.contains_key(&player_id) {
-    //         return false;
-    //     }
-
-    //     let player = match self.players.get_mut(&player_id) {
-    //         Some(player) => player,
-    //         _none => return false,
-    //     };
-
-    //     self.players_by_name.remove(player.get_name());
-    //     player.set_name(new_name.clone());
-
-    //     self.players_by_name.insert(new_name, player_id);
-
-    //     return true;
-    // }
-
     fn try_restore_player_save(&mut self) -> Option<Player> {
         // &mut self, name: String
         Option::None
@@ -383,9 +365,13 @@ impl GameManager {
 
     pub fn player_has_quest(&self, player_id: PlayerId, quest_id: Questid) -> bool {
         self.quest_instances.iter().any(|quest_instance| {
-            quest_instance.get_player() == player_id && 
-            quest_instance.get_quest_name() == quest_id && 
-            quest_instance.get_state() == QuestState::InProgress
+            quest_instance.get_player() == player_id
+                && quest_instance.get_quest_name() == quest_id
+                && quest_instance.get_state() == QuestState::InProgress
         })
+    }
+
+    pub fn player_has_item(&self, player_id: PlayerId, item_id: ItemId) -> bool {
+        return self.get_player(player_id).unwrap().has_item(item_id);
     }
 }

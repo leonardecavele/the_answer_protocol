@@ -1,13 +1,10 @@
-use std::ops::Index;
-
-use crate::constantes::{BASE_COMMAND_RESPONSE, ErrorCode, NPC_MOB};
+use crate::constantes::{BASE_COMMAND_RESPONSE, ErrorCode, LOST_ITEM, NPC_MOB};
 use crate::game_manager::GameManager;
 use crate::items::{Item, ItemId};
 use crate::npc::{Npc, NpcId};
 use crate::room::Room;
 use json::{JsonValue, object};
 use rand::RngExt;
-use rand::distr::StandardUniform;
 use tracing::{error, info};
 
 fn generate_json(player: &str, command: &str, error_code: ErrorCode, data: &str) -> JsonValue {
@@ -307,6 +304,24 @@ impl GameManager {
             }
 
             "QUIT" => {
+                let player_id = *self.get_player_id(player_name).unwrap();
+
+                // this part is for the lost item, who drops when quitting
+                if self.player_has_item(player_id, LOST_ITEM as ItemId) {
+                    let mut players = {
+                        let room_name = self.get_player(player_id).unwrap().get_current_room();
+                        self.get_all_players_at_room(room_name)
+                    };
+                    players.retain(|player| player != player_name);
+                    let event = self.generate_event_json(
+                        &mut players,
+                        "",
+                        "DROP",
+                        LOST_ITEM.to_string().as_str(),
+                    );
+                    self.add_diff_to_tick(event);
+                }
+
                 self.disconnect_player(player_name.to_string());
                 return BASE_COMMAND_RESPONSE.to_string();
             }
@@ -505,7 +520,7 @@ impl GameManager {
                     return generate_json(player_name, command_name, ErrorCode::NpcNotFound, "")
                         .dump();
                 }
-                
+
                 let npc_unwrap = npc.unwrap().clone();
                 if npc_unwrap.get_name() != npc_name {
                     return generate_json(player_name, command_name, ErrorCode::NpcNotFound, "")
