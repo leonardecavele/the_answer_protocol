@@ -15,7 +15,7 @@ type Event struct {
 }
 
 func (event Event) IsValid() bool {
-	return strings.TrimSpace(event.EmittedBy) != "" && strings.TrimSpace(event.EventName) != ""
+	return strings.TrimSpace(event.EventName) != ""
 }
 
 func (eventBatch EventBatch) IsValid() bool {
