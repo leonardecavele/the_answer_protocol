@@ -49,7 +49,7 @@ func groupInvite(args string, client *session.Client, gameServer *game_conn.Game
 		return protocol.ResponseAlreadyInGroup, nil
 	}
 
-	if  gameServer != nil {
+	if gameServer.IsConnected() {
 		inSameRoom, err := client.InSameRoom([]*session.Client{invitedClient}, gameServer)
 		if err != nil {
 			return "", err
@@ -87,7 +87,7 @@ func groupJoin(args string, client *session.Client, gameServer *game_conn.GameSe
 		return protocol.ResponseGroupNotFound, nil
 	}
 
-	if  gameServer != nil {
+	if gameServer.IsConnected() {
 		inSameRoom, err := client.InSameRoom([]*session.Client{groupMember}, gameServer)
 		if err != nil {
 			return "", err
