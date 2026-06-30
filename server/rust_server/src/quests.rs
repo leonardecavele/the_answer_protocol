@@ -63,7 +63,7 @@ impl Quest {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum QuestState {
     InProgress,
     Completed,
@@ -80,10 +80,11 @@ impl QuestState {
     }
 }
 
+#[derive(Debug)]
 pub struct QuestInstance {
     player: PlayerId,
     quest: Questid,
-    state: QuestState
+    state: QuestState,
 }
 
 impl QuestInstance {
@@ -94,7 +95,7 @@ impl QuestInstance {
             state,
         }
     }
-    
+
     pub fn get_player(&self) -> PlayerId {
         self.player
     }

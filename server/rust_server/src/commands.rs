@@ -82,8 +82,13 @@ impl GameManager {
         }
     }
 
-
-    pub fn group_command_move(&mut self, leader: String, command_name: &str, additional_players: Vec<String>, direction: &str) -> String {
+    pub fn group_command_move(
+        &mut self,
+        leader: String,
+        command_name: &str,
+        additional_players: Vec<String>,
+        direction: &str,
+    ) -> String {
         if direction != "NORTH"
             && direction != "SOUTH"
             && direction != "EAST"
@@ -96,11 +101,10 @@ impl GameManager {
         let last_room_players = self.get_all_players_at_room(player.get_current_room());
         let (room_to_go, room_to_go_id) = {
             let current_player_room_name = player.get_current_room();
-            let room_to_go_wrapped = self
-                .get_neighbor_room_name(current_player_room_name, &direction.to_string());
+            let room_to_go_wrapped =
+                self.get_neighbor_room_name(current_player_room_name, &direction.to_string());
             if room_to_go_wrapped.is_none() {
-                return generate_json(&leader, command_name, ErrorCode::NoExit, "")
-                    .dump();
+                return generate_json(&leader, command_name, ErrorCode::NoExit, "").dump();
             }
             let room_to_go = room_to_go_wrapped.unwrap().clone();
             let room_id = self.get_room_by_name(room_to_go.as_str()).unwrap().get_id();
@@ -188,7 +192,12 @@ impl GameManager {
 
         match command_name {
             "MOVE" => {
-                return self.group_command_move(leader.to_string(), command_name, grouped_players, data);
+                return self.group_command_move(
+                    leader.to_string(),
+                    command_name,
+                    grouped_players,
+                    data,
+                );
             }
             _ => {
                 error!("unknown group command: {}", command_name);
@@ -285,7 +294,12 @@ impl GameManager {
                 .dump();
             }
             "MOVE" => {
-                return self.group_command_move(player_name.to_string(), command_name, vec![], data);
+                return self.group_command_move(
+                    player_name.to_string(),
+                    command_name,
+                    vec![],
+                    data,
+                );
             }
 
             "QUIT" => {
@@ -504,7 +518,7 @@ impl GameManager {
                         if let Some(quest) = self.get_quest(quest_id) {
                             let mut rewards_json = Vec::new();
                             for loot in quest.get_loots() {
-                                rewards_json.push(json::object!{
+                                rewards_json.push(json::object! {
                                     "qty" => loot.qty,
                                     "chance" => loot.chance,
                                     "type" => loot.loot_type.to_string()
@@ -516,13 +530,24 @@ impl GameManager {
                                 "description" => quest.get_description(),
                                 "reward" => rewards_json,
                                 "status" => crate::quests::QuestState::InProgress.to_str()
-                            }.dump();
+                            }
+                            .dump();
                         } else {
-                            return generate_json(player_name, command_name, ErrorCode::NoQuestAvailable, "").dump();
+                            return generate_json(
+                                player_name,
+                                command_name,
+                                ErrorCode::NoQuestAvailable,
+                                "",
+                            )
+                            .dump();
                         }
 
                         let player_id = *self.get_player_id(player_name).unwrap();
-                        let quest_instance = crate::quests::QuestInstance::new(player_id, quest_id.clone(), crate::quests::QuestState::InProgress);
+                        let quest_instance = crate::quests::QuestInstance::new(
+                            player_id,
+                            quest_id.clone(),
+                            crate::quests::QuestState::InProgress,
+                        );
                         self.quest_instances.push(quest_instance);
 
                         return generate_json(
@@ -530,12 +555,29 @@ impl GameManager {
                             command_name,
                             ErrorCode::NoError,
                             quest_json_str.as_str(),
-                        ).dump();
+                        )
+                        .dump();
                     }
                 }
-                return generate_json(player_name, command_name, ErrorCode::NoQuestAvailable, "").dump();
+                return generate_json(player_name, command_name, ErrorCode::NoQuestAvailable, "")
+                    .dump();
             }
-            // "QUESTS" => {},
+            "QUESTS" => {
+                let player_id = *self.get_player_id(player_name).unwrap();
+                let quests = self
+                    .quest_instances
+                    .iter()
+                    .filter(|q| q.get_player() == player_id)
+                    .map(|q| (q.get_quest_name(), q.get_state()))
+                    .collect::<Vec<_>>();
+                return generate_json(
+                    player_name,
+                    command_name,
+                    ErrorCode::NoError,
+                    format!("{:?}", quests).as_str(),
+                )
+                .dump();
+            }
             _ => {
                 println!("Unknown command: {}", command_name);
                 return "".to_string();
