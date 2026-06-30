@@ -1,4 +1,4 @@
-use crate::constantes::Direction;
+use crate::constantes::{Direction, LOST_ITEM_SPAWN};
 use crate::inventory::Inventory;
 use crate::items::{Item, ItemId};
 use crate::npc::{Npc, NpcId};
@@ -11,6 +11,7 @@ use std::collections::HashMap;
 use std::io::Write;
 use std::net::TcpStream;
 use std::sync::mpsc;
+use std::time::Instant;
 use tracing::error;
 
 pub struct GameManager {
@@ -18,10 +19,10 @@ pub struct GameManager {
     players_by_name: HashMap<String, PlayerId>,
     next_player_id: PlayerCount,
     next_item_id: ItemId,
-    all_items: HashMap<ItemId, Item>,
-    all_rooms: HashMap<RoomId, Room>,
-    all_npcs: HashMap<NpcId, Npc>,
-    all_quests: HashMap<Questid, Quest>,
+    pub all_items: HashMap<ItemId, Item>,
+    pub all_rooms: HashMap<RoomId, Room>,
+    pub all_npcs: HashMap<NpcId, Npc>,
+    pub all_quests: HashMap<Questid, Quest>,
     pub quest_instances: Vec<QuestInstance>,
     mpsc_receiver: mpsc::Receiver<String>,
     writer_stream: TcpStream,
@@ -96,6 +97,10 @@ impl GameManager {
     }
     pub fn get_all_items(&mut self) -> &mut HashMap<ItemId, Item> {
         return &mut self.all_items;
+    }
+
+    pub fn get_all_rooms(&mut self) -> &mut HashMap<RoomId, Room> {
+        return &mut self.all_rooms;
     }
 
     pub fn get_quest(&self, id: &Questid) -> Option<&Quest> {
@@ -304,6 +309,18 @@ impl GameManager {
             .collect()
     }
 
+    pub fn reset_dropped_at_for_item(&mut self, item_id: ItemId) {
+        if let Some(item) = self.all_items.get_mut(&item_id) {
+            item.stop_dropped_at();
+        }
+    }
+
+    pub fn start_dropped_at_for_item(&mut self, item_id: ItemId) {
+        if let Some(item) = self.all_items.get_mut(&item_id) {
+            item.set_dropped_at(Instant::now());
+        }
+    }
+
     pub fn get_player_status_as_string(&self, player_name: &str) -> String {
         let player = self.get_player_from_name(player_name).unwrap();
         let hp = player.get_hp();
@@ -373,5 +390,17 @@ impl GameManager {
 
     pub fn player_has_item(&self, player_id: PlayerId, item_id: ItemId) -> bool {
         return self.get_player(player_id).unwrap().has_item(item_id);
+    }
+
+    pub fn get_mut_item(&mut self, item_id: ItemId) -> &mut Item {
+        self.all_items.get_mut(&item_id).unwrap()
+    }
+
+    pub fn get_room_id_from_name(&self, room_name: &str) -> RoomId {
+        self.all_rooms
+            .values()
+            .find(|room| room.get_name() == room_name)
+            .map(|room| room.get_id())
+            .unwrap_or(2 as RoomId)
     }
 }

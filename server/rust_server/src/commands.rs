@@ -1,4 +1,6 @@
-use crate::constantes::{BASE_COMMAND_RESPONSE, ErrorCode, LOST_ITEM, NPC_MOB};
+use std::time::Instant;
+
+use crate::constantes::{BASE_COMMAND_RESPONSE, ErrorCode, LOST_ITEM, LOST_ITEM_SPAWN, NPC_MOB};
 use crate::game_manager::GameManager;
 use crate::items::{Item, ItemId};
 use crate::npc::{Npc, NpcId};
@@ -42,7 +44,7 @@ impl GameManager {
         }
     }
 
-    fn generate_event_json(
+    pub fn generate_event_json(
         &self,
         players: &mut Vec<String>,
         emitted_by: &str,
@@ -53,6 +55,18 @@ impl GameManager {
         return object! {
             "players": players.as_slice(),
             "emitted_by": emitted_by,
+            "event_name": event_name,
+            "data": data
+        };
+    }
+
+    pub fn generate_no_player_event_json(
+        players: &mut Vec<String>,
+        event_name: &str,
+        data: &str,
+    ) -> JsonValue {
+        return object! {
+            "players": players.as_slice(),
             "event_name": event_name,
             "data": data
         };
@@ -305,20 +319,20 @@ impl GameManager {
 
             "QUIT" => {
                 let player_id = *self.get_player_id(player_name).unwrap();
-
+                let room = LOST_ITEM_SPAWN;
                 // this part is for the lost item, who drops when quitting
                 if self.player_has_item(player_id, LOST_ITEM as ItemId) {
-                    let mut players = {
-                        let room_name = self.get_player(player_id).unwrap().get_current_room();
-                        self.get_all_players_at_room(room_name)
-                    };
-                    players.retain(|player| player != player_name);
+                    let mut players = self.get_all_players_at_room(room);
+                    let lost_item_name = self.get_item_name(&(LOST_ITEM as ItemId));
                     let event = self.generate_event_json(
                         &mut players,
-                        "",
+                        player_name,
                         "DROP",
-                        LOST_ITEM.to_string().as_str(),
+                        Item::protocol_representation(LOST_ITEM as ItemId, lost_item_name.as_str())
+                            .as_str(),
                     );
+                    self.remove_item_from_player(player_id, LOST_ITEM as ItemId);
+                    self.add_item_to_room(room, LOST_ITEM as ItemId);
                     self.add_diff_to_tick(event);
                 }
 
@@ -400,6 +414,7 @@ impl GameManager {
 
                 self.remove_item_from_room(&room_name, item_id);
                 self.add_item_to_player(player_id, item_id);
+                self.reset_dropped_at_for_item(item_id);
 
                 let mut players_to_send = self.get_all_players_at_room(player_room.as_str());
                 let events_json =
@@ -441,6 +456,10 @@ impl GameManager {
                 self.remove_item_from_player(player_id, item_id);
                 self.add_item_to_room(&room_name, item_id);
 
+                //set the 2 minutes timer when we drop the item
+                
+                self.start_dropped_at_for_item(item_id);
+                
                 let mut players_to_send = self.get_all_players_at_room(room_name.as_str());
                 let events_json =
                     self.generate_event_json(&mut players_to_send, player_name, "DROP", item);

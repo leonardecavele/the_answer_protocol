@@ -1,7 +1,12 @@
 use std::time::Duration;
 
+use crate::room::RoomId;
+
 pub const LOST_ITEM: u8 = 1;
+pub const LOST_ITEM_SPAWN: &str = "pature";
+pub const LOST_ITEM_SPAWN_ID: RoomId = 2 as RoomId;
 pub const PLAYER_ROOM_SPAWN: &str = "devant_l_ecole";
+pub const ITEM_DESPAWN_TIME: Duration = Duration::from_secs(5);
 pub const TICK_TIME_AMPLIFICATION: u64 = 1;
 pub const TICK_RATE: u16 = 10; // 48
 pub const TICK_TIME: Duration =
@@ -69,13 +74,13 @@ impl ErrorCode {
 }
 
 #[derive(Clone, Copy, Debug)]
-pub enum LOOT{
+pub enum LOOT {
     XP,
     TShirt,
     Bottle,
 }
 
-impl LOOT{
+impl LOOT {
     pub fn from_string(s: &str) -> Option<Self> {
         match s.to_uppercase().as_str() {
             "XP" => Some(Self::XP),

@@ -29,4 +29,7 @@ impl Inventory {
     pub fn get_items(&self) -> &HashSet<ItemId> {
         &self.items
     }
+    pub fn get_items_mut(&mut self) -> &mut HashSet<ItemId> {
+        &mut self.items
+    }
 }
