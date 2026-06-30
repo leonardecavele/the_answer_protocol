@@ -151,5 +151,15 @@ func (room *Room) ReconnectPlayersToGameServer(gameServer *game_conn.GameServerM
 		logger.AppLogger.Info("Reconnected %s to Game server", username)
 	}
 
+	room.BroadcastEvent(protocol.EventBatch{
+		Events: []protocol.Event{
+			{
+				EventName: "GAME SERVER",
+				Data: "CONNECTED",
+			},
+		},
+	})
+
+
 	return nil
 }
