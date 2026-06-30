@@ -149,7 +149,6 @@ impl App {
             }
             ApiResponse::Quests(Ok(quests_res)) => {
                 self.state.game.quests = quests_res.quest_list.clone();
-                quests_res.quest_list.get()
                 self.state
                     .game
                     .log_action("You checked your quests.".to_string());
