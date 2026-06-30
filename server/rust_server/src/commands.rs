@@ -469,14 +469,71 @@ impl GameManager {
                 .dump();
             }
             "QUEST" => {
-                let quest = "".to_string();
-                return generate_json(
-                    player_name,
-                    command_name,
-                    ErrorCode::NoError,
-                    quest.as_str(),
-                )
-                .dump();
+                let target_npc = data;
+                let player_room = {
+                    self.get_player_from_name(player_name)
+                        .unwrap()
+                        .get_current_room()
+                };
+                let parsed_repr: Option<(NpcId, String)> =
+                    Npc::parse_protocol_representation(target_npc);
+                if parsed_repr.is_none() {
+                    return generate_json(player_name, command_name, ErrorCode::NpcNotFound, "")
+                        .dump();
+                }
+                let (npc_id, npc_name) = parsed_repr.unwrap();
+                let npc = self.get_npc(npc_id);
+                if npc.is_none() {
+                    return generate_json(player_name, command_name, ErrorCode::NpcNotFound, "")
+                        .dump();
+                }
+
+                let npc_unwrap = npc.unwrap().clone();
+                if npc_unwrap.get_name() != npc_name {
+                    return generate_json(player_name, command_name, ErrorCode::NpcNotFound, "")
+                        .dump();
+                }
+                if !self.npc_is_in_room(npc_id, player_room) {
+                    return generate_json(player_name, command_name, ErrorCode::NpcNotInRoom, "")
+                        .dump();
+                }
+
+                if let Some(quests) = npc_unwrap.get_quests() {
+                    if let Some(quest_id) = quests.first() {
+                        let quest_json_str;
+                        if let Some(quest) = self.get_quest(quest_id) {
+                            let mut rewards_json = Vec::new();
+                            for loot in quest.get_loots() {
+                                rewards_json.push(json::object!{
+                                    "qty" => loot.qty,
+                                    "chance" => loot.chance,
+                                    "type" => loot.loot_type.to_string()
+                                });
+                            }
+
+                            quest_json_str = json::object! {
+                                "quest_id" => quest.get_id().clone(),
+                                "description" => quest.get_description(),
+                                "reward" => rewards_json,
+                                "status" => crate::quests::QuestState::InProgress.to_str()
+                            }.dump();
+                        } else {
+                            return generate_json(player_name, command_name, ErrorCode::NoQuestAvailable, "").dump();
+                        }
+
+                        let player_id = *self.get_player_id(player_name).unwrap();
+                        let quest_instance = crate::quests::QuestInstance::new(player_id, quest_id.clone(), crate::quests::QuestState::InProgress);
+                        self.quest_instances.push(quest_instance);
+
+                        return generate_json(
+                            player_name,
+                            command_name,
+                            ErrorCode::NoError,
+                            quest_json_str.as_str(),
+                        ).dump();
+                    }
+                }
+                return generate_json(player_name, command_name, ErrorCode::NoQuestAvailable, "").dump();
             }
             // "QUESTS" => {},
             _ => {

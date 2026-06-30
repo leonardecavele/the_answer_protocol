@@ -83,6 +83,14 @@ impl LOOT{
             _ => None,
         }
     }
+
+    pub fn to_string(&self) -> String {
+        match self {
+            Self::XP => "XP".to_string(),
+            Self::TShirt => "TSHIRT".to_string(),
+            Self::Bottle => "BOTTLE".to_string(),
+        }
+    }
 }
 
 pub const NPC_QUEST_GIVER: u8 = 1 << 0;

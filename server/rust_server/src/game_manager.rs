@@ -4,11 +4,9 @@ use crate::items::{Item, ItemId};
 use crate::npc::{Npc, NpcId};
 use crate::parser::Parser;
 use crate::player::{Player, PlayerCount, PlayerId};
-use crate::quests::{Quest, Questid};
+use crate::quests::{Quest, QuestInstance, Questid};
 use crate::room::{Room, RoomId, RoomName};
 use json::JsonValue;
-use json::object;
-use tracing_subscriber::fmt::format;
 use std::collections::HashMap;
 use std::io::Write;
 use std::net::TcpStream;
@@ -24,6 +22,7 @@ pub struct GameManager {
     all_rooms: HashMap<RoomId, Room>,
     all_npcs: HashMap<NpcId, Npc>,
     all_quests: HashMap<Questid, Quest>,
+    pub quest_instances: Vec<QuestInstance>,
     mpsc_receiver: mpsc::Receiver<String>,
     writer_stream: TcpStream,
     tick_diff: HashMap<String, JsonValue>,
@@ -35,7 +34,6 @@ impl GameManager {
         writer_stream: TcpStream,
         parser: Parser,
     ) -> Self {
-
         let mut manager = Self {
             players: HashMap::new(),
             players_by_name: HashMap::new(),
@@ -45,6 +43,7 @@ impl GameManager {
             all_rooms: parser.get_rooms().clone(),
             all_npcs: parser.get_npcs().clone(),
             all_quests: parser.get_quests().clone(),
+            quest_instances: Vec::new(),
             mpsc_receiver,
             writer_stream,
             tick_diff: HashMap::new(),
@@ -54,7 +53,6 @@ impl GameManager {
         manager.next_item_id = manager.restore_next_item_id(&manager);
         return manager;
     }
-
 
     pub fn get_players(&self) -> &HashMap<PlayerId, Player> {
         return &self.players;
@@ -92,12 +90,16 @@ impl GameManager {
 
     fn restore_next_item_id(&self, manager: &GameManager) -> ItemId {
         //if a save is present take it else:
-        // 
-        // +1 because the ids start at 1 
+        //
+        // +1 because the ids start at 1
         (manager.all_items.len() + 1usize) as ItemId
     }
     pub fn get_all_items(&mut self) -> &mut HashMap<ItemId, Item> {
         return &mut self.all_items;
+    }
+
+    pub fn get_quest(&self, id: &Questid) -> Option<&Quest> {
+        self.all_quests.get(id)
     }
 
     pub fn get_all_quests(&mut self) -> &mut HashMap<Questid, Quest> {

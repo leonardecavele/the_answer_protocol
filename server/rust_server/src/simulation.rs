@@ -23,26 +23,17 @@ impl GameManager {
     }
 
     pub fn update_game_state(&mut self) -> std::io::Result<()> {
-        /*
-        here we should update the game state ( npcs, monsters, mouvements, etc
-        and store the diff in a buffer (an argument of this function),
-        we will send it back to players at the end of the tick
-        */
-
-        //hardcoded event for now :
-
-        // let mut events = json::JsonValue::new_array();
-        // let events = array![object! {
-        //     "player": "*",
-        //     "ignored_players": ["GABIN"],
-        //     "emitted_by": "GABIN",
-        //     "event_name": "CONNECT",
-        //     "data": ""
-        // }];
-
-
-        // self.send_msg_to_client(events.dump().to_string())?;
-        // info!("sent event");
+        for quest_instance in self.quest_instances.iter_mut() {
+            let state = quest_instance.get_state();
+            match quest_instance.get_quest_name().as_str() {
+                "Tunnel" => {
+                    
+                }
+                _ => {}
+                // => {}
+                // => {}
+            }
+        }
         Ok(())
     }
 }
