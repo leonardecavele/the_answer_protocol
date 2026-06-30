@@ -49,16 +49,18 @@ func groupInvite(args string, client *session.Client, gameServer *game_conn.Game
 		return protocol.ResponseAlreadyInGroup, nil
 	}
 
-	inSameRoom, err := client.InSameRoom([]*session.Client{invitedClient}, gameServer)
-	if err != nil {
-		return "", err
-	}
-	if !inSameRoom {
-		return protocol.ResponseNotInSameRoom, nil
-	}
+	if gameServer.IsConnected() {
+		inSameRoom, err := client.InSameRoom([]*session.Client{invitedClient}, gameServer)
+		if err != nil {
+			return "", err
+		}
+		if !inSameRoom {
+			return protocol.ResponseNotInSameRoom, nil
+		}
 
-	if response := client.Group.Invite(invitedClient.Username); response != "" {
-		return response, nil
+		if response := client.Group.Invite(invitedClient.Username); response != "" {
+			return response, nil
+		}
 	}
 
 	client.Room.RouteEvent(invitedClient.Username, protocol.Event{
@@ -85,17 +87,20 @@ func groupJoin(args string, client *session.Client, gameServer *game_conn.GameSe
 		return protocol.ResponseGroupNotFound, nil
 	}
 
-	inSameRoom, err := client.InSameRoom([]*session.Client{groupMember}, gameServer)
-	if err != nil {
-		return "", err
-	}
-	if !inSameRoom {
-		return protocol.ResponseNotInSameRoom, nil
+	if gameServer.IsConnected() {
+		inSameRoom, err := client.InSameRoom([]*session.Client{groupMember}, gameServer)
+		if err != nil {
+			return "", err
+		}
+		if !inSameRoom {
+			return protocol.ResponseNotInSameRoom, nil
+		}
+
+		if response := client.JoinGroup(groupMember.Group); response != "" {
+			return response, nil
+		}
 	}
 
-	if response := client.JoinGroup(groupMember.Group); response != "" {
-		return response, nil
-	}
 	client.Group.BroadcastEvent(protocol.EventBatch{
 		IgnoredPlayers: []string{client.Username},
 		Events: []protocol.Event{
@@ -105,6 +110,7 @@ func groupJoin(args string, client *session.Client, gameServer *game_conn.GameSe
 			},
 		},
 	})
+
 	return "OK group=" + client.Group.Id, nil
 }
 
