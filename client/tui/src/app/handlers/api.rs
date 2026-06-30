@@ -2,7 +2,7 @@ use crate::app::App;
 use crate::events::ApiEvent;
 use crate::network::envelopes::ResponseEnvelope;
 use crate::states::game::{ChatChannel, ChatMessage};
-use api_client::client::event::{GroupEvent, RoomEvent, ServerEvent};
+use api_client::client::event::{GameServerEvent, GroupEvent, RoomEvent, ServerEvent};
 use api_client::protocol::command::enums::ApiResponse;
 use api_client::protocol::command::resource_interaction::quests::QuestListEntry;
 
@@ -294,6 +294,28 @@ impl App {
                 self.state
                     .game
                     .log_action(format!("{} joined the server.", name));
+            }
+            ServerEvent::GameServer(game_server_event) => {
+                match game_server_event {
+                    GameServerEvent::Connected => {
+                        self.state
+                            .game
+                            .log_action("The server is online.".to_string());
+
+                        if let Some(network_manager) = &self.network_manager {
+                            let req = api_client::protocol::command::enums::ApiRequest::Look(
+                                api_client::protocol::command::core::look::LookCommand,
+                            );
+                            let envelope = crate::network::envelopes::RequestEnvelope::new(req);
+                            network_manager.send_command(envelope);
+                        }
+                    }
+                    GameServerEvent::Disconnected => {
+                        self.state
+                            .game
+                            .log_action("TODO waiting server reconnection VIEW.".to_string());
+                    }
+                }
             }
             ServerEvent::Quit(name) => {
                 self.state.game.online_players_count =

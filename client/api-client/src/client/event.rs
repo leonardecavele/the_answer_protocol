@@ -29,8 +29,15 @@ pub enum GroupEvent {
 }
 
 #[derive(Debug, Clone)]
+pub enum GameServerEvent {
+    Connected,
+    Disconnected
+}
+
+#[derive(Debug, Clone)]
 pub enum ServerEvent {
     Connect(String),
+    GameServer(GameServerEvent),
     Quit(String),
     Room(RoomEvent),
     Group(GroupEvent),
@@ -46,6 +53,15 @@ impl From<ServerResponse> for ServerEvent {
 
         match args.as_slice() {
             ["CONNECT", name] => ServerEvent::Connect(name.to_string()),
+
+            ["GAME", "SERVER", status] => {
+                match status.to_uppercase().as_str() {
+                    "CONNECTED" => ServerEvent::GameServer(GameServerEvent::Connected),
+                    "DISCONNECTED" => ServerEvent::GameServer(GameServerEvent::Disconnected),
+                    _ => ServerEvent::Unknown(status.to_string()),
+                }
+            }
+
             ["QUIT", name] => ServerEvent::Quit(name.to_string()),
 
             // Room events
