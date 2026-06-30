@@ -4,7 +4,7 @@ use crate::items::{Item, ItemId};
 use crate::npc::{Npc, NpcId};
 use crate::parser::Parser;
 use crate::player::{Player, PlayerCount, PlayerId};
-use crate::quests::{Quest, QuestInstance, Questid};
+use crate::quests::{Quest, QuestInstance, QuestState, Questid};
 use crate::room::{Room, RoomId, RoomName};
 use json::JsonValue;
 use std::collections::HashMap;
@@ -379,5 +379,13 @@ impl GameManager {
             "{{\"attacker_hp\":{}, \"target_hp\":{}, \"damage\":{}, \"status\":\"{}\"}}",
             player_hp, new_npc_hp, player_damage, status
         );
+    }
+
+    pub fn player_has_quest(&self, player_id: PlayerId, quest_id: Questid) -> bool {
+        self.quest_instances.iter().any(|quest_instance| {
+            quest_instance.get_player() == player_id && 
+            quest_instance.get_quest_name() == quest_id && 
+            quest_instance.get_state() == QuestState::InProgress
+        })
     }
 }

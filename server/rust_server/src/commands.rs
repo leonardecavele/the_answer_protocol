@@ -1,9 +1,13 @@
+use std::ops::Index;
+
 use crate::constantes::{BASE_COMMAND_RESPONSE, ErrorCode, NPC_MOB};
 use crate::game_manager::GameManager;
 use crate::items::{Item, ItemId};
 use crate::npc::{Npc, NpcId};
 use crate::room::Room;
 use json::{JsonValue, object};
+use rand::RngExt;
+use rand::distr::StandardUniform;
 use tracing::{error, info};
 
 fn generate_json(player: &str, command: &str, error_code: ErrorCode, data: &str) -> JsonValue {
@@ -501,7 +505,7 @@ impl GameManager {
                     return generate_json(player_name, command_name, ErrorCode::NpcNotFound, "")
                         .dump();
                 }
-
+                
                 let npc_unwrap = npc.unwrap().clone();
                 if npc_unwrap.get_name() != npc_name {
                     return generate_json(player_name, command_name, ErrorCode::NpcNotFound, "")
@@ -512,8 +516,12 @@ impl GameManager {
                         .dump();
                 }
 
-                if let Some(quests) = npc_unwrap.get_quests() {
-                    if let Some(quest_id) = quests.first() {
+                if let Some(mut quests) = npc_unwrap.get_quests().cloned() {
+                    let player_id = *self.get_player_id(player_name).unwrap();
+                    quests.retain(|quest| !self.player_has_quest(player_id, quest.clone()));
+                    let mut rng = rand::rng();
+                    let random_index = rng.random_range(0..quests.len());
+                    if let Some(quest_id) = quests.get(random_index) {
                         let quest_json_str;
                         if let Some(quest) = self.get_quest(quest_id) {
                             let mut rewards_json = Vec::new();
