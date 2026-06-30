@@ -99,6 +99,14 @@ func (gameServer *GameServer) Read(
 			if !errors.Is(err, io.EOF) {
 				logger.AppLogger.Error("Game server read error: %v", err)
 			}
+			broadcastEvent(protocol.EventBatch{
+				Events: []protocol.Event{
+					{
+						EventName: "GAME SERVER",
+						Data: "DISCONNECTED",
+					},
+				},
+			})
 			logger.AppLogger.Info("Game server disconnected")
 			return
 		}
