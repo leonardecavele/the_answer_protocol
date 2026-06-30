@@ -4,6 +4,7 @@ use crate::network::envelopes::ResponseEnvelope;
 use crate::states::game::{ChatChannel, ChatMessage};
 use api_client::client::event::{GroupEvent, RoomEvent, ServerEvent};
 use api_client::protocol::command::enums::ApiResponse;
+use api_client::protocol::command::resource_interaction::quests::QuestListEntry;
 
 impl App {
     pub(crate) fn handle_api_event(&mut self, api_event: ApiEvent) {
@@ -148,9 +149,17 @@ impl App {
             }
             ApiResponse::Quests(Ok(quests_res)) => {
                 self.state.game.quests = quests_res.quest_list.clone();
+                quests_res.quest_list.get()
                 self.state
                     .game
                     .log_action("You checked your quests.".to_string());
+            }
+            ApiResponse::Quest(Ok(quest_res)) => {
+                self.state.game.quests.push(QuestListEntry {
+                    quest_id: quest_res.quest_data.quest_id,
+                    status: quest_res.quest_data.status,
+                    progress: Some("in progress".to_string()),
+                });
             }
             ApiResponse::Talk(Ok(talk_res)) => {
                 if let api_client::protocol::command::enums::ApiRequest::Talk(cmd) =
