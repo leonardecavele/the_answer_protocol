@@ -11,6 +11,12 @@ pub struct ChatMessage {
 }
 
 #[derive(Debug, Clone)]
+pub struct SpawnData {
+    pub r#type: String,
+    pub id: String
+}
+
+#[derive(Debug, Clone)]
 pub enum RoomEvent {
     PresenceEnter(String),
     PresenceLeave(String),
@@ -29,8 +35,17 @@ pub enum GroupEvent {
 }
 
 #[derive(Debug, Clone)]
+pub enum GameServerEvent {
+    Connected,
+    Disconnected
+}
+
+#[derive(Debug, Clone)]
 pub enum ServerEvent {
     Connect(String),
+    GameServer(GameServerEvent),
+    Spawn(SpawnData),
+    Despawn(SpawnData),
     Quit(String),
     Room(RoomEvent),
     Group(GroupEvent),
@@ -46,6 +61,50 @@ impl From<ServerResponse> for ServerEvent {
 
         match args.as_slice() {
             ["CONNECT", name] => ServerEvent::Connect(name.to_string()),
+
+            ["GAME", "SERVER", status] => {
+                match status.to_uppercase().as_str() {
+                    "CONNECTED" => ServerEvent::GameServer(GameServerEvent::Connected),
+                    "DISCONNECTED" => ServerEvent::GameServer(GameServerEvent::Disconnected),
+                    _ => ServerEvent::Unknown(status.to_string()),
+                }
+            }
+
+            ["SPAWN", r#type, id] => {
+                let arg_type = r#type
+                    .strip_prefix("type=")
+                    .and_then(|s| s.parse::<String>().ok());
+                let arg_id = id
+                    .strip_prefix("id=")
+                    .and_then(|s| s.parse::<String>().ok());
+
+                if let Some(v_type) = arg_type && let Some(v_id) = arg_id {
+                    ServerEvent::Spawn(SpawnData {
+                        r#type: v_type.to_uppercase(),
+                        id: v_id
+                    })
+                } else {
+                    ServerEvent::Unknown(args.join(" "))
+                }
+            },
+            ["DESPAWN", r#type, id] => {
+                let arg_type = r#type
+                    .strip_prefix("type=")
+                    .and_then(|s| s.parse::<String>().ok());
+                let arg_id = id
+                    .strip_prefix("id=")
+                    .and_then(|s| s.parse::<String>().ok());
+
+                if let Some(v_type) = arg_type && let Some(v_id) = arg_id {
+                    ServerEvent::Despawn(SpawnData {
+                        r#type: v_type.to_uppercase(),
+                        id: v_id
+                    })
+                } else {
+                    ServerEvent::Unknown(args.join(" "))
+                }
+            },
+
             ["QUIT", name] => ServerEvent::Quit(name.to_string()),
 
             // Room events
