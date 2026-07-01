@@ -5,18 +5,6 @@ use std::time::Instant;
 
 pub const END_OF_DIALOGUE_TAG: &str = "[end of dialogue]";
 
-#[derive(Debug, Clone, PartialEq)]
-pub enum DialogueClearMode {
-    AlwaysClear,
-    ClearOnEndTag,
-}
-
-impl Default for DialogueClearMode {
-    fn default() -> Self {
-        DialogueClearMode::ClearOnEndTag
-    }
-}
-
 #[derive(Debug, Clone)]
 pub struct DialogueState {
     pub npc_id: String,
@@ -37,6 +25,13 @@ impl DialogueState {
             ends_dialog,
             last_tick: Instant::now(),
         }
+    }
+
+    pub fn add(&mut self, text: String, ends_dialog: bool) {
+        self.full_text.push_str("\n\n");
+        self.full_text.push_str(&text);
+        self.ends_dialog = ends_dialog;
+        self.visible_chars += 2;
     }
 }
 
@@ -76,7 +71,6 @@ pub struct GameState {
     pub focused_entity_id: Option<String>,
     pub action_logs: Vec<String>,
     pub active_dialogue: Option<DialogueState>,
-    pub dialogue_clear_mode: DialogueClearMode,
     pub room_item_cursor: usize,
     pub inventory_cursor: usize,
 }
@@ -104,7 +98,6 @@ impl GameState {
             focused_entity_id: None,
             action_logs: Vec::new(),
             active_dialogue: None,
-            dialogue_clear_mode: DialogueClearMode::default(),
             room_item_cursor: 0,
             inventory_cursor: 0,
         }

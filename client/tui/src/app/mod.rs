@@ -57,7 +57,42 @@ impl App {
         &mut self,
         terminal: &mut Terminal<CrosstermBackend<io::Stdout>>,
     ) -> Result<(), ApplicationError> {
+        self.render(terminal)?;
+
         while !self.state.should_quit {
+            let application_event = self.event_broker.next_event().await?;
+            self.update(application_event);
+
+            loop {
+                let event_res = self.event_broker.try_next_event();
+                match event_res {
+                    Ok(event) => {
+                        self.update(event);
+                        if self.state.should_quit {
+                            break;
+                        }
+                    }
+                    Err(e) => match e {
+                        ApplicationError::EventChannelEmpty => break,
+                        _ => {
+                            self.state.should_quit = true;
+                            return Err(e);
+                        }
+                    },
+                }
+            }
+
+            self.render(terminal)?;
+        }
+
+        Ok(())
+    }
+
+    fn render(
+        &mut self,
+        terminal: &mut Terminal<CrosstermBackend<io::Stdout>>,
+    ) -> Result<(), ApplicationError> {
+        if !self.state.should_quit {
             terminal.draw(|frame| {
                 let area = frame.area();
                 self.active_view.draw(&self.state, frame, area);
@@ -66,10 +101,6 @@ impl App {
                 }
                 self.notification_overlay.draw(&self.state, frame, area);
             })?;
-
-            let application_event = self.event_broker.next_event().await?;
-
-            self.update(application_event);
         }
 
         Ok(())
@@ -103,6 +134,7 @@ impl App {
                 self.handle_network_event(network_event);
             }
             ApplicationEvent::Api(api_event) => self.handle_api_event(api_event),
+            ApplicationEvent::SendRequest(request) => self.handle_request(request),
             ApplicationEvent::SendRawCommand(command) => self.handle_raw_command(command),
         }
     }
@@ -134,6 +166,15 @@ impl App {
                 "Unknown or invalid command: {}",
                 command
             )));
+        }
+    }
+
+    fn handle_request(&mut self, request: ApiRequest) {
+        self.push_event("request", format!("{:?}", request));
+
+        if let Some(network_manager) = &self.network_manager {
+            let envelope = RequestEnvelope::new(request);
+            network_manager.send_command(envelope);
         }
     }
 }

@@ -1,10 +1,11 @@
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
-use crate::states::game::DialogueClearMode;
 use crate::ui::components::Lifecycle;
 use crate::ui::components::scrollable::ScrollableComponent;
 use crate::ui::theme::overlay_block;
 use crate::ui::utils::wrap_str_to_lines;
+use api_client::protocol::command::enums::ApiRequest;
+use api_client::protocol::command::resource_interaction::talk::TalkCommand;
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
 use mpsc::Sender;
 use ratatui::{
@@ -71,7 +72,7 @@ impl ScrollableComponent for DialoguePopupComponent {
                 .collect();
             let mut display_text = visible_text;
 
-            if dialog.visible_chars == dialog.full_text.len() {
+            if dialog.visible_chars >= dialog.full_text.chars().count() {
                 display_text.push_str("\n\n(Press Enter to continue)");
             }
 
@@ -87,22 +88,25 @@ impl Lifecycle for DialoguePopupComponent {
         &mut self,
         state: &mut AppState,
         event: &CrosstermEvent,
-        _sender: &Sender<ApplicationEvent>,
+        sender: &Sender<ApplicationEvent>,
     ) -> bool {
         if let Some(dialog) = state.game.active_dialogue.clone() {
             if let CrosstermEvent::Key(key) = event {
                 if key.code == KeyCode::Enter {
-                    if dialog.visible_chars < dialog.full_text.len() {
+                    if dialog.visible_chars < dialog.full_text.chars().count() {
                         if let Some(ref mut d) = state.game.active_dialogue {
-                            d.visible_chars = d.full_text.len();
+                            d.visible_chars = d.full_text.chars().count();
                         }
                     } else {
-                        state.game.active_dialogue = None;
-                        let should_clear = dialog.ends_dialog
-                            || state.game.dialogue_clear_mode == DialogueClearMode::AlwaysClear;
-
-                        if should_clear {
+                        if dialog.ends_dialog {
+                            state.game.active_dialogue = None;
                             state.game.focused_entity_id = None;
+                        } else {
+                            let request = ApiRequest::Talk(TalkCommand {
+                                npc_name: dialog.npc_id.clone(),
+                            });
+
+                            let _ = sender.try_send(ApplicationEvent::SendRequest(request));
                         }
                     }
                     return true;
@@ -116,7 +120,7 @@ impl Lifecycle for DialoguePopupComponent {
 
     fn on_tick(&mut self, state: &mut AppState) {
         if let Some(ref mut dialog) = state.game.active_dialogue {
-            if dialog.visible_chars < dialog.full_text.len() {
+            if dialog.visible_chars < dialog.full_text.chars().count() {
                 if dialog.last_tick.elapsed().as_millis() > CHAR_DELAY_MS {
                     dialog.visible_chars += 1;
                     dialog.last_tick = Instant::now();

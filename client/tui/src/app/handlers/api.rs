@@ -2,11 +2,11 @@ use crate::app::App;
 use crate::events::ApiEvent;
 use crate::network::envelopes::{RequestEnvelope, ResponseEnvelope};
 use crate::states::game::{ChatChannel, ChatMessage, DialogueState, END_OF_DIALOGUE_TAG};
+use crate::states::ui::Notification;
 use api_client::client::event::{GameServerEvent, GroupEvent, RoomEvent, ServerEvent};
 use api_client::protocol::command::core::look::LookCommand;
 use api_client::protocol::command::enums::{ApiRequest, ApiResponse};
 use api_client::protocol::command::resource_interaction::quests::QuestListEntry;
-use crate::states::ui::Notification;
 
 impl App {
     pub(crate) fn handle_api_event(&mut self, api_event: ApiEvent) {
@@ -149,10 +149,13 @@ impl App {
                     let mut text = talk_res.dialogue.clone();
                     let ends_dialog = text.contains(END_OF_DIALOGUE_TAG);
                     if ends_dialog && text.starts_with(END_OF_DIALOGUE_TAG) {
-                        text = text
-                            .replace(END_OF_DIALOGUE_TAG, "**nothing**")
-                            .trim()
-                            .to_string();
+                        let eod = self
+                            .state
+                            .game
+                            .active_dialogue
+                            .clone()
+                            .map_or("[nothing]", |_| "[end]");
+                        text = text.replace(END_OF_DIALOGUE_TAG, eod).trim().to_string();
                     } else if ends_dialog {
                         text = text.replace(END_OF_DIALOGUE_TAG, "").trim().to_string();
                     }
@@ -161,20 +164,26 @@ impl App {
 
                     let display_name = self.state.game.manifest.get_npc_name(&cmd.npc_name);
 
-                    self.state
-                        .game
-                        .log_action(format!("You talked to {}.", display_name));
+                    if self.state.game.active_dialogue.is_none() {
+                        self.state
+                            .game
+                            .log_action(format!("You talked to {}.", display_name));
+                    }
 
                     self.state
                         .game
                         .log_action(format!("[{}] says: \"{}\"", display_name, text));
 
-                    self.state.game.active_dialogue = Some(DialogueState::new(
-                        cmd.npc_name,
-                        display_name,
-                        text,
-                        ends_dialog,
-                    ));
+                    if let Some(ref mut dialog) = self.state.game.active_dialogue {
+                        dialog.add(text, ends_dialog);
+                    } else {
+                        self.state.game.active_dialogue = Some(DialogueState::new(
+                            cmd.npc_name,
+                            display_name,
+                            text,
+                            ends_dialog,
+                        ));
+                    }
                 }
             }
             ApiResponse::Take(Ok(take_res)) => {
@@ -277,9 +286,7 @@ impl App {
                         .log_action("The server is online.".to_string());
 
                     if let Some(network_manager) = &self.network_manager {
-                        let req = ApiRequest::Look(
-                            LookCommand,
-                        );
+                        let req = ApiRequest::Look(LookCommand);
                         let envelope = RequestEnvelope::new(req);
                         network_manager.send_command(envelope);
                     }
@@ -290,76 +297,78 @@ impl App {
                         .log_action("TODO waiting server reconnection VIEW.".to_string());
                 }
             },
-            ServerEvent::Spawn(spawn_data) => {
-                match spawn_data.r#type.as_str() {
-                    "NPC" => {
-                        let npc_name = self
-                            .state
-                            .game
-                            .manifest
-                            .get_npc_name(spawn_data.id.as_str());
+            ServerEvent::Spawn(spawn_data) => match spawn_data.r#type.as_str() {
+                "NPC" => {
+                    let npc_name = self
+                        .state
+                        .game
+                        .manifest
+                        .get_npc_name(spawn_data.id.as_str());
 
-                        self.state
-                            .game
-                            .log_action(format!("{} has respawn", npc_name));
-                        self.state.game.room_npcs.push(spawn_data.id);
-                    }
-                    "ITEM" => {
-                        let item_name = self
-                            .state
-                            .game
-                            .manifest
-                            .get_item_name(spawn_data.id.as_str());
-                        self.state
-                            .game
-                            .log_action(format!("{} has been catapulted here", item_name));
-                        self.state.game.current_room_items.push(spawn_data.id);
-                    }
-                    t => {
-                        self.state
-                            .ui
-                            .push(crate::states::ui::Notification::warning(format!(
-                                "Unknown spawn event: {}",
-                                t
-                            )));
-                    }
+                    self.state
+                        .game
+                        .log_action(format!("{} has respawn", npc_name));
+                    self.state.game.room_npcs.push(spawn_data.id);
                 }
-            }
-            ServerEvent::Despawn(spawn_data) => {
-                match spawn_data.r#type.as_str() {
-                    "NPC" => {
-                        let npc_name = self
-                            .state
-                            .game
-                            .manifest
-                            .get_npc_name(spawn_data.id.as_str());
+                "ITEM" => {
+                    let item_name = self
+                        .state
+                        .game
+                        .manifest
+                        .get_item_name(spawn_data.id.as_str());
+                    self.state
+                        .game
+                        .log_action(format!("{} has been catapulted here", item_name));
+                    self.state.game.current_room_items.push(spawn_data.id);
+                }
+                t => {
+                    self.state
+                        .ui
+                        .push(crate::states::ui::Notification::warning(format!(
+                            "Unknown spawn event: {}",
+                            t
+                        )));
+                }
+            },
+            ServerEvent::Despawn(spawn_data) => match spawn_data.r#type.as_str() {
+                "NPC" => {
+                    let npc_name = self
+                        .state
+                        .game
+                        .manifest
+                        .get_npc_name(spawn_data.id.as_str());
 
-                        self.state
-                            .game
-                            .log_action(format!("{} has been defeated", npc_name));
-                        self.state.game.room_npcs.retain(|npc| npc != spawn_data.id.as_str());
-                    }
-                    "ITEM" => {
-                        let item_name = self
-                            .state
-                            .game
-                            .manifest
-                            .get_item_name(spawn_data.id.as_str());
-                        self.state
-                            .game
-                            .log_action(format!("{} has despawned", item_name));
-                        self.state.game.current_room_items.retain(|item| item != spawn_data.id.as_str());
-                    }
-                    t => {
-                        self.state
-                            .ui
-                            .push(crate::states::ui::Notification::warning(format!(
-                                "Unknown despawn event: {}",
-                                t
-                            )));
-                    }
+                    self.state
+                        .game
+                        .log_action(format!("{} has been defeated", npc_name));
+                    self.state
+                        .game
+                        .room_npcs
+                        .retain(|npc| npc != spawn_data.id.as_str());
                 }
-            }
+                "ITEM" => {
+                    let item_name = self
+                        .state
+                        .game
+                        .manifest
+                        .get_item_name(spawn_data.id.as_str());
+                    self.state
+                        .game
+                        .log_action(format!("{} has despawned", item_name));
+                    self.state
+                        .game
+                        .current_room_items
+                        .retain(|item| item != spawn_data.id.as_str());
+                }
+                t => {
+                    self.state
+                        .ui
+                        .push(crate::states::ui::Notification::warning(format!(
+                            "Unknown despawn event: {}",
+                            t
+                        )));
+                }
+            },
             ServerEvent::Quit(name) => {
                 self.state.game.online_players_count =
                     self.state.game.online_players_count.saturating_sub(1);

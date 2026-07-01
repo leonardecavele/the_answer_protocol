@@ -2,13 +2,14 @@ use crate::errors::ApplicationError;
 use crate::events::types::ApplicationEvent;
 use crossterm::event::EventStream;
 use futures::StreamExt;
-use mpsc::Sender;
 use std::time::Duration;
 use tokio::sync::mpsc;
+use tokio::sync::mpsc::Sender;
+use tokio::sync::mpsc::error::TryRecvError;
 use tokio::task::JoinHandle;
 use tokio::time::{Instant, interval_at};
 
-pub const TICK_RATE: Duration = Duration::from_millis(10);
+pub const TICK_RATE: Duration = Duration::from_millis(33);
 pub const MAX_EVENTS_BUS: usize = 100;
 
 pub struct EventBroker {
@@ -55,6 +56,13 @@ impl EventBroker {
             .recv()
             .await
             .ok_or(ApplicationError::EventChannelClosed)
+    }
+
+    pub fn try_next_event(&mut self) -> Result<ApplicationEvent, ApplicationError> {
+        self.receiver.try_recv().map_err(|e| match e {
+            TryRecvError::Empty => ApplicationError::EventChannelEmpty,
+            _ => ApplicationError::EventChannelClosed,
+        })
     }
 
     pub fn sender(&self) -> Sender<ApplicationEvent> {
