@@ -9,7 +9,7 @@ type NpcType = u8;
 pub type NpcId = u32;
 
 // for now, use this. later create Dialog and Questid structs
-pub type Dialog = String;
+pub type Dialog = Vec<String>;
 
 #[derive(Clone)]
 pub struct Npc {
@@ -39,8 +39,16 @@ impl Npc {
             if json["dialogs"].is_array() && !json["dialogs"].is_empty() {
                 let mut dialogs = Vec::new();
                 for item in json["dialogs"].members() {
-                    if let Some(dialog) = item.as_str() {
-                        dialogs.push(dialog.to_string());
+                    if item.is_array() {
+                        let mut lines = Vec::new();
+                        for line in item.members() {
+                            if let Some(line_str) = line.as_str() {
+                                lines.push(line_str.to_string());
+                            }
+                        }
+                        dialogs.push(lines);
+                    } else if let Some(dialog) = item.as_str() {
+                        dialogs.push(vec![dialog.to_string()]);
                     }
                 }
                 Some(dialogs)
@@ -111,5 +119,8 @@ impl Npc {
     }
     pub fn get_dialogs(&self) -> Option<&Vec<Dialog>> {
         self.dialogs.as_ref()
+    }
+    pub fn get_quests(&self) -> Option<&Vec<Questid>> {
+        self.quests.as_ref()
     }
 }

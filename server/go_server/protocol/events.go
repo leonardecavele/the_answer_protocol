@@ -3,7 +3,10 @@ package protocol
 import "encoding/json"
 
 func FormatEvent(event Event) (string, error) {
-	message := "EVT " + event.EventName + " " + event.EmittedBy
+	message := "EVT " + event.EventName
+	if event.EmittedBy != "" {
+		message += " " + event.EmittedBy
+	}
 	if event.Data == nil {
 		return message, nil
 	}

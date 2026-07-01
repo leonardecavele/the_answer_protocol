@@ -6,6 +6,7 @@ use crate::items::ItemId;
 use crate::npc::Npc;
 use crate::room::RoomName;
 use std::collections::{HashMap, HashSet};
+use rand::RngExt;
 
 pub type PlayerId = u32;
 pub type PlayerCount = u32;
@@ -17,7 +18,7 @@ pub struct Player {
     max_hp: u32,
     inventory: Inventory,
     current_room: String,
-    dialogs_index: HashMap<String, usize>,
+    dialogs_index: HashMap<String, (usize, usize)>,
 }
 
 impl Player {
@@ -63,27 +64,40 @@ impl Player {
     pub fn move_to_room(&mut self, room: &RoomName) {
         self.current_room = room.clone();
     }
-    pub fn get_dialog_index_for_npc(&self, npc_name: &str) -> usize {
-        return self.dialogs_index.get(npc_name).copied().unwrap_or(0);
+    pub fn get_dialog_index_for_npc(&self, npc_name: &str) -> Option<(usize, usize)> {
+        self.dialogs_index.get(npc_name).copied()
     }
     pub fn talk_with(&mut self, npc: &Npc) -> String {
-        if npc.get_dialogs().is_none() {
+        let dialogs = match npc.get_dialogs() {
+            Some(d) if !d.is_empty() => d,
+            _ => return NO_MORE_MESSAGES.to_string(),
+        };
+
+        let (dialog_list_index, current_line_index) = self.dialogs_index
+            .get(&npc.get_name())
+            .copied()
+            .unwrap_or_else(|| {
+                let mut rng = rand::rng();
+                let random_index = rng.random_range(0..dialogs.len());
+                (random_index, 0)
+            // change dialog vec if we are at end of dialogue
+            });
+
+        if dialog_list_index >= dialogs.len() {
             return NO_MORE_MESSAGES.to_string();
         }
-        let dialog_index = self.get_dialog_index_for_npc(npc.get_name().as_str());
-        let dialog = npc.get_dialog(dialog_index);
 
-        if dialog.is_some() {
-            self.dialogs_index.insert(npc.get_name(), dialog_index + 1);
-        } else {
-            let _ = self.dialogs_index.insert(npc.get_name(), 0);
-            // dialogs list return to index 0 after finish so we use the first dialog
-            // if none is found (because of a too high index)
-            // it is checked sooner if the npc does not have dialog or no
+        let current_dialog_list = &dialogs[dialog_list_index];
+
+        if current_line_index >= current_dialog_list.len() {
+            self.dialogs_index.remove(&npc.get_name());
             return NO_MORE_MESSAGES.to_string();
         }
 
-        return dialog.unwrap().to_string();
+        let message = &current_dialog_list[current_line_index];
+        self.dialogs_index.insert(npc.get_name(), (dialog_list_index, current_line_index + 1));
+
+        message.to_string()
     }
     pub fn has_item(&self, item_id: ItemId) -> bool {
         self.inventory.contains_item(item_id)

@@ -29,8 +29,8 @@
       }
 	},
 	{
-	  "name": "Les braves n'ont pas peur de l'échec.",
-	  "description": "Battez Acampion en moins de 20 tours.",
+	  "name": "Tic et Tac et Toe",
+	  "description": "Battez Acampion.",
 	  "loots": {
 		"XP": { "qty": 150, "chance": 100.0 }
 	  }
