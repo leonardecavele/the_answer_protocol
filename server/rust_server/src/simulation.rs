@@ -27,8 +27,7 @@ impl GameManager {
             let _state = quest_instance.get_state();
 
             match quest_instance.get_quest_name().as_str() {
-                "Tunnel" => {
-                }
+                "Tunnel" => {}
                 _ => {}
             }
         }
@@ -43,7 +42,9 @@ impl GameManager {
                     if let Some(dropped_time) = item.get_dropped_at() {
                         if current_time.duration_since(dropped_time) >= ITEM_DESPAWN_TIME {
                             let no_despawn_room = item.get_remove_despawn_in_room();
-                            if no_despawn_room.is_none() || no_despawn_room.unwrap() != room.get_id() {
+                            if no_despawn_room.is_none()
+                                || no_despawn_room.unwrap() != room.get_id()
+                            {
                                 actions.push((
                                     room.get_name().to_string(),
                                     *item_id,
@@ -66,12 +67,15 @@ impl GameManager {
                 GameManager::generate_no_player_event_json(&mut players, "DESPAWN", &data);
 
             self.add_diff_to_tick(event_despawn);
-            
+
             if is_lost_item {
                 let mut lost_item_spawn_players = self.get_all_players_at_room(LOST_ITEM_SPAWN);
                 self.add_item_to_room(LOST_ITEM_SPAWN, item_id);
-                let event_spawn =
-                    GameManager::generate_no_player_event_json(&mut lost_item_spawn_players, "SPAWN", &data);
+                let event_spawn = GameManager::generate_no_player_event_json(
+                    &mut lost_item_spawn_players,
+                    "SPAWN",
+                    &data,
+                );
                 self.add_diff_to_tick(event_spawn);
             }
         }
