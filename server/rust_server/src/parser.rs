@@ -1,9 +1,10 @@
+use crate::constantes::{LOST_ITEM, LOST_ITEM_SPAWN, LOST_ITEM_SPAWN_ID};
+use crate::items::{Item, ItemId};
+use crate::npc::{Npc, NpcId};
+use crate::quests::{Quest, Questid};
+use crate::room::{Room, RoomId};
 use std::collections::HashMap;
 use std::fs;
-use crate::items::{ItemId, Item};
-use crate::npc::{Npc, NpcId};
-use crate::room::{RoomId, Room};
-use crate::quests::{Questid, Quest};
 
 pub struct Parser {
     npcs: HashMap<NpcId, Npc>,
@@ -33,12 +34,11 @@ impl Parser {
     pub fn parse_quests(&mut self) -> Result<(), String> {
         let content = fs::read_to_string(&self.quests_file)
             .map_err(|e| format!("Failed to read file '{}': {}", self.quests_file, e))?;
-        
-        let parsed = json::parse(&content)
-            .map_err(|e| format!("Failed to parse JSON: {}", e))?;
+
+        let parsed = json::parse(&content).map_err(|e| format!("Failed to parse JSON: {}", e))?;
 
         let mut quests = HashMap::new();
-        
+
         if parsed["quests"].is_array() {
             for item in parsed["quests"].members() {
                 if let Some(quest) = Quest::new(item) {
@@ -62,18 +62,16 @@ impl Parser {
     pub fn parse_npcs(&mut self) -> Result<(), String> {
         let content = fs::read_to_string(&self.ncps_file)
             .map_err(|e| format!("Failed to read file '{}': {}", self.ncps_file, e))?;
-        
-        let parsed = json::parse(&content)
-            .map_err(|e| format!("Failed to parse JSON: {}", e))?;
+
+        let parsed = json::parse(&content).map_err(|e| format!("Failed to parse JSON: {}", e))?;
 
         let mut npcs = HashMap::new();
-        
+
         if parsed["npcs"].is_array() {
             for item in parsed["npcs"].members() {
                 if let Some(npc) = Npc::new(item) {
                     npcs.insert(npc.get_id(), npc);
-                }
-                else {
+                } else {
                     return Err("an invalid npc was found".to_string());
                 }
             }
@@ -91,12 +89,11 @@ impl Parser {
     pub fn parse_items(&mut self) -> Result<(), String> {
         let content = fs::read_to_string(&self.items_file)
             .map_err(|e| format!("Failed to read file '{}': {}", self.items_file, e))?;
-        
-        let parsed = json::parse(&content)
-            .map_err(|e| format!("Failed to parse JSON: {}", e))?;
+
+        let parsed = json::parse(&content).map_err(|e| format!("Failed to parse JSON: {}", e))?;
 
         let mut items = HashMap::new();
-        
+
         if parsed["items"].is_array() {
             for item in parsed["items"].members() {
                 let id = item["id"].as_u64();
@@ -104,7 +101,11 @@ impl Parser {
                 let description = item["description"].as_str();
 
                 if let (Some(id), Some(name), Some(description)) = (id, name, description) {
-                    let parsed_item = Item::new(id, name.to_string(), description.to_string());
+                    let mut parsed_item = Item::new(id, name.to_string(), description.to_string());
+                    if parsed_item.get_id() == LOST_ITEM as ItemId {
+                        let room_id = LOST_ITEM_SPAWN_ID;
+                        parsed_item.set_remove_despawn_in_room(room_id);
+                    }
                     items.insert(parsed_item.get_id(), parsed_item);
                 } else {
                     return Err("an invalid item was found".to_string());
@@ -125,12 +126,11 @@ impl Parser {
     pub fn parse_rooms(&mut self) -> Result<(), String> {
         let content = fs::read_to_string(&self.rooms_file)
             .map_err(|e| format!("Failed to read file '{}': {}", self.rooms_file, e))?;
-        
-        let parsed = json::parse(&content)
-            .map_err(|e| format!("Failed to parse JSON: {}", e))?;
+
+        let parsed = json::parse(&content).map_err(|e| format!("Failed to parse JSON: {}", e))?;
 
         let mut rooms = HashMap::new();
-        
+
         if parsed["rooms"].is_array() {
             for room in parsed["rooms"].members() {
                 let id = room["id"].as_u32();
@@ -147,7 +147,8 @@ impl Parser {
                         }
                     }
 
-                    let mut parsed_room = Room::new(id, name.to_string(), description.to_string(), exits);
+                    let mut parsed_room =
+                        Room::new(id, name.to_string(), description.to_string(), exits);
 
                     if room["items"].is_array() {
                         for item_id_json in room["items"].members() {

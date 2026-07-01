@@ -75,4 +75,7 @@ impl Room {
     pub fn protocol_representation(id: RoomId, name: RoomName) -> String {
         return format!("{}.{}", id, name);
     }
+    pub fn get_all_items(&mut self) -> &mut Inventory {
+        &mut self.all_items
+    }
 }

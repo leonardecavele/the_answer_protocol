@@ -1,9 +1,12 @@
-use crate::constantes::{BASE_COMMAND_RESPONSE, ErrorCode, NPC_MOB};
+use std::time::Instant;
+
+use crate::constantes::{BASE_COMMAND_RESPONSE, ErrorCode, LOST_ITEM, LOST_ITEM_SPAWN, NPC_MOB};
 use crate::game_manager::GameManager;
 use crate::items::{Item, ItemId};
 use crate::npc::{Npc, NpcId};
 use crate::room::Room;
 use json::{JsonValue, object};
+use rand::RngExt;
 use tracing::{error, info};
 
 fn generate_json(player: &str, command: &str, error_code: ErrorCode, data: &str) -> JsonValue {
@@ -41,7 +44,7 @@ impl GameManager {
         }
     }
 
-    fn generate_event_json(
+    pub fn generate_event_json(
         &self,
         players: &mut Vec<String>,
         emitted_by: &str,
@@ -52,6 +55,18 @@ impl GameManager {
         return object! {
             "players": players.as_slice(),
             "emitted_by": emitted_by,
+            "event_name": event_name,
+            "data": data
+        };
+    }
+
+    pub fn generate_no_player_event_json(
+        players: &mut Vec<String>,
+        event_name: &str,
+        data: &str,
+    ) -> JsonValue {
+        return object! {
+            "players": players.as_slice(),
             "event_name": event_name,
             "data": data
         };
@@ -82,8 +97,13 @@ impl GameManager {
         }
     }
 
-
-    pub fn group_command_move(&mut self, leader: String, command_name: &str, additional_players: Vec<String>, direction: &str) -> String {
+    pub fn group_command_move(
+        &mut self,
+        leader: String,
+        command_name: &str,
+        additional_players: Vec<String>,
+        direction: &str,
+    ) -> String {
         if direction != "NORTH"
             && direction != "SOUTH"
             && direction != "EAST"
@@ -96,11 +116,10 @@ impl GameManager {
         let last_room_players = self.get_all_players_at_room(player.get_current_room());
         let (room_to_go, room_to_go_id) = {
             let current_player_room_name = player.get_current_room();
-            let room_to_go_wrapped = self
-                .get_neighbor_room_name(current_player_room_name, &direction.to_string());
+            let room_to_go_wrapped =
+                self.get_neighbor_room_name(current_player_room_name, &direction.to_string());
             if room_to_go_wrapped.is_none() {
-                return generate_json(&leader, command_name, ErrorCode::NoExit, "")
-                    .dump();
+                return generate_json(&leader, command_name, ErrorCode::NoExit, "").dump();
             }
             let room_to_go = room_to_go_wrapped.unwrap().clone();
             let room_id = self.get_room_by_name(room_to_go.as_str()).unwrap().get_id();
@@ -188,7 +207,12 @@ impl GameManager {
 
         match command_name {
             "MOVE" => {
-                return self.group_command_move(leader.to_string(), command_name, grouped_players, data);
+                return self.group_command_move(
+                    leader.to_string(),
+                    command_name,
+                    grouped_players,
+                    data,
+                );
             }
             _ => {
                 error!("unknown group command: {}", command_name);
@@ -285,10 +309,33 @@ impl GameManager {
                 .dump();
             }
             "MOVE" => {
-                return self.group_command_move(player_name.to_string(), command_name, vec![], data);
+                return self.group_command_move(
+                    player_name.to_string(),
+                    command_name,
+                    vec![],
+                    data,
+                );
             }
 
             "QUIT" => {
+                let player_id = *self.get_player_id(player_name).unwrap();
+                let room = LOST_ITEM_SPAWN;
+                // this part is for the lost item, who drops when quitting
+                if self.player_has_item(player_id, LOST_ITEM as ItemId) {
+                    let mut players = self.get_all_players_at_room(room);
+                    let lost_item_name = self.get_item_name(&(LOST_ITEM as ItemId));
+                    let event = self.generate_event_json(
+                        &mut players,
+                        player_name,
+                        "DROP",
+                        Item::protocol_representation(LOST_ITEM as ItemId, lost_item_name.as_str())
+                            .as_str(),
+                    );
+                    self.remove_item_from_player(player_id, LOST_ITEM as ItemId);
+                    self.add_item_to_room(room, LOST_ITEM as ItemId);
+                    self.add_diff_to_tick(event);
+                }
+
                 self.disconnect_player(player_name.to_string());
                 return BASE_COMMAND_RESPONSE.to_string();
             }
@@ -367,6 +414,7 @@ impl GameManager {
 
                 self.remove_item_from_room(&room_name, item_id);
                 self.add_item_to_player(player_id, item_id);
+                self.reset_dropped_at_for_item(item_id);
 
                 let mut players_to_send = self.get_all_players_at_room(player_room.as_str());
                 let events_json =
@@ -408,6 +456,10 @@ impl GameManager {
                 self.remove_item_from_player(player_id, item_id);
                 self.add_item_to_room(&room_name, item_id);
 
+                //set the 2 minutes timer when we drop the item
+                
+                self.start_dropped_at_for_item(item_id);
+                
                 let mut players_to_send = self.get_all_players_at_room(room_name.as_str());
                 let events_json =
                     self.generate_event_json(&mut players_to_send, player_name, "DROP", item);
@@ -498,13 +550,17 @@ impl GameManager {
                         .dump();
                 }
 
-                if let Some(quests) = npc_unwrap.get_quests() {
-                    if let Some(quest_id) = quests.first() {
+                if let Some(mut quests) = npc_unwrap.get_quests().cloned() {
+                    let player_id = *self.get_player_id(player_name).unwrap();
+                    quests.retain(|quest| !self.player_has_quest(player_id, quest.clone()));
+                    let mut rng = rand::rng();
+                    let random_index = rng.random_range(0..quests.len());
+                    if let Some(quest_id) = quests.get(random_index) {
                         let quest_json_str;
                         if let Some(quest) = self.get_quest(quest_id) {
                             let mut rewards_json = Vec::new();
                             for loot in quest.get_loots() {
-                                rewards_json.push(json::object!{
+                                rewards_json.push(json::object! {
                                     "qty" => loot.qty,
                                     "chance" => loot.chance,
                                     "type" => loot.loot_type.to_string()
@@ -516,13 +572,24 @@ impl GameManager {
                                 "description" => quest.get_description(),
                                 "reward" => rewards_json,
                                 "status" => crate::quests::QuestState::InProgress.to_str()
-                            }.dump();
+                            }
+                            .dump();
                         } else {
-                            return generate_json(player_name, command_name, ErrorCode::NoQuestAvailable, "").dump();
+                            return generate_json(
+                                player_name,
+                                command_name,
+                                ErrorCode::NoQuestAvailable,
+                                "",
+                            )
+                            .dump();
                         }
 
                         let player_id = *self.get_player_id(player_name).unwrap();
-                        let quest_instance = crate::quests::QuestInstance::new(player_id, quest_id.clone(), crate::quests::QuestState::InProgress);
+                        let quest_instance = crate::quests::QuestInstance::new(
+                            player_id,
+                            quest_id.clone(),
+                            crate::quests::QuestState::InProgress,
+                        );
                         self.quest_instances.push(quest_instance);
 
                         return generate_json(
@@ -530,12 +597,29 @@ impl GameManager {
                             command_name,
                             ErrorCode::NoError,
                             quest_json_str.as_str(),
-                        ).dump();
+                        )
+                        .dump();
                     }
                 }
-                return generate_json(player_name, command_name, ErrorCode::NoQuestAvailable, "").dump();
+                return generate_json(player_name, command_name, ErrorCode::NoQuestAvailable, "")
+                    .dump();
             }
-            // "QUESTS" => {},
+            "QUESTS" => {
+                let player_id = *self.get_player_id(player_name).unwrap();
+                let quests = self
+                    .quest_instances
+                    .iter()
+                    .filter(|q| q.get_player() == player_id)
+                    .map(|q| (q.get_quest_name(), q.get_state()))
+                    .collect::<Vec<_>>();
+                return generate_json(
+                    player_name,
+                    command_name,
+                    ErrorCode::NoError,
+                    format!("{:?}", quests).as_str(),
+                )
+                .dump();
+            }
             _ => {
                 println!("Unknown command: {}", command_name);
                 return "".to_string();
