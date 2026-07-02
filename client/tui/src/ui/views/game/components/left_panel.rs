@@ -6,11 +6,11 @@ use crate::ui::components::Component;
 use crate::ui::components::Lifecycle;
 use crate::ui::theme::default_block;
 use ratatui::{
+    Frame,
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::Span,
     widgets::{List, ListItem},
-    Frame,
 };
 use tokio::sync::mpsc::Sender;
 

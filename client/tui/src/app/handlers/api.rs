@@ -145,7 +145,11 @@ impl App {
                     let mut text = talk_res.dialogue;
                     let ends_dialog = text.contains(END_OF_DIALOGUE_TAG);
                     if ends_dialog && text.starts_with(END_OF_DIALOGUE_TAG) {
-                        let eod = if self.state.game.active_dialogue.is_some() { "**end**" } else { "**nothing**" };
+                        let eod = if self.state.game.active_dialogue.is_some() {
+                            "**end**"
+                        } else {
+                            "**nothing**"
+                        };
                         text = text.replace(END_OF_DIALOGUE_TAG, eod).trim().to_string();
                     } else if ends_dialog {
                         text = text.replace(END_OF_DIALOGUE_TAG, "").trim().to_string();
@@ -185,10 +189,7 @@ impl App {
                     .game
                     .current_room_items
                     .retain(|i| i != &take_res.item_identifier);
-                self.state
-                    .game
-                    .inventory
-                    .push(take_res.item_identifier);
+                self.state.game.inventory.push(take_res.item_identifier);
             }
             ApiResponse::Drop(Ok(drop_res)) => {
                 self.state

@@ -14,7 +14,7 @@ pub enum ApplicationError {
     /// Errors originating from the event broker channel being closed or failing.
     #[error("Event channel was closed unexpectedly")]
     EventChannelClosed,
-    
+
     #[error("Event channel is empty")]
     EventChannelEmpty,
 
