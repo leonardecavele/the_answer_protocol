@@ -51,7 +51,18 @@ impl Component for HeaderComponent {
         };
 
         let stats_line = Line::from(vec![
-            Span::styled(" HP: ", Style::default().add_modifier(Modifier::BOLD)),
+            Span::styled(" Player: ", Style::default().add_modifier(Modifier::BOLD)),
+            Span::styled(
+                state
+                    .game
+                    .player_name
+                    .clone()
+                    .unwrap_or("unknown".to_string()),
+                Style::default()
+                    .fg(Color::Magenta)
+                    .add_modifier(Modifier::BOLD),
+            ),
+            Span::styled(" | HP: ", Style::default().add_modifier(Modifier::BOLD)),
             Span::styled(
                 format!("{}/{}", state.game.hp, state.game.max_hp),
                 Style::default().fg(hp_color).add_modifier(Modifier::BOLD),

@@ -120,4 +120,10 @@ impl GameState {
 
         true
     }
+
+    pub fn close_dialogue(&mut self) {
+        self.active_dialogue = None;
+        self.focused_entity_id = None;
+        self.dialogue_closed_at = Some(Instant::now());
+    }
 }

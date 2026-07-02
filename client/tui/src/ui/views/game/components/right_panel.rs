@@ -4,6 +4,8 @@ use crate::states::ui::GameFocus;
 use crate::ui::components::Component;
 use crate::ui::components::Lifecycle;
 use crate::ui::utils::{center_area_with_aspect_ratio, render_image, wrap_str_to_lines};
+use ratatui::style::Stylize;
+use ratatui::widgets::{Block, BorderType, Borders};
 use ratatui::{
     Frame,
     layout::{Alignment, Rect},
@@ -86,14 +88,56 @@ impl RightPanelComponent {
         }
         None
     }
+
+    fn render_text(&self, frame: &mut Frame, area: Rect, text: &str, fg_color: Color) {
+        let mut safe_area = area;
+        if safe_area.height > 2 {
+            safe_area.y += 1;
+            safe_area.height -= 1;
+        }
+        if safe_area.width > 16 {
+            safe_area.x += 8;
+            safe_area.width -= 16;
+        }
+
+        let visual_lines = wrap_str_to_lines(text, safe_area.width as usize);
+        let lines_count = visual_lines.len() as u16;
+        let p = Paragraph::new(visual_lines)
+            .alignment(Alignment::Center)
+            .fg(fg_color);
+
+        if safe_area.height > lines_count {
+            safe_area.y += safe_area.height.saturating_sub(lines_count) / 2;
+            safe_area.height = lines_count;
+        }
+        frame.render_widget(p, safe_area);
+    }
 }
 
 impl Component for RightPanelComponent {
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
         let (path_to_load, text_fallback) = self.get_path_to_load(state);
 
-        let inner_area = area; // No borders
+        let inner_area = area;
         let mut actual_image_area = inner_area;
+
+        if !state.network.is_connected {
+            frame.render_widget(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .border_type(BorderType::Double)
+                    .border_style(Style::default().fg(Color::Red)),
+                area,
+            );
+            self.render_text(
+                frame,
+                inner_area,
+                "Waiting for game server reconnection..",
+                Color::Red,
+            );
+
+            return;
+        }
 
         if let Some(path) = path_to_load {
             if let Some((img_width, img_height)) = state.ui.get_image_dimensions(&path) {
@@ -109,25 +153,7 @@ impl Component for RightPanelComponent {
                 ratatui_image::Resize::Scale(None),
             );
         } else if let Some(text) = text_fallback {
-            let mut safe_area = inner_area;
-            if safe_area.height > 2 {
-                safe_area.y += 1;
-                safe_area.height -= 1;
-            }
-            if safe_area.width > 16 {
-                safe_area.x += 8;
-                safe_area.width -= 16;
-            }
-
-            let visual_lines = wrap_str_to_lines(text, safe_area.width as usize);
-            let lines_count = visual_lines.len() as u16;
-            let p = Paragraph::new(visual_lines).alignment(Alignment::Center);
-
-            if safe_area.height > lines_count {
-                safe_area.y += safe_area.height.saturating_sub(lines_count) / 2;
-                safe_area.height = lines_count;
-            }
-            frame.render_widget(p, safe_area);
+            self.render_text(frame, inner_area, text, Color::White);
         }
 
         if state.ui.current_focus == GameFocus::RightPanel {

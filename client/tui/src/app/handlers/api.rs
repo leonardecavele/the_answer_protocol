@@ -42,6 +42,8 @@ impl App {
             format!("{} - {:?}", envelope.id, envelope.response),
         );
 
+        self.state.network.is_connected = true;
+
         match envelope.response {
             ApiResponse::Connect(Ok(connect_res)) => {
                 self.state.game.player_name = Some(connect_res.player_name);
@@ -100,10 +102,16 @@ impl App {
                     });
                 }
             }
-            ApiResponse::Look(Ok(look_res)) => {
+            ApiResponse::Look(Ok(mut look_res)) => {
                 self.state
                     .game
                     .log_action(format!("You looked at {}.", look_res.room.name));
+
+                let player_name = self.state.game.player_name.as_ref();
+                look_res.players.retain(|p| {
+                    !p.eq_ignore_ascii_case(player_name.unwrap_or(&"unknown".to_string()).as_str())
+                });
+
                 self.state.game.current_room_id = Some(look_res.room.id);
                 self.state.game.current_room_name = Some(look_res.room.name);
                 self.state.game.current_room_description = Some(look_res.room.description);
@@ -144,13 +152,15 @@ impl App {
                 if let ApiRequest::Talk(cmd) = envelope.original_request {
                     let mut text = talk_res.dialogue;
                     let ends_dialog = text.contains(END_OF_DIALOGUE_TAG);
-                    if ends_dialog && text.starts_with(END_OF_DIALOGUE_TAG) {
-                        let eod = if self.state.game.active_dialogue.is_some() {
-                            "**end**"
+                    let ends_dialog_only = ends_dialog && text.starts_with(END_OF_DIALOGUE_TAG);
+
+                    if ends_dialog_only {
+                        if self.state.game.active_dialogue.is_none() {
+                            text = "**nothing**".to_string();
                         } else {
-                            "**nothing**"
-                        };
-                        text = text.replace(END_OF_DIALOGUE_TAG, eod).trim().to_string();
+                            self.state.game.close_dialogue();
+                            return;
+                        }
                     } else if ends_dialog {
                         text = text.replace(END_OF_DIALOGUE_TAG, "").trim().to_string();
                     }
@@ -165,9 +175,11 @@ impl App {
                             .log_action(format!("You talked to {}.", display_name));
                     }
 
-                    self.state
-                        .game
-                        .log_action(format!("[{}] says: \"{}\"", display_name, text));
+                    if !ends_dialog_only {
+                        self.state
+                            .game
+                            .log_action(format!("[{}] says: \"{}\"", display_name, text));
+                    }
 
                     if let Some(ref mut dialog) = self.state.game.active_dialogue {
                         dialog.add(text, ends_dialog);
@@ -248,7 +260,6 @@ impl App {
             ApiResponse::Quit(Ok(_)) => {
                 self.state.should_quit = true;
             }
-            // Add other successful response handlers here as needed
             response => {
                 self.state.ui.event_history.insert(
                     0,
@@ -271,20 +282,6 @@ impl App {
                     .game
                     .log_action(format!("{} joined the server.", name));
             }
-            ServerEvent::GameServer(game_server_event) => match game_server_event {
-                GameServerEvent::Connected => {
-                    self.state
-                        .game
-                        .log_action("The server is online.".to_string());
-
-                    self.handle_request(ApiRequest::Look(LookCommand));
-                }
-                GameServerEvent::Disconnected => {
-                    self.state
-                        .game
-                        .log_action("TODO waiting server reconnection VIEW.".to_string());
-                }
-            },
             ServerEvent::Spawn(spawn_data) => match spawn_data.r#type.as_str() {
                 "NPC" => {
                     let npc_name = self
@@ -312,10 +309,7 @@ impl App {
                 t => {
                     self.state
                         .ui
-                        .push(crate::states::ui::Notification::warning(format!(
-                            "Unknown spawn event: {}",
-                            t
-                        )));
+                        .push(Notification::warning(format!("Unknown spawn event: {}", t)));
                 }
             },
             ServerEvent::Despawn(spawn_data) => match spawn_data.r#type.as_str() {
@@ -349,12 +343,10 @@ impl App {
                         .retain(|item| item != spawn_data.id.as_str());
                 }
                 t => {
-                    self.state
-                        .ui
-                        .push(crate::states::ui::Notification::warning(format!(
-                            "Unknown despawn event: {}",
-                            t
-                        )));
+                    self.state.ui.push(Notification::warning(format!(
+                        "Unknown despawn event: {}",
+                        t
+                    )));
                 }
             },
             ServerEvent::Quit(name) => {
@@ -473,6 +465,23 @@ impl App {
                     .ui
                     .push(Notification::warning(format!("Unknown event: {}", raw)));
             }
+            ServerEvent::GameServer(game_server_event) => match game_server_event {
+                GameServerEvent::Connected => {
+                    self.state
+                        .game
+                        .log_action("Game server online.".to_string());
+
+                    self.handle_request(ApiRequest::Look(LookCommand));
+                    self.load_state_from_server();
+                }
+                GameServerEvent::Disconnected => {
+                    self.state
+                        .game
+                        .log_action("Game server offline.".to_string());
+
+                    self.state.network.is_connected = false;
+                }
+            },
             _ => {
                 self.state.ui.push(Notification::warning(format!(
                     "Missing handler for event: {:?}",

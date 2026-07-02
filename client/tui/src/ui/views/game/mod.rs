@@ -59,7 +59,6 @@ impl GameView {
 
 impl Component for GameView {
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
-        // Vertical layout: Header (3), Center (rest), Footer (3)
         let vertical_chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
@@ -79,7 +78,6 @@ impl Component for GameView {
             right_width_constraint = Constraint::Length(final_width);
         }
 
-        // Horizontal layout for the center part
         let horizontal_chunks = Layout::default()
             .direction(Direction::Horizontal)
             .constraints([

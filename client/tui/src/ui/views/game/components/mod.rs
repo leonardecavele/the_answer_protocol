@@ -11,8 +11,6 @@ pub mod item_view_popup;
 pub mod left_panel;
 pub mod npc_popup;
 pub mod right_panel;
-
-pub use action_history::*;
 pub use center_panel::CenterPanelComponent;
 pub use chat_overlay::ChatOverlayComponent;
 pub use dialogue_popup::DialoguePopupComponent;

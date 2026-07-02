@@ -104,9 +104,7 @@ impl Lifecycle for DialoguePopupComponent {
                         }
                     } else {
                         if dialog.ends_dialog {
-                            state.game.active_dialogue = None;
-                            state.game.focused_entity_id = None;
-                            state.game.dialogue_closed_at = Some(Instant::now());
+                            state.game.close_dialogue();
                         } else {
                             let request = ApiRequest::Talk(TalkCommand {
                                 npc_name: dialog.npc_id.clone(),

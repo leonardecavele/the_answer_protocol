@@ -10,7 +10,11 @@ use crate::ui::components::scrollable::Scrollable;
 use crate::ui::components::widgets::event_overlay::EventOverlayComponent;
 use crate::ui::components::widgets::notifications::NotificationComponent;
 use crate::ui::views::login::LoginView;
+use api_client::protocol::command::core::who::WhoCommand;
 use api_client::protocol::command::enums::ApiRequest;
+use api_client::protocol::command::resource_interaction::inventory::InventoryCommand;
+use api_client::protocol::command::resource_interaction::quests::QuestsCommand;
+use api_client::protocol::command::resource_interaction::status::StatusCommand;
 use ratatui::Terminal;
 use ratatui::backend::CrosstermBackend;
 use std::io;
@@ -140,7 +144,7 @@ impl App {
         }
     }
 
-    pub(crate) fn handle_tick(&mut self) {
+    fn handle_tick(&mut self) {
         self.state
             .ui
             .notifications
@@ -177,5 +181,12 @@ impl App {
             let envelope = RequestEnvelope::new(request);
             network_manager.send_command(envelope);
         }
+    }
+
+    fn load_state_from_server(&mut self) {
+        self.handle_request(ApiRequest::Who(WhoCommand));
+        self.handle_request(ApiRequest::Status(StatusCommand));
+        self.handle_request(ApiRequest::Inventory(InventoryCommand));
+        self.handle_request(ApiRequest::Quests(QuestsCommand));
     }
 }
