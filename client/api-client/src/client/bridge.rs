@@ -82,6 +82,7 @@ impl Bridge {
             }
         }
 
+        let _ = self.event_transmitter.send(ServerEvent::ConnectionLost);
         info!("network connection closed");
     }
 

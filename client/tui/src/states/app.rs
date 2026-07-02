@@ -2,6 +2,7 @@ use crate::data::manifest::Manifest;
 use crate::states::game::GameState;
 use crate::states::network::NetworkState;
 use crate::states::ui::UiState;
+use std::sync::Arc;
 
 pub struct AppState {
     pub should_quit: bool,
@@ -11,7 +12,7 @@ pub struct AppState {
 }
 
 impl AppState {
-    pub fn new(ip: String, port: String, manifest: Manifest) -> Self {
+    pub fn new(ip: String, port: String, manifest: Arc<Manifest>) -> Self {
         Self {
             should_quit: false,
             ui: UiState::new(),

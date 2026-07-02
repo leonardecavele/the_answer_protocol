@@ -1,6 +1,7 @@
 use crate::data::manifest::Manifest;
 use api_client::protocol::command::resource_interaction::quests::QuestListEntry;
 use std::collections::HashMap;
+use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 pub const END_OF_DIALOGUE_TAG: &str = "[end of dialogue]";
@@ -59,7 +60,7 @@ pub struct GameState {
     pub online_players_count: u32,
     pub hp: u32,
     pub max_hp: u32,
-    pub manifest: Manifest,
+    pub manifest: Arc<Manifest>,
     pub room_npcs: Vec<String>,
     pub current_room_items: Vec<String>,
     pub inventory: Vec<String>,
@@ -77,7 +78,7 @@ pub struct GameState {
 }
 
 impl GameState {
-    pub fn new(manifest: Manifest) -> Self {
+    pub fn new(manifest: Arc<Manifest>) -> Self {
         Self {
             player_name: None,
             chat_history: Vec::new(),

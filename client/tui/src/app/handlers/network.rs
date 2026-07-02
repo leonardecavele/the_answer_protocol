@@ -3,14 +3,15 @@ use crate::events::NetworkEvent;
 use crate::network::NetworkManager;
 use crate::network::envelopes::RequestEnvelope;
 use crate::network::manager::NOTIF_ID_CONNECTION_ATTEMPT;
+use crate::states::app::AppState;
 use crate::states::ui::Notification;
 use crate::ui::views::game::GameView;
+use crate::ui::views::login::LoginView;
 use api_client::protocol::command::core::who::WhoCommand;
 use api_client::protocol::command::enums::ApiRequest;
 use api_client::protocol::command::resource_interaction::inventory::InventoryCommand;
 use api_client::protocol::command::resource_interaction::quests::QuestsCommand;
 use api_client::protocol::command::resource_interaction::status::StatusCommand;
-use tracing::info;
 
 impl App {
     pub(crate) fn handle_network_event(&mut self, event: NetworkEvent) {
@@ -76,7 +77,22 @@ impl App {
                 )));
             }
             NetworkEvent::ConnectionLost { reason } => {
-                info!("Connection lost: {}", reason);
+                self.network_manager = None;
+
+                self.active_view = Box::new(LoginView::new(
+                    self.state.network.server_ip.clone(),
+                    self.state.network.server_port.clone(),
+                ));
+
+                self.state = AppState::new(
+                    self.state.network.server_ip.clone(),
+                    self.state.network.server_port.clone(),
+                    self.state.game.manifest.clone(),
+                );
+
+                self.state
+                    .ui
+                    .push(Notification::error(format!("Connection lost: {}", reason)));
             }
         }
     }

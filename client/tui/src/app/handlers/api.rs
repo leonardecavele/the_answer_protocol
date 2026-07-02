@@ -473,6 +473,12 @@ impl App {
                     .ui
                     .push(Notification::warning(format!("Unknown event: {}", raw)));
             }
+            _ => {
+                self.state.ui.push(Notification::warning(format!(
+                    "Missing handler for event: {:?}",
+                    event
+                )));
+            }
         }
     }
 }

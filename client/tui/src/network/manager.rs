@@ -1,6 +1,7 @@
 use crate::events::{ApiEvent, ApplicationEvent, NetworkEvent};
 use crate::network::envelopes::{RequestEnvelope, ResponseEnvelope};
 use api_client::client::connect::ClientConnect;
+use api_client::client::event::ServerEvent;
 use mpsc::Sender;
 use tokio::sync::mpsc;
 use tokio::task::JoinHandle;
@@ -27,7 +28,7 @@ impl NetworkManager {
             match ClientConnect::connect(&server_address).await {
                 Ok(mut client) => {
                     match client.connect(player_name.clone()).await {
-                        Ok(Ok(_connect_response)) => {
+                        Ok(Ok(_)) => {
                             let _ = event_sender
                                 .send(ApplicationEvent::Network(
                                     NetworkEvent::ConnectionEstablished {
@@ -39,15 +40,31 @@ impl NetworkManager {
                                 .await;
 
                             client.on_event({
-                                let _event_sender = event_sender.clone();
+                                let cloned_event_sender = event_sender.clone();
                                 move |server_event| {
                                     tracing::debug!(
                                         "Received event from server: {:?}",
                                         server_event
                                     );
-                                    let _ = _event_sender.try_send(ApplicationEvent::Api(
-                                        ApiEvent::Server(server_event),
-                                    ));
+
+                                    match server_event {
+                                        ServerEvent::ConnectionLost => {
+                                            let _ = cloned_event_sender.try_send(
+                                                ApplicationEvent::Network(
+                                                    NetworkEvent::ConnectionLost {
+                                                        reason: "Server is down".to_string(),
+                                                    },
+                                                ),
+                                            );
+                                        }
+                                        _ => {
+                                            let _ = cloned_event_sender.try_send(
+                                                ApplicationEvent::Api(ApiEvent::Server(
+                                                    server_event,
+                                                )),
+                                            );
+                                        }
+                                    }
                                 }
                             });
 

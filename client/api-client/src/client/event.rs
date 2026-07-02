@@ -53,6 +53,7 @@ pub enum ServerEvent {
     PrivateChat(ChatMessage),
     Stats(u32),
     Unknown(String),
+    ConnectionLost,
 }
 
 impl From<ServerResponse> for ServerEvent {

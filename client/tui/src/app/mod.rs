@@ -14,6 +14,7 @@ use api_client::protocol::command::enums::ApiRequest;
 use ratatui::Terminal;
 use ratatui::backend::CrosstermBackend;
 use std::io;
+use std::sync::Arc;
 use std::time::Instant;
 
 pub mod handlers;
@@ -36,7 +37,7 @@ impl App {
             Err(error) => (Manifest::default(), Some(error)),
         };
 
-        let mut state = AppState::new(ip.clone(), port.clone(), manifest);
+        let mut state = AppState::new(ip.clone(), port.clone(), Arc::new(manifest));
         if let Some(error) = err {
             state
                 .ui
