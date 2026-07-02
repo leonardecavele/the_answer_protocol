@@ -1,7 +1,7 @@
 use crate::data::manifest::Manifest;
 use api_client::protocol::command::resource_interaction::quests::QuestListEntry;
 use std::collections::HashMap;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 pub const END_OF_DIALOGUE_TAG: &str = "[end of dialogue]";
 
@@ -71,6 +71,7 @@ pub struct GameState {
     pub focused_entity_id: Option<String>,
     pub action_logs: Vec<String>,
     pub active_dialogue: Option<DialogueState>,
+    pub dialogue_closed_at: Option<Instant>,
     pub room_item_cursor: usize,
     pub inventory_cursor: usize,
 }
@@ -98,6 +99,7 @@ impl GameState {
             focused_entity_id: None,
             action_logs: Vec::new(),
             active_dialogue: None,
+            dialogue_closed_at: None,
             room_item_cursor: 0,
             inventory_cursor: 0,
         }
@@ -106,5 +108,15 @@ impl GameState {
     pub fn log_action(&mut self, text: String) {
         let time_str = chrono::Local::now().format("%H:%M:%S").to_string();
         self.action_logs.push(format!("[{}] {}", time_str, text));
+    }
+
+    pub fn is_npc_dialogue_available(&self) -> bool {
+        if let Some(time) = self.dialogue_closed_at {
+            if time.elapsed() < Duration::from_millis(300) {
+                return false;
+            }
+        }
+
+        true
     }
 }

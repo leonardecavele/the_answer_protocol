@@ -6,11 +6,11 @@ use crate::ui::theme::overlay_block;
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
 use mpsc::Sender;
 use ratatui::{
-    Frame,
     layout::Rect,
     style::{Color, Modifier, Style},
     text::Span,
     widgets::{Clear, List, ListItem},
+    Frame,
 };
 use tokio::sync::mpsc;
 

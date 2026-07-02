@@ -73,7 +73,12 @@ impl ScrollableComponent for DialoguePopupComponent {
             let mut display_text = visible_text;
 
             if dialog.visible_chars >= dialog.full_text.chars().count() {
-                display_text.push_str("\n\n(Press Enter to continue)");
+                let text = if dialog.ends_dialog {
+                    "(Press Enter to close)"
+                } else {
+                    "(Press Enter to continue)"
+                };
+                display_text.push_str(format!("\n\n{text}").as_str());
             }
 
             wrap_str_to_lines(&display_text, max_width)
@@ -101,6 +106,7 @@ impl Lifecycle for DialoguePopupComponent {
                         if dialog.ends_dialog {
                             state.game.active_dialogue = None;
                             state.game.focused_entity_id = None;
+                            state.game.dialogue_closed_at = Some(Instant::now());
                         } else {
                             let request = ApiRequest::Talk(TalkCommand {
                                 npc_name: dialog.npc_id.clone(),

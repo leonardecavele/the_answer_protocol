@@ -1,6 +1,6 @@
 use crate::app::App;
 use crate::events::ApiEvent;
-use crate::network::envelopes::{RequestEnvelope, ResponseEnvelope};
+use crate::network::envelopes::ResponseEnvelope;
 use crate::states::game::{ChatChannel, ChatMessage, DialogueState, END_OF_DIALOGUE_TAG};
 use crate::states::ui::Notification;
 use api_client::client::event::{GameServerEvent, GroupEvent, RoomEvent, ServerEvent};
@@ -68,7 +68,7 @@ impl App {
             }
             ApiResponse::GroupJoin(Ok(res)) => {
                 if let ApiRequest::GroupJoin(cmd) = envelope.original_request {
-                    self.state.game.group_id = Some(res.group_id.clone());
+                    self.state.game.group_id = Some(res.group_id);
                     self.state.game.group_leader = Some(cmd.leader_name.to_uppercase());
                     self.state
                         .game
@@ -87,7 +87,7 @@ impl App {
                     self.state.game.chat_history.push(ChatMessage {
                         channel: ChatChannel::Global,
                         sender: "You".to_string(),
-                        content: cmd.message.clone(),
+                        content: cmd.message,
                     });
                 }
             }
@@ -96,7 +96,7 @@ impl App {
                     self.state.game.chat_history.push(ChatMessage {
                         channel: ChatChannel::Private(cmd.to.clone()),
                         sender: format!("(You) to {}", cmd.to),
-                        content: cmd.message.clone(),
+                        content: cmd.message,
                     });
                 }
             }
@@ -104,13 +104,13 @@ impl App {
                 self.state
                     .game
                     .log_action(format!("You looked at {}.", look_res.room.name));
-                self.state.game.current_room_id = Some(look_res.room.id.clone());
-                self.state.game.current_room_name = Some(look_res.room.name.clone());
-                self.state.game.current_room_description = Some(look_res.room.description.clone());
-                self.state.game.room_players = look_res.players.clone();
-                self.state.game.room_npcs = look_res.npcs.clone();
-                self.state.game.current_room_items = look_res.items.clone();
-                self.state.game.current_room_exits = look_res.room.exits.clone();
+                self.state.game.current_room_id = Some(look_res.room.id);
+                self.state.game.current_room_name = Some(look_res.room.name);
+                self.state.game.current_room_description = Some(look_res.room.description);
+                self.state.game.room_players = look_res.players;
+                self.state.game.room_npcs = look_res.npcs;
+                self.state.game.current_room_items = look_res.items;
+                self.state.game.current_room_exits = look_res.room.exits;
             }
             ApiResponse::Move(Ok(_move_res)) => {
                 self.state.game.focused_entity_id = None;
@@ -119,20 +119,16 @@ impl App {
                         .game
                         .log_action(format!("You moved {}.", cmd.direction));
                 }
-                if let Some(network_manager) = &self.network_manager {
-                    let req = ApiRequest::Look(LookCommand);
-                    let envelope = RequestEnvelope::new(req);
-                    network_manager.send_command(envelope);
-                }
+                self.handle_request(ApiRequest::Look(LookCommand));
             }
             ApiResponse::Inventory(Ok(inv_res)) => {
-                self.state.game.inventory = inv_res.inventory.clone();
+                self.state.game.inventory = inv_res.inventory;
                 self.state
                     .game
                     .log_action("You checked your inventory.".to_string());
             }
             ApiResponse::Quests(Ok(quests_res)) => {
-                self.state.game.quests = quests_res.quest_list.clone();
+                self.state.game.quests = quests_res.quest_list;
                 self.state
                     .game
                     .log_action("You checked your quests.".to_string());
@@ -146,15 +142,10 @@ impl App {
             }
             ApiResponse::Talk(Ok(talk_res)) => {
                 if let ApiRequest::Talk(cmd) = envelope.original_request {
-                    let mut text = talk_res.dialogue.clone();
+                    let mut text = talk_res.dialogue;
                     let ends_dialog = text.contains(END_OF_DIALOGUE_TAG);
                     if ends_dialog && text.starts_with(END_OF_DIALOGUE_TAG) {
-                        let eod = self
-                            .state
-                            .game
-                            .active_dialogue
-                            .clone()
-                            .map_or("[nothing]", |_| "[end]");
+                        let eod = if self.state.game.active_dialogue.is_some() { "**end**" } else { "**nothing**" };
                         text = text.replace(END_OF_DIALOGUE_TAG, eod).trim().to_string();
                     } else if ends_dialog {
                         text = text.replace(END_OF_DIALOGUE_TAG, "").trim().to_string();
@@ -192,12 +183,12 @@ impl App {
                     .log_action(format!("You took {}.", take_res.item_identifier));
                 self.state
                     .game
-                    .inventory
-                    .push(take_res.item_identifier.clone());
-                self.state
-                    .game
                     .current_room_items
                     .retain(|i| i != &take_res.item_identifier);
+                self.state
+                    .game
+                    .inventory
+                    .push(take_res.item_identifier);
             }
             ApiResponse::Drop(Ok(drop_res)) => {
                 self.state
@@ -205,12 +196,12 @@ impl App {
                     .log_action(format!("You dropped {}.", drop_res.item_identifier));
                 self.state
                     .game
-                    .current_room_items
-                    .push(drop_res.item_identifier.clone());
-                self.state
-                    .game
                     .inventory
                     .retain(|item| !item.eq(&drop_res.item_identifier));
+                self.state
+                    .game
+                    .current_room_items
+                    .push(drop_res.item_identifier);
             }
             ApiResponse::Attack(Ok(attack_res)) => {
                 if let ApiRequest::Attack(cmd) = envelope.original_request {
@@ -285,11 +276,7 @@ impl App {
                         .game
                         .log_action("The server is online.".to_string());
 
-                    if let Some(network_manager) = &self.network_manager {
-                        let req = ApiRequest::Look(LookCommand);
-                        let envelope = RequestEnvelope::new(req);
-                        network_manager.send_command(envelope);
-                    }
+                    self.handle_request(ApiRequest::Look(LookCommand));
                 }
                 GameServerEvent::Disconnected => {
                     self.state
@@ -452,15 +439,11 @@ impl App {
                     });
                 }
                 GroupEvent::Move(direction) => {
-                    if let Some(network_manager) = &self.network_manager {
-                        let req_look = ApiRequest::Look(LookCommand);
+                    self.state
+                        .game
+                        .log_action(format!("Group moved to {}.", direction));
 
-                        self.state
-                            .game
-                            .log_action(format!("Group moved to {}.", direction));
-
-                        let _ = network_manager.send_command(RequestEnvelope::new(req_look));
-                    }
+                    self.handle_request(ApiRequest::Look(LookCommand));
                 }
             },
             ServerEvent::GlobalChat(chat) => {

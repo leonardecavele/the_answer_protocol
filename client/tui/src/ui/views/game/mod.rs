@@ -2,9 +2,9 @@ pub mod components;
 
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
+use crate::ui::components::scrollable::Scrollable;
 use crate::ui::components::Component;
 use crate::ui::components::Lifecycle;
-use crate::ui::components::scrollable::Scrollable;
 
 use crate::states::ui::GameFocus;
 use crate::ui::components::interactive::is_mouse_in_rect;
@@ -15,8 +15,8 @@ use components::{
     LeftPanelComponent, NpcActionPopup, RightPanelComponent,
 };
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
-use ratatui::Frame;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
+use ratatui::Frame;
 use tokio::sync::mpsc;
 
 pub struct GameView {

@@ -6,11 +6,11 @@ use crate::ui::components::Component;
 use crate::ui::components::Lifecycle;
 use crate::ui::theme::default_block;
 use ratatui::{
-    Frame,
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::Span,
     widgets::{List, ListItem},
+    Frame,
 };
 use tokio::sync::mpsc::Sender;
 
@@ -202,6 +202,10 @@ impl Lifecycle for LeftPanelComponent {
                             return true;
                         }
                         crossterm::event::KeyCode::Enter => {
+                            if !state.game.is_npc_dialogue_available() {
+                                return true;
+                            }
+
                             if let Some(idx) = self.selected_npc_index {
                                 if let Some(npc_id) = state.game.room_npcs.get(idx) {
                                     state.ui.active_npc_popup = Some(npc_id.clone());
