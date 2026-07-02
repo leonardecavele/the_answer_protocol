@@ -1,16 +1,17 @@
-use crate::constantes::Direction;
+use crate::constantes::{Direction, LOST_ITEM_SPAWN};
 use crate::inventory::Inventory;
 use crate::items::{Item, ItemId};
 use crate::npc::{Npc, NpcId};
 use crate::parser::Parser;
 use crate::player::{Player, PlayerCount, PlayerId};
-use crate::quests::{Quest, QuestInstance, Questid};
+use crate::quests::{Quest, QuestInstance, QuestState, Questid};
 use crate::room::{Room, RoomId, RoomName};
 use json::JsonValue;
 use std::collections::HashMap;
 use std::io::Write;
 use std::net::TcpStream;
 use std::sync::mpsc;
+use std::time::Instant;
 use tracing::error;
 
 pub struct GameManager {
@@ -18,10 +19,10 @@ pub struct GameManager {
     players_by_name: HashMap<String, PlayerId>,
     next_player_id: PlayerCount,
     next_item_id: ItemId,
-    all_items: HashMap<ItemId, Item>,
-    all_rooms: HashMap<RoomId, Room>,
-    all_npcs: HashMap<NpcId, Npc>,
-    all_quests: HashMap<Questid, Quest>,
+    pub all_items: HashMap<ItemId, Item>,
+    pub all_rooms: HashMap<RoomId, Room>,
+    pub all_npcs: HashMap<NpcId, Npc>,
+    pub all_quests: HashMap<Questid, Quest>,
     pub quest_instances: Vec<QuestInstance>,
     mpsc_receiver: mpsc::Receiver<String>,
     writer_stream: TcpStream,
@@ -98,6 +99,10 @@ impl GameManager {
         return &mut self.all_items;
     }
 
+    pub fn get_all_rooms(&mut self) -> &mut HashMap<RoomId, Room> {
+        return &mut self.all_rooms;
+    }
+
     pub fn get_quest(&self, id: &Questid) -> Option<&Quest> {
         self.all_quests.get(id)
     }
@@ -105,24 +110,6 @@ impl GameManager {
     pub fn get_all_quests(&mut self) -> &mut HashMap<Questid, Quest> {
         return &mut self.all_quests;
     }
-
-    // fn change_player_name(&mut self, player_id: PlayerId, new_name: String) -> bool {
-    //     if !self.players.contains_key(&player_id) {
-    //         return false;
-    //     }
-
-    //     let player = match self.players.get_mut(&player_id) {
-    //         Some(player) => player,
-    //         _none => return false,
-    //     };
-
-    //     self.players_by_name.remove(player.get_name());
-    //     player.set_name(new_name.clone());
-
-    //     self.players_by_name.insert(new_name, player_id);
-
-    //     return true;
-    // }
 
     fn try_restore_player_save(&mut self) -> Option<Player> {
         // &mut self, name: String
@@ -322,6 +309,18 @@ impl GameManager {
             .collect()
     }
 
+    pub fn reset_dropped_at_for_item(&mut self, item_id: ItemId) {
+        if let Some(item) = self.all_items.get_mut(&item_id) {
+            item.stop_dropped_at();
+        }
+    }
+
+    pub fn start_dropped_at_for_item(&mut self, item_id: ItemId) {
+        if let Some(item) = self.all_items.get_mut(&item_id) {
+            item.set_dropped_at(Instant::now());
+        }
+    }
+
     pub fn get_player_status_as_string(&self, player_name: &str) -> String {
         let player = self.get_player_from_name(player_name).unwrap();
         let hp = player.get_hp();
@@ -379,5 +378,29 @@ impl GameManager {
             "{{\"attacker_hp\":{}, \"target_hp\":{}, \"damage\":{}, \"status\":\"{}\"}}",
             player_hp, new_npc_hp, player_damage, status
         );
+    }
+
+    pub fn player_has_quest(&self, player_id: PlayerId, quest_id: Questid) -> bool {
+        self.quest_instances.iter().any(|quest_instance| {
+            quest_instance.get_player() == player_id
+                && quest_instance.get_quest_name() == quest_id
+                && quest_instance.get_state() == QuestState::InProgress
+        })
+    }
+
+    pub fn player_has_item(&self, player_id: PlayerId, item_id: ItemId) -> bool {
+        return self.get_player(player_id).unwrap().has_item(item_id);
+    }
+
+    pub fn get_mut_item(&mut self, item_id: ItemId) -> &mut Item {
+        self.all_items.get_mut(&item_id).unwrap()
+    }
+
+    pub fn get_room_id_from_name(&self, room_name: &str) -> RoomId {
+        self.all_rooms
+            .values()
+            .find(|room| room.get_name() == room_name)
+            .map(|room| room.get_id())
+            .unwrap_or(2 as RoomId)
     }
 }
