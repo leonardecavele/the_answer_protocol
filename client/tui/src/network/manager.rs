@@ -110,7 +110,7 @@ impl NetworkManager {
                         Err(tap_error) => {
                             let _ = event_sender
                                 .send(ApplicationEvent::Network(NetworkEvent::ConnectionFailed {
-                                    error_message: format!("Communication error: {:?}", tap_error),
+                                    error_message: tap_error.to_string(),
                                 }))
                                 .await;
                         }
@@ -119,7 +119,7 @@ impl NetworkManager {
                 Err(e) => {
                     let _ = event_sender
                         .send(ApplicationEvent::Network(NetworkEvent::ConnectionFailed {
-                            error_message: format!("TCP error: {}", e),
+                            error_message: e.to_string(),
                         }))
                         .await;
                 }

@@ -13,6 +13,7 @@ pub enum GameFocus {
     Input,
     RightPanel,
     NpcList,
+    QuestList,
     RoomItemsList,
     InventoryGrid,
     ActionHistory,

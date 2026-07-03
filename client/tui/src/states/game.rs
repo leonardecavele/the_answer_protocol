@@ -73,7 +73,6 @@ pub struct GameState {
     pub action_logs: Vec<String>,
     pub active_dialogue: Option<DialogueState>,
     pub dialogue_closed_at: Option<Instant>,
-    pub room_item_cursor: usize,
     pub inventory_cursor: usize,
 }
 
@@ -101,7 +100,6 @@ impl GameState {
             action_logs: Vec::new(),
             active_dialogue: None,
             dialogue_closed_at: None,
-            room_item_cursor: 0,
             inventory_cursor: 0,
         }
     }

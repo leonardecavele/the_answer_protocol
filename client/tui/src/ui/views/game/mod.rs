@@ -187,10 +187,11 @@ impl Lifecycle for GameView {
             }
             if key.code == KeyCode::Tab {
                 state.ui.current_focus = match state.ui.current_focus {
-                    GameFocus::Input => GameFocus::ActionHistory,
-                    GameFocus::ActionHistory => GameFocus::NpcList,
+                    GameFocus::Input => GameFocus::NpcList,
                     GameFocus::NpcList => GameFocus::RoomItemsList,
-                    GameFocus::RoomItemsList => GameFocus::InventoryGrid,
+                    GameFocus::RoomItemsList => GameFocus::QuestList,
+                    GameFocus::QuestList => GameFocus::ActionHistory,
+                    GameFocus::ActionHistory => GameFocus::InventoryGrid,
                     GameFocus::InventoryGrid => GameFocus::RightPanel,
                     GameFocus::RightPanel => GameFocus::Input,
                 };
@@ -200,10 +201,11 @@ impl Lifecycle for GameView {
                 state.ui.current_focus = match state.ui.current_focus {
                     GameFocus::Input => GameFocus::RightPanel,
                     GameFocus::RightPanel => GameFocus::InventoryGrid,
-                    GameFocus::InventoryGrid => GameFocus::RoomItemsList,
+                    GameFocus::InventoryGrid => GameFocus::ActionHistory,
+                    GameFocus::ActionHistory => GameFocus::QuestList,
+                    GameFocus::QuestList => GameFocus::RoomItemsList,
                     GameFocus::RoomItemsList => GameFocus::NpcList,
-                    GameFocus::NpcList => GameFocus::ActionHistory,
-                    GameFocus::ActionHistory => GameFocus::Input,
+                    GameFocus::NpcList => GameFocus::Input,
                 };
                 return true;
             }
@@ -237,7 +239,21 @@ impl Lifecycle for GameView {
                         if y > 0 {
                             let idx = (y - 1) as usize;
                             if idx < state.game.current_room_items.len() {
-                                state.game.room_item_cursor = idx;
+                                self.left_panel.selected_item_index = idx;
+                            }
+                        }
+                    }
+                }
+
+                if let Some(r) = self.left_panel.quests_area {
+                    if is_mouse_in_rect(mouse.column, mouse.row, r) {
+                        state.ui.current_focus = GameFocus::QuestList;
+
+                        let y = mouse.row.saturating_sub(r.y);
+                        if y > 0 {
+                            let idx = (y - 1) as usize;
+                            if idx < state.game.current_room_items.len() {
+                                self.left_panel.selected_quest_index = idx;
                             }
                         }
                     }

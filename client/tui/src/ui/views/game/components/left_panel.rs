@@ -18,6 +18,9 @@ pub struct LeftPanelComponent {
     pub npcs_area: Option<Rect>,
     pub selected_npc_index: Option<usize>,
     pub items_area: Option<Rect>,
+    pub selected_item_index: usize,
+    pub quests_area: Option<Rect>,
+    pub selected_quest_index: usize,
 }
 
 impl LeftPanelComponent {
@@ -26,6 +29,9 @@ impl LeftPanelComponent {
             npcs_area: None,
             selected_npc_index: None,
             items_area: None,
+            selected_item_index: 0,
+            quests_area: None,
+            selected_quest_index: 0,
         }
     }
 }
@@ -121,7 +127,7 @@ impl Component for LeftPanelComponent {
                     .unwrap_or_else(|| item_id.clone());
                 let mut style = Style::default().fg(Color::Cyan);
 
-                if state.game.room_item_cursor == idx
+                if self.selected_item_index == idx
                     && state.ui.current_focus == GameFocus::RoomItemsList
                 {
                     style = style.add_modifier(Modifier::REVERSED);
@@ -145,7 +151,8 @@ impl Component for LeftPanelComponent {
             .game
             .quests
             .iter()
-            .map(|q| {
+            .enumerate()
+            .map(|(idx, q)| {
                 let desc = state
                     .game
                     .manifest
@@ -154,20 +161,31 @@ impl Component for LeftPanelComponent {
                     .map(|c| c.description.clone())
                     .unwrap_or_else(|| q.quest_id.clone());
                 let is_done = q.status.eq_ignore_ascii_case("completed");
-                let style = if is_done {
+                let mut style = if is_done {
                     Style::default().fg(Color::Green)
                 } else {
                     Style::default().fg(Color::Yellow)
                 };
+
+                if self.selected_quest_index == idx
+                    && state.ui.current_focus == GameFocus::QuestList
+                {
+                    style = style.add_modifier(Modifier::REVERSED);
+                }
+
                 ListItem::new(Span::styled(
                     format!("[{}] {}", q.status.to_uppercase(), desc),
                     style,
                 ))
             })
             .collect();
-        let quests_block = default_block().title(" Quests ");
+        let mut quests_block = default_block().title(" Quests ");
+        if state.ui.current_focus == GameFocus::QuestList {
+            quests_block = quests_block.border_style(Style::default().fg(Color::Yellow));
+        }
         let quests_list = List::new(quests_items).block(quests_block);
         frame.render_widget(quests_list, chunks[3]);
+        self.quests_area = Some(chunks[3]);
     }
 }
 
@@ -223,8 +241,8 @@ impl Lifecycle for LeftPanelComponent {
                 if item_count > 0 {
                     match key.code {
                         crossterm::event::KeyCode::Up => {
-                            let current = state.game.room_item_cursor;
-                            state.game.room_item_cursor = if current == 0 {
+                            let current = self.selected_item_index;
+                            self.selected_item_index = if current == 0 {
                                 item_count - 1
                             } else {
                                 current - 1
@@ -232,8 +250,8 @@ impl Lifecycle for LeftPanelComponent {
                             return true;
                         }
                         crossterm::event::KeyCode::Down => {
-                            let current = state.game.room_item_cursor;
-                            state.game.room_item_cursor = if current >= item_count - 1 {
+                            let current = self.selected_item_index;
+                            self.selected_item_index = if current >= item_count - 1 {
                                 0
                             } else {
                                 current + 1
@@ -241,12 +259,46 @@ impl Lifecycle for LeftPanelComponent {
                             return true;
                         }
                         crossterm::event::KeyCode::Enter => {
-                            if let Some(item_id) = state
-                                .game
-                                .current_room_items
-                                .get(state.game.room_item_cursor)
+                            if let Some(item_id) =
+                                state.game.current_room_items.get(self.selected_item_index)
                             {
                                 state.ui.active_item_popup = Some(item_id.clone());
+                                return true;
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+            }
+        } else if state.ui.current_focus == GameFocus::QuestList {
+            if let crossterm::event::Event::Key(key) = event {
+                let quest_count = state.game.quests.len();
+                if quest_count > 0 {
+                    match key.code {
+                        crossterm::event::KeyCode::Up => {
+                            let current = self.selected_quest_index;
+                            self.selected_quest_index = if current == 0 {
+                                quest_count - 1
+                            } else {
+                                current - 1
+                            };
+                            return true;
+                        }
+                        crossterm::event::KeyCode::Down => {
+                            let current = self.selected_quest_index;
+                            self.selected_quest_index = if current >= quest_count - 1 {
+                                0
+                            } else {
+                                current + 1
+                            };
+                            return true;
+                        }
+                        crossterm::event::KeyCode::Enter => {
+                            if let Some(_quest_id) = state.game.quests.get(self.selected_quest_index)
+                            {
+                                state
+                                    .game
+                                    .log_action("TODO: overlay for quest selection".to_string());
                                 return true;
                             }
                         }

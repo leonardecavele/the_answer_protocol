@@ -471,6 +471,10 @@ impl App {
                         .game
                         .log_action("Game server online.".to_string());
 
+                    self.state
+                        .ui
+                        .push(Notification::info("Game server is online. Session restarted."));
+
                     self.handle_request(ApiRequest::Look(LookCommand));
                     self.load_state_from_server();
                 }
