@@ -1,5 +1,6 @@
 use crate::network::envelopes::{RequestEnvelope, ResponseEnvelope};
 use api_client::client::event::ServerEvent;
+use api_client::protocol::command::enums::ApiRequest;
 use crossterm::event::Event as CrosstermEvent;
 
 /// The main event enum that encapsulates all possible events in the application.
@@ -8,6 +9,7 @@ pub enum ApplicationEvent {
     Terminal(CrosstermEvent),
     Tick,
     Network(NetworkEvent),
+    SendRequest(ApiRequest),
     SendRawCommand(String),
     Api(ApiEvent),
 }

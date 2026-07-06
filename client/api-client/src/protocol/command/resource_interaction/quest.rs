@@ -10,10 +10,17 @@ pub struct QuestCommand {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct QuestReward {
+    pub qty: u32,
+    pub chance: u32,
+    pub r#type: String
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QuestData {
     pub quest_id: String,
     pub description: String,
-    pub reward: String,
+    pub reward: Vec<QuestReward>,
     pub status: String,
 }
 

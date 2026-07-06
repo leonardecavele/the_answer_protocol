@@ -1,7 +1,7 @@
 use crate::data::manifest::NpcType;
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
-use crate::states::ui::GameFocus;
+use crate::states::game::GameFocus;
 use crate::ui::components::Component;
 use crate::ui::components::Lifecycle;
 use crate::ui::theme::default_block;
@@ -18,6 +18,9 @@ pub struct LeftPanelComponent {
     pub npcs_area: Option<Rect>,
     pub selected_npc_index: Option<usize>,
     pub items_area: Option<Rect>,
+    pub selected_item_index: usize,
+    pub quests_area: Option<Rect>,
+    pub selected_quest_index: usize,
 }
 
 impl LeftPanelComponent {
@@ -26,12 +29,17 @@ impl LeftPanelComponent {
             npcs_area: None,
             selected_npc_index: None,
             items_area: None,
+            selected_item_index: 0,
+            quests_area: None,
+            selected_quest_index: 0,
         }
     }
 }
 
 impl Component for LeftPanelComponent {
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
+        // TODO: refactoriser cette fonction (decouper en plus petit bloc)
+
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
@@ -45,11 +53,12 @@ impl Component for LeftPanelComponent {
         // 1. Room Players
         let players_items: Vec<ListItem> = state
             .game
-            .room_players
+            .room
+            .players
             .iter()
             .map(|name| {
                 let mut style = Style::default();
-                if Some(name) == state.game.player_name.as_ref() {
+                if Some(name) == state.game.player.name.as_ref() {
                     style = style.fg(Color::Yellow).add_modifier(Modifier::BOLD);
                 }
                 ListItem::new(Span::styled(format!("• {}", name), style))
@@ -61,7 +70,8 @@ impl Component for LeftPanelComponent {
         // 2. Room NPCs
         let npcs_items: Vec<ListItem> = state
             .game
-            .room_npcs
+            .room
+            .npcs
             .iter()
             .map(|npc_id| {
                 let (display_name, npc_type) = match state.game.manifest.npcs.get(npc_id) {
@@ -80,9 +90,9 @@ impl Component for LeftPanelComponent {
 
                 if let Some(selected_idx) = self.selected_npc_index {
                     // Find the actual index of the npc_id in the room_npcs list
-                    if let Some(idx) = state.game.room_npcs.iter().position(|id| id == npc_id) {
+                    if let Some(idx) = state.game.room.npcs.iter().position(|id| id == npc_id) {
                         if idx == selected_idx {
-                            if state.ui.current_focus == GameFocus::NpcList {
+                            if state.game.ui.current_focus == GameFocus::NpcList {
                                 style = style.add_modifier(Modifier::REVERSED);
                             }
                         }
@@ -96,7 +106,7 @@ impl Component for LeftPanelComponent {
             })
             .collect();
         let mut npcs_block = default_block().title(" Room NPCs ");
-        if state.ui.current_focus == GameFocus::NpcList {
+        if state.game.ui.current_focus == GameFocus::NpcList {
             npcs_block = npcs_block.border_style(Style::default().fg(Color::Yellow));
         }
         let npcs_list = List::new(npcs_items).block(npcs_block);
@@ -106,7 +116,8 @@ impl Component for LeftPanelComponent {
         // 3. Room Items
         let items: Vec<ListItem> = state
             .game
-            .current_room_items
+            .room
+            .items
             .iter()
             .enumerate()
             .map(|(idx, item_id)| {
@@ -119,8 +130,8 @@ impl Component for LeftPanelComponent {
                     .unwrap_or_else(|| item_id.clone());
                 let mut style = Style::default().fg(Color::Cyan);
 
-                if state.game.room_item_cursor == idx
-                    && state.ui.current_focus == GameFocus::RoomItemsList
+                if self.selected_item_index == idx
+                    && state.game.ui.current_focus == GameFocus::RoomItemsList
                 {
                     style = style.add_modifier(Modifier::REVERSED);
                 }
@@ -131,7 +142,7 @@ impl Component for LeftPanelComponent {
             })
             .collect();
         let mut items_block = default_block().title(" Room Items ");
-        if state.ui.current_focus == GameFocus::RoomItemsList {
+        if state.game.ui.current_focus == GameFocus::RoomItemsList {
             items_block = items_block.border_style(Style::default().fg(Color::Yellow));
         }
         let items_list = List::new(items).block(items_block);
@@ -141,9 +152,11 @@ impl Component for LeftPanelComponent {
         // 4. Quests
         let quests_items: Vec<ListItem> = state
             .game
+            .player
             .quests
             .iter()
-            .map(|q| {
+            .enumerate()
+            .map(|(idx, q)| {
                 let desc = state
                     .game
                     .manifest
@@ -152,20 +165,31 @@ impl Component for LeftPanelComponent {
                     .map(|c| c.description.clone())
                     .unwrap_or_else(|| q.quest_id.clone());
                 let is_done = q.status.eq_ignore_ascii_case("completed");
-                let style = if is_done {
+                let mut style = if is_done {
                     Style::default().fg(Color::Green)
                 } else {
                     Style::default().fg(Color::Yellow)
                 };
+
+                if self.selected_quest_index == idx
+                    && state.game.ui.current_focus == GameFocus::QuestList
+                {
+                    style = style.add_modifier(Modifier::REVERSED);
+                }
+
                 ListItem::new(Span::styled(
                     format!("[{}] {}", q.status.to_uppercase(), desc),
                     style,
                 ))
             })
             .collect();
-        let quests_block = default_block().title(" Quests ");
+        let mut quests_block = default_block().title(" Quests ");
+        if state.game.ui.current_focus == GameFocus::QuestList {
+            quests_block = quests_block.border_style(Style::default().fg(Color::Yellow));
+        }
         let quests_list = List::new(quests_items).block(quests_block);
         frame.render_widget(quests_list, chunks[3]);
+        self.quests_area = Some(chunks[3]);
     }
 }
 
@@ -176,9 +200,9 @@ impl Lifecycle for LeftPanelComponent {
         event: &crossterm::event::Event,
         _event_sender: &Sender<ApplicationEvent>,
     ) -> bool {
-        if state.ui.current_focus == GameFocus::NpcList {
+        if state.game.ui.current_focus == GameFocus::NpcList {
             if let crossterm::event::Event::Key(key) = event {
-                let npc_count = state.game.room_npcs.len();
+                let npc_count = state.game.room.npcs.len();
                 if npc_count > 0 {
                     match key.code {
                         crossterm::event::KeyCode::Up => {
@@ -200,9 +224,13 @@ impl Lifecycle for LeftPanelComponent {
                             return true;
                         }
                         crossterm::event::KeyCode::Enter => {
+                            if !state.game.ui.is_npc_dialogue_available() {
+                                return true;
+                            }
+
                             if let Some(idx) = self.selected_npc_index {
-                                if let Some(npc_id) = state.game.room_npcs.get(idx) {
-                                    state.ui.active_npc_popup = Some(npc_id.clone());
+                                if let Some(npc_id) = state.game.room.npcs.get(idx) {
+                                    state.game.ui.active_npc_popup = Some(npc_id.clone());
                                     return true;
                                 }
                             }
@@ -211,14 +239,14 @@ impl Lifecycle for LeftPanelComponent {
                     }
                 }
             }
-        } else if state.ui.current_focus == GameFocus::RoomItemsList {
+        } else if state.game.ui.current_focus == GameFocus::RoomItemsList {
             if let crossterm::event::Event::Key(key) = event {
-                let item_count = state.game.current_room_items.len();
+                let item_count = state.game.room.items.len();
                 if item_count > 0 {
                     match key.code {
                         crossterm::event::KeyCode::Up => {
-                            let current = state.game.room_item_cursor;
-                            state.game.room_item_cursor = if current == 0 {
+                            let current = self.selected_item_index;
+                            self.selected_item_index = if current == 0 {
                                 item_count - 1
                             } else {
                                 current - 1
@@ -226,8 +254,8 @@ impl Lifecycle for LeftPanelComponent {
                             return true;
                         }
                         crossterm::event::KeyCode::Down => {
-                            let current = state.game.room_item_cursor;
-                            state.game.room_item_cursor = if current >= item_count - 1 {
+                            let current = self.selected_item_index;
+                            self.selected_item_index = if current >= item_count - 1 {
                                 0
                             } else {
                                 current + 1
@@ -235,12 +263,47 @@ impl Lifecycle for LeftPanelComponent {
                             return true;
                         }
                         crossterm::event::KeyCode::Enter => {
-                            if let Some(item_id) = state
-                                .game
-                                .current_room_items
-                                .get(state.game.room_item_cursor)
+                            if let Some(item_id) =
+                                state.game.room.items.get(self.selected_item_index)
                             {
-                                state.ui.active_item_popup = Some(item_id.clone());
+                                state.game.ui.active_item_popup = Some(item_id.clone());
+                                return true;
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+            }
+        } else if state.game.ui.current_focus == GameFocus::QuestList {
+            if let crossterm::event::Event::Key(key) = event {
+                let quest_count = state.game.player.quests.len();
+                if quest_count > 0 {
+                    match key.code {
+                        crossterm::event::KeyCode::Up => {
+                            let current = self.selected_quest_index;
+                            self.selected_quest_index = if current == 0 {
+                                quest_count - 1
+                            } else {
+                                current - 1
+                            };
+                            return true;
+                        }
+                        crossterm::event::KeyCode::Down => {
+                            let current = self.selected_quest_index;
+                            self.selected_quest_index = if current >= quest_count - 1 {
+                                0
+                            } else {
+                                current + 1
+                            };
+                            return true;
+                        }
+                        crossterm::event::KeyCode::Enter => {
+                            if let Some(_quest_id) =
+                                state.game.player.quests.get(self.selected_quest_index)
+                            {
+                                state
+                                    .game
+                                    .log_action("TODO: overlay for quest selection".to_string());
                                 return true;
                             }
                         }

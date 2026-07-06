@@ -1,6 +1,9 @@
 use crate::events::types::NotificationType;
+use ratatui::Frame;
+use ratatui::layout::Rect;
 use ratatui_image::picker::Picker;
 use ratatui_image::protocol::StatefulProtocol;
+use ratatui_image::{Resize, StatefulImage};
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::time::{Duration, Instant};
@@ -8,22 +11,8 @@ use uuid::Uuid;
 
 pub const NOTIF_DEFAULT_DURATION_MS: u64 = 5000;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum GameFocus {
-    Input,
-    RightPanel,
-    NpcList,
-    RoomItemsList,
-    InventoryGrid,
-    ActionHistory,
-}
-
-impl Default for GameFocus {
-    fn default() -> Self {
-        GameFocus::Input
-    }
-}
-
+//region Notifications
+// TODO: Changer l'emplacement des notifications
 pub struct Notification {
     pub id: String,
     pub message: String,
@@ -84,53 +73,63 @@ impl Notification {
     }
 }
 
-pub struct UiState {
-    pub notifications: Vec<Notification>,
-    pub show_event_overlay: bool,
-    pub event_history: Vec<String>,
-    pub image_picker: Picker,
-    pub image_cache: RefCell<HashMap<String, Option<(StatefulProtocol, u32, u32)>>>,
-    pub current_focus: GameFocus,
-    pub active_npc_popup: Option<String>,
-    pub active_item_popup: Option<String>,
-    pub active_item_view_popup: Option<String>,
-    pub show_help_overlay: bool,
+pub struct Notifications {
+    notifications: Vec<Notification>,
 }
 
-impl UiState {
+impl Notifications {
     pub fn new() -> Self {
-        let picker = Picker::halfblocks();
-
         Self {
             notifications: Vec::new(),
-            show_event_overlay: false,
-            event_history: Vec::new(),
-            image_picker: picker,
-            image_cache: RefCell::new(HashMap::new()),
-            current_focus: GameFocus::default(),
-            active_npc_popup: None,
-            active_item_popup: None,
-            active_item_view_popup: None,
-            show_help_overlay: false,
         }
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.notifications.is_empty()
+    }
+
+    pub fn take(&self, n: usize) -> Vec<&Notification> {
+        self.notifications.iter().rev().take(n).collect::<Vec<_>>()
     }
 
     pub fn push(&mut self, notification: Notification) {
         self.notifications.push(notification);
     }
 
-    pub fn remove_notification(&mut self, target_id: &str) {
+    pub fn remove(&mut self, target_id: &str) {
         self.notifications.retain(|n| n.id != target_id);
     }
 
-    pub fn ensure_image_loaded(&self, path: &str) {
-        let mut cache = self.image_cache.borrow_mut();
+    pub fn remove_expired(&mut self) {
+        self.notifications.retain(|n| Instant::now() < n.expires_at);
+    }
+}
+//endregion
+
+//region ImageManager
+pub struct ImageManager {
+    picker: Picker,
+    cache: RefCell<HashMap<String, Option<(StatefulProtocol, u32, u32)>>>,
+}
+
+impl ImageManager {
+    pub fn new() -> Self {
+        let picker = Picker::halfblocks();
+
+        Self {
+            picker: picker,
+            cache: RefCell::new(HashMap::new()),
+        }
+    }
+
+    pub fn ensure_loaded(&self, path: &str) {
+        let mut cache = self.cache.borrow_mut();
         if !cache.contains_key(path) {
             match image::open(path) {
                 Ok(dyn_img) => {
                     let w = dyn_img.width();
                     let h = dyn_img.height();
-                    let protocol = self.image_picker.new_resize_protocol(dyn_img);
+                    let protocol = self.picker.new_resize_protocol(dyn_img);
                     cache.insert(path.to_string(), Some((protocol, w, h)));
                 }
                 Err(_) => {
@@ -140,13 +139,41 @@ impl UiState {
         }
     }
 
-    pub fn get_image_dimensions(&self, path: &str) -> Option<(u32, u32)> {
-        self.ensure_image_loaded(path);
-        let cache = self.image_cache.borrow();
+    pub fn get_dimensions(&self, path: &str) -> Option<(u32, u32)> {
+        self.ensure_loaded(path);
+        let cache = self.cache.borrow();
         if let Some(Some((_, w, h))) = cache.get(path) {
             Some((*w, *h))
         } else {
             None
+        }
+    }
+
+    pub fn render(&self, frame: &mut Frame, area: Rect, path: &str, resize: Resize) {
+        self.ensure_loaded(path);
+        let mut cache = self.cache.borrow_mut();
+        if let Some(Some((protocol, _, _))) = cache.get_mut(path) {
+            let image_widget = StatefulImage::default().resize(resize);
+            frame.render_stateful_widget(image_widget, area, protocol);
+        }
+    }
+}
+//endregion
+
+pub struct UiState {
+    pub notification: Notifications,
+    pub image_manager: ImageManager,
+    pub show_event_overlay: bool,
+    pub event_history: Vec<String>,
+}
+
+impl UiState {
+    pub fn new() -> Self {
+        Self {
+            notification: Notifications::new(),
+            image_manager: ImageManager::new(),
+            show_event_overlay: false,
+            event_history: Vec::new(),
         }
     }
 }

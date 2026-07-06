@@ -1,9 +1,12 @@
 use crate::app::App;
 use crate::events::ApiEvent;
 use crate::network::envelopes::ResponseEnvelope;
-use crate::states::game::{ChatChannel, ChatMessage};
-use api_client::client::event::{GroupEvent, RoomEvent, ServerEvent};
-use api_client::protocol::command::enums::ApiResponse;
+use crate::states::game::{ChatChannel, ChatMessage, DialogueState, END_OF_DIALOGUE_TAG};
+use crate::states::ui::Notification;
+use api_client::client::event::{GameServerEvent, GroupEvent, RoomEvent, ServerEvent};
+use api_client::protocol::command::core::look::LookCommand;
+use api_client::protocol::command::enums::{ApiRequest, ApiResponse};
+use api_client::protocol::command::resource_interaction::quests::QuestListEntry;
 
 impl App {
     pub(crate) fn handle_api_event(&mut self, api_event: ApiEvent) {
@@ -31,7 +34,8 @@ impl App {
             );
             self.state
                 .ui
-                .push(crate::states::ui::Notification::warning(error.to_string()));
+                .notification
+                .push(Notification::warning(error.to_string()));
 
             return;
         }
@@ -41,154 +45,155 @@ impl App {
             format!("{} - {:?}", envelope.id, envelope.response),
         );
 
+        self.state.network.is_connected = true;
+
         match envelope.response {
             ApiResponse::Connect(Ok(connect_res)) => {
-                self.state.game.player_name = Some(connect_res.player_name);
+                self.state.game.player.name = Some(connect_res.player_name);
             }
             ApiResponse::Who(Ok(who_res)) => {
-                self.state.game.online_players_count = who_res.player_count;
+                self.state.game.server.online_players_count = who_res.player_count;
                 self.state
                     .game
                     .log_action("You checked who is here.".to_string());
             }
             ApiResponse::Status(Ok(status_res)) => {
-                self.state.game.hp = status_res.player_status.hp;
-                self.state.game.max_hp = status_res.player_status.max_hp;
+                self.state.game.player.hp = status_res.player_status.hp;
+                self.state.game.player.max_hp = status_res.player_status.max_hp;
                 self.state
                     .game
                     .log_action("You checked your state.".to_string());
             }
             ApiResponse::GroupCreate(Ok(res)) => {
-                self.state.game.group_id = Some(res.group_id.clone());
-                self.state.game.group_leader = self.state.game.player_name.clone();
+                self.state.game.group.id = Some(res.group_id.clone());
+                self.state.game.group.leader = self.state.game.player.name.clone();
                 self.state
                     .game
                     .log_action(format!("You created group {}.", res.group_id));
             }
             ApiResponse::GroupJoin(Ok(res)) => {
-                if let api_client::protocol::command::enums::ApiRequest::GroupJoin(cmd) =
-                    envelope.original_request
-                {
-                    self.state.game.group_id = Some(res.group_id.clone());
-                    self.state.game.group_leader = Some(cmd.leader_name.to_uppercase());
+                if let ApiRequest::GroupJoin(cmd) = envelope.original_request {
+                    self.state.game.group.id = Some(res.group_id);
+                    self.state.game.group.leader = Some(cmd.leader_name.to_uppercase());
                     self.state
                         .game
-                        .log_action("You joined the group.".to_string());
+                        .log_action(format!("You joined the group of {}.", cmd.leader_name));
                 }
             }
             ApiResponse::GroupLeave(Ok(_res)) => {
-                self.state.game.group_id = None;
-                self.state.game.group_leader = None;
+                self.state.game.group.id = None;
+                self.state.game.group.leader = None;
                 self.state
                     .game
                     .log_action("You left the group.".to_string());
             }
             ApiResponse::GlobalChat(Ok(_)) => {
-                if let api_client::protocol::command::enums::ApiRequest::GlobalChat(cmd) =
-                    envelope.original_request
-                {
-                    self.state
-                        .game
-                        .chat_history
-                        .push(crate::states::game::ChatMessage {
-                            channel: crate::states::game::ChatChannel::Global,
-                            sender: "You".to_string(),
-                            content: cmd.message.clone(),
-                        });
+                if let ApiRequest::GlobalChat(cmd) = envelope.original_request {
+                    self.state.game.chat_history.push(ChatMessage {
+                        channel: ChatChannel::Global,
+                        sender: "You".to_string(),
+                        content: cmd.message,
+                    });
                 }
             }
             ApiResponse::PrivateChat(Ok(_)) => {
-                if let api_client::protocol::command::enums::ApiRequest::PrivateChat(cmd) =
-                    envelope.original_request
-                {
-                    self.state
-                        .game
-                        .chat_history
-                        .push(crate::states::game::ChatMessage {
-                            channel: crate::states::game::ChatChannel::Private(cmd.to.clone()),
-                            sender: format!("(You) to {}", cmd.to),
-                            content: cmd.message.clone(),
-                        });
+                if let ApiRequest::PrivateChat(cmd) = envelope.original_request {
+                    self.state.game.chat_history.push(ChatMessage {
+                        channel: ChatChannel::Private(cmd.to.clone()),
+                        sender: format!("(You) to {}", cmd.to),
+                        content: cmd.message,
+                    });
                 }
             }
-            ApiResponse::Look(Ok(look_res)) => {
+            ApiResponse::Look(Ok(mut look_res)) => {
                 self.state
                     .game
                     .log_action(format!("You looked at {}.", look_res.room.name));
-                self.state.game.current_room_id = Some(look_res.room.id.clone());
-                self.state.game.current_room_name = Some(look_res.room.name.clone());
-                self.state.game.current_room_description = Some(look_res.room.description.clone());
-                self.state.game.room_players = look_res.players.clone();
-                self.state.game.room_npcs = look_res.npcs.clone();
-                self.state.game.current_room_items = look_res.items.clone();
-                self.state.game.current_room_exits = look_res.room.exits.clone();
+
+                let player_name = self.state.game.player.name.as_ref();
+                look_res.players.retain(|p| {
+                    !p.eq_ignore_ascii_case(player_name.unwrap_or(&"unknown".to_string()).as_str())
+                });
+
+                self.state.game.room.id = Some(look_res.room.id);
+                self.state.game.room.name = Some(look_res.room.name);
+                self.state.game.room.description = Some(look_res.room.description);
+                self.state.game.room.players = look_res.players;
+                self.state.game.room.npcs = look_res.npcs;
+                self.state.game.room.items = look_res.items;
+                self.state.game.room.exits = look_res.room.exits;
             }
             ApiResponse::Move(Ok(_move_res)) => {
-                self.state.game.focused_entity_id = None;
-                if let api_client::protocol::command::enums::ApiRequest::Move(cmd) =
-                    envelope.original_request
-                {
+                self.state.game.ui.focused_entity_id = None;
+                if let ApiRequest::Move(cmd) = envelope.original_request {
                     self.state
                         .game
                         .log_action(format!("You moved {}.", cmd.direction));
                 }
-                if let Some(network_manager) = &self.network_manager {
-                    let req = api_client::protocol::command::enums::ApiRequest::Look(
-                        api_client::protocol::command::core::look::LookCommand,
-                    );
-                    let envelope = crate::network::envelopes::RequestEnvelope::new(req);
-                    network_manager.send_command(envelope);
-                }
+                self.handle_request(ApiRequest::Look(LookCommand));
             }
             ApiResponse::Inventory(Ok(inv_res)) => {
-                self.state.game.inventory = inv_res.inventory.clone();
+                self.state.game.player.inventory = inv_res.inventory;
                 self.state
                     .game
                     .log_action("You checked your inventory.".to_string());
             }
             ApiResponse::Quests(Ok(quests_res)) => {
-                self.state.game.quests = quests_res.quest_list.clone();
+                self.state.game.player.quests = quests_res.quest_list;
                 self.state
                     .game
                     .log_action("You checked your quests.".to_string());
             }
+            ApiResponse::Quest(Ok(quest_res)) => {
+                self.state.game.player.quests.push(QuestListEntry {
+                    quest_id: quest_res.quest_data.quest_id,
+                    status: quest_res.quest_data.status,
+                    progress: Some("in progress".to_string()),
+                });
+            }
             ApiResponse::Talk(Ok(talk_res)) => {
-                if let api_client::protocol::command::enums::ApiRequest::Talk(cmd) =
-                    envelope.original_request
-                {
-                    let mut text = talk_res.dialogue.clone();
-                    let ends_dialog = text.contains(crate::states::game::END_OF_DIALOGUE_TAG);
-                    if ends_dialog && text.starts_with(crate::states::game::END_OF_DIALOGUE_TAG) {
-                        text = text
-                            .replace(crate::states::game::END_OF_DIALOGUE_TAG, "**nothing**")
-                            .trim()
-                            .to_string();
+                if let ApiRequest::Talk(cmd) = envelope.original_request {
+                    let mut text = talk_res.dialogue;
+                    let ends_dialog = text.contains(END_OF_DIALOGUE_TAG);
+                    let ends_dialog_only = ends_dialog && text.starts_with(END_OF_DIALOGUE_TAG);
+
+                    if ends_dialog_only {
+                        if self.state.game.ui.active_dialogue.is_none() {
+                            text = "**nothing**".to_string();
+                        } else {
+                            self.state.game.ui.close_dialogue();
+                            return;
+                        }
                     } else if ends_dialog {
-                        text = text
-                            .replace(crate::states::game::END_OF_DIALOGUE_TAG, "")
-                            .trim()
-                            .to_string();
+                        text = text.replace(END_OF_DIALOGUE_TAG, "").trim().to_string();
                     }
 
-                    self.state.game.focused_entity_id = Some(cmd.npc_name.clone());
+                    self.state.game.ui.focused_entity_id = Some(cmd.npc_name.clone());
 
                     let display_name = self.state.game.manifest.get_npc_name(&cmd.npc_name);
 
-                    self.state
-                        .game
-                        .log_action(format!("You talked to {}.", display_name));
+                    if self.state.game.ui.active_dialogue.is_none() {
+                        self.state
+                            .game
+                            .log_action(format!("You talked to {}.", display_name));
+                    }
 
-                    self.state
-                        .game
-                        .log_action(format!("[{}] says: \"{}\"", display_name, text));
+                    if !ends_dialog_only {
+                        self.state
+                            .game
+                            .log_action(format!("[{}] says: \"{}\"", display_name, text));
+                    }
 
-                    self.state.game.active_dialogue =
-                        Some(crate::states::game::DialogueState::new(
+                    if let Some(ref mut dialog) = self.state.game.ui.active_dialogue {
+                        dialog.add(text, ends_dialog);
+                    } else {
+                        self.state.game.ui.active_dialogue = Some(DialogueState::new(
                             cmd.npc_name,
                             display_name,
                             text,
                             ends_dialog,
                         ));
+                    }
                 }
             }
             ApiResponse::Take(Ok(take_res)) => {
@@ -197,12 +202,14 @@ impl App {
                     .log_action(format!("You took {}.", take_res.item_identifier));
                 self.state
                     .game
-                    .inventory
-                    .push(take_res.item_identifier.clone());
+                    .room
+                    .items
+                    .retain(|i| i != &take_res.item_identifier);
                 self.state
                     .game
-                    .current_room_items
-                    .retain(|i| i != &take_res.item_identifier);
+                    .player
+                    .inventory
+                    .push(take_res.item_identifier);
             }
             ApiResponse::Drop(Ok(drop_res)) => {
                 self.state
@@ -210,18 +217,14 @@ impl App {
                     .log_action(format!("You dropped {}.", drop_res.item_identifier));
                 self.state
                     .game
-                    .current_room_items
-                    .push(drop_res.item_identifier.clone());
-                self.state
-                    .game
+                    .player
                     .inventory
                     .retain(|item| !item.eq(&drop_res.item_identifier));
+                self.state.game.room.items.push(drop_res.item_identifier);
             }
             ApiResponse::Attack(Ok(attack_res)) => {
-                if let api_client::protocol::command::enums::ApiRequest::Attack(cmd) =
-                    envelope.original_request
-                {
-                    self.state.game.focused_entity_id = Some(cmd.npc_name.clone());
+                if let ApiRequest::Attack(cmd) = envelope.original_request {
+                    self.state.game.ui.focused_entity_id = Some(cmd.npc_name.clone());
 
                     let display_name = self.state.game.manifest.get_npc_name(&cmd.npc_name);
 
@@ -232,11 +235,11 @@ impl App {
                     let res = attack_res.combat_result;
 
                     // Update HP manually from attack result
-                    self.state.game.hp = res.attacker_hp;
+                    self.state.game.player.hp = res.attacker_hp;
 
                     let text = match res.status.eq_ignore_ascii_case("Victory") {
                         true => {
-                            self.state.game.room_npcs.retain(|npc| npc != &cmd.npc_name);
+                            self.state.game.room.npcs.retain(|npc| npc != &cmd.npc_name);
                             format!(
                                 "Combat with {}: You dealt {} damage. {} is death. Victory.",
                                 display_name, res.damage, display_name
@@ -250,13 +253,12 @@ impl App {
                         }
                     };
 
-                    self.state.game.active_dialogue =
-                        Some(crate::states::game::DialogueState::new(
-                            cmd.npc_name,
-                            display_name.clone(),
-                            text.clone(),
-                            true,
-                        ));
+                    self.state.game.ui.active_dialogue = Some(DialogueState::new(
+                        cmd.npc_name,
+                        display_name.clone(),
+                        text.clone(),
+                        true,
+                    ));
 
                     self.state.game.log_action(text);
                 }
@@ -264,7 +266,6 @@ impl App {
             ApiResponse::Quit(Ok(_)) => {
                 self.state.should_quit = true;
             }
-            // Add other successful response handlers here as needed
             response => {
                 self.state.ui.event_history.insert(
                     0,
@@ -282,18 +283,95 @@ impl App {
 
         match event {
             ServerEvent::Connect(name) => {
-                self.state.game.online_players_count += 1;
+                self.state.game.server.online_players_count += 1;
                 self.state
                     .game
                     .log_action(format!("{} joined the server.", name));
             }
+            ServerEvent::Spawn(spawn_data) => match spawn_data.r#type.as_str() {
+                "NPC" => {
+                    let npc_name = self
+                        .state
+                        .game
+                        .manifest
+                        .get_npc_name(spawn_data.id.as_str());
+
+                    self.state
+                        .game
+                        .log_action(format!("{} has respawn", npc_name));
+                    self.state.game.room.npcs.push(spawn_data.id);
+                }
+                "ITEM" => {
+                    let item_name = self
+                        .state
+                        .game
+                        .manifest
+                        .get_item_name(spawn_data.id.as_str());
+                    self.state
+                        .game
+                        .log_action(format!("{} has been catapulted here", item_name));
+                    self.state.game.room.items.push(spawn_data.id);
+                }
+                t => {
+                    self.state
+                        .ui
+                        .notification
+                        .push(Notification::warning(format!("Unknown spawn event: {}", t)));
+                }
+            },
+            ServerEvent::Despawn(spawn_data) => match spawn_data.r#type.as_str() {
+                "NPC" => {
+                    let npc_name = self
+                        .state
+                        .game
+                        .manifest
+                        .get_npc_name(spawn_data.id.as_str());
+
+                    self.state
+                        .game
+                        .log_action(format!("{} has been defeated", npc_name));
+                    self.state
+                        .game
+                        .room
+                        .npcs
+                        .retain(|npc| npc != spawn_data.id.as_str());
+                }
+                "ITEM" => {
+                    let item_name = self
+                        .state
+                        .game
+                        .manifest
+                        .get_item_name(spawn_data.id.as_str());
+                    self.state
+                        .game
+                        .log_action(format!("{} has despawned", item_name));
+                    self.state
+                        .game
+                        .room
+                        .items
+                        .retain(|item| item != spawn_data.id.as_str());
+                }
+                t => {
+                    self.state
+                        .ui
+                        .notification
+                        .push(Notification::warning(format!(
+                            "Unknown despawn event: {}",
+                            t
+                        )));
+                }
+            },
             ServerEvent::Quit(name) => {
-                self.state.game.online_players_count =
-                    self.state.game.online_players_count.saturating_sub(1);
-                self.state.game.room_players.retain(|p| p != &name);
-                if self.state.game.group_leader.as_ref() == Some(&name) {
-                    self.state.game.group_id = None;
-                    self.state.game.group_leader = None;
+                self.state.game.server.online_players_count = self
+                    .state
+                    .game
+                    .server
+                    .online_players_count
+                    .saturating_sub(1);
+                self.state.game.room.players.retain(|p| p != &name);
+                if self.state.game.group.leader.as_ref() == Some(&name) {
+                    self.state.game.group.id = None;
+                    self.state.game.group.leader = None;
                 }
                 self.state
                     .game
@@ -301,8 +379,8 @@ impl App {
             }
             ServerEvent::Room(room_event) => match room_event {
                 RoomEvent::PresenceEnter(name) => {
-                    if !self.state.game.room_players.contains(&name) {
-                        self.state.game.room_players.push(name.clone());
+                    if !self.state.game.room.players.contains(&name) {
+                        self.state.game.room.players.push(name.clone());
                     }
 
                     self.state
@@ -310,7 +388,7 @@ impl App {
                         .log_action(format!("{} entered the room.", name));
                 }
                 RoomEvent::PresenceLeave(name) => {
-                    self.state.game.room_players.retain(|p| p != &name);
+                    self.state.game.room.players.retain(|p| p != &name);
                     self.state
                         .game
                         .log_action(format!("{} left the room.", name));
@@ -323,13 +401,13 @@ impl App {
                     });
                 }
                 RoomEvent::Take(player, item) => {
-                    self.state.game.current_room_items.retain(|id| id != &item);
+                    self.state.game.room.items.retain(|id| id != &item);
                     self.state
                         .game
                         .log_action(format!("{} took {}.", player, item));
                 }
                 RoomEvent::Drop(player, item) => {
-                    self.state.game.current_room_items.push(item.clone());
+                    self.state.game.room.items.push(item.clone());
                     self.state
                         .game
                         .log_action(format!("{} dropped {}.", player, item));
@@ -337,12 +415,10 @@ impl App {
             },
             ServerEvent::Group(group_event) => match group_event {
                 GroupEvent::Invite(leader) => {
-                    self.state
-                        .ui
-                        .push(crate::states::ui::Notification::info(format!(
-                            "You are invited to a group by {}.",
-                            leader
-                        )));
+                    self.state.ui.notification.push(Notification::info(format!(
+                        "You are invited to a group by {}.",
+                        leader
+                    )));
                 }
                 GroupEvent::Join(user) => {
                     self.state
@@ -350,9 +426,9 @@ impl App {
                         .log_action(format!("{} joined the group.", user));
                 }
                 GroupEvent::Leave(user) => {
-                    if self.state.game.group_leader.as_ref() == Some(&user.to_uppercase()) {
-                        self.state.game.group_id = None;
-                        self.state.game.group_leader = None;
+                    if self.state.game.group.leader.as_ref() == Some(&user.to_uppercase()) {
+                        self.state.game.group.id = None;
+                        self.state.game.group.leader = None;
 
                         self.state.game.log_action(format!(
                             "Leader {} left. The group has been disbanded.",
@@ -372,19 +448,11 @@ impl App {
                     });
                 }
                 GroupEvent::Move(direction) => {
-                    if let Some(network_manager) = &self.network_manager {
-                        let req_look = api_client::protocol::command::enums::ApiRequest::Look(
-                            api_client::protocol::command::core::look::LookCommand,
-                        );
+                    self.state
+                        .game
+                        .log_action(format!("Group moved to {}.", direction));
 
-                        self.state
-                            .game
-                            .log_action(format!("Group moved to {}.", direction));
-
-                        let _ = network_manager.send_command(
-                            crate::network::envelopes::RequestEnvelope::new(req_look),
-                        );
-                    }
+                    self.handle_request(ApiRequest::Look(LookCommand));
                 }
             },
             ServerEvent::GlobalChat(chat) => {
@@ -400,22 +468,48 @@ impl App {
                     sender: chat.sender.clone(),
                     content: chat.message,
                 });
-                self.state
-                    .ui
-                    .push(crate::states::ui::Notification::info(format!(
-                        "New private message from {}.",
-                        chat.sender
-                    )));
+                self.state.ui.notification.push(Notification::info(format!(
+                    "New private message from {}.",
+                    chat.sender
+                )));
             }
             ServerEvent::Stats(count) => {
-                self.state.game.online_players_count = count;
+                self.state.game.server.online_players_count = count;
             }
             ServerEvent::Unknown(raw) => {
                 self.state
                     .ui
-                    .push(crate::states::ui::Notification::warning(format!(
-                        "Unknown event: {}",
-                        raw
+                    .notification
+                    .push(Notification::warning(format!("Unknown event: {}", raw)));
+            }
+            ServerEvent::GameServer(game_server_event) => match game_server_event {
+                GameServerEvent::Connected => {
+                    self.state
+                        .game
+                        .log_action("Game server online.".to_string());
+
+                    self.state.ui.notification.push(Notification::info(
+                        "Game server is online. Session restarted.",
+                    ));
+
+                    self.handle_request(ApiRequest::Look(LookCommand));
+                    self.load_state_from_server();
+                }
+                GameServerEvent::Disconnected => {
+                    self.state
+                        .game
+                        .log_action("Game server offline.".to_string());
+
+                    self.state.network.is_connected = false;
+                }
+            },
+            _ => {
+                self.state
+                    .ui
+                    .notification
+                    .push(Notification::warning(format!(
+                        "Missing handler for event: {:?}",
+                        event
                     )));
             }
         }

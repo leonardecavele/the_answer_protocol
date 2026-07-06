@@ -11,15 +11,12 @@ use ratatui::widgets::{Block, Clear, Paragraph};
 use tokio::sync::mpsc;
 
 pub trait ScrollableComponent: Lifecycle {
-    /// Calculates the final widget area (e.g., 80% of screen, or dynamic height)
     fn get_area(&self, _state: &AppState, max_area: Rect) -> Rect {
         max_area
     }
 
-    /// Provides the background block (borders, titles, styles)
     fn get_block<'a>(&self, state: &AppState) -> Block<'a>;
 
-    /// Provides the formatted text lines
     fn get_content<'a>(&self, state: &'a AppState, max_width: usize) -> Vec<Line<'a>>;
 }
 

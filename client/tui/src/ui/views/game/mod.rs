@@ -6,12 +6,13 @@ use crate::ui::components::Component;
 use crate::ui::components::Lifecycle;
 use crate::ui::components::scrollable::Scrollable;
 
-use crate::states::ui::GameFocus;
+use crate::states::game::GameFocus;
 use crate::ui::components::interactive::is_mouse_in_rect;
+use crate::ui::views::game::components::{INVENTORY_ITEM_HEIGHT, INVENTORY_ITEM_WIDTH};
 use components::{
     CenterPanelComponent, ChatOverlayComponent, DialoguePopupComponent, FooterComponent,
-    HeaderComponent, HelpOverlayComponent, ItemPopupComponent, ItemViewPopupComponent, LeftPanelComponent,
-    NpcActionPopup, RightPanelComponent,
+    HeaderComponent, HelpOverlayComponent, ItemPopupComponent, ItemViewPopupComponent,
+    LeftPanelComponent, NpcActionPopup, RightPanelComponent,
 };
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
 use ratatui::Frame;
@@ -30,7 +31,6 @@ pub struct GameView {
     item_view_popup: ItemViewPopupComponent,
     dialogue_popup: Scrollable<DialoguePopupComponent>,
     help_overlay: Scrollable<HelpOverlayComponent>,
-    show_chat: bool,
     right_panel_area: Option<Rect>,
     footer_area: Option<Rect>,
 }
@@ -49,7 +49,6 @@ impl GameView {
             item_view_popup: ItemViewPopupComponent::new(),
             dialogue_popup: Scrollable::new(DialoguePopupComponent::new()),
             help_overlay: Scrollable::new(HelpOverlayComponent::new()),
-            show_chat: false,
             right_panel_area: None,
             footer_area: None,
         }
@@ -58,7 +57,6 @@ impl GameView {
 
 impl Component for GameView {
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
-        // Vertical layout: Header (3), Center (rest), Footer (3)
         let vertical_chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
@@ -78,7 +76,6 @@ impl Component for GameView {
             right_width_constraint = Constraint::Length(final_width);
         }
 
-        // Horizontal layout for the center part
         let horizontal_chunks = Layout::default()
             .direction(Direction::Horizontal)
             .constraints([
@@ -97,28 +94,28 @@ impl Component for GameView {
         self.right_panel_area = Some(horizontal_chunks[2]);
         self.footer_area = Some(vertical_chunks[2]);
 
-        if state.ui.show_help_overlay {
+        if state.game.ui.show_help_overlay {
             self.help_overlay.draw(state, frame, area);
         }
 
-        if self.show_chat {
+        if state.game.ui.show_chat {
             let center_area = horizontal_chunks[1];
             self.chat_overlay.draw(state, frame, center_area);
         }
 
-        if state.ui.active_npc_popup.is_some() {
+        if state.game.ui.active_npc_popup.is_some() {
             self.npc_popup.draw(state, frame, area);
         }
 
-        if state.ui.active_item_popup.is_some() {
+        if state.game.ui.active_item_popup.is_some() {
             self.item_popup.draw(state, frame, area);
         }
 
-        if state.game.active_dialogue.is_some() {
+        if state.game.ui.active_dialogue.is_some() {
             self.dialogue_popup.draw(state, frame, area);
         }
 
-        if state.ui.active_item_view_popup.is_some() {
+        if state.game.ui.active_item_view_popup.is_some() {
             self.item_view_popup.draw(state, frame, area);
         }
     }
@@ -126,7 +123,7 @@ impl Component for GameView {
 
 impl Lifecycle for GameView {
     fn on_tick(&mut self, state: &mut AppState) {
-        if state.game.active_dialogue.is_some() {
+        if state.game.ui.active_dialogue.is_some() {
             self.dialogue_popup.on_tick(state);
         }
     }
@@ -137,13 +134,13 @@ impl Lifecycle for GameView {
         event: &CrosstermEvent,
         event_sender: &mpsc::Sender<ApplicationEvent>,
     ) -> bool {
-        if state.ui.show_help_overlay {
+        if state.game.ui.show_help_overlay {
             self.help_overlay
                 .handle_terminal_event(state, event, event_sender);
             return true;
         }
 
-        if state.ui.active_item_view_popup.is_some() {
+        if state.game.ui.active_item_view_popup.is_some() {
             if self
                 .item_view_popup
                 .handle_terminal_event(state, event, event_sender)
@@ -152,19 +149,19 @@ impl Lifecycle for GameView {
             }
         }
 
-        if state.game.active_dialogue.is_some() {
+        if state.game.ui.active_dialogue.is_some() {
             self.dialogue_popup
                 .handle_terminal_event(state, event, event_sender);
             return true;
         }
 
-        if state.ui.active_npc_popup.is_some() {
+        if state.game.ui.active_npc_popup.is_some() {
             self.npc_popup
                 .handle_terminal_event(state, event, event_sender);
             return true;
         }
 
-        if state.ui.active_item_popup.is_some() {
+        if state.game.ui.active_item_popup.is_some() {
             self.item_popup
                 .handle_terminal_event(state, event, event_sender);
             return true;
@@ -176,35 +173,37 @@ impl Lifecycle for GameView {
                     .modifiers
                     .contains(crossterm::event::KeyModifiers::CONTROL)
             {
-                state.ui.show_help_overlay = !state.ui.show_help_overlay;
+                state.game.ui.show_help_overlay = !state.game.ui.show_help_overlay;
                 return true;
             }
         }
 
         if let CrosstermEvent::Key(key) = event {
             if key.code == KeyCode::F(1) {
-                self.show_chat = !self.show_chat;
+                state.game.ui.show_chat = !state.game.ui.show_chat;
                 return true;
             }
             if key.code == KeyCode::Tab {
-                state.ui.current_focus = match state.ui.current_focus {
-                    GameFocus::Input => GameFocus::ActionHistory,
-                    GameFocus::ActionHistory => GameFocus::NpcList,
+                state.game.ui.current_focus = match state.game.ui.current_focus {
+                    GameFocus::Input => GameFocus::NpcList,
                     GameFocus::NpcList => GameFocus::RoomItemsList,
-                    GameFocus::RoomItemsList => GameFocus::InventoryGrid,
+                    GameFocus::RoomItemsList => GameFocus::QuestList,
+                    GameFocus::QuestList => GameFocus::ActionHistory,
+                    GameFocus::ActionHistory => GameFocus::InventoryGrid,
                     GameFocus::InventoryGrid => GameFocus::RightPanel,
                     GameFocus::RightPanel => GameFocus::Input,
                 };
                 return true;
             }
             if key.code == KeyCode::BackTab {
-                state.ui.current_focus = match state.ui.current_focus {
+                state.game.ui.current_focus = match state.game.ui.current_focus {
                     GameFocus::Input => GameFocus::RightPanel,
                     GameFocus::RightPanel => GameFocus::InventoryGrid,
-                    GameFocus::InventoryGrid => GameFocus::RoomItemsList,
+                    GameFocus::InventoryGrid => GameFocus::ActionHistory,
+                    GameFocus::ActionHistory => GameFocus::QuestList,
+                    GameFocus::QuestList => GameFocus::RoomItemsList,
                     GameFocus::RoomItemsList => GameFocus::NpcList,
-                    GameFocus::NpcList => GameFocus::ActionHistory,
-                    GameFocus::ActionHistory => GameFocus::Input,
+                    GameFocus::NpcList => GameFocus::Input,
                 };
                 return true;
             }
@@ -216,14 +215,14 @@ impl Lifecycle for GameView {
             {
                 if let Some(r) = self.left_panel.npcs_area {
                     if is_mouse_in_rect(mouse.column, mouse.row, r) {
-                        state.ui.current_focus = GameFocus::NpcList;
+                        state.game.ui.current_focus = GameFocus::NpcList;
 
                         // Select the clicked NPC
                         let y = mouse.row.saturating_sub(r.y);
                         // y=0 is top border, y=1 is first item
                         if y > 0 {
                             let idx = (y - 1) as usize;
-                            if idx < state.game.room_npcs.len() {
+                            if idx < state.game.room.npcs.len() {
                                 self.left_panel.selected_npc_index = Some(idx);
                             }
                         }
@@ -232,13 +231,27 @@ impl Lifecycle for GameView {
 
                 if let Some(r) = self.left_panel.items_area {
                     if is_mouse_in_rect(mouse.column, mouse.row, r) {
-                        state.ui.current_focus = GameFocus::RoomItemsList;
+                        state.game.ui.current_focus = GameFocus::RoomItemsList;
 
                         let y = mouse.row.saturating_sub(r.y);
                         if y > 0 {
                             let idx = (y - 1) as usize;
-                            if idx < state.game.current_room_items.len() {
-                                state.game.room_item_cursor = idx;
+                            if idx < state.game.room.items.len() {
+                                self.left_panel.selected_item_index = idx;
+                            }
+                        }
+                    }
+                }
+
+                if let Some(r) = self.left_panel.quests_area {
+                    if is_mouse_in_rect(mouse.column, mouse.row, r) {
+                        state.game.ui.current_focus = GameFocus::QuestList;
+
+                        let y = mouse.row.saturating_sub(r.y);
+                        if y > 0 {
+                            let idx = (y - 1) as usize;
+                            if idx < state.game.room.items.len() {
+                                self.left_panel.selected_quest_index = idx;
                             }
                         }
                     }
@@ -246,23 +259,23 @@ impl Lifecycle for GameView {
 
                 if let Some(r) = self.center_panel.history_area {
                     if is_mouse_in_rect(mouse.column, mouse.row, r) {
-                        state.ui.current_focus = GameFocus::ActionHistory;
+                        state.game.ui.current_focus = GameFocus::ActionHistory;
                     }
                 }
 
                 if let Some(r) = self.center_panel.inventory_area {
                     if is_mouse_in_rect(mouse.column, mouse.row, r) {
-                        state.ui.current_focus = GameFocus::InventoryGrid;
+                        state.game.ui.current_focus = GameFocus::InventoryGrid;
 
                         let rel_x = mouse.column.saturating_sub(r.x);
                         let rel_y = mouse.row.saturating_sub(r.y);
                         if rel_x > 0 && rel_y > 0 {
-                            let col = (rel_x - 1) as usize / 20; // item_width = 20
-                            let row = (rel_y - 1) as usize / 10; // item_height = 10
+                            let col = (rel_x - 1) as usize / INVENTORY_ITEM_WIDTH as usize;
+                            let row = (rel_y - 1) as usize / INVENTORY_ITEM_HEIGHT as usize;
                             let cols = self.center_panel.inventory.inventory_cols.max(1);
                             let idx = row * cols + col;
-                            if idx < state.game.inventory.len() {
-                                state.game.inventory_cursor = idx;
+                            if idx < state.game.player.inventory.len() {
+                                state.game.ui.inventory_cursor = idx;
                             }
                         }
                     }
@@ -270,19 +283,18 @@ impl Lifecycle for GameView {
 
                 if let Some(r) = self.right_panel_area {
                     if is_mouse_in_rect(mouse.column, mouse.row, r) {
-                        state.ui.current_focus = GameFocus::RightPanel;
+                        state.game.ui.current_focus = GameFocus::RightPanel;
                     }
                 }
                 if let Some(r) = self.footer_area {
                     if is_mouse_in_rect(mouse.column, mouse.row, r) {
-                        state.ui.current_focus = GameFocus::Input;
+                        state.game.ui.current_focus = GameFocus::Input;
                     }
                 }
             }
         }
 
-        // Pass event to components (Chat overlay gets priority if visible)
-        if self.show_chat {
+        if state.game.ui.show_chat {
             if self
                 .chat_overlay
                 .handle_terminal_event(state, event, event_sender)

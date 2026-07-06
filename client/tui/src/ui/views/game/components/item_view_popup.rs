@@ -2,13 +2,13 @@ use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
 use crate::ui::components::{Component, Lifecycle};
 use crate::ui::theme::overlay_block;
-use crate::ui::utils::{render_image, wrap_str_to_lines};
+use crate::ui::utils::{center_area_with_aspect_ratio, wrap_str_to_lines};
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
 use ratatui::{
+    Frame,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Color, Style},
     widgets::{Clear, Paragraph},
-    Frame,
 };
 use tokio::sync::mpsc::Sender;
 
@@ -29,7 +29,7 @@ impl ItemViewPopupComponent {
 
 impl Component for ItemViewPopupComponent {
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
-        let item_id = if let Some(id) = &state.ui.active_item_view_popup {
+        let item_id = if let Some(id) = &state.game.ui.active_item_view_popup {
             id
         } else {
             return;
@@ -82,16 +82,12 @@ impl Component for ItemViewPopupComponent {
         let footer_area = chunks[3];
 
         if let Some(path) = image_path {
-            if let Some((img_width, img_height)) = state.ui.get_image_dimensions(&path) {
-                actual_image_area = crate::ui::utils::center_area_with_aspect_ratio(
-                    actual_image_area,
-                    img_width,
-                    img_height,
-                );
+            if let Some((img_width, img_height)) = state.ui.image_manager.get_dimensions(&path) {
+                actual_image_area =
+                    center_area_with_aspect_ratio(actual_image_area, img_width, img_height);
             }
 
-            render_image(
-                state,
+            state.ui.image_manager.render(
                 frame,
                 actual_image_area,
                 &path,
@@ -125,20 +121,19 @@ impl Lifecycle for ItemViewPopupComponent {
         event: &CrosstermEvent,
         _event_sender: &Sender<ApplicationEvent>,
     ) -> bool {
-        if state.ui.active_item_view_popup.is_none() {
+        if state.game.ui.active_item_view_popup.is_none() {
             return false;
         }
 
         if let CrosstermEvent::Key(key) = event {
             match key.code {
                 KeyCode::Esc | KeyCode::Enter | KeyCode::Char('q') => {
-                    state.ui.active_item_view_popup = None;
+                    state.game.ui.active_item_view_popup = None;
                 }
                 _ => {}
             }
         }
 
-        // Always block underlying events when this popup is open
         true
     }
 }

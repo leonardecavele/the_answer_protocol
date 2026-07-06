@@ -1,6 +1,11 @@
 use crate::app::App;
 use crate::events::NetworkEvent;
-use tracing::info;
+use crate::network::NetworkManager;
+use crate::network::manager::NOTIF_ID_CONNECTION_ATTEMPT;
+use crate::states::app::AppState;
+use crate::states::ui::Notification;
+use crate::ui::views::game::GameView;
+use crate::ui::views::login::LoginView;
 
 impl App {
     pub(crate) fn handle_network_event(&mut self, event: NetworkEvent) {
@@ -14,7 +19,7 @@ impl App {
             } => {
                 self.network_manager = None;
 
-                self.network_manager = Some(crate::network::NetworkManager::start(
+                self.network_manager = Some(NetworkManager::start(
                     self.event_broker.sender(),
                     server_ip,
                     server_port,
@@ -26,61 +31,55 @@ impl App {
                 server_port,
                 player_name,
             } => {
-                if let Some(network_manager) = &self.network_manager {
-                    let req = api_client::protocol::command::enums::ApiRequest::Who(
-                        api_client::protocol::command::core::who::WhoCommand,
-                    );
-                    network_manager
-                        .send_command(crate::network::envelopes::RequestEnvelope::new(req));
-
-                    let req = api_client::protocol::command::enums::ApiRequest::Status(
-                        api_client::protocol::command::resource_interaction::status::StatusCommand,
-                    );
-                    network_manager
-                        .send_command(crate::network::envelopes::RequestEnvelope::new(req));
-
-                    let req_inv = api_client::protocol::command::enums::ApiRequest::Inventory(
-                        api_client::protocol::command::resource_interaction::inventory::InventoryCommand,
-                    );
-                    network_manager
-                        .send_command(crate::network::envelopes::RequestEnvelope::new(req_inv));
-
-                    let req_quests = api_client::protocol::command::enums::ApiRequest::Quests(
-                        api_client::protocol::command::resource_interaction::quests::QuestsCommand,
-                    );
-                    network_manager
-                        .send_command(crate::network::envelopes::RequestEnvelope::new(req_quests));
-                }
+                self.load_state_from_server();
 
                 self.state
                     .ui
-                    .remove_notification(crate::network::manager::NOTIF_ID_CONNECTION_ATTEMPT);
+                    .notification
+                    .remove(NOTIF_ID_CONNECTION_ATTEMPT);
 
-                self.state.ui.push(crate::states::ui::Notification::info(
-                    "Connected to the server successfully!",
-                ));
+                self.state
+                    .ui
+                    .notification
+                    .push(Notification::info("Connected to the server successfully!"));
 
                 self.state.network.server_ip = server_ip;
                 self.state.network.server_port = server_port;
-                self.state.game.player_name = Some(player_name);
+                self.state.network.is_connected = true;
+                self.state.game.player.name = Some(player_name);
 
-                self.active_view = Box::new(crate::ui::views::game::GameView::new());
+                self.view_manager.set_view(Box::new(GameView::new()));
             }
             NetworkEvent::ConnectionFailed { error_message } => {
                 self.network_manager = None;
                 self.state
                     .ui
-                    .remove_notification(crate::network::manager::NOTIF_ID_CONNECTION_ATTEMPT);
+                    .notification
+                    .remove(NOTIF_ID_CONNECTION_ATTEMPT);
+
+                self.state.ui.notification.push(Notification::error(format!(
+                    "Connection failed: {}",
+                    error_message
+                )));
+            }
+            NetworkEvent::ConnectionLost { reason } => {
+                self.network_manager = None;
+
+                self.view_manager.set_view(Box::new(LoginView::new(
+                    self.state.network.server_ip.clone(),
+                    self.state.network.server_port.clone(),
+                )));
+
+                self.state = AppState::new(
+                    self.state.network.server_ip.clone(),
+                    self.state.network.server_port.clone(),
+                    self.state.game.manifest.clone(),
+                );
 
                 self.state
                     .ui
-                    .push(crate::states::ui::Notification::error(format!(
-                        "Connection failed: {}",
-                        error_message
-                    )));
-            }
-            NetworkEvent::ConnectionLost { reason } => {
-                info!("Connection lost: {}", reason);
+                    .notification
+                    .push(Notification::error(format!("Connection lost: {}", reason)));
             }
         }
     }

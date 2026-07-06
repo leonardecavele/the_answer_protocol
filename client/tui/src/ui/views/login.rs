@@ -200,9 +200,10 @@ impl Lifecycle for LoginView {
                     if name.is_empty() || ip.is_empty() || port.is_empty() {
                         state
                             .ui
+                            .notification
                             .push(Notification::warning("All fields must be filled"));
                     } else {
-                        state.ui.push(
+                        state.ui.notification.push(
                             Notification::info("Connecting...")
                                 .with_id(crate::network::manager::NOTIF_ID_CONNECTION_ATTEMPT)
                                 .with_duration(60000),

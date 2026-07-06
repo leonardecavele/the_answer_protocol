@@ -15,6 +15,9 @@ pub enum ApplicationError {
     #[error("Event channel was closed unexpectedly")]
     EventChannelClosed,
 
+    #[error("Event channel is empty")]
+    EventChannelEmpty,
+
     /// General application-level errors.
     #[error("Application Error: {0}")]
     General(String),

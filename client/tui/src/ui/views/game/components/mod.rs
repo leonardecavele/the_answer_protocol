@@ -11,15 +11,13 @@ pub mod item_view_popup;
 pub mod left_panel;
 pub mod npc_popup;
 pub mod right_panel;
-
-pub use action_history::*;
-pub use inventory::*;
 pub use center_panel::CenterPanelComponent;
 pub use chat_overlay::ChatOverlayComponent;
 pub use dialogue_popup::DialoguePopupComponent;
 pub use footer::FooterComponent;
 pub use header::HeaderComponent;
 pub use help_overlay::HelpOverlayComponent;
+pub use inventory::*;
 pub use item_popup::ItemPopupComponent;
 pub use item_view_popup::ItemViewPopupComponent;
 pub use left_panel::LeftPanelComponent;

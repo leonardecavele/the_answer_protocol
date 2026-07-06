@@ -1,18 +1,11 @@
-use std::time::Instant;
+use crate::data::manifest::Manifest;
+use api_client::protocol::command::resource_interaction::quests::QuestListEntry;
+use std::collections::HashMap;
+use std::sync::Arc;
+use std::time::{Duration, Instant};
 
+//region Dialogue
 pub const END_OF_DIALOGUE_TAG: &str = "[end of dialogue]";
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum DialogueClearMode {
-    AlwaysClear,
-    ClearOnEndTag,
-}
-
-impl Default for DialogueClearMode {
-    fn default() -> Self {
-        DialogueClearMode::ClearOnEndTag
-    }
-}
 
 #[derive(Debug, Clone)]
 pub struct DialogueState {
@@ -35,8 +28,17 @@ impl DialogueState {
             last_tick: Instant::now(),
         }
     }
-}
 
+    pub fn add(&mut self, text: String, ends_dialog: bool) {
+        self.full_text.push_str("\n\n");
+        self.full_text.push_str(&text);
+        self.ends_dialog = ends_dialog;
+        self.visible_chars += 2;
+    }
+}
+//endregion
+
+//region Chat
 #[derive(Debug, Clone)]
 pub enum ChatChannel {
     Global,
@@ -51,59 +53,215 @@ pub struct ChatMessage {
     pub sender: String,
     pub content: String,
 }
+//endregion
 
-pub struct GameState {
-    pub player_name: Option<String>,
-    pub chat_history: Vec<ChatMessage>,
-    pub room_players: Vec<String>,
-    pub group_id: Option<String>,
-    pub group_leader: Option<String>,
-    pub online_players_count: u32,
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum GameFocus {
+    Input,
+    RightPanel,
+    NpcList,
+    QuestList,
+    RoomItemsList,
+    InventoryGrid,
+    ActionHistory,
+}
+
+impl Default for GameFocus {
+    fn default() -> Self {
+        GameFocus::Input
+    }
+}
+
+//region Sub-states
+pub struct PlayerState {
+    pub name: Option<String>,
     pub hp: u32,
     pub max_hp: u32,
-    pub manifest: crate::data::manifest::Manifest,
-    pub room_npcs: Vec<String>,
-    pub current_room_items: Vec<String>,
     pub inventory: Vec<String>,
-    pub quests: Vec<api_client::protocol::command::resource_interaction::quests::QuestListEntry>,
-    pub current_room_id: Option<String>,
-    pub current_room_name: Option<String>,
-    pub current_room_description: Option<String>,
-    pub current_room_exits: std::collections::HashMap<String, String>,
-    pub focused_entity_id: Option<String>,
-    pub action_logs: Vec<String>,
-    pub active_dialogue: Option<DialogueState>,
-    pub dialogue_clear_mode: DialogueClearMode,
-    pub room_item_cursor: usize,
+    pub quests: Vec<QuestListEntry>,
+}
+
+impl PlayerState {
+    pub fn new() -> Self {
+        Self {
+            name: None,
+            hp: 100,
+            max_hp: 100,
+            inventory: Vec::new(),
+            quests: Vec::new(),
+        }
+    }
+
+    pub fn heal(&mut self, amount: u32) {
+        self.hp = (self.hp + amount).min(self.max_hp);
+    }
+
+    pub fn take_damage(&mut self, amount: u32) {
+        self.hp = self.hp.saturating_sub(amount);
+    }
+
+    pub fn is_dead(&self) -> bool {
+        self.hp == 0
+    }
+}
+
+pub struct GroupState {
+    pub id: Option<String>,
+    pub leader: Option<String>,
+}
+
+impl GroupState {
+    pub fn new() -> Self {
+        Self {
+            id: None,
+            leader: None,
+        }
+    }
+
+    pub fn is_in_group(&self) -> bool {
+        self.id.is_some()
+    }
+
+    pub fn is_leader(&self, player_name: &str) -> bool {
+        if let Some(leader) = &self.leader {
+            leader == player_name
+        } else {
+            false
+        }
+    }
+
+    pub fn leave(&mut self) {
+        self.id = None;
+        self.leader = None;
+    }
+}
+
+pub struct RoomState {
+    pub id: Option<String>,
+    pub name: Option<String>,
+    pub description: Option<String>,
+    pub exits: HashMap<String, String>,
+    pub players: Vec<String>,
+    pub npcs: Vec<String>,
+    pub items: Vec<String>,
+}
+
+impl RoomState {
+    pub fn new() -> Self {
+        Self {
+            id: None,
+            name: None,
+            description: None,
+            exits: HashMap::new(),
+            players: Vec::new(),
+            npcs: Vec::new(),
+            items: Vec::new(),
+        }
+    }
+
+    pub fn clear(&mut self) {
+        self.id = None;
+        self.name = None;
+        self.description = None;
+        self.exits.clear();
+        self.players.clear();
+        self.npcs.clear();
+        self.items.clear();
+    }
+
+    pub fn has_exit(&self, direction: &str) -> bool {
+        self.exits.contains_key(direction)
+    }
+}
+
+pub struct ServerState {
+    pub online_players_count: u32,
+}
+
+impl ServerState {
+    pub fn new() -> Self {
+        Self {
+            online_players_count: 1,
+        }
+    }
+}
+
+pub struct GameUiState {
+    pub current_focus: GameFocus,
+    pub active_npc_popup: Option<String>,
+    pub active_item_popup: Option<String>,
+    pub active_item_view_popup: Option<String>,
+    pub show_help_overlay: bool,
+    pub show_chat: bool,
     pub inventory_cursor: usize,
+    pub focused_entity_id: Option<String>,
+    pub active_dialogue: Option<DialogueState>,
+    pub dialogue_closed_at: Option<Instant>,
+}
+
+impl GameUiState {
+    pub fn new() -> Self {
+        Self {
+            current_focus: GameFocus::default(),
+            active_npc_popup: None,
+            active_item_popup: None,
+            active_item_view_popup: None,
+            show_help_overlay: false,
+            show_chat: false,
+            inventory_cursor: 0,
+            focused_entity_id: None,
+            active_dialogue: None,
+            dialogue_closed_at: None,
+        }
+    }
+
+    pub fn is_npc_dialogue_available(&self) -> bool {
+        if let Some(time) = self.dialogue_closed_at {
+            if time.elapsed() < Duration::from_millis(300) {
+                return false;
+            }
+        }
+        true
+    }
+
+    pub fn close_dialogue(&mut self) {
+        self.active_dialogue = None;
+        self.focused_entity_id = None;
+        self.dialogue_closed_at = Some(Instant::now());
+    }
+
+    pub fn close_all_popups(&mut self) {
+        self.active_npc_popup = None;
+        self.active_item_popup = None;
+        self.active_item_view_popup = None;
+        self.close_dialogue();
+    }
+}
+//endregion
+
+pub struct GameState {
+    pub player: PlayerState,
+    pub group: GroupState,
+    pub room: RoomState,
+    pub server: ServerState,
+    pub ui: GameUiState,
+    pub manifest: Arc<Manifest>,
+
+    pub chat_history: Vec<ChatMessage>,
+    pub action_logs: Vec<String>,
 }
 
 impl GameState {
-    pub fn new(manifest: crate::data::manifest::Manifest) -> Self {
+    pub fn new(manifest: Arc<Manifest>) -> Self {
         Self {
-            player_name: None,
-            chat_history: Vec::new(),
-            room_players: Vec::new(),
-            group_id: None,
-            group_leader: None,
-            online_players_count: 1,
-            hp: 100,
-            max_hp: 100,
+            player: PlayerState::new(),
+            group: GroupState::new(),
+            room: RoomState::new(),
+            server: ServerState::new(),
+            ui: GameUiState::new(),
             manifest,
-            room_npcs: Vec::new(),
-            current_room_items: Vec::new(),
-            inventory: Vec::new(),
-            quests: Vec::new(),
-            current_room_id: None,
-            current_room_name: None,
-            current_room_description: None,
-            current_room_exits: std::collections::HashMap::new(),
-            focused_entity_id: None,
+            chat_history: Vec::new(),
             action_logs: Vec::new(),
-            active_dialogue: None,
-            dialogue_clear_mode: DialogueClearMode::default(),
-            room_item_cursor: 0,
-            inventory_cursor: 0,
         }
     }
 

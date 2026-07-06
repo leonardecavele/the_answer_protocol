@@ -27,10 +27,10 @@ impl ItemPopupComponent {
 
     fn get_actions(&self, state: &AppState, item_id: &str) -> Vec<String> {
         let mut actions = Vec::new();
-        if state.game.current_room_items.contains(&item_id.to_string()) {
+        if state.game.room.items.contains(&item_id.to_string()) {
             actions.push("TAKE".to_string());
         }
-        if state.game.inventory.contains(&item_id.to_string()) {
+        if state.game.player.inventory.contains(&item_id.to_string()) {
             actions.push("DROP".to_string());
         }
         actions.push("VIEW".to_string());
@@ -41,7 +41,7 @@ impl ItemPopupComponent {
 
 impl Component for ItemPopupComponent {
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
-        let item_id = if let Some(id) = &state.ui.active_item_popup {
+        let item_id = if let Some(id) = &state.game.ui.active_item_popup {
             id
         } else {
             return;
@@ -101,7 +101,7 @@ impl Lifecycle for ItemPopupComponent {
         event: &CrosstermEvent,
         event_sender: &Sender<ApplicationEvent>,
     ) -> bool {
-        let item_id = if let Some(id) = state.ui.active_item_popup.clone() {
+        let item_id = if let Some(id) = state.game.ui.active_item_popup.clone() {
             id
         } else {
             return false;
@@ -130,7 +130,7 @@ impl Lifecycle for ItemPopupComponent {
                     return true;
                 }
                 KeyCode::Esc => {
-                    state.ui.active_item_popup = None;
+                    state.game.ui.active_item_popup = None;
                     self.selected_action_index = 0;
                     return true;
                 }
@@ -138,7 +138,7 @@ impl Lifecycle for ItemPopupComponent {
                     if let Some(act) = actions.get(self.selected_action_index) {
                         match act.as_str() {
                             "VIEW" => {
-                                state.ui.active_item_view_popup = Some(item_id.clone());
+                                state.game.ui.active_item_view_popup = Some(item_id.clone());
                                 return true;
                             }
                             "CANCEL" => {}
@@ -150,16 +150,15 @@ impl Lifecycle for ItemPopupComponent {
                         }
                     }
 
-                    state.ui.active_item_popup = None;
+                    state.game.ui.active_item_popup = None;
                     self.selected_action_index = 0;
                     return true;
                 }
                 _ => {
-                    // Block all other keys
                     return true;
                 }
             }
         }
-        true // Block mouse clicks too while popup is active
+        true
     }
 }

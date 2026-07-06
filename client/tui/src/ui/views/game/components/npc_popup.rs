@@ -39,7 +39,7 @@ impl NpcActionPopup {
 
 impl Component for NpcActionPopup {
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
-        let npc_id = if let Some(id) = &state.ui.active_npc_popup {
+        let npc_id = if let Some(id) = &state.game.ui.active_npc_popup {
             id
         } else {
             return;
@@ -99,7 +99,7 @@ impl Lifecycle for NpcActionPopup {
         event: &CrosstermEvent,
         event_sender: &Sender<ApplicationEvent>,
     ) -> bool {
-        let npc_id = if let Some(id) = state.ui.active_npc_popup.clone() {
+        let npc_id = if let Some(id) = state.game.ui.active_npc_popup.clone() {
             id
         } else {
             return false;
@@ -128,7 +128,7 @@ impl Lifecycle for NpcActionPopup {
                     return true;
                 }
                 KeyCode::Esc => {
-                    state.ui.active_npc_popup = None;
+                    state.game.ui.active_npc_popup = None;
                     self.selected_action_index = 0;
                     return true;
                 }
@@ -139,16 +139,15 @@ impl Lifecycle for NpcActionPopup {
                             let _ = event_sender.try_send(ApplicationEvent::SendRawCommand(cmd));
                         }
                     }
-                    state.ui.active_npc_popup = None;
+                    state.game.ui.active_npc_popup = None;
                     self.selected_action_index = 0;
                     return true;
                 }
                 _ => {
-                    // Block all other keys
                     return true;
                 }
             }
         }
-        true // Block mouse clicks too while popup is active
+        true
     }
 }

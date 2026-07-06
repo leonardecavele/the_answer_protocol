@@ -1,3 +1,4 @@
+use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
 use crate::ui::components::Lifecycle;
 use crate::ui::components::interactive::InteractiveComponent;
@@ -51,7 +52,7 @@ impl InteractiveComponent for TextInputComponent {
         &mut self,
         _state: &mut AppState,
         event: &CrosstermEvent,
-        _event_sender: &Sender<crate::events::ApplicationEvent>,
+        _event_sender: &Sender<ApplicationEvent>,
         _is_hovered: bool,
     ) -> bool {
         if !self.is_focused {

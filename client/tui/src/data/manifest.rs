@@ -77,4 +77,11 @@ impl Manifest {
             .map(|n| n.name.clone())
             .unwrap_or_else(|| id.to_string())
     }
+
+    pub fn get_item_name(&self, id: &str) -> String {
+        self.items
+            .get(id)
+            .map(|n| n.name.clone())
+            .unwrap_or_else(|| id.to_string())
+    }
 }
