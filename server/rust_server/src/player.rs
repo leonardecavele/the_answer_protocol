@@ -5,6 +5,7 @@ use crate::inventory::Inventory;
 use crate::items::ItemId;
 use crate::npc::Npc;
 use crate::room::RoomName;
+use crate::save::Save;
 use std::collections::{HashMap, HashSet};
 use rand::RngExt;
 
@@ -34,7 +35,7 @@ impl Player {
         }
     }
     
-    pub fn from_save(save: crate::save::Save) -> Self {
+    pub fn from_save(save: Save) -> Self {
         Self {
             name: save.name,
             id: save.id,
