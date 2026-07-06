@@ -176,14 +176,13 @@ impl GameManager {
 
     fn try_restore_player_save(&mut self, name: &str) -> Option<Player> {
         let path = format!("saves/{}.toml", name);
-        if std::path::Path::new(&path).exists() {
-            if let Ok(save_data) = confy::load_path::<crate::save::Save>(&path) {
-                if save_data.name == name {
-                    return Some(Player::from_save(save_data));
-                }
+        if let Ok(save_data) = confy::load_path::<Save>(&path) {
+            if save_data.name == name {
+                return Some(Player::from_save(save_data));
             }
+            return None;
         }
-        None
+        return None;
     }
 
     fn add_player_to_game(&mut self, player: Player) {
