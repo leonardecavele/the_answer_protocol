@@ -33,6 +33,18 @@ impl Player {
             dialogs_index: HashMap::new(),
         }
     }
+    
+    pub fn from_save(save: crate::save::Save) -> Self {
+        Self {
+            name: save.name,
+            id: save.id,
+            hp: save.hp,
+            max_hp: save.max_hp,
+            inventory: save.inventory,
+            current_room: save.current_room,
+            dialogs_index: save.dialogs_index,
+        }
+    }
     pub fn set_name(&mut self, new_name: String) {
         self.name = new_name;
     }
@@ -60,6 +72,9 @@ impl Player {
     }
     pub fn get_current_room(&self) -> &str {
         &self.current_room
+    }
+    pub fn get_inventory(&self) -> &Inventory {
+        &self.inventory
     }
     pub fn move_to_room(&mut self, room: &RoomName) {
         self.current_room = room.clone();

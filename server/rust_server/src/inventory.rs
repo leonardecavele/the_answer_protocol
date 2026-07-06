@@ -1,8 +1,8 @@
 use crate::items::ItemId;
 use std::collections::HashSet;
-// use json::object;
+use serde::{Deserialize, Serialize};
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Inventory {
     items: HashSet<ItemId>,
 }

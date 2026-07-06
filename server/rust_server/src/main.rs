@@ -107,6 +107,7 @@ fn main() -> std::io::Result<()> {
             }
             TickResult::Exit => {
                 println!("exiting...");
+                game_manager.save_server_state();
                 return Ok(());
             }
         }

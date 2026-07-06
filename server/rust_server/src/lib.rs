@@ -11,3 +11,4 @@ pub mod npc;
 pub mod parser;
 pub mod combat_instances;
 pub mod quests;
+pub mod save;

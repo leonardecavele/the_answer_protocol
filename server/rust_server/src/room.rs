@@ -78,4 +78,7 @@ impl Room {
     pub fn get_all_items(&mut self) -> &mut Inventory {
         &mut self.all_items
     }
+    pub fn set_inventory(&mut self, inventory: Inventory) {
+        self.all_items = inventory;
+    }
 }

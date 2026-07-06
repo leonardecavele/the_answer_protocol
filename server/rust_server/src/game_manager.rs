@@ -6,6 +6,7 @@ use crate::parser::Parser;
 use crate::player::{Player, PlayerCount, PlayerId};
 use crate::quests::{Quest, QuestInstance, QuestState, Questid};
 use crate::room::{Room, RoomId, RoomName};
+use crate::save::{Save, ServerSave};
 use json::JsonValue;
 use std::collections::HashMap;
 use std::io::Write;
@@ -13,6 +14,7 @@ use std::net::TcpStream;
 use std::sync::mpsc;
 use std::time::Instant;
 use tracing::error;
+use tracing::warn;
 
 pub struct GameManager {
     players: HashMap<PlayerId, Player>,
@@ -50,13 +52,34 @@ impl GameManager {
             tick_diff: HashMap::new(),
         };
 
-        manager.next_player_id = manager.restore_next_player_id();
-        manager.next_item_id = manager.restore_next_item_id(&manager);
+        manager.restore_server_state();
         return manager;
     }
 
     pub fn get_players(&self) -> &HashMap<PlayerId, Player> {
         return &self.players;
+    }
+
+    
+    fn save_player(&mut self, player_id: PlayerId) {
+        if let Some(player) = self.players.get(&player_id) {
+            let inventory = player.get_inventory().clone();
+            let save_data = crate::save::Save {
+                name: player.get_name().to_string(),
+                id: player.get_id(),
+                hp: player.get_hp(),
+                max_hp: player.get_max_hp(),
+                inventory,
+                current_room: player.get_current_room().to_string(),
+                dialogs_index: std::collections::HashMap::new(),
+            };
+            if let Err(e) = confy::store_path(format!("saves/{}.toml", player.get_name()), save_data) {
+                tracing::error!("Failed to save player: {}", e);
+            }
+        }
+        else {
+            warn!("Player not found: {} while saving the game progression", player_id);
+        }
     }
 
     pub fn get_player(&self, player_id: PlayerId) -> Option<&Player> {
@@ -85,16 +108,56 @@ impl GameManager {
         }
     }
 
-    fn restore_next_player_id(&self) -> PlayerId {
-        return 0;
+    pub fn save_server_state(&mut self) {
+        let player_ids: Vec<PlayerId> = self.players.keys().copied().collect();
+        for id in player_ids {
+            self.save_player(id);
+        }
+
+        let mut rooms_inventory = HashMap::new();
+        for (room_id, room) in &self.all_rooms {
+            rooms_inventory.insert(room_id.to_string(), room.get_inventory().clone());
+        }
+
+        let server_save = crate::save::ServerSave {
+            next_player_id: self.next_player_id,
+            next_item_id: self.next_item_id,
+            rooms_inventory,
+        };
+
+        if let Err(e) = confy::store_path("saves/server_state.toml", server_save) {
+            tracing::error!("Failed to save server state: {}", e);
+        }
     }
 
-    fn restore_next_item_id(&self, manager: &GameManager) -> ItemId {
-        //if a save is present take it else:
-        //
-        // +1 because the ids start at 1
-        (manager.all_items.len() + 1usize) as ItemId
+    fn restore_server_state(&mut self) {
+        let path = "saves/server_state.toml";
+        if std::path::Path::new(path).exists() {
+            if let Ok(server_save) = confy::load_path::<ServerSave>(path) {
+                if server_save.next_player_id > 0 || server_save.next_item_id > 1 {
+                    self.next_player_id = server_save.next_player_id;
+                    self.next_item_id = server_save.next_item_id;
+                    for (room_id_str, inventory) in server_save.rooms_inventory {
+                        if let Ok(room_id) = room_id_str.parse::<u32>() {
+                            if let Some(room) = self.all_rooms.get_mut(&room_id) {
+                                room.set_inventory(inventory);
+                            }
+                        }
+                    }
+                } else {
+                    self.next_player_id = 0;
+                    self.next_item_id = (self.all_items.len() + 1) as ItemId;
+                }
+            } else {
+                self.next_player_id = 0;
+                self.next_item_id = (self.all_items.len() + 1) as ItemId;
+            }
+        } else {
+            self.next_player_id = 0;
+            self.next_item_id = (self.all_items.len() + 1) as ItemId;
+        }
     }
+
     pub fn get_all_items(&mut self) -> &mut HashMap<ItemId, Item> {
         return &mut self.all_items;
     }
@@ -111,9 +174,16 @@ impl GameManager {
         return &mut self.all_quests;
     }
 
-    fn try_restore_player_save(&mut self) -> Option<Player> {
-        // &mut self, name: String
-        Option::None
+    fn try_restore_player_save(&mut self, name: &str) -> Option<Player> {
+        let path = format!("saves/{}.toml", name);
+        if std::path::Path::new(&path).exists() {
+            if let Ok(save_data) = confy::load_path::<crate::save::Save>(&path) {
+                if save_data.name == name {
+                    return Some(Player::from_save(save_data));
+                }
+            }
+        }
+        None
     }
 
     fn add_player_to_game(&mut self, player: Player) {
@@ -132,21 +202,22 @@ impl GameManager {
     }
 
     pub fn connect_player(&mut self, name: String) {
-        // get the data of this player from the database and add the player to the game
-        // init an empty save if the player never played before
-        match self.try_restore_player_save() {
-            Some(_player) => return,
+        match self.try_restore_player_save(&name) {
+            Some(player) => self.add_player_to_game(player),
             _none => self.create_new_player(name),
         }
     }
 
     pub fn disconnect_player(&mut self, name: String) {
-        let player_id_wrapped = self.players_by_name.get(&name);
-        if player_id_wrapped.is_none() {
-            error!("disconnect player: player not found");
-        }
-        let player_id = player_id_wrapped.unwrap();
-        self.players.remove(player_id);
+        let player_id = match self.players_by_name.get(&name) {
+            Some(&id) => id,
+            None => {
+                error!("disconnect player: player not found");
+                return;
+            }
+        };
+        self.save_player(player_id);
+        self.players.remove(&player_id);
         self.players_by_name.remove(&name);
     }
 
@@ -404,3 +475,5 @@ impl GameManager {
             .unwrap_or(2 as RoomId)
     }
 }
+
+
