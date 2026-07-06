@@ -1,5 +1,5 @@
 use crate::states::app::AppState;
-use crate::states::ui::GameFocus;
+use crate::states::game::GameFocus;
 use crate::ui::components::Lifecycle;
 use crate::ui::components::scrollable::ScrollableComponent;
 use crate::ui::theme::default_block;
@@ -24,7 +24,7 @@ impl ScrollableComponent for ActionHistoryComponent {
         let mut history_block = default_block()
             .title(" Action History ")
             .title_bottom(Line::from(" Press Ctrl + H to open help ").alignment(Alignment::Center));
-        if state.ui.current_focus == GameFocus::ActionHistory {
+        if state.game.current_focus == GameFocus::ActionHistory {
             history_block = history_block.border_style(Style::default().fg(Color::Yellow));
         }
         history_block

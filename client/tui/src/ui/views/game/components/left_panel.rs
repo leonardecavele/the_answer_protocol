@@ -1,7 +1,7 @@
 use crate::data::manifest::NpcType;
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
-use crate::states::ui::GameFocus;
+use crate::states::game::GameFocus;
 use crate::ui::components::Component;
 use crate::ui::components::Lifecycle;
 use crate::ui::theme::default_block;
@@ -90,7 +90,7 @@ impl Component for LeftPanelComponent {
                     // Find the actual index of the npc_id in the room_npcs list
                     if let Some(idx) = state.game.room_npcs.iter().position(|id| id == npc_id) {
                         if idx == selected_idx {
-                            if state.ui.current_focus == GameFocus::NpcList {
+                            if state.game.current_focus == GameFocus::NpcList {
                                 style = style.add_modifier(Modifier::REVERSED);
                             }
                         }
@@ -104,7 +104,7 @@ impl Component for LeftPanelComponent {
             })
             .collect();
         let mut npcs_block = default_block().title(" Room NPCs ");
-        if state.ui.current_focus == GameFocus::NpcList {
+        if state.game.current_focus == GameFocus::NpcList {
             npcs_block = npcs_block.border_style(Style::default().fg(Color::Yellow));
         }
         let npcs_list = List::new(npcs_items).block(npcs_block);
@@ -128,7 +128,7 @@ impl Component for LeftPanelComponent {
                 let mut style = Style::default().fg(Color::Cyan);
 
                 if self.selected_item_index == idx
-                    && state.ui.current_focus == GameFocus::RoomItemsList
+                    && state.game.current_focus == GameFocus::RoomItemsList
                 {
                     style = style.add_modifier(Modifier::REVERSED);
                 }
@@ -139,7 +139,7 @@ impl Component for LeftPanelComponent {
             })
             .collect();
         let mut items_block = default_block().title(" Room Items ");
-        if state.ui.current_focus == GameFocus::RoomItemsList {
+        if state.game.current_focus == GameFocus::RoomItemsList {
             items_block = items_block.border_style(Style::default().fg(Color::Yellow));
         }
         let items_list = List::new(items).block(items_block);
@@ -168,7 +168,7 @@ impl Component for LeftPanelComponent {
                 };
 
                 if self.selected_quest_index == idx
-                    && state.ui.current_focus == GameFocus::QuestList
+                    && state.game.current_focus == GameFocus::QuestList
                 {
                     style = style.add_modifier(Modifier::REVERSED);
                 }
@@ -180,7 +180,7 @@ impl Component for LeftPanelComponent {
             })
             .collect();
         let mut quests_block = default_block().title(" Quests ");
-        if state.ui.current_focus == GameFocus::QuestList {
+        if state.game.current_focus == GameFocus::QuestList {
             quests_block = quests_block.border_style(Style::default().fg(Color::Yellow));
         }
         let quests_list = List::new(quests_items).block(quests_block);
@@ -196,7 +196,7 @@ impl Lifecycle for LeftPanelComponent {
         event: &crossterm::event::Event,
         _event_sender: &Sender<ApplicationEvent>,
     ) -> bool {
-        if state.ui.current_focus == GameFocus::NpcList {
+        if state.game.current_focus == GameFocus::NpcList {
             if let crossterm::event::Event::Key(key) = event {
                 let npc_count = state.game.room_npcs.len();
                 if npc_count > 0 {
@@ -226,7 +226,7 @@ impl Lifecycle for LeftPanelComponent {
 
                             if let Some(idx) = self.selected_npc_index {
                                 if let Some(npc_id) = state.game.room_npcs.get(idx) {
-                                    state.ui.active_npc_popup = Some(npc_id.clone());
+                                    state.game.active_npc_popup = Some(npc_id.clone());
                                     return true;
                                 }
                             }
@@ -235,7 +235,7 @@ impl Lifecycle for LeftPanelComponent {
                     }
                 }
             }
-        } else if state.ui.current_focus == GameFocus::RoomItemsList {
+        } else if state.game.current_focus == GameFocus::RoomItemsList {
             if let crossterm::event::Event::Key(key) = event {
                 let item_count = state.game.current_room_items.len();
                 if item_count > 0 {
@@ -262,7 +262,7 @@ impl Lifecycle for LeftPanelComponent {
                             if let Some(item_id) =
                                 state.game.current_room_items.get(self.selected_item_index)
                             {
-                                state.ui.active_item_popup = Some(item_id.clone());
+                                state.game.active_item_popup = Some(item_id.clone());
                                 return true;
                             }
                         }
@@ -270,7 +270,7 @@ impl Lifecycle for LeftPanelComponent {
                     }
                 }
             }
-        } else if state.ui.current_focus == GameFocus::QuestList {
+        } else if state.game.current_focus == GameFocus::QuestList {
             if let crossterm::event::Event::Key(key) = event {
                 let quest_count = state.game.quests.len();
                 if quest_count > 0 {
@@ -294,7 +294,8 @@ impl Lifecycle for LeftPanelComponent {
                             return true;
                         }
                         crossterm::event::KeyCode::Enter => {
-                            if let Some(_quest_id) = state.game.quests.get(self.selected_quest_index)
+                            if let Some(_quest_id) =
+                                state.game.quests.get(self.selected_quest_index)
                             {
                                 state
                                     .game

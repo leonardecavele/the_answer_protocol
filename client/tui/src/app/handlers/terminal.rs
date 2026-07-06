@@ -17,24 +17,7 @@ impl App {
             }
         }
 
-        if self.state.ui.show_event_overlay {
-            let _ = self.event_overlay.handle_terminal_event(
-                &mut self.state,
-                &event,
-                &self.event_broker.sender(),
-            );
-            return;
-        }
-
-        if self.notification_overlay.handle_terminal_event(
-            &mut self.state,
-            &event,
-            &self.event_broker.sender(),
-        ) {
-            return;
-        }
-
-        self.active_view.handle_terminal_event(
+        self.view_manager.handle_terminal_event(
             &mut self.state,
             &event,
             &self.event_broker.sender(),

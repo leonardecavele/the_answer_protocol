@@ -1,8 +1,5 @@
-use crate::states::app::AppState;
-use ratatui::Frame;
 use ratatui::layout::Rect;
 use ratatui::text::Line;
-use ratatui_image::{Resize, StatefulImage};
 
 /// Wrap text efficiently to match the exact visual lines it will take on screen.
 pub fn wrap_str_to_lines<'a, 'b>(text: &'a str, max_width: usize) -> Vec<Line<'b>> {
@@ -23,16 +20,6 @@ pub fn wrap_slice_to_lines(strs: &[String], max_width: usize) -> Vec<Line<'stati
         }
     }
     visual_lines
-}
-
-/// Renders an image using ratatui-image, handling caching automatically
-pub fn render_image(state: &AppState, frame: &mut Frame, area: Rect, path: &str, resize: Resize) {
-    state.ui.ensure_image_loaded(path);
-    let mut cache = state.ui.image_cache.borrow_mut();
-    if let Some(Some((protocol, _, _))) = cache.get_mut(path) {
-        let image_widget = StatefulImage::default().resize(resize);
-        frame.render_stateful_widget(image_widget, area, protocol);
-    }
 }
 
 /// Helper to compute the centered sub-area that respects the image's original aspect ratio.

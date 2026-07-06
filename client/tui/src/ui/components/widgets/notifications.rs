@@ -33,18 +33,12 @@ impl Component for NotificationComponent {
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
         self.visible_areas.clear();
 
-        if state.ui.notifications.is_empty() {
+        if state.ui.notification.is_empty() {
             return;
         }
 
         // We take the last N notifications
-        let notifs_to_draw = state
-            .ui
-            .notifications
-            .iter()
-            .rev()
-            .take(MAX_VISIBLE_NOTIFICATIONS)
-            .collect::<Vec<_>>();
+        let notifs_to_draw = state.ui.notification.take(MAX_VISIBLE_NOTIFICATIONS);
 
         let mut current_y = area.height;
 
@@ -124,10 +118,9 @@ impl Lifecycle for NotificationComponent {
                     .iter()
                     .find(|(_, area)| is_mouse_in_rect(*column, *row, *area))
                 {
-                    // Remove the targeted notification from the state
                     let id_to_remove = clicked_id.clone();
-                    state.ui.notifications.retain(|n| n.id != id_to_remove);
-                    return true; // Event consumed
+                    state.ui.notification.remove(&id_to_remove);
+                    return true;
                 }
             }
         }

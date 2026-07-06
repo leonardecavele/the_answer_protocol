@@ -26,7 +26,7 @@ impl HelpOverlayComponent {
 
 impl ScrollableComponent for HelpOverlayComponent {
     fn get_area(&self, state: &AppState, max_area: Rect) -> Rect {
-        if !state.ui.show_help_overlay {
+        if !state.game.show_help_overlay {
             return Rect::default();
         }
 
@@ -146,7 +146,7 @@ impl Lifecycle for HelpOverlayComponent {
         if let CrosstermEvent::Key(key) = event {
             match key.code {
                 KeyCode::Esc | KeyCode::Char('q') => {
-                    state.ui.show_help_overlay = false;
+                    state.game.show_help_overlay = false;
                     return true;
                 }
                 KeyCode::Char('h') => {
@@ -154,7 +154,7 @@ impl Lifecycle for HelpOverlayComponent {
                         .modifiers
                         .contains(crossterm::event::KeyModifiers::CONTROL)
                     {
-                        state.ui.show_help_overlay = false;
+                        state.game.show_help_overlay = false;
                         return true;
                     }
                 }

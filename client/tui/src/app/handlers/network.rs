@@ -35,10 +35,12 @@ impl App {
 
                 self.state
                     .ui
-                    .remove_notification(NOTIF_ID_CONNECTION_ATTEMPT);
+                    .notification
+                    .remove(NOTIF_ID_CONNECTION_ATTEMPT);
 
                 self.state
                     .ui
+                    .notification
                     .push(Notification::info("Connected to the server successfully!"));
 
                 self.state.network.server_ip = server_ip;
@@ -46,15 +48,16 @@ impl App {
                 self.state.network.is_connected = true;
                 self.state.game.player_name = Some(player_name);
 
-                self.active_view = Box::new(GameView::new());
+                self.view_manager.set_view(Box::new(GameView::new()));
             }
             NetworkEvent::ConnectionFailed { error_message } => {
                 self.network_manager = None;
                 self.state
                     .ui
-                    .remove_notification(NOTIF_ID_CONNECTION_ATTEMPT);
+                    .notification
+                    .remove(NOTIF_ID_CONNECTION_ATTEMPT);
 
-                self.state.ui.push(Notification::error(format!(
+                self.state.ui.notification.push(Notification::error(format!(
                     "Connection failed: {}",
                     error_message
                 )));
@@ -62,10 +65,10 @@ impl App {
             NetworkEvent::ConnectionLost { reason } => {
                 self.network_manager = None;
 
-                self.active_view = Box::new(LoginView::new(
+                self.view_manager.set_view(Box::new(LoginView::new(
                     self.state.network.server_ip.clone(),
                     self.state.network.server_port.clone(),
-                ));
+                )));
 
                 self.state = AppState::new(
                     self.state.network.server_ip.clone(),
@@ -75,6 +78,7 @@ impl App {
 
                 self.state
                     .ui
+                    .notification
                     .push(Notification::error(format!("Connection lost: {}", reason)));
             }
         }

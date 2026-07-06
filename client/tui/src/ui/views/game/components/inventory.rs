@@ -1,6 +1,6 @@
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
-use crate::states::ui::GameFocus;
+use crate::states::game::GameFocus;
 use crate::ui::components::Component;
 use crate::ui::components::Lifecycle;
 use crate::ui::theme::default_block;
@@ -35,7 +35,7 @@ impl Component for InventoryComponent {
         self.inventory_area = Some(area);
 
         let mut inv_block = default_block().title(" Inventory ");
-        if state.ui.current_focus == GameFocus::InventoryGrid {
+        if state.game.current_focus == GameFocus::InventoryGrid {
             inv_block = inv_block.border_style(Style::default().fg(Color::Yellow));
         }
 
@@ -77,7 +77,7 @@ impl Component for InventoryComponent {
 
             let text = format!("{}\n{}", display_name, item_id);
             let mut p_style = Style::default();
-            if state.ui.current_focus == GameFocus::InventoryGrid
+            if state.game.current_focus == GameFocus::InventoryGrid
                 && state.game.inventory_cursor == idx
             {
                 p_style = p_style.add_modifier(Modifier::REVERSED).fg(Color::Yellow);
@@ -104,7 +104,7 @@ impl Lifecycle for InventoryComponent {
         event: &crossterm::event::Event,
         _event_sender: &Sender<ApplicationEvent>,
     ) -> bool {
-        if state.ui.current_focus == GameFocus::InventoryGrid {
+        if state.game.current_focus == GameFocus::InventoryGrid {
             if let crossterm::event::Event::Key(key) = event {
                 let inv_count = state.game.inventory.len();
                 if inv_count > 0 {
@@ -143,7 +143,7 @@ impl Lifecycle for InventoryComponent {
                             if let Some(item_id) =
                                 state.game.inventory.get(state.game.inventory_cursor)
                             {
-                                state.ui.active_item_popup = Some(item_id.clone());
+                                state.game.active_item_popup = Some(item_id.clone());
                                 return true;
                             }
                         }

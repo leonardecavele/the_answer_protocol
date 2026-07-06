@@ -32,7 +32,10 @@ impl App {
                 "api response",
                 format!("[ERROR] {} - {}", envelope.id, error),
             );
-            self.state.ui.push(Notification::warning(error.to_string()));
+            self.state
+                .ui
+                .notification
+                .push(Notification::warning(error.to_string()));
 
             return;
         }
@@ -309,6 +312,7 @@ impl App {
                 t => {
                     self.state
                         .ui
+                        .notification
                         .push(Notification::warning(format!("Unknown spawn event: {}", t)));
                 }
             },
@@ -343,10 +347,13 @@ impl App {
                         .retain(|item| item != spawn_data.id.as_str());
                 }
                 t => {
-                    self.state.ui.push(Notification::warning(format!(
-                        "Unknown despawn event: {}",
-                        t
-                    )));
+                    self.state
+                        .ui
+                        .notification
+                        .push(Notification::warning(format!(
+                            "Unknown despawn event: {}",
+                            t
+                        )));
                 }
             },
             ServerEvent::Quit(name) => {
@@ -399,7 +406,7 @@ impl App {
             },
             ServerEvent::Group(group_event) => match group_event {
                 GroupEvent::Invite(leader) => {
-                    self.state.ui.push(Notification::info(format!(
+                    self.state.ui.notification.push(Notification::info(format!(
                         "You are invited to a group by {}.",
                         leader
                     )));
@@ -452,7 +459,7 @@ impl App {
                     sender: chat.sender.clone(),
                     content: chat.message,
                 });
-                self.state.ui.push(Notification::info(format!(
+                self.state.ui.notification.push(Notification::info(format!(
                     "New private message from {}.",
                     chat.sender
                 )));
@@ -463,6 +470,7 @@ impl App {
             ServerEvent::Unknown(raw) => {
                 self.state
                     .ui
+                    .notification
                     .push(Notification::warning(format!("Unknown event: {}", raw)));
             }
             ServerEvent::GameServer(game_server_event) => match game_server_event {
@@ -471,9 +479,9 @@ impl App {
                         .game
                         .log_action("Game server online.".to_string());
 
-                    self.state
-                        .ui
-                        .push(Notification::info("Game server is online. Session restarted."));
+                    self.state.ui.notification.push(Notification::info(
+                        "Game server is online. Session restarted.",
+                    ));
 
                     self.handle_request(ApiRequest::Look(LookCommand));
                     self.load_state_from_server();
@@ -487,10 +495,13 @@ impl App {
                 }
             },
             _ => {
-                self.state.ui.push(Notification::warning(format!(
-                    "Missing handler for event: {:?}",
-                    event
-                )));
+                self.state
+                    .ui
+                    .notification
+                    .push(Notification::warning(format!(
+                        "Missing handler for event: {:?}",
+                        event
+                    )));
             }
         }
     }

@@ -4,6 +4,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
+//region Dialogue
 pub const END_OF_DIALOGUE_TAG: &str = "[end of dialogue]";
 
 #[derive(Debug, Clone)]
@@ -35,7 +36,9 @@ impl DialogueState {
         self.visible_chars += 2;
     }
 }
+//endregion
 
+//region Chat
 #[derive(Debug, Clone)]
 pub enum ChatChannel {
     Global,
@@ -49,6 +52,24 @@ pub struct ChatMessage {
     pub channel: ChatChannel,
     pub sender: String,
     pub content: String,
+}
+//endregion
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum GameFocus {
+    Input,
+    RightPanel,
+    NpcList,
+    QuestList,
+    RoomItemsList,
+    InventoryGrid,
+    ActionHistory,
+}
+
+impl Default for GameFocus {
+    fn default() -> Self {
+        GameFocus::Input
+    }
 }
 
 pub struct GameState {
@@ -74,6 +95,13 @@ pub struct GameState {
     pub active_dialogue: Option<DialogueState>,
     pub dialogue_closed_at: Option<Instant>,
     pub inventory_cursor: usize,
+
+    pub current_focus: GameFocus,
+    pub active_npc_popup: Option<String>,
+    pub active_item_popup: Option<String>,
+    pub active_item_view_popup: Option<String>,
+    pub show_help_overlay: bool,
+    pub show_chat: bool,
 }
 
 impl GameState {
@@ -101,6 +129,13 @@ impl GameState {
             active_dialogue: None,
             dialogue_closed_at: None,
             inventory_cursor: 0,
+
+            current_focus: GameFocus::default(),
+            active_npc_popup: None,
+            active_item_popup: None,
+            active_item_view_popup: None,
+            show_help_overlay: false,
+            show_chat: false,
         }
     }
 

@@ -41,7 +41,7 @@ impl ItemPopupComponent {
 
 impl Component for ItemPopupComponent {
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
-        let item_id = if let Some(id) = &state.ui.active_item_popup {
+        let item_id = if let Some(id) = &state.game.active_item_popup {
             id
         } else {
             return;
@@ -101,7 +101,7 @@ impl Lifecycle for ItemPopupComponent {
         event: &CrosstermEvent,
         event_sender: &Sender<ApplicationEvent>,
     ) -> bool {
-        let item_id = if let Some(id) = state.ui.active_item_popup.clone() {
+        let item_id = if let Some(id) = state.game.active_item_popup.clone() {
             id
         } else {
             return false;
@@ -130,7 +130,7 @@ impl Lifecycle for ItemPopupComponent {
                     return true;
                 }
                 KeyCode::Esc => {
-                    state.ui.active_item_popup = None;
+                    state.game.active_item_popup = None;
                     self.selected_action_index = 0;
                     return true;
                 }
@@ -138,7 +138,7 @@ impl Lifecycle for ItemPopupComponent {
                     if let Some(act) = actions.get(self.selected_action_index) {
                         match act.as_str() {
                             "VIEW" => {
-                                state.ui.active_item_view_popup = Some(item_id.clone());
+                                state.game.active_item_view_popup = Some(item_id.clone());
                                 return true;
                             }
                             "CANCEL" => {}
@@ -150,7 +150,7 @@ impl Lifecycle for ItemPopupComponent {
                         }
                     }
 
-                    state.ui.active_item_popup = None;
+                    state.game.active_item_popup = None;
                     self.selected_action_index = 0;
                     return true;
                 }

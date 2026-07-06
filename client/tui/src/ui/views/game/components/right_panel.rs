@@ -1,9 +1,9 @@
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
-use crate::states::ui::GameFocus;
+use crate::states::game::GameFocus;
 use crate::ui::components::Component;
 use crate::ui::components::Lifecycle;
-use crate::ui::utils::{center_area_with_aspect_ratio, render_image, wrap_str_to_lines};
+use crate::ui::utils::{center_area_with_aspect_ratio, wrap_str_to_lines};
 use ratatui::style::Stylize;
 use ratatui::widgets::{Block, BorderType, Borders};
 use ratatui::{
@@ -80,7 +80,7 @@ impl RightPanelComponent {
     pub fn get_desired_width(&mut self, state: &AppState, available_height: u16) -> Option<u16> {
         let (path_to_load, _) = self.get_path_to_load(state);
         if let Some(path) = path_to_load {
-            if let Some((img_width, img_height)) = state.ui.get_image_dimensions(&path) {
+            if let Some((img_width, img_height)) = state.ui.image_manager.get_dimensions(&path) {
                 let img_aspect = (img_width as f32) / (img_height as f32 / 2.0);
                 let render_width = (available_height as f32 * img_aspect) as u16;
                 return Some(render_width);
@@ -140,13 +140,12 @@ impl Component for RightPanelComponent {
         }
 
         if let Some(path) = path_to_load {
-            if let Some((img_width, img_height)) = state.ui.get_image_dimensions(&path) {
+            if let Some((img_width, img_height)) = state.ui.image_manager.get_dimensions(&path) {
                 actual_image_area =
                     center_area_with_aspect_ratio(inner_area, img_width, img_height);
             }
 
-            render_image(
-                state,
+            state.ui.image_manager.render(
                 frame,
                 actual_image_area,
                 &path,
@@ -156,7 +155,7 @@ impl Component for RightPanelComponent {
             self.render_text(frame, inner_area, text, Color::White);
         }
 
-        if state.ui.current_focus == GameFocus::RightPanel {
+        if state.game.current_focus == GameFocus::RightPanel {
             let focus_text = " [ FOCUS ] ";
             let focus_area = Rect {
                 x: inner_area.x + inner_area.width.saturating_sub(11),
@@ -240,10 +239,10 @@ impl Lifecycle for RightPanelComponent {
         event: &crossterm::event::Event,
         event_sender: &Sender<ApplicationEvent>,
     ) -> bool {
-        if state.ui.current_focus == GameFocus::RightPanel {
+        if state.game.current_focus == GameFocus::RightPanel {
             if let crossterm::event::Event::Key(key) = event {
                 if key.code == crossterm::event::KeyCode::Enter {
-                    state.ui.current_focus = GameFocus::NpcList;
+                    state.game.current_focus = GameFocus::NpcList;
                     return true;
                 }
 

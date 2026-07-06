@@ -1,0 +1,81 @@
+use crate::events::ApplicationEvent;
+use crate::states::app::AppState;
+use crate::ui::components::scrollable::Scrollable;
+use crate::ui::components::widgets::event_overlay::EventOverlayComponent;
+use crate::ui::components::widgets::notifications::NotificationComponent;
+use crate::ui::components::{Component, Lifecycle};
+use crate::ui::views::login::LoginView;
+use crossterm::event::Event as CrosstermEvent;
+use ratatui::Frame;
+use ratatui::layout::Rect;
+use tokio::sync::mpsc::Sender;
+
+pub struct ViewManager {
+    active_view: Box<dyn Component>,
+    event_overlay: Scrollable<EventOverlayComponent>,
+    notification_overlay: NotificationComponent,
+}
+
+impl ViewManager {
+    pub fn new(ip: String, port: String) -> Self {
+        Self {
+            active_view: Box::new(LoginView::new(ip, port)),
+            event_overlay: Scrollable::new(EventOverlayComponent::new()),
+            notification_overlay: NotificationComponent::new(),
+        }
+    }
+
+    pub fn set_view(&mut self, view: Box<dyn Component>) {
+        self.active_view = view;
+    }
+}
+
+impl Component for ViewManager {
+    fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
+        self.active_view.draw(state, frame, area);
+
+        if state.ui.show_event_overlay {
+            self.event_overlay.draw(state, frame, area);
+        }
+
+        self.notification_overlay.draw(state, frame, area);
+    }
+}
+
+impl Lifecycle for ViewManager {
+    fn handle_terminal_event(
+        &mut self,
+        state: &mut AppState,
+        event: &CrosstermEvent,
+        sender: &Sender<ApplicationEvent>,
+    ) -> bool {
+        if state.ui.show_event_overlay {
+            if self
+                .event_overlay
+                .handle_terminal_event(state, &event, sender)
+            {
+                return true;
+            }
+        }
+
+        if self
+            .notification_overlay
+            .handle_terminal_event(state, &event, sender)
+        {
+            return true;
+        }
+
+        if self
+            .active_view
+            .handle_terminal_event(state, &event, sender)
+        {
+            return true;
+        }
+
+        self.active_view.handle_terminal_event(state, event, sender)
+    }
+
+    fn on_tick(&mut self, state: &mut AppState) {
+        self.active_view.on_tick(state)
+    }
+}
