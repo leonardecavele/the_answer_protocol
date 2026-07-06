@@ -4,11 +4,13 @@ use rust_server::parser::Parser;
 
 use std::io::{BufRead, BufReader};
 use std::net::{TcpListener, TcpStream};
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc;
 use std::thread;
 use std::time::Instant;
 use time::macros::format_description;
-use tracing::{error, info};
+use tracing::info;
 use tracing_subscriber::EnvFilter;
 use tracing_subscriber::fmt::time::LocalTime;
 
@@ -62,7 +64,22 @@ fn main() -> std::io::Result<()> {
     // the receover now reads the sent message and sends PONG back to the go server
     start_reader_thread(reader_stream, mpsc_sender);
     let mut game_manager = GameManager::new(mpsc_receiver, writer_stream, parser);
+
+    let running = Arc::new(AtomicBool::new(true));
+    let cloned_running = running.clone();
+
+    ctrlc::set_handler(move || {
+        info!("stopping server...");
+        cloned_running.store(false, Ordering::Relaxed);
+    })
+    .expect("error while setting Ctrl-C handler");
+
     loop {
+        if !running.load(Ordering::Relaxed) {
+            game_manager.save_server_state();
+            return Ok(());
+        }
+
         let start = Instant::now(); // this tick time start
         game_manager.update_game_state()?;
 
