@@ -35,14 +35,14 @@ impl Component for InventoryComponent {
         self.inventory_area = Some(area);
 
         let mut inv_block = default_block().title(" Inventory ");
-        if state.game.current_focus == GameFocus::InventoryGrid {
+        if state.game.ui.current_focus == GameFocus::InventoryGrid {
             inv_block = inv_block.border_style(Style::default().fg(Color::Yellow));
         }
 
         let inv_inner = inv_block.inner(area);
         frame.render_widget(inv_block, area);
 
-        if state.game.inventory.is_empty() {
+        if state.game.player.inventory.is_empty() {
             let p = Paragraph::new(" Your inventory is empty. ").alignment(Alignment::Center);
             frame.render_widget(p, inv_inner);
             return;
@@ -51,7 +51,7 @@ impl Component for InventoryComponent {
         self.inventory_cols = (inv_inner.width / INVENTORY_ITEM_WIDTH) as usize;
         let cols = self.inventory_cols.max(1);
 
-        for (idx, item_id) in state.game.inventory.iter().enumerate() {
+        for (idx, item_id) in state.game.player.inventory.iter().enumerate() {
             let col = idx % cols;
             let row = idx / cols;
 
@@ -77,8 +77,8 @@ impl Component for InventoryComponent {
 
             let text = format!("{}\n{}", display_name, item_id);
             let mut p_style = Style::default();
-            if state.game.current_focus == GameFocus::InventoryGrid
-                && state.game.inventory_cursor == idx
+            if state.game.ui.current_focus == GameFocus::InventoryGrid
+                && state.game.ui.inventory_cursor == idx
             {
                 p_style = p_style.add_modifier(Modifier::REVERSED).fg(Color::Yellow);
             }
@@ -104,46 +104,49 @@ impl Lifecycle for InventoryComponent {
         event: &crossterm::event::Event,
         _event_sender: &Sender<ApplicationEvent>,
     ) -> bool {
-        if state.game.current_focus == GameFocus::InventoryGrid {
+        if state.game.ui.current_focus == GameFocus::InventoryGrid {
             if let crossterm::event::Event::Key(key) = event {
-                let inv_count = state.game.inventory.len();
+                let inv_count = state.game.player.inventory.len();
                 if inv_count > 0 {
                     let cols = self.inventory_cols.max(1);
                     let rows = (inv_count + cols - 1) / cols;
-                    let current = state.game.inventory_cursor;
+                    let current = state.game.ui.inventory_cursor;
                     let current_row = current / cols;
 
                     match key.code {
                         crossterm::event::KeyCode::Up => {
                             if current_row > 0 {
-                                state.game.inventory_cursor = current - cols;
+                                state.game.ui.inventory_cursor = current - cols;
                             }
                             return true;
                         }
                         crossterm::event::KeyCode::Down => {
                             if current_row + 1 < rows {
                                 let target = current + cols;
-                                state.game.inventory_cursor = target.min(inv_count - 1);
+                                state.game.ui.inventory_cursor = target.min(inv_count - 1);
                             }
                             return true;
                         }
                         crossterm::event::KeyCode::Left => {
                             if current > 0 {
-                                state.game.inventory_cursor = current - 1;
+                                state.game.ui.inventory_cursor = current - 1;
                             }
                             return true;
                         }
                         crossterm::event::KeyCode::Right => {
                             if current + 1 < inv_count {
-                                state.game.inventory_cursor = current + 1;
+                                state.game.ui.inventory_cursor = current + 1;
                             }
                             return true;
                         }
                         crossterm::event::KeyCode::Enter => {
-                            if let Some(item_id) =
-                                state.game.inventory.get(state.game.inventory_cursor)
+                            if let Some(item_id) = state
+                                .game
+                                .player
+                                .inventory
+                                .get(state.game.ui.inventory_cursor)
                             {
-                                state.game.active_item_popup = Some(item_id.clone());
+                                state.game.ui.active_item_popup = Some(item_id.clone());
                                 return true;
                             }
                         }

@@ -29,7 +29,7 @@ impl ItemViewPopupComponent {
 
 impl Component for ItemViewPopupComponent {
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
-        let item_id = if let Some(id) = &state.game.active_item_view_popup {
+        let item_id = if let Some(id) = &state.game.ui.active_item_view_popup {
             id
         } else {
             return;
@@ -121,14 +121,14 @@ impl Lifecycle for ItemViewPopupComponent {
         event: &CrosstermEvent,
         _event_sender: &Sender<ApplicationEvent>,
     ) -> bool {
-        if state.game.active_item_view_popup.is_none() {
+        if state.game.ui.active_item_view_popup.is_none() {
             return false;
         }
 
         if let CrosstermEvent::Key(key) = event {
             match key.code {
                 KeyCode::Esc | KeyCode::Enter | KeyCode::Char('q') => {
-                    state.game.active_item_view_popup = None;
+                    state.game.ui.active_item_view_popup = None;
                 }
                 _ => {}
             }

@@ -46,7 +46,7 @@ impl App {
                 self.state.network.server_ip = server_ip;
                 self.state.network.server_port = server_port;
                 self.state.network.is_connected = true;
-                self.state.game.player_name = Some(player_name);
+                self.state.game.player.name = Some(player_name);
 
                 self.view_manager.set_view(Box::new(GameView::new()));
             }

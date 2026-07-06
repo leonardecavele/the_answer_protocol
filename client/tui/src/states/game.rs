@@ -72,76 +72,147 @@ impl Default for GameFocus {
     }
 }
 
-pub struct GameState {
-    pub player_name: Option<String>,
-    pub chat_history: Vec<ChatMessage>,
-    pub room_players: Vec<String>,
-    pub group_id: Option<String>,
-    pub group_leader: Option<String>,
-    pub online_players_count: u32,
+//region Sub-states
+pub struct PlayerState {
+    pub name: Option<String>,
     pub hp: u32,
     pub max_hp: u32,
-    pub manifest: Arc<Manifest>,
-    pub room_npcs: Vec<String>,
-    pub current_room_items: Vec<String>,
     pub inventory: Vec<String>,
     pub quests: Vec<QuestListEntry>,
-    pub current_room_id: Option<String>,
-    pub current_room_name: Option<String>,
-    pub current_room_description: Option<String>,
-    pub current_room_exits: HashMap<String, String>,
-    pub focused_entity_id: Option<String>,
-    pub action_logs: Vec<String>,
-    pub active_dialogue: Option<DialogueState>,
-    pub dialogue_closed_at: Option<Instant>,
-    pub inventory_cursor: usize,
+}
 
+impl PlayerState {
+    pub fn new() -> Self {
+        Self {
+            name: None,
+            hp: 100,
+            max_hp: 100,
+            inventory: Vec::new(),
+            quests: Vec::new(),
+        }
+    }
+
+    pub fn heal(&mut self, amount: u32) {
+        self.hp = (self.hp + amount).min(self.max_hp);
+    }
+
+    pub fn take_damage(&mut self, amount: u32) {
+        self.hp = self.hp.saturating_sub(amount);
+    }
+
+    pub fn is_dead(&self) -> bool {
+        self.hp == 0
+    }
+}
+
+pub struct GroupState {
+    pub id: Option<String>,
+    pub leader: Option<String>,
+}
+
+impl GroupState {
+    pub fn new() -> Self {
+        Self {
+            id: None,
+            leader: None,
+        }
+    }
+
+    pub fn is_in_group(&self) -> bool {
+        self.id.is_some()
+    }
+
+    pub fn is_leader(&self, player_name: &str) -> bool {
+        if let Some(leader) = &self.leader {
+            leader == player_name
+        } else {
+            false
+        }
+    }
+
+    pub fn leave(&mut self) {
+        self.id = None;
+        self.leader = None;
+    }
+}
+
+pub struct RoomState {
+    pub id: Option<String>,
+    pub name: Option<String>,
+    pub description: Option<String>,
+    pub exits: HashMap<String, String>,
+    pub players: Vec<String>,
+    pub npcs: Vec<String>,
+    pub items: Vec<String>,
+}
+
+impl RoomState {
+    pub fn new() -> Self {
+        Self {
+            id: None,
+            name: None,
+            description: None,
+            exits: HashMap::new(),
+            players: Vec::new(),
+            npcs: Vec::new(),
+            items: Vec::new(),
+        }
+    }
+
+    pub fn clear(&mut self) {
+        self.id = None;
+        self.name = None;
+        self.description = None;
+        self.exits.clear();
+        self.players.clear();
+        self.npcs.clear();
+        self.items.clear();
+    }
+
+    pub fn has_exit(&self, direction: &str) -> bool {
+        self.exits.contains_key(direction)
+    }
+}
+
+pub struct ServerState {
+    pub online_players_count: u32,
+}
+
+impl ServerState {
+    pub fn new() -> Self {
+        Self {
+            online_players_count: 1,
+        }
+    }
+}
+
+pub struct GameUiState {
     pub current_focus: GameFocus,
     pub active_npc_popup: Option<String>,
     pub active_item_popup: Option<String>,
     pub active_item_view_popup: Option<String>,
     pub show_help_overlay: bool,
     pub show_chat: bool,
+    pub inventory_cursor: usize,
+    pub focused_entity_id: Option<String>,
+    pub active_dialogue: Option<DialogueState>,
+    pub dialogue_closed_at: Option<Instant>,
 }
 
-impl GameState {
-    pub fn new(manifest: Arc<Manifest>) -> Self {
+impl GameUiState {
+    pub fn new() -> Self {
         Self {
-            player_name: None,
-            chat_history: Vec::new(),
-            room_players: Vec::new(),
-            group_id: None,
-            group_leader: None,
-            online_players_count: 1,
-            hp: 100,
-            max_hp: 100,
-            manifest,
-            room_npcs: Vec::new(),
-            current_room_items: Vec::new(),
-            inventory: Vec::new(),
-            quests: Vec::new(),
-            current_room_id: None,
-            current_room_name: None,
-            current_room_description: None,
-            current_room_exits: HashMap::new(),
-            focused_entity_id: None,
-            action_logs: Vec::new(),
-            active_dialogue: None,
-            dialogue_closed_at: None,
-            inventory_cursor: 0,
-
             current_focus: GameFocus::default(),
             active_npc_popup: None,
             active_item_popup: None,
             active_item_view_popup: None,
             show_help_overlay: false,
             show_chat: false,
+            inventory_cursor: 0,
+            focused_entity_id: None,
+            active_dialogue: None,
+            dialogue_closed_at: None,
         }
-    }
-
-    pub fn log_action(&mut self, text: String) {
-        let time_str = chrono::Local::now().format("%H:%M:%S").to_string();
-        self.action_logs.push(format!("[{}] {}", time_str, text));
     }
 
     pub fn is_npc_dialogue_available(&self) -> bool {
@@ -150,7 +221,6 @@ impl GameState {
                 return false;
             }
         }
-
         true
     }
 
@@ -158,5 +228,45 @@ impl GameState {
         self.active_dialogue = None;
         self.focused_entity_id = None;
         self.dialogue_closed_at = Some(Instant::now());
+    }
+
+    pub fn close_all_popups(&mut self) {
+        self.active_npc_popup = None;
+        self.active_item_popup = None;
+        self.active_item_view_popup = None;
+        self.close_dialogue();
+    }
+}
+//endregion
+
+pub struct GameState {
+    pub player: PlayerState,
+    pub group: GroupState,
+    pub room: RoomState,
+    pub server: ServerState,
+    pub ui: GameUiState,
+    pub manifest: Arc<Manifest>,
+
+    pub chat_history: Vec<ChatMessage>,
+    pub action_logs: Vec<String>,
+}
+
+impl GameState {
+    pub fn new(manifest: Arc<Manifest>) -> Self {
+        Self {
+            player: PlayerState::new(),
+            group: GroupState::new(),
+            room: RoomState::new(),
+            server: ServerState::new(),
+            ui: GameUiState::new(),
+            manifest,
+            chat_history: Vec::new(),
+            action_logs: Vec::new(),
+        }
+    }
+
+    pub fn log_action(&mut self, text: String) {
+        let time_str = chrono::Local::now().format("%H:%M:%S").to_string();
+        self.action_logs.push(format!("[{}] {}", time_str, text));
     }
 }

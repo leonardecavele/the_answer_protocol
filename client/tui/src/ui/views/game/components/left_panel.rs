@@ -53,11 +53,12 @@ impl Component for LeftPanelComponent {
         // 1. Room Players
         let players_items: Vec<ListItem> = state
             .game
-            .room_players
+            .room
+            .players
             .iter()
             .map(|name| {
                 let mut style = Style::default();
-                if Some(name) == state.game.player_name.as_ref() {
+                if Some(name) == state.game.player.name.as_ref() {
                     style = style.fg(Color::Yellow).add_modifier(Modifier::BOLD);
                 }
                 ListItem::new(Span::styled(format!("• {}", name), style))
@@ -69,7 +70,8 @@ impl Component for LeftPanelComponent {
         // 2. Room NPCs
         let npcs_items: Vec<ListItem> = state
             .game
-            .room_npcs
+            .room
+            .npcs
             .iter()
             .map(|npc_id| {
                 let (display_name, npc_type) = match state.game.manifest.npcs.get(npc_id) {
@@ -88,9 +90,9 @@ impl Component for LeftPanelComponent {
 
                 if let Some(selected_idx) = self.selected_npc_index {
                     // Find the actual index of the npc_id in the room_npcs list
-                    if let Some(idx) = state.game.room_npcs.iter().position(|id| id == npc_id) {
+                    if let Some(idx) = state.game.room.npcs.iter().position(|id| id == npc_id) {
                         if idx == selected_idx {
-                            if state.game.current_focus == GameFocus::NpcList {
+                            if state.game.ui.current_focus == GameFocus::NpcList {
                                 style = style.add_modifier(Modifier::REVERSED);
                             }
                         }
@@ -104,7 +106,7 @@ impl Component for LeftPanelComponent {
             })
             .collect();
         let mut npcs_block = default_block().title(" Room NPCs ");
-        if state.game.current_focus == GameFocus::NpcList {
+        if state.game.ui.current_focus == GameFocus::NpcList {
             npcs_block = npcs_block.border_style(Style::default().fg(Color::Yellow));
         }
         let npcs_list = List::new(npcs_items).block(npcs_block);
@@ -114,7 +116,8 @@ impl Component for LeftPanelComponent {
         // 3. Room Items
         let items: Vec<ListItem> = state
             .game
-            .current_room_items
+            .room
+            .items
             .iter()
             .enumerate()
             .map(|(idx, item_id)| {
@@ -128,7 +131,7 @@ impl Component for LeftPanelComponent {
                 let mut style = Style::default().fg(Color::Cyan);
 
                 if self.selected_item_index == idx
-                    && state.game.current_focus == GameFocus::RoomItemsList
+                    && state.game.ui.current_focus == GameFocus::RoomItemsList
                 {
                     style = style.add_modifier(Modifier::REVERSED);
                 }
@@ -139,7 +142,7 @@ impl Component for LeftPanelComponent {
             })
             .collect();
         let mut items_block = default_block().title(" Room Items ");
-        if state.game.current_focus == GameFocus::RoomItemsList {
+        if state.game.ui.current_focus == GameFocus::RoomItemsList {
             items_block = items_block.border_style(Style::default().fg(Color::Yellow));
         }
         let items_list = List::new(items).block(items_block);
@@ -149,6 +152,7 @@ impl Component for LeftPanelComponent {
         // 4. Quests
         let quests_items: Vec<ListItem> = state
             .game
+            .player
             .quests
             .iter()
             .enumerate()
@@ -168,7 +172,7 @@ impl Component for LeftPanelComponent {
                 };
 
                 if self.selected_quest_index == idx
-                    && state.game.current_focus == GameFocus::QuestList
+                    && state.game.ui.current_focus == GameFocus::QuestList
                 {
                     style = style.add_modifier(Modifier::REVERSED);
                 }
@@ -180,7 +184,7 @@ impl Component for LeftPanelComponent {
             })
             .collect();
         let mut quests_block = default_block().title(" Quests ");
-        if state.game.current_focus == GameFocus::QuestList {
+        if state.game.ui.current_focus == GameFocus::QuestList {
             quests_block = quests_block.border_style(Style::default().fg(Color::Yellow));
         }
         let quests_list = List::new(quests_items).block(quests_block);
@@ -196,9 +200,9 @@ impl Lifecycle for LeftPanelComponent {
         event: &crossterm::event::Event,
         _event_sender: &Sender<ApplicationEvent>,
     ) -> bool {
-        if state.game.current_focus == GameFocus::NpcList {
+        if state.game.ui.current_focus == GameFocus::NpcList {
             if let crossterm::event::Event::Key(key) = event {
-                let npc_count = state.game.room_npcs.len();
+                let npc_count = state.game.room.npcs.len();
                 if npc_count > 0 {
                     match key.code {
                         crossterm::event::KeyCode::Up => {
@@ -220,13 +224,13 @@ impl Lifecycle for LeftPanelComponent {
                             return true;
                         }
                         crossterm::event::KeyCode::Enter => {
-                            if !state.game.is_npc_dialogue_available() {
+                            if !state.game.ui.is_npc_dialogue_available() {
                                 return true;
                             }
 
                             if let Some(idx) = self.selected_npc_index {
-                                if let Some(npc_id) = state.game.room_npcs.get(idx) {
-                                    state.game.active_npc_popup = Some(npc_id.clone());
+                                if let Some(npc_id) = state.game.room.npcs.get(idx) {
+                                    state.game.ui.active_npc_popup = Some(npc_id.clone());
                                     return true;
                                 }
                             }
@@ -235,9 +239,9 @@ impl Lifecycle for LeftPanelComponent {
                     }
                 }
             }
-        } else if state.game.current_focus == GameFocus::RoomItemsList {
+        } else if state.game.ui.current_focus == GameFocus::RoomItemsList {
             if let crossterm::event::Event::Key(key) = event {
-                let item_count = state.game.current_room_items.len();
+                let item_count = state.game.room.items.len();
                 if item_count > 0 {
                     match key.code {
                         crossterm::event::KeyCode::Up => {
@@ -260,9 +264,9 @@ impl Lifecycle for LeftPanelComponent {
                         }
                         crossterm::event::KeyCode::Enter => {
                             if let Some(item_id) =
-                                state.game.current_room_items.get(self.selected_item_index)
+                                state.game.room.items.get(self.selected_item_index)
                             {
-                                state.game.active_item_popup = Some(item_id.clone());
+                                state.game.ui.active_item_popup = Some(item_id.clone());
                                 return true;
                             }
                         }
@@ -270,9 +274,9 @@ impl Lifecycle for LeftPanelComponent {
                     }
                 }
             }
-        } else if state.game.current_focus == GameFocus::QuestList {
+        } else if state.game.ui.current_focus == GameFocus::QuestList {
             if let crossterm::event::Event::Key(key) = event {
-                let quest_count = state.game.quests.len();
+                let quest_count = state.game.player.quests.len();
                 if quest_count > 0 {
                     match key.code {
                         crossterm::event::KeyCode::Up => {
@@ -295,7 +299,7 @@ impl Lifecycle for LeftPanelComponent {
                         }
                         crossterm::event::KeyCode::Enter => {
                             if let Some(_quest_id) =
-                                state.game.quests.get(self.selected_quest_index)
+                                state.game.player.quests.get(self.selected_quest_index)
                             {
                                 state
                                     .game

@@ -21,7 +21,7 @@ impl HeaderComponent {
 
 impl Component for HeaderComponent {
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
-        let room_name = match &state.game.current_room_name {
+        let room_name = match &state.game.room.name {
             Some(name) => name.as_str(),
             None => "Cluster 6 (the backrooms)",
         };
@@ -37,10 +37,11 @@ impl Component for HeaderComponent {
             Span::raw(" "),
         ]);
 
-        let hp_color = if state.game.max_hp == 0 {
+        let hp_color = if state.game.player.max_hp == 0 {
             Color::White
         } else {
-            let percentage = (state.game.hp as f32 / state.game.max_hp as f32) * 100.0;
+            let percentage =
+                (state.game.player.hp as f32 / state.game.player.max_hp as f32) * 100.0;
             if percentage > 50.0 {
                 Color::Green
             } else if percentage > 25.0 {
@@ -55,7 +56,8 @@ impl Component for HeaderComponent {
             Span::styled(
                 state
                     .game
-                    .player_name
+                    .player
+                    .name
                     .clone()
                     .unwrap_or("unknown".to_string()),
                 Style::default()
@@ -64,19 +66,22 @@ impl Component for HeaderComponent {
             ),
             Span::styled(" | HP: ", Style::default().add_modifier(Modifier::BOLD)),
             Span::styled(
-                format!("{}/{}", state.game.hp, state.game.max_hp),
+                format!("{}/{}", state.game.player.hp, state.game.player.max_hp),
                 Style::default().fg(hp_color).add_modifier(Modifier::BOLD),
             ),
-            Span::raw(format!(" | Online: {} ", state.game.online_players_count)),
+            Span::raw(format!(
+                " | Online: {} ",
+                state.game.server.online_players_count
+            )),
         ]);
 
         let mut block = default_block()
             .title(title_line.alignment(Alignment::Left))
             .title(stats_line.alignment(Alignment::Right));
 
-        if let Some(group_id) = &state.game.group_id {
-            if let Some(leader_name) = &state.game.group_leader {
-                let display_leader = if Some(leader_name) == state.game.player_name.as_ref() {
+        if let Some(group_id) = &state.game.group.id {
+            if let Some(leader_name) = &state.game.group.leader {
+                let display_leader = if Some(leader_name) == state.game.player.name.as_ref() {
                     "[You]"
                 } else {
                     leader_name.as_str()
@@ -103,7 +108,7 @@ impl Component for HeaderComponent {
             }
         }
 
-        let description = match &state.game.current_room_description {
+        let description = match &state.game.room.description {
             Some(desc) => desc.as_str(),
             None => "",
         };

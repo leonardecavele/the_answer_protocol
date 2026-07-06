@@ -6,7 +6,7 @@ use crate::network::envelopes::RequestEnvelope;
 use crate::states::app::AppState;
 use crate::states::ui::Notification;
 use crate::ui::components::{Component, Lifecycle};
-use crate::ui::manager::ViewManager;
+use crate::ui::view::ViewManager;
 use api_client::protocol::command::core::who::WhoCommand;
 use api_client::protocol::command::enums::ApiRequest;
 use api_client::protocol::command::resource_interaction::inventory::InventoryCommand;

@@ -24,7 +24,7 @@ impl ScrollableComponent for ActionHistoryComponent {
         let mut history_block = default_block()
             .title(" Action History ")
             .title_bottom(Line::from(" Press Ctrl + H to open help ").alignment(Alignment::Center));
-        if state.game.current_focus == GameFocus::ActionHistory {
+        if state.game.ui.current_focus == GameFocus::ActionHistory {
             history_block = history_block.border_style(Style::default().fg(Color::Yellow));
         }
         history_block

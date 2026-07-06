@@ -52,7 +52,7 @@ impl Lifecycle for CenterPanelComponent {
         event: &crossterm::event::Event,
         event_sender: &Sender<ApplicationEvent>,
     ) -> bool {
-        if state.game.current_focus == GameFocus::ActionHistory {
+        if state.game.ui.current_focus == GameFocus::ActionHistory {
             if self
                 .action_history
                 .handle_terminal_event(state, event, event_sender)
@@ -60,7 +60,7 @@ impl Lifecycle for CenterPanelComponent {
                 return true;
             }
         }
-        if state.game.current_focus == GameFocus::InventoryGrid {
+        if state.game.ui.current_focus == GameFocus::InventoryGrid {
             if self
                 .inventory
                 .handle_terminal_event(state, event, event_sender)

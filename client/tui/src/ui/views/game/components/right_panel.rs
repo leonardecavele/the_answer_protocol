@@ -33,7 +33,7 @@ impl RightPanelComponent {
         let mut text_fallback: Option<&'static str> =
             Some(" You are lost and have your eyes closed. ");
 
-        if let Some(focused_id) = &state.game.focused_entity_id {
+        if let Some(focused_id) = &state.game.ui.focused_entity_id {
             text_fallback = Some(" No image available for this NPC. ");
             if let Some(npc) = state.game.manifest.npcs.get(focused_id) {
                 if let (Some(paths), Some(speed)) = (&npc.image_paths, npc.animation_speed_ms) {
@@ -61,7 +61,7 @@ impl RightPanelComponent {
         }
 
         if path_to_load.is_none() {
-            if let Some(room_id) = &state.game.current_room_id {
+            if let Some(room_id) = &state.game.room.id {
                 if let Some(room) = state.game.manifest.rooms.get(room_id) {
                     if let Some(path) = &room.image_path {
                         path_to_load = Some(path.clone());
@@ -155,7 +155,7 @@ impl Component for RightPanelComponent {
             self.render_text(frame, inner_area, text, Color::White);
         }
 
-        if state.game.current_focus == GameFocus::RightPanel {
+        if state.game.ui.current_focus == GameFocus::RightPanel {
             let focus_text = " [ FOCUS ] ";
             let focus_area = Rect {
                 x: inner_area.x + inner_area.width.saturating_sub(11),
@@ -173,7 +173,7 @@ impl Component for RightPanelComponent {
                 .fg(Color::Yellow)
                 .add_modifier(Modifier::BOLD);
 
-            if state.game.current_room_exits.contains_key("NORTH") {
+            if state.game.room.exits.contains_key("NORTH") {
                 let text = " [North] ";
                 let w = text.len() as u16;
                 let x = actual_image_area.x + actual_image_area.width.saturating_sub(w) / 2;
@@ -186,7 +186,7 @@ impl Component for RightPanelComponent {
                 frame.render_widget(Clear, area);
                 frame.render_widget(Paragraph::new(text).style(exit_style), area);
             }
-            if state.game.current_room_exits.contains_key("SOUTH") {
+            if state.game.room.exits.contains_key("SOUTH") {
                 let text = " [South] ";
                 let w = text.len() as u16;
                 let x = actual_image_area.x + actual_image_area.width.saturating_sub(w) / 2;
@@ -200,7 +200,7 @@ impl Component for RightPanelComponent {
                 frame.render_widget(Clear, area);
                 frame.render_widget(Paragraph::new(text).style(exit_style), area);
             }
-            if state.game.current_room_exits.contains_key("EAST") {
+            if state.game.room.exits.contains_key("EAST") {
                 let text = " [East] ";
                 let w = text.len() as u16;
                 let x = actual_image_area.x + actual_image_area.width.saturating_sub(w);
@@ -214,7 +214,7 @@ impl Component for RightPanelComponent {
                 frame.render_widget(Clear, area);
                 frame.render_widget(Paragraph::new(text).style(exit_style), area);
             }
-            if state.game.current_room_exits.contains_key("WEST") {
+            if state.game.room.exits.contains_key("WEST") {
                 let text = " [West] ";
                 let w = text.len() as u16;
                 let x = actual_image_area.x;
@@ -239,10 +239,10 @@ impl Lifecycle for RightPanelComponent {
         event: &crossterm::event::Event,
         event_sender: &Sender<ApplicationEvent>,
     ) -> bool {
-        if state.game.current_focus == GameFocus::RightPanel {
+        if state.game.ui.current_focus == GameFocus::RightPanel {
             if let crossterm::event::Event::Key(key) = event {
                 if key.code == crossterm::event::KeyCode::Enter {
-                    state.game.current_focus = GameFocus::NpcList;
+                    state.game.ui.current_focus = GameFocus::NpcList;
                     return true;
                 }
 
@@ -254,7 +254,7 @@ impl Lifecycle for RightPanelComponent {
                     _ => return false,
                 };
 
-                if state.game.current_room_exits.contains_key(direction) {
+                if state.game.room.exits.contains_key(direction) {
                     let _ = event_sender.try_send(ApplicationEvent::SendRawCommand(format!(
                         "MOVE {}",
                         direction
