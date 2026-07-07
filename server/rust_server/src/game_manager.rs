@@ -60,7 +60,6 @@ impl GameManager {
         return &self.players;
     }
 
-    
     fn save_player(&mut self, player_id: PlayerId) {
         if let Some(player) = self.players.get(&player_id) {
             let inventory = player.get_inventory().clone();
@@ -73,12 +72,16 @@ impl GameManager {
                 current_room: player.get_current_room().to_string(),
                 dialogs_index: std::collections::HashMap::new(),
             };
-            if let Err(e) = confy::store_path(format!("saves/{}.toml", player.get_name()), save_data) {
+            if let Err(e) =
+                confy::store_path(format!("saves/{}.toml", player.get_name()), save_data)
+            {
                 tracing::error!("Failed to save player: {}", e);
             }
-        }
-        else {
-            warn!("Player not found: {} while saving the game progression", player_id);
+        } else {
+            warn!(
+                "Player not found: {} while saving the game progression",
+                player_id
+            );
         }
     }
 
@@ -132,30 +135,34 @@ impl GameManager {
 
     fn restore_server_state(&mut self) {
         let path = "saves/server_state.toml";
-        if std::path::Path::new(path).exists() {
-            if let Ok(server_save) = confy::load_path::<ServerSave>(path) {
-                if server_save.next_player_id > 0 || server_save.next_item_id > 1 {
-                    self.next_player_id = server_save.next_player_id;
-                    self.next_item_id = server_save.next_item_id;
-                    for (room_id_str, inventory) in server_save.rooms_inventory {
-                        if let Ok(room_id) = room_id_str.parse::<u32>() {
-                            if let Some(room) = self.all_rooms.get_mut(&room_id) {
-                                room.set_inventory(inventory);
-                            }
-                        }
+        if !std::path::Path::new(path).exists() {
+            return;
+        }
+        let Ok(server_save) = confy::load_path::<ServerSave>(path) else {
+            self.set_default_ids();
+            return;
+        };
+
+        if server_save.next_player_id > 0 || server_save.next_item_id > 1 {
+            self.next_player_id = server_save.next_player_id;
+            self.next_item_id = server_save.next_item_id;
+            for (room_id_str, inventory) in server_save.rooms_inventory {
+                if let Ok(room_id) = room_id_str.parse::<u32>() {
+                    if let Some(room) = self.all_rooms.get_mut(&room_id) {
+                        room.set_inventory(inventory);
                     }
                 } else {
-                    self.next_player_id = 0;
-                    self.next_item_id = (self.all_items.len() + 1) as ItemId;
+                    self.set_default_ids();
                 }
-            } else {
-                self.next_player_id = 0;
-                self.next_item_id = (self.all_items.len() + 1) as ItemId;
             }
         } else {
-            self.next_player_id = 0;
-            self.next_item_id = (self.all_items.len() + 1) as ItemId;
+            self.set_default_ids();
         }
+    }
+
+    pub fn set_default_ids(&mut self) {
+        self.next_player_id = 0;
+        self.next_item_id = (self.all_items.len() + 1) as ItemId;
     }
 
     pub fn get_all_items(&mut self) -> &mut HashMap<ItemId, Item> {
@@ -176,11 +183,15 @@ impl GameManager {
 
     fn try_restore_player_save(&mut self, name: &str) -> Option<Player> {
         let path = format!("saves/{}.toml", name);
-        if let Ok(save_data) = confy::load_path::<Save>(&path) {
-            if save_data.name == name {
-                return Some(Player::from_save(save_data));
-            }
+
+        if !std::path::Path::new(&path).exists() {
             return None;
+        }
+        let Ok(save_data) = confy::load_path::<Save>(&path) else {
+            return None;
+        };
+        if save_data.name == name {
+            return Some(Player::from_save(save_data));
         }
         return None;
     }
@@ -474,5 +485,3 @@ impl GameManager {
             .unwrap_or(2 as RoomId)
     }
 }
-
-
