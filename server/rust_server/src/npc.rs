@@ -24,16 +24,11 @@ pub struct Npc {
 }
 
 impl Npc {
-    pub fn new(json: &JsonValue) -> Option<Self> {
-        let id = json["id"].as_u32()?;
+    pub fn new(json: &JsonValue, id: NpcId) -> Option<Self> {
         let name = json["name"].as_str()?.to_string();
-        let npc_type = json["npc_type"].as_u8()?;
-        if npc_type < 1 || npc_type > NPC_QUEST_GIVER + NPC_MOB + NPC_TALKER {
-            error!("invalid npc type: {}", npc_type);
-            return None;
-        }
-        let hp = json["hp"].as_u32();
+        
         let max_hp = json["max_hp"].as_u32();
+        let hp = max_hp;
 
         let dialogs: Option<Vec<Dialog>> =
             if json["dialogs"].is_array() && !json["dialogs"].is_empty() {
@@ -58,15 +53,38 @@ impl Npc {
 
         let quests = if json["quests"].is_array() && !json["quests"].is_empty() {
             let mut quests = Vec::new();
-            for item in json["quests"].members() {
-                if let Some(id) = item.as_str() {
-                    quests.push(id.to_string());
+            for quest in json["quests"].members() {
+                if let Some(quest_id) = quest.as_str() {
+                    if quests.iter().any(|q: &String| q == quest_id) {
+                        // checks if the quest is already added
+                        return None;
+                    }
+                    else {
+                        // normal case
+                        quests.push(quest_id.to_string());
+                    }
                 }
             }
             Some(quests)
         } else {
             None
         };
+
+        let mut npc_type = 0;
+        if dialogs.is_some() {
+            npc_type |= NPC_TALKER;
+        }
+        if quests.is_some() {
+            npc_type |= NPC_QUEST_GIVER;
+        }
+        if max_hp.is_some() {
+            npc_type |= NPC_MOB;
+        }
+
+        if npc_type == 0 {
+            error!("invalid npc type: no dialogs, quests or max_hp");
+            return None;
+        }
 
         let room_spawn = json["spawns"].as_str()?.to_string();
 

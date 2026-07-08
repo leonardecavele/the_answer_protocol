@@ -1,11 +1,12 @@
 use tracing::error;
 
-use crate::constantes::{LOST_ITEM, LOST_ITEM_SPAWN, LOST_ITEM_SPAWN_ID};
+use crate::constantes::{LOST_ITEM, LOST_ITEM_SPAWN_ID};
 use crate::items::{Item, ItemId};
 use crate::npc::{Npc, NpcId};
 use crate::quests::{Quest, Questid};
 use crate::room::{Room, RoomId};
 use std::collections::HashMap;
+use std::collections::HashSet;
 use std::fs;
 
 pub struct Parser {
@@ -50,6 +51,64 @@ impl Parser {
             error!("{}", e);
             std::process::exit(1);
         }
+        if let Err(e) = self.check_good_ids() {
+            error!("{}", e);
+            std::process::exit(1);
+        }
+    }
+
+    pub fn check_good_ids(&self) -> Result<(), String> {
+        let mut valid_room_names = HashSet::new();
+        for room in self.rooms.values() {
+            valid_room_names.insert(room.get_name().to_string());
+        }
+
+        for (room_id, room) in &self.rooms {
+            for item_id in room.get_inventory().get_items() {
+                if !self.items.contains_key(item_id) {
+                    return Err(format!(
+                        "Room {} ({}) contains invalid item_id {}",
+                        room_id,
+                        room.get_name(),
+                        item_id
+                    ));
+                }
+            }
+            for (_dir, dest) in room.get_exits() {
+                if !valid_room_names.contains(dest) {
+                    return Err(format!(
+                        "Room {} ({}) has an exit to invalid room name '{}'",
+                        room_id,
+                        room.get_name(),
+                        dest
+                    ));
+                }
+            }
+        }
+
+        for (npc_id, npc) in &self.npcs {
+            if !valid_room_names.contains(npc.get_spawn_room()) {
+                return Err(format!(
+                    "NPC {} ({}) spawns in invalid room '{}'",
+                    npc_id,
+                    npc.get_name(),
+                    npc.get_spawn_room()
+                ));
+            }
+            if let Some(quests) = npc.get_quests() {
+                for quest_id in quests {
+                    if !self.quests.contains_key(quest_id) {
+                        return Err(format!(
+                            "NPC {} ({}) has invalid quest_id '{}'",
+                            npc_id,
+                            npc.get_name(),
+                            quest_id
+                        ));
+                    }
+                }
+            }
+        }
+        Ok(())
     }
 
     pub fn parse_quests(&mut self) -> Result<(), String> {
@@ -63,6 +122,9 @@ impl Parser {
         if parsed["quests"].is_array() {
             for item in parsed["quests"].members() {
                 if let Some(quest) = Quest::new(item) {
+                    if quests.contains_key(quest.get_id()) {
+                        return Err(format!("duplicate quest: {}", quest.get_id()));
+                    }
                     quests.insert(quest.get_id().clone(), quest);
                 } else {
                     return Err(format!("invalid quest: {}", item));
@@ -87,14 +149,15 @@ impl Parser {
         let parsed = json::parse(&content).map_err(|e| format!("Failed to parse JSON: {}", e))?;
 
         let mut npcs = HashMap::new();
-
+        let mut npc_id: NpcId = 0;
         if parsed["npcs"].is_array() {
-            for item in parsed["npcs"].members() {
-                if let Some(npc) = Npc::new(item) {
-                    npcs.insert(npc.get_id(), npc);
+            for member in parsed["npcs"].members() {
+                if let Some(npc) = Npc::new(member, npc_id) {
+                    npcs.insert(npc_id, npc);
                 } else {
-                    return Err(format!("invalid npc: {}", item));
+                    return Err(format!("invalid npc: {}", member));
                 }
+                npc_id += 1;
             }
         } else {
             return Err("JSON does not contain 'npcs' array".to_string());
@@ -114,15 +177,9 @@ impl Parser {
         let parsed = json::parse(&content).map_err(|e| format!("Failed to parse JSON: {}", e))?;
 
         let mut items = HashMap::new();
-
+        let mut id: u64 = 0;
         if parsed["items"].is_array() {
             for item in parsed["items"].members() {
-                let id_val = item["id"].as_i64().ok_or("item id must be an int")?;
-                if id_val < 0 {
-                    return Err("item id must be a positive int".to_string());
-                }
-                let id = id_val as u64;
-
                 let name = item["name"].as_str().ok_or("item name must be a string")?;
                 let description = item["description"]
                     .as_str()
@@ -131,9 +188,11 @@ impl Parser {
                 let mut parsed_item = Item::new(id, name.to_string(), description.to_string());
                 if parsed_item.get_id() == LOST_ITEM as ItemId {
                     let room_id = LOST_ITEM_SPAWN_ID;
-                    parsed_item.set_remove_despawn_in_room(room_id);
+                    parsed_item.remove_despawn_in_room(room_id);
                 }
+
                 items.insert(parsed_item.get_id(), parsed_item);
+                id += 1;
             }
         } else {
             return Err("JSON does not contain 'items' array".to_string());
@@ -154,15 +213,9 @@ impl Parser {
         let parsed = json::parse(&content).map_err(|e| format!("Failed to parse JSON: {}", e))?;
 
         let mut rooms = HashMap::new();
-
+        let mut room_id: RoomId = 0;
         if parsed["rooms"].is_array() {
             for room in parsed["rooms"].members() {
-                let id_val = room["id"].as_i64().ok_or("room id must be an int")?;
-                if id_val < 0 {
-                    return Err("room id must be a positive int".to_string());
-                }
-                let id = id_val as u32;
-
                 let name = room["name"].as_str().ok_or("room name must be a string")?;
                 let description = room["description"]
                     .as_str()
@@ -173,23 +226,23 @@ impl Parser {
                     for (dir, dest) in room["exits"].entries() {
                         let dir_lower = dir.to_lowercase();
                         if !["north", "east", "south", "west"].contains(&dir_lower.as_str()) {
-                            return Err(format!("invalid exit direction '{}' in room {}", dir, id));
+                            return Err(format!("invalid exit direction '{}' in room {}", dir, room_id));
                         }
                         if let Some(dest_str) = dest.as_str() {
                             exits.insert(dir.to_uppercase(), dest_str.to_string());
                         } else {
                             return Err(format!(
                                 "destination for exit '{}' must be a string in room {}",
-                                dir, id
+                                dir, room_id
                             ));
                         }
                     }
                 } else if !room["exits"].is_null() && !room["exits"].is_empty() {
-                    return Err(format!("exits must be an object in room {}", id));
+                    return Err(format!("exits must be an object in room {}", room_id));
                 }
 
                 let mut parsed_room =
-                    Room::new(id, name.to_string(), description.to_string(), exits);
+                    Room::new(room_id, name.to_string(), description.to_string(), exits);
 
                 if room["items"].is_array() {
                     for item_id_json in room["items"].members() {
@@ -198,16 +251,17 @@ impl Parser {
                         if item_id_val < 0 {
                             return Err(format!(
                                 "room item id must be a positive int in room {}",
-                                id
+                                room_id
                             ));
                         }
                         parsed_room.add_item(item_id_val as ItemId);
                     }
                 } else if !room["items"].is_null() && !room["items"].is_empty() {
-                    return Err(format!("items must be an array in room {}", id));
+                    return Err(format!("items must be an array in room {}", room_id));
                 }
 
                 rooms.insert(parsed_room.get_id(), parsed_room);
+                room_id += 1;
             }
         } else {
             return Err("JSON does not contain 'rooms' array".to_string());

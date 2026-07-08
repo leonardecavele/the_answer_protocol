@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use crate::room::RoomId;
 
-pub const LOST_ITEM: u8 = 1;
+pub const LOST_ITEM: u8 = 0;
 pub const LOST_ITEM_SPAWN: &str = "pature";
 pub const LOST_ITEM_SPAWN_ID: RoomId = 2 as RoomId;
 pub const PLAYER_ROOM_SPAWN: &str = "devant_l_ecole";

@@ -26,7 +26,7 @@ impl Item {
     pub fn get_remove_despawn_in_room(&self) -> Option<RoomId> {
         self.remove_despawn_in_room
     }
-    pub fn set_remove_despawn_in_room(&mut self, room_id: RoomId) {
+    pub fn remove_despawn_in_room(&mut self, room_id: RoomId) {
         self.remove_despawn_in_room = Some(room_id);
     }
     pub fn get_dropped_at(&self) -> Option<Instant> {

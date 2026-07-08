@@ -1,4 +1,4 @@
-use crate::constantes::{Direction, LOST_ITEM_SPAWN};
+use crate::constantes::Direction;
 use crate::inventory::Inventory;
 use crate::items::{Item, ItemId};
 use crate::npc::{Npc, NpcId};
@@ -63,7 +63,7 @@ impl GameManager {
     fn save_player(&mut self, player_id: PlayerId) {
         if let Some(player) = self.players.get(&player_id) {
             let inventory = player.get_inventory().clone();
-            let save_data = crate::save::Save {
+            let save_data = Save {
                 name: player.get_name().to_string(),
                 id: player.get_id(),
                 hp: player.get_hp(),
@@ -75,7 +75,7 @@ impl GameManager {
             if let Err(e) =
                 confy::store_path(format!("saves/{}.toml", player.get_name()), save_data)
             {
-                tracing::error!("Failed to save player: {}", e);
+                error!("Failed to save player: {}", e);
             }
         } else {
             warn!(
@@ -146,7 +146,19 @@ impl GameManager {
         if server_save.next_player_id > 0 || server_save.next_item_id > 1 {
             self.next_player_id = server_save.next_player_id;
             self.next_item_id = server_save.next_item_id;
-            for (room_id_str, inventory) in server_save.rooms_inventory {
+            for (room_id_str, mut inventory) in server_save.rooms_inventory {
+                let items_to_check: Vec<ItemId> = inventory.get_items().iter().cloned().collect();
+                for item_id in items_to_check {
+                    if !self.item_exists(item_id) {
+                        tracing::warn!(
+                            "Removing invalid item {} from room {}",
+                            item_id,
+                            room_id_str
+                        );
+                        inventory.remove_item(item_id);
+                    }
+                }
+
                 if let Ok(room_id) = room_id_str.parse::<u32>() {
                     if let Some(room) = self.all_rooms.get_mut(&room_id) {
                         room.set_inventory(inventory);
@@ -162,7 +174,7 @@ impl GameManager {
 
     pub fn set_default_ids(&mut self) {
         self.next_player_id = 0;
-        self.next_item_id = (self.all_items.len() + 1) as ItemId;
+        self.next_item_id = self.all_items.len() as ItemId;
     }
 
     pub fn get_all_items(&mut self) -> &mut HashMap<ItemId, Item> {
@@ -187,9 +199,23 @@ impl GameManager {
         if !std::path::Path::new(&path).exists() {
             return None;
         }
-        let Ok(save_data) = confy::load_path::<Save>(&path) else {
+        let Ok(mut save_data) = confy::load_path::<Save>(&path) else {
             return None;
         };
+
+        // Filter out nonexistent items from player's inventory
+        let items_to_check: Vec<ItemId> = save_data.inventory.get_items().iter().cloned().collect();
+        for item_id in items_to_check {
+            if !self.item_exists(item_id) {
+                tracing::warn!(
+                    "Removing invalid item {} from player {}",
+                    item_id,
+                    save_data.name
+                );
+                save_data.inventory.remove_item(item_id);
+            }
+        }
+
         if save_data.name == name {
             return Some(Player::from_save(save_data));
         }
@@ -221,7 +247,7 @@ impl GameManager {
     pub fn disconnect_player(&mut self, name: String) {
         let player_id = match self.players_by_name.get(&name) {
             Some(&id) => id,
-            None => {
+            _none => {
                 error!("disconnect player: player not found");
                 return;
             }

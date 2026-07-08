@@ -1,7 +1,6 @@
 {
   "npcs": [
     {
-      "id": 1,
       "name": "vquetier",
       "npc_type": 5,
       "hp": null,
@@ -109,7 +108,6 @@
       "spawns": "cluster_du_bas"
     },
     {
-      "id": 2,
       "name": "faon",
       "npc_type": 5,
       "hp": null,
@@ -125,7 +123,6 @@
       "spawns": "pature"
     },
     {
-      "id": 3,
       "name": "smenard",
       "npc_type": 5,
       "hp": null,
@@ -135,7 +132,6 @@
       "spawns": "cluster_du_bas"
     },
     {
-      "id": 4,
       "name": "mdourdoi",
       "npc_type": 2,
       "hp": 150,
@@ -152,7 +148,6 @@
       "spawns": "cluster_du_bas"
     },
     {
-      "id": 5,
       "name": "gagulhon",
       "npc_type": 5,
       "hp": null,
@@ -162,7 +157,6 @@
       "spawns": "devant_l_ecole"
     },
     {
-      "id": 6,
       "name": "ndalailallema",
       "npc_type": 5,
       "hp": null,
@@ -185,13 +179,12 @@
         "Tunnel",
         "Caillou Papier Ciseaux",
         "Normi-quoi ?",
-        "Les braves n'ont pas peur de l'échec.",
+        "Tic et Tac et Toe",
         "Des wraps ! Plus de wraps !"
       ],
       "spawns": "devant_le_bocal"
     },
     {
-      "id": 7,
       "name": "gabach",
       "npc_type": 5,
       "hp": null,
@@ -234,7 +227,6 @@
       "spawns": "cluster_du_haut"
     },
     {
-      "id": 8,
       "name": "enchevri",
       "npc_type": 2,
       "hp": 120,
@@ -252,7 +244,6 @@
       "spawns": "cluster_du_haut"
     },
     {
-      "id": 9,
       "name": "acampion",
       "npc_type": 2,
       "hp": 100,
@@ -272,7 +263,6 @@
       "spawns": "afk"
     },
     {
-      "id": 10,
       "name": "mphippen",
       "npc_type": 5,
       "hp": null,
@@ -297,7 +287,6 @@
       "spawns": "afk"
     },
     {
-      "id": 11,
       "name": "crappo",
       "npc_type": 2,
       "hp": 100,
@@ -315,7 +304,6 @@
       "spawns": "entree"
     },
     {
-      "id": 12,
       "name": "ayteyssi",
       "npc_type": 5,
       "hp": null,
@@ -325,7 +313,6 @@
       "spawns": "devant_l_ecole"
     },
     {
-      "id": 13,
       "name": "ldecavel",
       "npc_type": 2,
       "hp": 100,
@@ -344,7 +331,6 @@
       "spawns": "cantina"
     },
     {
-      "id": 14,
       "name": "cobussie",
       "npc_type": 5,
       "hp": null,
@@ -354,7 +340,6 @@
       "spawns": "cantina"
     },
     {
-      "id": 15,
       "name": "ibady",
       "npc_type": 2,
       "hp": 142,
@@ -372,7 +357,6 @@
       "spawns": "foyer"
     },
     {
-      "id": 16,
       "name": "bokim",
       "npc_type": 5,
       "hp": null,
