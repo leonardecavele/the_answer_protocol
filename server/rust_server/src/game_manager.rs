@@ -46,6 +46,7 @@ impl GameManager {
             all_rooms: parser.get_rooms().clone(),
             all_npcs: parser.get_npcs().clone(),
             all_quests: parser.get_quests().clone(),
+            combat_instances: CombatInstanceManager::new(),
             quest_instances: Vec::new(),
             mpsc_receiver,
             writer_stream,

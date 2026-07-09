@@ -213,6 +213,9 @@ impl GameManager {
                     data,
                 );
             }
+            "AGGRO" => {
+                let combat_instance = CombatInstance::new(npc_id, grouped_players);
+            }
             _ => {
                 error!("unknown group command: {}", command_name);
                 return "".to_string();
