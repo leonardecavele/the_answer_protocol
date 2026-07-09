@@ -203,11 +203,19 @@ impl GameManager {
             return None;
         };
 
+        if save_data.name != name {
+            return None;
+        }
+
+        if !self.room_exists(&save_data.current_room) {
+            return None;
+        }
+        
         // Filter out nonexistent items from player's inventory
         let items_to_check: Vec<ItemId> = save_data.inventory.get_items().iter().cloned().collect();
         for item_id in items_to_check {
             if !self.item_exists(item_id) {
-                tracing::warn!(
+                warn!(
                     "Removing invalid item {} from player {}",
                     item_id,
                     save_data.name
@@ -216,10 +224,7 @@ impl GameManager {
             }
         }
 
-        if save_data.name == name {
-            return Some(Player::from_save(save_data));
-        }
-        return None;
+        return Some(Player::from_save(save_data));
     }
 
     fn add_player_to_game(&mut self, player: Player) {
@@ -327,6 +332,10 @@ impl GameManager {
 
     pub fn item_exists(&self, item_id: ItemId) -> bool {
         return self.all_items.contains_key(&item_id);
+    }
+
+    pub fn room_exists(&self, room_name: &str) -> bool {
+        self.all_rooms.values().any(|room| room.get_name() == room_name)
     }
 
     pub fn get_only_item_with_name(&self, item_name: &str) -> Option<ItemId> {
