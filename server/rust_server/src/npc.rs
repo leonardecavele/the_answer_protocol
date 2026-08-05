@@ -1,4 +1,5 @@
 use json::JsonValue;
+use std::time::Instant;
 use tracing::error;
 
 use crate::constantes::{NPC_MOB, NPC_QUEST_GIVER, NPC_TALKER};
@@ -21,12 +22,13 @@ pub struct Npc {
     dialogs: Option<Vec<Dialog>>,
     quests: Option<Vec<Questid>>,
     room_spawn: RoomName,
+    death: Option<Instant>,
 }
 
 impl Npc {
     pub fn new(json: &JsonValue, id: NpcId) -> Option<Self> {
         let name = json["name"].as_str()?.to_string();
-        
+
         let max_hp = json["max_hp"].as_u32();
         let hp = max_hp;
 
@@ -58,8 +60,7 @@ impl Npc {
                     if quests.iter().any(|q: &String| q == quest_id) {
                         // checks if the quest is already added
                         return None;
-                    }
-                    else {
+                    } else {
                         // normal case
                         quests.push(quest_id.to_string());
                     }
@@ -97,6 +98,7 @@ impl Npc {
             dialogs,
             quests,
             room_spawn,
+            death: None,
         })
     }
 
@@ -132,11 +134,21 @@ impl Npc {
             None
         }
     }
+    pub fn die(&mut self) {
+        self.death = Some(Instant::now());
+    }
+    pub fn revive(&mut self) {
+        self.death = None;
+    }
+
     pub fn get_protocol_representation(&self) -> String {
         format!("{}.{}", self.id, self.name)
     }
     pub fn get_dialogs(&self) -> Option<&Vec<Dialog>> {
         self.dialogs.as_ref()
+    }
+    pub fn get_death(&self) -> Option<Instant> {
+        self.death
     }
     pub fn get_quests(&self) -> Option<&Vec<Questid>> {
         self.quests.as_ref()

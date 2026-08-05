@@ -1,4 +1,5 @@
-use crate::constantes::Direction;
+use crate::combat_instances::CombatInstanceManager;
+use crate::constantes::{Direction, NPC_RESPAWN_TIME};
 use crate::inventory::Inventory;
 use crate::items::{Item, ItemId};
 use crate::npc::{Npc, NpcId};
@@ -13,8 +14,8 @@ use std::io::Write;
 use std::net::TcpStream;
 use std::sync::mpsc;
 use std::time::Instant;
-use tracing::error;
 use tracing::warn;
+use tracing::{error, info};
 
 pub struct GameManager {
     players: HashMap<PlayerId, Player>,
@@ -26,6 +27,7 @@ pub struct GameManager {
     pub all_npcs: HashMap<NpcId, Npc>,
     pub all_quests: HashMap<Questid, Quest>,
     pub quest_instances: Vec<QuestInstance>,
+    pub combat_instances: CombatInstanceManager,
     mpsc_receiver: mpsc::Receiver<String>,
     writer_stream: TcpStream,
     tick_diff: HashMap<String, JsonValue>,
@@ -89,6 +91,11 @@ impl GameManager {
     pub fn get_player(&self, player_id: PlayerId) -> Option<&Player> {
         self.players.get(&player_id)
     }
+
+    pub fn get_mut_player(&mut self, player_id: PlayerId) -> Option<&mut Player> {
+        self.players.get_mut(&player_id)
+    }
+
     pub fn get_player_id(&self, player_name: &str) -> Option<&PlayerId> {
         self.players_by_name.get(player_name)
     }
@@ -211,15 +218,14 @@ impl GameManager {
         if !self.room_exists(&save_data.current_room) {
             return None;
         }
-        
+
         // Filter out nonexistent items from player's inventory
         let items_to_check: Vec<ItemId> = save_data.inventory.get_items().iter().cloned().collect();
         for item_id in items_to_check {
             if !self.item_exists(item_id) {
                 warn!(
                     "Removing invalid item {} from player {}",
-                    item_id,
-                    save_data.name
+                    item_id, save_data.name
                 );
                 save_data.inventory.remove_item(item_id);
             }
@@ -336,7 +342,13 @@ impl GameManager {
     }
 
     pub fn room_exists(&self, room_name: &str) -> bool {
-        self.all_rooms.values().any(|room| room.get_name() == room_name)
+        self.all_rooms
+            .values()
+            .any(|room| room.get_name() == room_name)
+    }
+
+    pub fn player_exists(&self, player_name: &str) -> bool {
+        self.players_by_name.contains_key(player_name)
     }
 
     pub fn get_only_item_with_name(&self, item_name: &str) -> Option<ItemId> {
@@ -410,9 +422,39 @@ impl GameManager {
     pub fn get_npcs_in_room_as_protocol_representations(&self, room_name: &str) -> Vec<String> {
         self.all_npcs
             .values()
-            .filter(|&npc| npc.get_spawn_room() == room_name)
+            .filter(|&npc| npc.get_spawn_room() == room_name && npc.get_death().is_none())
             .map(|npc| npc.get_protocol_representation())
             .collect()
+    }
+
+    pub fn revive_dead_npcs(&mut self) {
+        let mut npcs_to_revive = Vec::new();
+        for (npc_id, ncp) in self.all_npcs.iter() {
+            if let Some(death) = ncp.get_death() {
+                if death.elapsed() > NPC_RESPAWN_TIME {
+                    npcs_to_revive.push(*npc_id);
+                }
+            }
+        }
+
+        for npc_id in npcs_to_revive {
+            let (room_name, ncp_rep) = {
+                let ncp = self.all_npcs.get_mut(&npc_id).unwrap();
+                ncp.revive();
+                (
+                    ncp.get_spawn_room().to_string(),
+                    ncp.get_protocol_representation(),
+                )
+            };
+            let mut players_to_send_event = self.get_all_players_at_room(&room_name);
+            let data = format!("type=NPC id={}", ncp_rep);
+            let event = GameManager::generate_no_player_event_json(
+                &mut players_to_send_event,
+                "SPAWN",
+                &data,
+            );
+            self.add_diff_to_tick(event);
+        }
     }
 
     pub fn get_npc(&self, npc_id: NpcId) -> Option<&Npc> {
@@ -470,30 +512,134 @@ impl GameManager {
             .unwrap()
     }
 
-    pub fn kill_npc(&mut self, npc_id: NpcId) {
-        self.all_npcs.remove(&npc_id);
+    pub fn get_npc_max_hp(&self, npc_id: NpcId) -> Option<u32> {
+        self.all_npcs.get(&npc_id).and_then(|npc| npc.get_max_hp())
     }
 
-    pub fn player_attacks_npc(&mut self, player_id: PlayerId, npc_id: NpcId) -> String {
-        let player_damage = 10;
-        let player_hp = self.get_player(player_id).unwrap().get_hp();
-        let npc = self.get_mut_npc(npc_id).unwrap();
-        let hp = npc.get_hp().unwrap();
+    pub fn kill_npc(&mut self, npc_id: NpcId) {
+        if let Some(npc) = self.get_mut_npc(npc_id) {
+            npc.die();
+        }
+    }
 
-        let new_npc_hp = if hp > player_damage {
-            hp - player_damage
+    pub fn kill_player(&mut self, player_id: PlayerId) {
+        let (mut players_to_send_death_info, player_name) = {
+            let player = self.get_player(player_id).unwrap();
+            (self.get_all_players_at_room(player.get_current_room()), player.get_name().to_string())
+        };
+        let path = format!("saves/{}.toml", player_name);
+        let _ = std::fs::remove_file(path);
+        // ignore error because the save may not exist yet
+        // (in which case we do not need to delete the save)
+        info!("deleted player {} save", player_name);
+        self.get_mut_player(player_id).unwrap().reset();
+        let event = self.generate_event_json(&mut players_to_send_death_info, player_name.as_str(), "DEATH", "");
+        self.add_diff_to_tick(event);
+    }
+
+
+    pub fn get_player_instance_group(&self, player_id: PlayerId) -> Option<Vec<String>> {
+        if let Some(instance) = self.combat_instances.get_instance_for_player(player_id) {
+            let mut vec = Vec::new();
+            for player_id in instance.get_grouped_players() {
+                if let Some(player) = self.get_player(*player_id) {
+                    vec.push(player.get_name().to_string());
+                }
+            }
+            if let Some(leader) = self.get_player(instance.get_leader()) {
+                vec.push(leader.get_name().to_string());
+            }
+            return Some(vec);
+        }
+        None
+    }
+    pub fn npc_attacks_player(
+        &mut self,
+        damage: u32,
+        npc_id: NpcId,
+        player_id: PlayerId,
+    ) -> String {
+        let npc = self.get_mut_npc(npc_id).unwrap();
+        let npc_hp = npc.get_hp().unwrap();
+        let mut dealt_damage = damage;
+        let player = self.get_mut_player(player_id).unwrap();
+        let player_hp = player.get_hp();
+        let new_player_hp = if player_hp > damage {
+            player_hp - damage
         } else {
+            dealt_damage = player_hp;
+            0
+        };
+
+        // TODO: event dans defend qui dis combien de degats le joueur defend ( envoyé aux membres du groupe)
+        // pareil dans Attack
+        // faire que quand un joueur quitte, Defend soit lancé automatiquement et il est marqué comme finished dans l'instance
+        // sur le point au dessus manque plus que de mettre des degats au joueur quand il quitte
+
+        let status = if player_hp > 0 { "combat" } else { "death" };
+        player.set_hp(new_player_hp);
+        self.set_success_for_player(player_id, false);
+
+        if new_player_hp == 0 {
+            self.kill_player(player_id);
+        }
+        return format!(
+            "{{\"attacker_hp\":{}, \"target_hp\":{}, \"damage\":{}, \"status\":\"{}\"}}",
+            npc_hp, new_player_hp, dealt_damage, status
+        );
+    }
+
+    pub fn get_player_success(&self, player_id: PlayerId) -> Option<Option<bool>> {
+        if let Some(instance) = self.combat_instances.get_instance_for_player(player_id) {
+            return instance.get_player_success(player_id);
+        }
+        None
+    }
+    pub fn set_success_for_player(&mut self, player_id: PlayerId, success: bool) {
+        if let Some(instance) = self.combat_instances.get_mut_instance_for_player(player_id) {
+            instance.set_player_success(player_id, success);
+        }
+    }
+
+    pub fn player_attacks_npc(
+        &mut self,
+        damage: u32,
+        player_id: PlayerId,
+        npc_id: NpcId,
+    ) -> String {
+        let player = self.get_player(player_id).unwrap();
+        let npc_room = self.get_npc(npc_id).unwrap().get_spawn_room().to_string();
+        let mut players_in_room = self.get_all_players_at_room(npc_room.as_str()).clone();
+        let player_name = player.get_name().to_string();
+        let player_hp = player.get_hp();
+        let npc = self.get_mut_npc(npc_id).unwrap();
+        let npc_repr = npc.get_protocol_representation();
+        let hp = npc.get_hp().unwrap();
+        let mut dealt_damage = damage;
+        let new_npc_hp = if hp > damage {
+            hp - damage
+        } else {
+            dealt_damage = hp;
             0
         };
 
         let status = if new_npc_hp > 0 { "combat" } else { "victory" };
         npc.set_hp(Some(new_npc_hp));
+        self.set_success_for_player(player_id, true);
+        if let Some(mut players_to_send_event) = self.get_player_instance_group(player_id) {
+            let event = self.generate_event_json(&mut players_to_send_event, &player_name, "attack", dealt_damage.to_string().as_str());
+            self.add_diff_to_tick(event);
+        }
+
         if new_npc_hp == 0 {
             self.kill_npc(npc_id);
+            let event = self.generate_event_json(&mut players_in_room, &player_name, "kill", npc_repr.as_str());
+            self.add_diff_to_tick(event);
         }
+
         return format!(
             "{{\"attacker_hp\":{}, \"target_hp\":{}, \"damage\":{}, \"status\":\"{}\"}}",
-            player_hp, new_npc_hp, player_damage, status
+            player_hp, new_npc_hp, dealt_damage, status
         );
     }
 
@@ -519,5 +665,28 @@ impl GameManager {
             .find(|room| room.get_name() == room_name)
             .map(|room| room.get_id())
             .unwrap_or(2 as RoomId)
+    }
+
+    pub fn remove_finished_combat_instances(&mut self) {
+        self.combat_instances.remove_finished_instances();
+    }
+
+    pub fn get_nb_players_in_player_instance(&self, player_id: PlayerId) -> Option<u32> {
+        self.combat_instances
+            .instances
+            .values()
+            .find_map(|instance| {
+                if instance.get_leader() == player_id
+                    || instance.get_grouped_players().contains(&player_id)
+                {
+                    Some(1 + instance.get_grouped_players().len() as u32)
+                } else {
+                    None
+                }
+            })
+    }
+
+    pub fn is_npc_in_combat(&self, npc_id: NpcId) -> bool {
+        self.combat_instances.instances.contains_key(&npc_id)
     }
 }

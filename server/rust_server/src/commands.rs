@@ -1,5 +1,4 @@
-
-use crate::constantes::{BASE_COMMAND_RESPONSE, ErrorCode, LOST_ITEM, LOST_ITEM_SPAWN, NPC_MOB};
+use crate::constantes::{BASE_COMMAND_RESPONSE, ErrorCode, LOST_ITEM, LOST_ITEM_SPAWN, NPC_DMG, NPC_MOB};
 use crate::game_manager::GameManager;
 use crate::items::{Item, ItemId};
 use crate::npc::{Npc, NpcId};
@@ -197,7 +196,7 @@ impl GameManager {
 
     pub fn handle_group_command(&mut self, json_object: &JsonValue) -> String {
         let leader = json_object["leader"].as_str().unwrap();
-        let grouped_players = json_object["grouped_players"]
+        let mut grouped_players = json_object["grouped_players"]
             .members()
             .map(|x| x.as_str().unwrap().to_string())
             .collect::<Vec<String>>();
@@ -214,13 +213,72 @@ impl GameManager {
                 );
             }
             "AGGRO" => {
-                let combat_instance = CombatInstance::new(npc_id, grouped_players);
+                let npc_id: u32 = data.parse().unwrap();
+                let leader_id = *self.get_player_id(leader).unwrap();
+
+                if self.is_npc_in_combat(npc_id) {
+                    return generate_json(leader, command_name, ErrorCode::NpcInCombat, "").dump();
+                }
+                if !self.all_npcs.contains_key(&npc_id) {
+                    return generate_json(leader, command_name, ErrorCode::NpcNotFound, "").dump();
+                }
+
+                for player in &grouped_players {
+                    if !self.player_exists(player) {
+                        return generate_json(leader, command_name, ErrorCode::PlayerNotFound, "")
+                            .dump();
+                    }
+                }
+                let grouped_players_ids: Vec<u32> = grouped_players
+                    .iter()
+                    .filter_map(|name| self.get_player_id(name).copied())
+                    .collect();
+                self.combat_instances
+                    .add_instance(leader_id, npc_id, grouped_players_ids);
+                let npc_representation = self
+                    .all_npcs
+                    .get(&npc_id)
+                    .unwrap()
+                    .get_protocol_representation();
+                let event = self.generate_event_json(
+                    &mut grouped_players,
+                    leader,
+                    "AGGRO",
+                    &npc_representation,
+                );
+                self.add_diff_to_tick(event);
+
+                return generate_json(leader, command_name, ErrorCode::NoError, "").dump();
             }
             _ => {
                 error!("unknown group command: {}", command_name);
                 return "".to_string();
             }
         }
+    }
+
+    pub fn verify_combat_target(&self, player_name: &str, command_name: &str, target_npc: &str) -> Result<NpcId, String> {
+        let npc_wrapped = Npc::parse_protocol_representation(target_npc);
+        let player_room = {
+            self.get_player_from_name(player_name)
+                .unwrap()
+                .get_current_room()
+        };
+        if npc_wrapped.is_none() {
+            return Err(generate_json(player_name, command_name, ErrorCode::NpcNotFound, "").dump());
+        }
+        let (npc_id, _) = npc_wrapped.unwrap();
+        if !self.npc_is_in_room(npc_id, player_room) {
+            return Err(generate_json(player_name, command_name, ErrorCode::NpcNotInRoom, "").dump());
+        }
+        let npc_type = self.get_npc_type(npc_id);
+        if (npc_type & NPC_MOB) == 0 {
+            return Err(generate_json(player_name, command_name, ErrorCode::NpcNotHostile, "").dump());
+        }
+        if self.is_npc_in_combat(npc_id) {
+            return Err(generate_json(player_name, command_name, ErrorCode::NpcInCombat, "").dump());
+        }
+        Ok(npc_id)
     }
 
     pub fn handle_message(&mut self, msg: String) -> String {
@@ -336,6 +394,12 @@ impl GameManager {
                     self.remove_item_from_player(player_id, LOST_ITEM as ItemId);
                     self.add_item_to_room(room, LOST_ITEM as ItemId);
                     self.add_diff_to_tick(event);
+                }
+                let player_success = self.get_player_success(player_id);
+                // player_success : Option<Option<bool>
+                if player_success.is_some() && player_success.unwrap().is_none() {
+                    let npc_id = self.combat_instances.get_instance_for_player(player_id).unwrap().get_npc_id();
+                    self.npc_attacks_player(NPC_DMG, npc_id, player_id);
                 }
 
                 self.disconnect_player(player_name.to_string());
@@ -459,9 +523,9 @@ impl GameManager {
                 self.add_item_to_room(&room_name, item_id);
 
                 //set the 2 minutes timer when we drop the item
-                
+
                 self.start_dropped_at_for_item(item_id);
-                
+
                 let mut players_to_send = self.get_all_players_at_room(room_name.as_str());
                 let events_json =
                     self.generate_event_json(&mut players_to_send, player_name, "DROP", item);
@@ -480,29 +544,40 @@ impl GameManager {
                 .dump();
             }
             "ATTACK" => {
-                let player_id = self.get_player_id(player_name);
-                let target_npc = data;
-                let npc_wrapped = Npc::parse_protocol_representation(target_npc);
-                let player_room = {
-                    self.get_player_from_name(player_name)
-                        .unwrap()
-                        .get_current_room()
+                let npc_id = match self.verify_combat_target(player_name, command_name, data) {
+                    Ok(id) => id,
+                    Err(json_response) => return json_response,
                 };
-                if npc_wrapped.is_none() {
-                    return generate_json(player_name, command_name, ErrorCode::NpcNotFound, "")
-                        .dump();
+                let player_id = *self.get_player_id(player_name).unwrap();
+
+                if let Some(instance_player_count) =
+                    self.get_nb_players_in_player_instance(player_id)
+                {
+                    let instance = self.combat_instances.get_instance_for_player(player_id).unwrap();
+                    if let Some(_player) = instance.get_player_success(player_id) {
+                        if let Some(success) = _player {
+                            return generate_json(
+                                player_name,
+                                command_name,
+                                ErrorCode::ActionAlreadyTaken,
+                                "",
+                            )
+                            .dump();
+                        }
+                    }
+                    let npc_max_hp = self.get_npc_max_hp(npc_id).unwrap();
+                    let dmg = npc_max_hp / instance_player_count + 1;
+                    let combat_result = self.player_attacks_npc(dmg, player_id, npc_id);
+                    return generate_json(
+                        player_name,
+                        command_name,
+                        ErrorCode::NoError,
+                        combat_result.as_str(),
+                    )
+                    .dump();
                 }
-                let (npc_id, _) = npc_wrapped.unwrap();
-                if !self.npc_is_in_room(npc_id, player_room) {
-                    return generate_json(player_name, command_name, ErrorCode::NpcNotInRoom, "")
-                        .dump();
-                }
-                let npc_type = self.get_npc_type(npc_id);
-                if (npc_type & NPC_MOB) == 0 {
-                    return generate_json(player_name, command_name, ErrorCode::NpcNotHostile, "")
-                        .dump();
-                }
-                let combat_result = self.player_attacks_npc(*player_id.unwrap(), npc_id);
+
+                let combat_result = self.player_attacks_npc(NPC_DMG, player_id, npc_id);
 
                 return generate_json(
                     player_name,
@@ -511,6 +586,14 @@ impl GameManager {
                     combat_result.as_str(),
                 )
                 .dump();
+            }
+            "DEFEND" => {
+                let npc_id = match self.verify_combat_target(player_name, command_name, data) {
+                    Ok(id) => id,
+                    Err(json_response) => return json_response,
+                };
+                let player_id = *self.get_player_id(player_name).unwrap();
+                self.npc_attacks_player(NPC_DMG, npc_id, player_id)
             }
             "STATUS" => {
                 let player_status = self.get_player_status_as_string(player_name);

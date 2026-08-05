@@ -23,6 +23,9 @@ impl GameManager {
     }
 
     pub fn update_game_state(&mut self) -> std::io::Result<()> {
+        self.remove_finished_combat_instances();
+
+        self.revive_dead_npcs();
         for quest_instance in self.quest_instances.iter_mut() {
             let _state = quest_instance.get_state();
 
@@ -31,7 +34,7 @@ impl GameManager {
                 _ => {}
             }
         }
-
+        
         let current_time = Instant::now();
 
         let mut actions: Vec<(String, ItemId, bool, String)> = Vec::new();

@@ -2,10 +2,13 @@ use std::time::Duration;
 
 use crate::room::RoomId;
 
+pub const NPC_DMG: u32 = 10;
 pub const LOST_ITEM: u8 = 0;
+// pub const BDE_SHIRT: u8 = 2;
 pub const LOST_ITEM_SPAWN: &str = "pature";
 pub const LOST_ITEM_SPAWN_ID: RoomId = 2 as RoomId;
 pub const PLAYER_ROOM_SPAWN: &str = "devant_l_ecole";
+pub const NPC_RESPAWN_TIME: Duration = Duration::from_secs(30);
 pub const ITEM_DESPAWN_TIME: Duration = Duration::from_mins(2);
 pub const TICK_TIME_AMPLIFICATION: u64 = 1;
 pub const TICK_RATE: u16 = 10; // 48
@@ -44,6 +47,9 @@ pub enum ErrorCode {
     InvalidCommand,
     InvalidQuestion,
     InvalidGroupCommand,
+    PlayerNotFound,
+    NpcInCombat,
+    ActionAlreadyTaken,
 }
 
 impl ErrorCode {
@@ -61,14 +67,17 @@ impl ErrorCode {
             | Self::NpcNotFound
             | Self::GroupNotFound
             | Self::NoSuchGroup => 404,
+            Self::PlayerNotFound => 405,
             Self::NpcNotHostile => 405,
             Self::NoQuestAvailable => 406,
             Self::NpcNotInRoom => 407,
+            Self::NpcInCombat => 408,
+            Self::ActionAlreadyTaken => 409,
             Self::ConnectionFailed => 900,
             Self::SendFailed => 901,
             Self::InvalidGroupCommand => 997,
             Self::InvalidQuestion => 998,
-            Self::InvalidCommand => 999,
+            Self::InvalidCommand => 999,    
         }
     }
 }

@@ -34,6 +34,13 @@ impl Player {
             dialogs_index: HashMap::new(),
         }
     }
+    pub fn reset(&mut self) {
+        self.hp = PLAYER_STARTING_HP;
+        self.max_hp = PLAYER_STARTING_MAX_HP;
+        self.inventory = Inventory::new();
+        self.current_room = PLAYER_ROOM_SPAWN.to_string();
+        self.dialogs_index.clear();
+    }
     
     pub fn from_save(save: Save) -> Self {
         Self {
@@ -60,6 +67,9 @@ impl Player {
     }
     pub fn get_max_hp(&self) -> u32 {
         self.max_hp
+    }
+    pub fn set_hp(&mut self, hp: u32) {
+        self.hp = hp;
     }
 
     pub fn get_items(&self) -> &HashSet<ItemId> {
