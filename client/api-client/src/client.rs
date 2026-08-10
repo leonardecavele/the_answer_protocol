@@ -51,7 +51,8 @@ impl Client {
                     .await
                     .map_err(|_| {
                         InternalError::ChannelPanic(
-                            "failed to send command to the bridge task (task may have crashed)"
+                            "failed to send command to the client-server communication task: \
+                            the task may have stopped or crashed"
                                 .to_string(),
                         )
                     })?;

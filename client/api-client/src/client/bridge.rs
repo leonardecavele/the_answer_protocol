@@ -102,11 +102,13 @@ impl Bridge {
 
                 if response.opcode == Opcode::Evt {
                     let event = ServerEvent::from(response);
-                    let _ = self.event_transmitter.send(event).map_err(|_| {
-                        InternalError::ChannelPanic(
-                            "event channel is closed, nowhere to send the event".to_string(),
-                        )
-                    })?;
+                    if self.event_transmitter.receiver_count() > 0 {
+                        let _ = self.event_transmitter.send(event).map_err(|_| {
+                            InternalError::ChannelPanic(
+                                "event channel is closed, nowhere to send the event".to_string(),
+                            )
+                        })?;
+                    }
 
                     return Ok(true);
                 }
