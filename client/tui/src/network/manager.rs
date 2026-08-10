@@ -3,14 +3,16 @@ use crate::network::envelopes::{RequestEnvelope, ResponseEnvelope};
 use api_client::client::connect::ClientConnect;
 use api_client::client::event::ServerEvent;
 use mpsc::Sender;
+use tokio::sync::broadcast::error::RecvError;
 use tokio::sync::mpsc;
-use tokio::task::JoinHandle;
+use tokio_util::task::AbortOnDropHandle;
+use tracing::{info, warn};
 
 pub const NOTIF_ID_CONNECTION_ATTEMPT: &str = "notif_connection_attempt";
 
 pub struct NetworkManager {
-    background_task: JoinHandle<()>,
     pub command_sender: Sender<RequestEnvelope>,
+    _background_task: AbortOnDropHandle<()>,
 }
 
 impl NetworkManager {
@@ -22,11 +24,13 @@ impl NetworkManager {
     ) -> Self {
         let (command_tx, mut command_rx) = mpsc::channel::<RequestEnvelope>(128);
 
-        let background_task = tokio::spawn(async move {
+        let _background_task = AbortOnDropHandle::new(tokio::spawn(async move {
             let server_address = format!("{}:{}", server_ip, server_port);
 
             match ClientConnect::connect(&server_address).await {
-                Ok(mut client) => {
+                Ok((mut client, mut event_receiver)) => {
+                    let sender = event_sender.clone();
+
                     match client.connect(player_name.clone()).await {
                         Ok(Ok(_)) => {
                             let _ = event_sender
@@ -39,62 +43,71 @@ impl NetworkManager {
                                 ))
                                 .await;
 
-                            client.on_event({
-                                let cloned_event_sender = event_sender.clone();
-                                move |server_event| {
-                                    tracing::debug!(
-                                        "Received event from server: {:?}",
-                                        server_event
-                                    );
+                            let _event_forward_task =
+                                AbortOnDropHandle::new(tokio::spawn(async move {
+                                    loop {
+                                        let event = event_receiver.recv().await;
 
-                                    match server_event {
-                                        ServerEvent::ConnectionLost => {
-                                            let _ = cloned_event_sender.try_send(
-                                                ApplicationEvent::Network(
-                                                    NetworkEvent::ConnectionLost {
-                                                        reason: "Server is down".to_string(),
-                                                    },
-                                                ),
-                                            );
-                                        }
-                                        _ => {
-                                            let _ = cloned_event_sender.try_send(
-                                                ApplicationEvent::Api(ApiEvent::Server(
-                                                    server_event,
-                                                )),
-                                            );
+                                        match event {
+                                            Ok(server_event) => match server_event {
+                                                ServerEvent::ConnectionLost => {
+                                                    let _ = sender
+                                                        .send(ApplicationEvent::Network(
+                                                            NetworkEvent::ConnectionLost {
+                                                                reason: "Server is down"
+                                                                    .to_string(),
+                                                            },
+                                                        ))
+                                                        .await;
+                                                }
+                                                _ => {
+                                                    let _ = sender
+                                                        .send(ApplicationEvent::Api(
+                                                            ApiEvent::Server(server_event),
+                                                        ))
+                                                        .await;
+                                                }
+                                            },
+                                            Err(RecvError::Lagged(count)) => {
+                                                warn!("client lagged (missing {} event(s))", count);
+                                            }
+                                            Err(RecvError::Closed) => {
+                                                info!("connection closed");
+                                                break;
+                                            }
                                         }
                                     }
-                                }
-                            });
+                                }));
 
-                            // Command loop
                             while let Some(envelope) = command_rx.recv().await {
                                 let original_request = envelope.request.clone();
 
-                                let _ = event_sender.try_send(ApplicationEvent::Api(
-                                    ApiEvent::LogApiRequest(envelope.clone()),
-                                ));
+                                let _ = event_sender
+                                    .send(ApplicationEvent::Api(ApiEvent::LogApiRequest(
+                                        envelope.clone(),
+                                    )))
+                                    .await;
 
                                 match client.execute_request(envelope.request).await {
                                     Ok(api_response) => {
-                                        let _ = event_sender.try_send(ApplicationEvent::Api(
-                                            ApiEvent::ApiResponse(ResponseEnvelope {
-                                                id: envelope.id,
-                                                response: api_response,
-                                                original_request,
-                                            }),
-                                        ));
+                                        let _ = event_sender
+                                            .send(ApplicationEvent::Api(ApiEvent::ApiResponse(
+                                                ResponseEnvelope {
+                                                    id: envelope.id,
+                                                    response: api_response,
+                                                    original_request,
+                                                },
+                                            )))
+                                            .await;
                                     }
                                     Err(tap_error) => {
-                                        let _ = event_sender.try_send(ApplicationEvent::Network(
-                                            NetworkEvent::ConnectionLost {
-                                                reason: format!(
-                                                    "Failed to send request: {:?}",
-                                                    tap_error
-                                                ),
-                                            },
-                                        ));
+                                        let _ = event_sender
+                                            .send(ApplicationEvent::Network(
+                                                NetworkEvent::ConnectionLost {
+                                                    reason: tap_error.to_string(),
+                                                },
+                                            ))
+                                            .await;
                                         break;
                                     }
                                 }
@@ -124,21 +137,15 @@ impl NetworkManager {
                         .await;
                 }
             }
-        });
+        }));
 
         Self {
-            background_task,
             command_sender: command_tx,
+            _background_task,
         }
     }
 
     pub fn send_command(&self, cmd: RequestEnvelope) {
         let _ = self.command_sender.try_send(cmd);
-    }
-}
-
-impl Drop for NetworkManager {
-    fn drop(&mut self) {
-        self.background_task.abort();
     }
 }

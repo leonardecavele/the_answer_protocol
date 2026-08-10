@@ -5,11 +5,11 @@ pub mod event;
 
 use crate::client::event::ServerEvent;
 use crate::error::{CommandError, InternalError, TapError};
-use crate::protocol::command::Command;
 use crate::protocol::command::enums::{ApiRequest, ApiResponse};
+use crate::protocol::command::Command;
 use crate::protocol::request::Request;
 use crate::protocol::response::Opcode;
-use event::EventDispatcher;
+use tokio::sync::broadcast;
 use tokio::sync::mpsc::Sender;
 use tokio::task::JoinHandle;
 use tracing::info;
@@ -17,7 +17,7 @@ use tracing::info;
 struct BridgeHandle {
     task: JoinHandle<()>,
     command_sender: Sender<Request>,
-    event_dispatcher: EventDispatcher,
+    event_sender: broadcast::Sender<ServerEvent>,
 }
 #[derive(Debug)]
 pub struct ServerInfo {
@@ -30,11 +30,8 @@ pub struct Client {
 }
 
 impl Client {
-    pub fn on_event<F>(&mut self, handler: F)
-    where
-        F: FnMut(ServerEvent) + Send + 'static,
-    {
-        self.bridge.event_dispatcher.subscribe(handler);
+    pub fn subscribe(&self) -> broadcast::Receiver<ServerEvent> {
+        self.bridge.event_sender.subscribe()
     }
 
     async fn request<C: Command>(
@@ -43,26 +40,25 @@ impl Client {
     ) -> Result<Result<C::ResponseData, CommandError>, TapError> {
         match command.create_command(&self.server) {
             Ok(raw_command) => {
-                let (request, response_receiver) = Request::new(raw_command);
+                let (request, response_receiver) = Request::new(raw_command.clone());
 
                 self.bridge
                     .command_sender
                     .send(request)
                     .await
                     .map_err(|_| {
-                        InternalError::ChannelPanic(
-                            "failed to send command to the client-server communication task: \
-                            the task may have stopped or crashed"
-                                .to_string(),
-                        )
+                        InternalError::BridgeUnavailable(format!(
+                            "cannot send '{}': the connection to {} is no longer running",
+                            raw_command, self.server.addr
+                        ))
                     })?;
 
                 let response = response_receiver.await.map_err(|_| {
-                    InternalError::ChannelPanic(
-                        "bridge task dropped the response channel without \
-                        replying (connection probably died)"
-                            .to_string(),
-                    )
+                    InternalError::BridgeUnavailable(format!(
+                        "no response to '{}': the connection to {} dropped the command \
+                        (server disconnected, or it replied with an unreadable frame)",
+                        raw_command, self.server.addr
+                    ))
                 })?;
 
                 match response.opcode {

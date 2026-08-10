@@ -56,7 +56,7 @@ pub enum NetworkError {
     #[error("codec error: {0}")]
     Codec(#[from] tokio_util::codec::LinesCodecError),
 
-    #[error("connection to {addr} failed. max attempt reached.")]
+    #[error("could not connect to {addr}: every attempt was refused")]
     ConnectionMaxRetry { addr: String },
 
     #[error("connection to {addr} timed out")]
@@ -68,23 +68,23 @@ pub enum NetworkError {
 
 #[derive(Error, Debug)]
 pub enum ProtocolError {
-    #[error("invalid opcode. expected ({expected}), received '{received}'")]
+    #[error("invalid opcode: expected one of {expected}, got '{received}'")]
     InvalidOpcode { expected: String, received: String },
 
-    #[error("invalid arguments. expected ({expected}), received '{received}'")]
+    #[error("invalid arguments: expected {expected}, got '{received}'")]
     InvalidArguments { expected: String, received: String },
 
-    #[error("response parse error: {0}")]
+    #[error("could not parse the server response: {0}")]
     Parse(String),
 }
 
 #[derive(Error, Debug)]
 pub enum InternalError {
-    #[error("channel communication error: {0}")]
-    ChannelPanic(String),
+    #[error("{0}")]
+    BridgeUnavailable(String),
 
-    #[error("thread panic: {0}")]
-    ThreadPanic(String),
+    #[error("{0}")]
+    BridgeStartFailed(String),
 }
 
 #[derive(Error, Debug)]

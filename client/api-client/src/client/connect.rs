@@ -1,5 +1,5 @@
 use crate::client::bridge::Bridge;
-use crate::client::event::{EventDispatcher, ServerEvent};
+use crate::client::event::ServerEvent;
 use crate::client::{BridgeHandle, Client, ServerInfo};
 use crate::error::{InternalError, NetworkError, TapError};
 use crate::protocol::handshake::HandshakeResponse;
@@ -17,7 +17,7 @@ use tracing::{debug, info};
 pub struct ClientConnect;
 
 impl ClientConnect {
-    pub async fn connect<A>(addr: A) -> Result<Client, TapError>
+    pub async fn connect<A>(addr: A) -> Result<(Client, broadcast::Receiver<ServerEvent>), TapError>
     where
         A: ToSocketAddrs + Clone + Display,
     {
@@ -25,12 +25,12 @@ impl ClientConnect {
         info!("successfully connected to TCP socket at {}", server_addr);
 
         let (request_sender, request_receiver) = mpsc::channel::<Request>(2048);
-        let (event_broadcast_sender, _) = broadcast::channel::<ServerEvent>(2048);
+        let (event_sender, event_receiver) = broadcast::channel::<ServerEvent>(2048);
         let (handshake_request, handshake_receiver) = Request::handshake();
         let bridge_handler = Self::start_bridge(
             socket,
             handshake_request,
-            event_broadcast_sender.clone(),
+            event_sender.clone(),
             request_receiver,
         )
         .await?;
@@ -50,11 +50,11 @@ impl ClientConnect {
             bridge: BridgeHandle {
                 task: bridge_handler,
                 command_sender: request_sender,
-                event_dispatcher: EventDispatcher::new(event_broadcast_sender),
+                event_sender,
             },
         };
 
-        Ok(client)
+        Ok((client, event_receiver))
     }
 
     async fn connect_tcp<A: ToSocketAddrs + Clone + Display>(
@@ -126,7 +126,10 @@ impl ClientConnect {
         });
 
         ready_receiver.await.map_err(|e| {
-            InternalError::ThreadPanic(format!("bridge task panicked during initialization: {}", e))
+            InternalError::BridgeStartFailed(format!(
+                "the connection task died before it could start listening: {}",
+                e
+            ))
         })?;
 
         Ok(bridge_task)
