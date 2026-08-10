@@ -30,6 +30,17 @@ func shutdownServer(quit chan struct{}, listener net.Listener, stopOnce *sync.On
 }
 
 func main() {
+	validProtocol := false
+	for n := range config.SupportedProtocols {
+		if config.SupportedProtocols[n] == config.ProtocolVersion {
+			validProtocol = true
+		}
+	}
+	if !validProtocol {
+		logger.AppLogger.Error(fmt.Sprintf("Invalid protocol: %d", config.ProtocolVersion))
+		os.Exit(int(serverError.CodeProtocolError))
+	}
+
 	quit := make(chan struct{})
 	var stopOnce sync.Once
 	var listener net.Listener
