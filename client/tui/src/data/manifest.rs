@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
 
-pub const ASSETS_PATH_MANIFEST: &str = "assets/manifest.json";
+pub const ASSETS_PATH_MANIFEST: &str = "../assets/manifest.json";
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
