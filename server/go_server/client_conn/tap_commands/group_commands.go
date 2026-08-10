@@ -17,8 +17,8 @@ var groupCommands = map[string]handleGroup{
 	"QUIT":   groupLeave,
 }
 
-func groupCreate(args string, client *session.Client, gameServer *game_conn.GameServerManager) (string, error) {
-	if response, err := isOk(args, client, gameServer, false, false); response != "" || err != nil {
+func groupCreate(args string, client *session.Client, gameServerManager *game_conn.GameServerManager) (string, error) {
+	if response, err := isOk(args, client, gameServerManager, false, false); response != "" || err != nil {
 		return response, err
 	}
 	if client.Group != nil {
@@ -33,8 +33,8 @@ func groupCreate(args string, client *session.Client, gameServer *game_conn.Game
 	return "OK group=" + group.Id, nil
 }
 
-func groupInvite(args string, client *session.Client, gameServer *game_conn.GameServerManager) (string, error) {
-	if response, err := isOk(args, client, gameServer, false, true); response != "" || err != nil {
+func groupInvite(args string, client *session.Client, gameServerManager *game_conn.GameServerManager) (string, error) {
+	if response, err := isOk(args, client, gameServerManager, false, true); response != "" || err != nil {
 		return response, err
 	}
 	if client.Group == nil {
@@ -49,8 +49,8 @@ func groupInvite(args string, client *session.Client, gameServer *game_conn.Game
 		return protocol.ResponseAlreadyInGroup, nil
 	}
 
-	if gameServer.IsConnected() {
-		inSameRoom, err := client.InSameRoom([]*session.Client{invitedClient}, gameServer)
+	if gameServerManager.IsConnected() {
+		inSameRoom, err := client.InSameRoom([]*session.Client{invitedClient}, gameServerManager)
 		if err != nil {
 			return "", err
 		}
@@ -71,8 +71,8 @@ func groupInvite(args string, client *session.Client, gameServer *game_conn.Game
 	return "OK", nil
 }
 
-func groupJoin(args string, client *session.Client, gameServer *game_conn.GameServerManager) (string, error) {
-	if response, err := isOk(args, client, gameServer, false, true); response != "" || err != nil {
+func groupJoin(args string, client *session.Client, gameServerManager *game_conn.GameServerManager) (string, error) {
+	if response, err := isOk(args, client, gameServerManager, false, true); response != "" || err != nil {
 		return response, err
 	}
 	if client.Group != nil {
@@ -87,8 +87,8 @@ func groupJoin(args string, client *session.Client, gameServer *game_conn.GameSe
 		return protocol.ResponseGroupNotFound, nil
 	}
 
-	if gameServer.IsConnected() {
-		inSameRoom, err := client.InSameRoom([]*session.Client{groupMember}, gameServer)
+	if gameServerManager.IsConnected() {
+		inSameRoom, err := client.InSameRoom([]*session.Client{groupMember}, gameServerManager)
 		if err != nil {
 			return "", err
 		}
@@ -114,8 +114,8 @@ func groupJoin(args string, client *session.Client, gameServer *game_conn.GameSe
 	return "OK group=" + client.Group.Id, nil
 }
 
-func groupLeave(args string, client *session.Client, gameServer *game_conn.GameServerManager) (string, error) {
-	if response, err := isOk(args, client, gameServer, false, false); response != "" || err != nil {
+func groupLeave(args string, client *session.Client, gameServerManager *game_conn.GameServerManager) (string, error) {
+	if response, err := isOk(args, client, gameServerManager, false, false); response != "" || err != nil {
 		return response, err
 	}
 	if client.Group == nil {
@@ -136,7 +136,7 @@ func groupLeave(args string, client *session.Client, gameServer *game_conn.GameS
 	return "OK", nil
 }
 
-func handleGroupCommand(args string, client *session.Client, gameServer *game_conn.GameServerManager) (string, error) {
+func handleGroupCommand(args string, client *session.Client, gameServerManager *game_conn.GameServerManager) (string, error) {
 	subCommand, subArgs, _ := strings.Cut(args, " ")
 	if subCommand == "" {
 		return protocol.ResponseInvalidArguments, nil
@@ -147,5 +147,5 @@ func handleGroupCommand(args string, client *session.Client, gameServer *game_co
 		return protocol.ResponseCommandNotFound, nil
 	}
 
-	return subCommandHandler(subArgs, client, gameServer)
+	return subCommandHandler(subArgs, client, gameServerManager)
 }

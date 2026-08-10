@@ -27,7 +27,7 @@ func parseCommand(msg string) (string, string, string) {
 	return "", "", protocol.ResponseCommandNotFound
 }
 
-func handleTapCommand(str string, client *session.Client, gameServer *game_conn.GameServerManager) (string, error) {
+func handleTapCommand(str string, client *session.Client, gameServerManager *game_conn.GameServerManager) (string, error) {
 	response := ""
 
 	cmd, args, response := parseCommand(str)
@@ -35,7 +35,7 @@ func handleTapCommand(str string, client *session.Client, gameServer *game_conn.
 		return response, nil
 	}
 
-	response, err := tap_commands.TapCommands[cmd](args, client, gameServer)
+	response, err := tap_commands.TapCommands[cmd](args, client, gameServerManager)
 	if err != nil {
 		return "", err
 	}
@@ -63,14 +63,14 @@ func handleClientEvents(client *session.Client, done <-chan struct{}) {
 	}
 }
 
-func HandleClient(client *session.Client, gameServer *game_conn.GameServerManager) {
+func HandleClient(client *session.Client, gameServerManager *game_conn.GameServerManager) {
 	defer func() {
-		if err := client.DeleteClient(gameServer); err != nil {
+		if err := client.DeleteClient(gameServerManager); err != nil {
 			logger.AppLogger.Error("%s Erase client error: %v\n", client.Id, err)
 		}
 	}()
 
-	if !gameServer.IsConnected() {
+	if !gameServerManager.IsConnected() {
 		client.SendEvent(protocol.Event{
 			EventName: "GAME SERVER",
 			Data:      "DISCONNECTED",
@@ -102,7 +102,7 @@ func HandleClient(client *session.Client, gameServer *game_conn.GameServerManage
 		}
 
 		logger.AppLogger.Info("%s Client Read: %s", client.Id, str)
-		response, err := handleTapCommand(str, client, gameServer)
+		response, err := handleTapCommand(str, client, gameServerManager)
 		if err != nil {
 			logger.AppLogger.Error("%s Command error: %v\n", client.Id, err)
 			response = protocol.ResponseGameServerClosed

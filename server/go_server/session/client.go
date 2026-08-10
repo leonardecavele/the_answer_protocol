@@ -42,7 +42,7 @@ func NewClient(conn net.Conn, room *Room) *Client {
 	}
 }
 
-func (c *Client) DeleteClient(gameServer *game_conn.GameServerManager) error {
+func (c *Client) DeleteClient(gameServerManager *game_conn.GameServerManager) error {
 	username := c.Username
 	state := c.State
 
@@ -75,7 +75,7 @@ func (c *Client) DeleteClient(gameServer *game_conn.GameServerManager) error {
 	closeErr := c.Conn.Close()
 
 	if state == AUTHENTICATED {
-		if err := gameServer.WriteCommand(game_conn.CommandToGameServer{
+		if err := gameServerManager.WriteCommand(game_conn.CommandToGameServer{
 			Player:    username,
 			Command:   "QUIT",
 			Arguments: "",
@@ -118,12 +118,12 @@ func (c *Client) ReadCommandTimeout(timeout time.Duration) (game_conn.CommandFro
 	}
 }
 
-func (c *Client) InSameRoom(clients []*Client, gameServer *game_conn.GameServerManager) (bool, error) {
-	if c == nil || gameServer == nil {
+func (c *Client) InSameRoom(clients []*Client, gameServerManager *game_conn.GameServerManager) (bool, error) {
+	if c == nil || gameServerManager == nil {
 		return false, serverError.ErrGameServerNotConnected
 	}
 
-	answer, err := gameServer.AskQuestion(game_conn.QuestionToGameServer{
+	answer, err := gameServerManager.AskQuestion(game_conn.QuestionToGameServer{
 		Question: "ROOM_PLAYERS",
 		Data:     c.Username,
 	})

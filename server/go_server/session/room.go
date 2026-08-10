@@ -139,9 +139,9 @@ func (room *Room) BroadcastEvent(eventBatch protocol.EventBatch) {
 	}
 }
 
-func (room *Room) ReconnectPlayersToGameServer(gameServer *game_conn.GameServerManager) error {
+func (room *Room) ReconnectPlayersToGameServer(gameServerManager *game_conn.GameServerManager) error {
 	for _, username := range room.ConnectedUsernames() {
-		if err := gameServer.WriteCommand(game_conn.CommandToGameServer{
+		if err := gameServerManager.WriteCommand(game_conn.CommandToGameServer{
 			Player:    username,
 			Command:   "CONNECT",
 			Arguments: username,

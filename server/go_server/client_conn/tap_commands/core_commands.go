@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-func handleConnectCommand(args string, client *session.Client, gameServer *game_conn.GameServerManager) (string, error) {
+func handleConnectCommand(args string, client *session.Client, gameServerManager *game_conn.GameServerManager) (string, error) {
 	isValidUsername := func(username string) bool {
 		if username == "" {
 			return false
@@ -35,7 +35,7 @@ func handleConnectCommand(args string, client *session.Client, gameServer *game_
 		return response, nil
 	}
 
-	if err := gameServer.WriteCommand(game_conn.CommandToGameServer{
+	if err := gameServerManager.WriteCommand(game_conn.CommandToGameServer{
 		Player:    client.Username,
 		Command:   "CONNECT",
 		Arguments: "",
@@ -56,12 +56,12 @@ func handleConnectCommand(args string, client *session.Client, gameServer *game_
 	return protocol.ResponseConnected, nil
 }
 
-func handleLookCommand(args string, client *session.Client, gameServer *game_conn.GameServerManager) (string, error) {
-	if response, err := isOk(args, client, gameServer, true, false); response != "" || err != nil {
+func handleLookCommand(args string, client *session.Client, gameServerManager *game_conn.GameServerManager) (string, error) {
+	if response, err := isOk(args, client, gameServerManager, true, false); response != "" || err != nil {
 		return response, err
 	}
 
-	if err := gameServer.WriteCommand(game_conn.CommandToGameServer{
+	if err := gameServerManager.WriteCommand(game_conn.CommandToGameServer{
 		Player:    client.Username,
 		Command:   "LOOK",
 		Arguments: args,
@@ -77,8 +77,8 @@ func handleLookCommand(args string, client *session.Client, gameServer *game_con
 	return "OK " + response.Data, nil
 }
 
-func handleMoveCommand(args string, client *session.Client, gameServer *game_conn.GameServerManager) (string, error) {
-	if response, err := isOk(args, client, gameServer, true, true); response != "" || err != nil {
+func handleMoveCommand(args string, client *session.Client, gameServerManager *game_conn.GameServerManager) (string, error) {
+	if response, err := isOk(args, client, gameServerManager, true, true); response != "" || err != nil {
 		return response, err
 	}
 
@@ -86,7 +86,7 @@ func handleMoveCommand(args string, client *session.Client, gameServer *game_con
 		return protocol.ResponseNotGroupLeader, nil
 	}
 
-	if err := sendGroupedOrSolo("MOVE", args, client, gameServer); err != nil {
+	if err := sendGroupedOrSolo("MOVE", args, client, gameServerManager); err != nil {
 		return "", err
 	}
 
@@ -98,8 +98,8 @@ func handleMoveCommand(args string, client *session.Client, gameServer *game_con
 	return "OK " + "room=" + response.Data, nil
 }
 
-func handleQuitCommand(args string, client *session.Client, gameServer *game_conn.GameServerManager) (string, error) {
-	if response, err := isOk(args, client, gameServer, false, false); response != "" || err != nil {
+func handleQuitCommand(args string, client *session.Client, gameServerManager *game_conn.GameServerManager) (string, error) {
+	if response, err := isOk(args, client, gameServerManager, false, false); response != "" || err != nil {
 		return response, err
 	}
 
