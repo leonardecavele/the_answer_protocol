@@ -14,6 +14,9 @@ func handleConnectCommand(args string, client *session.Client, gameServer *game_
 		if username == "" {
 			return false
 		}
+		if len(username) < 3 || len(username) > 10 {
+			return false
+		}
 		for _, c := range username {
 			if (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
 				(c >= '0' && c <= '9') || c == '-' || c == '_' {
