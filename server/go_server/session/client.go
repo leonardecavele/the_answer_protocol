@@ -168,3 +168,7 @@ func (c *Client) InSameRoom(clients []*Client, gameServer *game_conn.GameServerM
 func (c *Client) SendEvent(event protocol.Event) {
 	c.eventChan <- event
 }
+
+func (c *Client) SendCommand(command game_conn.CommandFromGameServer) {
+	c.commandChan <- command
+}

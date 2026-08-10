@@ -85,7 +85,7 @@ func (room *Room) RouteCommand(username string, command game_conn.CommandFromGam
 		return false
 	}
 
-	client.commandChan <- command
+	client.SendCommand(command)
 	return true
 }
 
@@ -100,7 +100,7 @@ func (room *Room) RouteEvent(username string, event protocol.Event) bool {
 		return false
 	}
 
-	client.eventChan <- event
+	client.SendEvent(event)
 	return true
 }
 
@@ -134,7 +134,7 @@ func (room *Room) BroadcastEvent(eventBatch protocol.EventBatch) {
 
 	for _, client := range clients {
 		for _, event := range eventBatch.Events {
-			client.eventChan <- event
+			client.SendEvent(event)
 		}
 	}
 }
@@ -155,11 +155,10 @@ func (room *Room) ReconnectPlayersToGameServer(gameServer *game_conn.GameServerM
 		Events: []protocol.Event{
 			{
 				EventName: "GAME SERVER",
-				Data: "CONNECTED",
+				Data:      "CONNECTED",
 			},
 		},
 	})
-
 
 	return nil
 }
