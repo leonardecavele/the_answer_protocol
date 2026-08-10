@@ -657,13 +657,17 @@ impl GameManager {
                         .dump();
                 }
 
-                if let Some(mut quests) = npc_unwrap.get_quests().cloned()
-                {
+                if let Some(mut quests) = npc_unwrap.get_quests().cloned() {
                     let player_id = *self.get_player_id(player_name).unwrap();
                     quests.retain(|quest| !self.player_has_quest(player_id, quest.clone()));
                     if quests.is_empty() {
-                        return generate_json(player_name, command_name, ErrorCode::NoQuestAvailable, "")
-                            .dump();
+                        return generate_json(
+                            player_name,
+                            command_name,
+                            ErrorCode::NoQuestAvailable,
+                            "",
+                        )
+                        .dump();
                     }
                     let mut rng = rand::rng();
                     let random_index = rng.random_range(0..quests.len());
