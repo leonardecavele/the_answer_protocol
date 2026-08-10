@@ -53,13 +53,6 @@ func handleConnectCommand(args string, client *session.Client, gameServerManager
 		},
 	})
 
-	if !gameServerManager.IsConnected() {
-		client.SendEvent(protocol.Event{
-			EventName: "GAME SERVER",
-			Data:      "DISCONNECTED",
-		})
-	}
-
 	return protocol.ResponseConnected, nil
 }
 
