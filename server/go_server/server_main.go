@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"fmt"
 	"go_server/client_conn"
 	"go_server/config"
 	serverError "go_server/error"
@@ -67,6 +68,7 @@ func main() {
 
 	listener, listenErr := net.Listen("tcp", ":"+strconv.Itoa(config.GoServerPort))
 	if listenErr != nil {
+		logger.AppLogger.Error(fmt.Sprint(listenErr))
 		os.Exit(int(serverError.CodeListenerError))
 	}
 	defer listener.Close()
@@ -87,6 +89,4 @@ func main() {
 
 		go client_conn.HandleClient(session.NewClient(conn, room), gameServerManager)
 	}
-
-	os.Exit(int(serverError.CodeNoError))
 }
