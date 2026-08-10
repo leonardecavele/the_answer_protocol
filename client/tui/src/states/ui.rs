@@ -18,6 +18,7 @@ pub struct Notification {
     pub message: String,
     pub notification_type: NotificationType,
     pub expires_at: Instant,
+    pub duration: u64,
 }
 
 impl Notification {
@@ -40,12 +41,7 @@ impl Notification {
     }
 
     pub fn error(message: impl Into<String>) -> Self {
-        Self::new(
-            None,
-            message.into(),
-            NotificationType::Error,
-            NOTIF_DEFAULT_DURATION_MS,
-        )
+        Self::new(None, message.into(), NotificationType::Error, 0)
     }
 
     pub fn with_id(mut self, id: impl Into<String>) -> Self {
@@ -69,6 +65,7 @@ impl Notification {
             message,
             notification_type: notif_type,
             expires_at: Instant::now() + Duration::from_millis(duration_ms),
+            duration: duration_ms,
         }
     }
 }
@@ -101,7 +98,8 @@ impl Notifications {
     }
 
     pub fn remove_expired(&mut self) {
-        self.notifications.retain(|n| Instant::now() < n.expires_at);
+        self.notifications
+            .retain(|n| Instant::now() < n.expires_at || n.duration == 0);
     }
 }
 //endregion
