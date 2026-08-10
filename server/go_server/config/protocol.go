@@ -1,3 +1,5 @@
 package config
 
-const ProtocolVersion = 1
+var SupportedProtocols = [2]int{1, 2}
+
+const ProtocolVersion = 3
