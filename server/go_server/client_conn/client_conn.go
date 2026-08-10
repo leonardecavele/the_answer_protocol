@@ -70,13 +70,6 @@ func HandleClient(client *session.Client, gameServerManager *game_conn.GameServe
 		}
 	}()
 
-	if !gameServerManager.IsConnected() {
-		client.SendEvent(protocol.Event{
-			EventName: "GAME SERVER",
-			Data:      "DISCONNECTED",
-		})
-	}
-
 	stopListeningEvents := make(chan struct{})
 	defer close(stopListeningEvents)
 
