@@ -107,6 +107,12 @@ func HandleClient(client *session.Client, gameServerManager *game_conn.GameServe
 			logger.AppLogger.Error("%s Write error: %v\n", client.Id, err)
 			return
 		}
+		if response == protocol.ResponseConnected && !gameServerManager.IsConnected() {
+			client.SendEvent(protocol.Event{
+				EventName: "GAME SERVER",
+				Data:      "DISCONNECTED",
+			})
+		}
 		if response == protocol.ResponseBye {
 			return
 		}
