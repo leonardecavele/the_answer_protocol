@@ -27,9 +27,8 @@ fn setup(mut commands: Commands) {
     ));
 }
 
-// Système de mise à jour (la logique du jeu)
 fn rotation_systeme(time: Res<Time>, mut requests: Query<&mut Transform, With<MonCarre>>) {
-    // On boucle sur tout ce qui possède l'étiquette "MonCarre"
+    // everything with type MonCarre
     for mut transform in &mut requests {
         // Fait tourner l'objet sur l'axe Z
         transform.rotate_z(2.0 * time.delta_seconds());
