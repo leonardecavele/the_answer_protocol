@@ -6,12 +6,12 @@ import (
 	"go_server/session"
 )
 
-func handleTakeCommand(args string, client *session.Client, gameServer *game_conn.GameServerManager) (string, error) {
-	if response, err := isOk(args, client, gameServer, true, true); response != "" || err != nil {
+func handleTakeCommand(args string, client *session.Client, gameServerManager *game_conn.GameServerManager) (string, error) {
+	if response, err := isOk(args, client, gameServerManager, true, true); response != "" || err != nil {
 		return response, err
 	}
 
-	if err := gameServer.WriteCommand(game_conn.CommandToGameServer{
+	if err := gameServerManager.WriteCommand(game_conn.CommandToGameServer{
 		Player:    client.Username,
 		Command:   "TAKE",
 		Arguments: args,
@@ -27,12 +27,12 @@ func handleTakeCommand(args string, client *session.Client, gameServer *game_con
 	return "OK " + "taken=" + response.Data, nil
 }
 
-func handleDropCommand(args string, client *session.Client, gameServer *game_conn.GameServerManager) (string, error) {
-	if response, err := isOk(args, client, gameServer, true, true); response != "" || err != nil {
+func handleDropCommand(args string, client *session.Client, gameServerManager *game_conn.GameServerManager) (string, error) {
+	if response, err := isOk(args, client, gameServerManager, true, true); response != "" || err != nil {
 		return response, err
 	}
 
-	if err := gameServer.WriteCommand(game_conn.CommandToGameServer{
+	if err := gameServerManager.WriteCommand(game_conn.CommandToGameServer{
 		Player:    client.Username,
 		Command:   "DROP",
 		Arguments: args,
@@ -48,12 +48,12 @@ func handleDropCommand(args string, client *session.Client, gameServer *game_con
 	return "OK " + "dropped=" + response.Data, nil
 }
 
-func handleInventoryCommand(args string, client *session.Client, gameServer *game_conn.GameServerManager) (string, error) {
-	if response, err := isOk(args, client, gameServer, true, false); response != "" || err != nil {
+func handleInventoryCommand(args string, client *session.Client, gameServerManager *game_conn.GameServerManager) (string, error) {
+	if response, err := isOk(args, client, gameServerManager, true, false); response != "" || err != nil {
 		return response, err
 	}
 
-	if err := gameServer.WriteCommand(game_conn.CommandToGameServer{
+	if err := gameServerManager.WriteCommand(game_conn.CommandToGameServer{
 		Player:  client.Username,
 		Command: "INVENTORY",
 	}); err != nil {
@@ -68,12 +68,12 @@ func handleInventoryCommand(args string, client *session.Client, gameServer *gam
 	return "OK " + response.Data, nil
 }
 
-func handleTalkCommand(args string, client *session.Client, gameServer *game_conn.GameServerManager) (string, error) {
-	if response, err := isOk(args, client, gameServer, true, true); response != "" || err != nil {
+func handleTalkCommand(args string, client *session.Client, gameServerManager *game_conn.GameServerManager) (string, error) {
+	if response, err := isOk(args, client, gameServerManager, true, true); response != "" || err != nil {
 		return response, err
 	}
 
-	if err := gameServer.WriteCommand(game_conn.CommandToGameServer{
+	if err := gameServerManager.WriteCommand(game_conn.CommandToGameServer{
 		Player:    client.Username,
 		Command:   "TALK",
 		Arguments: args,
@@ -89,12 +89,12 @@ func handleTalkCommand(args string, client *session.Client, gameServer *game_con
 	return "OK " + response.Data, nil
 }
 
-func handleAttackCommand(args string, client *session.Client, gameServer *game_conn.GameServerManager) (string, error) {
-	if response, err := isOk(args, client, gameServer, true, true); response != "" || err != nil {
+func handleAttackCommand(args string, client *session.Client, gameServerManager *game_conn.GameServerManager) (string, error) {
+	if response, err := isOk(args, client, gameServerManager, true, true); response != "" || err != nil {
 		return response, err
 	}
 
-	if err := gameServer.WriteCommand(game_conn.CommandToGameServer{
+	if err := gameServerManager.WriteCommand(game_conn.CommandToGameServer{
 		Player:    client.Username,
 		Command:   "ATTACK",
 		Arguments: args,
@@ -110,12 +110,12 @@ func handleAttackCommand(args string, client *session.Client, gameServer *game_c
 	return "OK " + response.Data, nil
 }
 
-func handleStatusCommand(args string, client *session.Client, gameServer *game_conn.GameServerManager) (string, error) {
-	if response, err := isOk(args, client, gameServer, true, false); response != "" || err != nil {
+func handleStatusCommand(args string, client *session.Client, gameServerManager *game_conn.GameServerManager) (string, error) {
+	if response, err := isOk(args, client, gameServerManager, true, false); response != "" || err != nil {
 		return response, err
 	}
 
-	if err := gameServer.WriteCommand(game_conn.CommandToGameServer{
+	if err := gameServerManager.WriteCommand(game_conn.CommandToGameServer{
 		Player:  client.Username,
 		Command: "STATUS",
 	}); err != nil {
@@ -130,15 +130,15 @@ func handleStatusCommand(args string, client *session.Client, gameServer *game_c
 	return "OK " + response.Data, nil
 }
 
-func handleQuestCommand(args string, client *session.Client, gameServer *game_conn.GameServerManager) (string, error) {
-	if response, err := isOk(args, client, gameServer, true, true); response != "" || err != nil {
+func handleQuestCommand(args string, client *session.Client, gameServerManager *game_conn.GameServerManager) (string, error) {
+	if response, err := isOk(args, client, gameServerManager, true, true); response != "" || err != nil {
 		return response, err
 	}
 	if client.Group != nil && !client.IsLeader() {
 		return protocol.ResponseNotGroupLeader, nil
 	}
 
-	if err := sendGroupedOrSolo("QUEST", args, client, gameServer); err != nil {
+	if err := sendGroupedOrSolo("QUEST", args, client, gameServerManager); err != nil {
 		return "", err
 	}
 
@@ -150,12 +150,12 @@ func handleQuestCommand(args string, client *session.Client, gameServer *game_co
 	return "OK " + response.Data, nil
 }
 
-func handleQuestsCommand(args string, client *session.Client, gameServer *game_conn.GameServerManager) (string, error) {
-	if response, err := isOk(args, client, gameServer, true, false); response != "" || err != nil {
+func handleQuestsCommand(args string, client *session.Client, gameServerManager *game_conn.GameServerManager) (string, error) {
+	if response, err := isOk(args, client, gameServerManager, true, false); response != "" || err != nil {
 		return response, err
 	}
 
-	if err := gameServer.WriteCommand(game_conn.CommandToGameServer{
+	if err := gameServerManager.WriteCommand(game_conn.CommandToGameServer{
 		Player:  client.Username,
 		Command: "QUESTS",
 	}); err != nil {

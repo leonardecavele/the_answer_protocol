@@ -1,4 +1,6 @@
-use crate::constantes::{BASE_COMMAND_RESPONSE, ErrorCode, LOST_ITEM, LOST_ITEM_SPAWN, NPC_DMG, NPC_MOB};
+use crate::constantes::{
+    BASE_COMMAND_RESPONSE, ErrorCode, LOST_ITEM, LOST_ITEM_SPAWN, NPC_DMG, NPC_MOB,
+};
 use crate::game_manager::GameManager;
 use crate::items::{Item, ItemId};
 use crate::npc::{Npc, NpcId};
@@ -147,11 +149,11 @@ impl GameManager {
 
         for p in &all_moving_players {
             let mut lrp = spectators_leave.clone();
-            let leave_diff = self.generate_event_json(&mut lrp, p, "ROOM", "LEAVE");
+            let leave_diff = self.generate_event_json(&mut lrp, p, "ROOM", "PRESENCE LEAVE");
             self.add_diff_to_tick(leave_diff);
 
             let mut crp = spectators_enter.clone();
-            let enter_diff = self.generate_event_json(&mut crp, p, "ROOM", "ENTER");
+            let enter_diff = self.generate_event_json(&mut crp, p, "ROOM", "PRESENCE ENTER");
             self.add_diff_to_tick(enter_diff);
 
             if p != &leader {
@@ -257,7 +259,12 @@ impl GameManager {
         }
     }
 
-    pub fn verify_combat_target(&self, player_name: &str, command_name: &str, target_npc: &str) -> Result<NpcId, String> {
+    pub fn verify_combat_target(
+        &self,
+        player_name: &str,
+        command_name: &str,
+        target_npc: &str,
+    ) -> Result<NpcId, String> {
         let npc_wrapped = Npc::parse_protocol_representation(target_npc);
         let player_room = {
             self.get_player_from_name(player_name)
@@ -265,18 +272,26 @@ impl GameManager {
                 .get_current_room()
         };
         if npc_wrapped.is_none() {
-            return Err(generate_json(player_name, command_name, ErrorCode::NpcNotFound, "").dump());
+            return Err(
+                generate_json(player_name, command_name, ErrorCode::NpcNotFound, "").dump(),
+            );
         }
         let (npc_id, _) = npc_wrapped.unwrap();
         if !self.npc_is_in_room(npc_id, player_room) {
-            return Err(generate_json(player_name, command_name, ErrorCode::NpcNotInRoom, "").dump());
+            return Err(
+                generate_json(player_name, command_name, ErrorCode::NpcNotInRoom, "").dump(),
+            );
         }
         let npc_type = self.get_npc_type(npc_id);
         if (npc_type & NPC_MOB) == 0 {
-            return Err(generate_json(player_name, command_name, ErrorCode::NpcNotHostile, "").dump());
+            return Err(
+                generate_json(player_name, command_name, ErrorCode::NpcNotHostile, "").dump(),
+            );
         }
         if self.is_npc_in_combat(npc_id) {
-            return Err(generate_json(player_name, command_name, ErrorCode::NpcInCombat, "").dump());
+            return Err(
+                generate_json(player_name, command_name, ErrorCode::NpcInCombat, "").dump(),
+            );
         }
         Ok(npc_id)
     }
@@ -398,7 +413,11 @@ impl GameManager {
                 let player_success = self.get_player_success(player_id);
                 // player_success : Option<Option<bool>
                 if player_success.is_some() && player_success.unwrap().is_none() {
-                    let npc_id = self.combat_instances.get_instance_for_player(player_id).unwrap().get_npc_id();
+                    let npc_id = self
+                        .combat_instances
+                        .get_instance_for_player(player_id)
+                        .unwrap()
+                        .get_npc_id();
                     self.npc_attacks_player(NPC_DMG, npc_id, player_id);
                 }
 
@@ -553,7 +572,10 @@ impl GameManager {
                 if let Some(instance_player_count) =
                     self.get_nb_players_in_player_instance(player_id)
                 {
-                    let instance = self.combat_instances.get_instance_for_player(player_id).unwrap();
+                    let instance = self
+                        .combat_instances
+                        .get_instance_for_player(player_id)
+                        .unwrap();
                     if let Some(_player) = instance.get_player_success(player_id) {
                         if let Some(success) = _player {
                             return generate_json(
@@ -638,6 +660,15 @@ impl GameManager {
                 if let Some(mut quests) = npc_unwrap.get_quests().cloned() {
                     let player_id = *self.get_player_id(player_name).unwrap();
                     quests.retain(|quest| !self.player_has_quest(player_id, quest.clone()));
+                    if quests.is_empty() {
+                        return generate_json(
+                            player_name,
+                            command_name,
+                            ErrorCode::NoQuestAvailable,
+                            "",
+                        )
+                        .dump();
+                    }
                     let mut rng = rand::rng();
                     let random_index = rng.random_range(0..quests.len());
                     if let Some(quest_id) = quests.get(random_index) {

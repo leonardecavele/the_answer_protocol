@@ -6,12 +6,12 @@ import (
 	"go_server/session"
 )
 
-func handleUseCommand(args string, client *session.Client, gameServer *game_conn.GameServerManager) (string, error) {
-	if response, err := isOk(args, client, gameServer, true, true); response != "" || err != nil {
+func handleUseCommand(args string, client *session.Client, gameServerManager *game_conn.GameServerManager) (string, error) {
+	if response, err := isOk(args, client, gameServerManager, true, true); response != "" || err != nil {
 		return response, err
 	}
 
-	if err := gameServer.WriteCommand(game_conn.CommandToGameServer{
+	if err := gameServerManager.WriteCommand(game_conn.CommandToGameServer{
 		Player:    client.Username,
 		Command:   "USE",
 		Arguments: args,
@@ -27,8 +27,8 @@ func handleUseCommand(args string, client *session.Client, gameServer *game_conn
 	return "OK " + response.Data, nil
 }
 
-func handleAggroCommand(args string, client *session.Client, gameServer *game_conn.GameServerManager) (string, error) {
-	if response, err := isOk(args, client, gameServer, true, true); response != "" || err != nil {
+func handleAggroCommand(args string, client *session.Client, gameServerManager *game_conn.GameServerManager) (string, error) {
+	if response, err := isOk(args, client, gameServerManager, true, true); response != "" || err != nil {
 		return response, err
 	}
 
@@ -36,7 +36,7 @@ func handleAggroCommand(args string, client *session.Client, gameServer *game_co
 		return protocol.ResponseNotGroupLeader, nil
 	}
 
-	if err := sendGroupedOrSolo("AGGRO", args, client, gameServer); err != nil {
+	if err := sendGroupedOrSolo("AGGRO", args, client, gameServerManager); err != nil {
 		return "", err
 	}
 

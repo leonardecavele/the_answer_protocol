@@ -627,13 +627,13 @@ impl GameManager {
         npc.set_hp(Some(new_npc_hp));
         self.set_success_for_player(player_id, true);
         if let Some(mut players_to_send_event) = self.get_player_instance_group(player_id) {
-            let event = self.generate_event_json(&mut players_to_send_event, &player_name, "attack", dealt_damage.to_string().as_str());
+            let event = self.generate_event_json(&mut players_to_send_event, &player_name, "ATTACK", dealt_damage.to_string().as_str());
             self.add_diff_to_tick(event);
         }
 
         if new_npc_hp == 0 {
             self.kill_npc(npc_id);
-            let event = self.generate_event_json(&mut players_in_room, &player_name, "kill", npc_repr.as_str());
+            let event = self.generate_event_json(&mut players_in_room, &player_name, "KILL", npc_repr.as_str());
             self.add_diff_to_tick(event);
         }
 
