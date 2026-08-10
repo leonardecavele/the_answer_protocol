@@ -16,6 +16,7 @@ use crossterm::terminal::{
 use ratatui::Terminal;
 use ratatui::backend::CrosstermBackend;
 use std::{io, panic};
+use tracing_subscriber::EnvFilter;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -55,9 +56,28 @@ fn setup_panic_hook() {
     }));
 }
 
+fn setup_logging() -> Result<(), Box<dyn std::error::Error>> {
+    let file = std::fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open("app.log")?;
+
+    tracing_subscriber::fmt()
+        .with_env_filter(
+            EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| EnvFilter::new("debug")),
+        )
+        .with_writer(file)
+        .with_ansi(false)
+        .init();
+
+    Ok(())
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     setup_panic_hook();
+    setup_logging()?;
 
     let cli = Cli::parse();
 
