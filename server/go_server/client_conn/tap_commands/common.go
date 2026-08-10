@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-type handleTapCommandArgs func(args string, client *session.Client, gameServer *game_conn.GameServerManager) (string, error)
+type handleTapCommandArgs func(args string, client *session.Client, gameServerManager *game_conn.GameServerManager) (string, error)
 
 var coreTapCommands = map[string]handleTapCommandArgs{
 	"CONNECT": handleConnectCommand,
@@ -62,8 +62,8 @@ var TapCommands = func(commandGroups ...map[string]handleTapCommandArgs) map[str
 	customTapCommands,
 )
 
-func isOk(args string, client *session.Client, gameServer *game_conn.GameServerManager, needGameServer bool, hasArgs bool) (string, error) {
-	if needGameServer && !gameServer.IsConnected() {
+func isOk(args string, client *session.Client, gameServerManager *game_conn.GameServerManager, needGameServer bool, hasArgs bool) (string, error) {
+	if needGameServer && !gameServerManager.IsConnected() {
 		return protocol.ResponseGameServerClosed, nil
 	}
 
@@ -82,9 +82,9 @@ func isOk(args string, client *session.Client, gameServer *game_conn.GameServerM
 	return "", nil
 }
 
-func sendGroupedOrSolo(command string, args string, client *session.Client, gameServer *game_conn.GameServerManager) error {
+func sendGroupedOrSolo(command string, args string, client *session.Client, gameServerManager *game_conn.GameServerManager) error {
 	if client.Group == nil {
-		return gameServer.WriteCommand(game_conn.CommandToGameServer{
+		return gameServerManager.WriteCommand(game_conn.CommandToGameServer{
 			Player:    client.Username,
 			Command:   command,
 			Arguments: args,
@@ -100,7 +100,7 @@ func sendGroupedOrSolo(command string, args string, client *session.Client, game
 		groupedPlayers = append(groupedPlayers, groupedClient.Username)
 	}
 
-	return gameServer.WriteCommand(game_conn.GroupedCommandToGameServer{
+	return gameServerManager.WriteCommand(game_conn.GroupedCommandToGameServer{
 		Leader:         client.Username,
 		GroupedPlayers: groupedPlayers,
 		Command:        command,
