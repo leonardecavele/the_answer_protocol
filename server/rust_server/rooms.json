@@ -18,7 +18,7 @@
     },
     {
       "name": "devant_le_bocal",
-      "description": "Certains viennent y ch<wercher leur TIG, d'autres s'y rafraichir.",
+      "description": "Certains viennent y chercher leur TIG, d'autres s'y rafraichir.",
       "exits": { "west": "cluster_du_haut" }
     },
     {
