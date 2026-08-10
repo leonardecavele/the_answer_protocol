@@ -149,11 +149,11 @@ impl GameManager {
 
         for p in &all_moving_players {
             let mut lrp = spectators_leave.clone();
-            let leave_diff = self.generate_event_json(&mut lrp, p, "ROOM", "LEAVE");
+            let leave_diff = self.generate_event_json(&mut lrp, p, "ROOM", "PRESENCE LEAVE");
             self.add_diff_to_tick(leave_diff);
 
             let mut crp = spectators_enter.clone();
-            let enter_diff = self.generate_event_json(&mut crp, p, "ROOM", "ENTER");
+            let enter_diff = self.generate_event_json(&mut crp, p, "ROOM", "PRESENCE ENTER");
             self.add_diff_to_tick(enter_diff);
 
             if p != &leader {
