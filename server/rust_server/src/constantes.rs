@@ -9,7 +9,7 @@ pub const LOST_ITEM_SPAWN: &str = "pature";
 pub const LOST_ITEM_SPAWN_ID: RoomId = 2 as RoomId;
 pub const PLAYER_ROOM_SPAWN: &str = "devant_l_ecole";
 pub const NPC_RESPAWN_TIME: Duration = Duration::from_secs(30);
-pub const ITEM_DESPAWN_TIME: Duration = Duration::from_mins(2);
+pub const ITEM_DESPAWN_TIME: Duration = Duration::from_mins(1);
 pub const TICK_TIME_AMPLIFICATION: u64 = 1;
 pub const TICK_RATE: u16 = 10; // 48
 pub const TICK_TIME: Duration =
@@ -77,7 +77,7 @@ impl ErrorCode {
             Self::SendFailed => 901,
             Self::InvalidGroupCommand => 997,
             Self::InvalidQuestion => 998,
-            Self::InvalidCommand => 999,    
+            Self::InvalidCommand => 999,
         }
     }
 }

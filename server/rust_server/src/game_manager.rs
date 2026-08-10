@@ -88,6 +88,10 @@ impl GameManager {
         }
     }
 
+    pub fn get_available_quests_for_player(&self, player_id: PlayerId, quests: Option<&Vec<QuestId>>) -> Option<Vec<QuestId>> {
+        
+    }
+
     pub fn get_player(&self, player_id: PlayerId) -> Option<&Player> {
         self.players.get(&player_id)
     }
