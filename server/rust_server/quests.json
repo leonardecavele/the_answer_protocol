@@ -4,42 +4,42 @@
       "name": "Librairie Quarante-Deux",
       "description": "Donnez un coup de main à Mdourdoi avec sa libft sans faire aucune erreur.",
       "loots": {
-		  "XP": { "qty": 142, "chance": 100.0 }
+		  "MERCI": { "qty": 3, "chance": 100.0 }
 	  }
     },
     {
       "name": "Tunnel",
       "description": "Parlez à Vquetier si vous osez.",
       "loots": {
-		  "XP": { "qty": 242, "chance": 100.0 }
+		  "MERCI": { "qty": 10, "chance": 100.0 }
 	  }
     },
     {
       "name": "Caillou Papier Ciseaux",
       "description": "Battez Ldecavel (triple champion du monde en pierre feuille ciseaux) en cantina du premier coup.",
       "loots": {
-        "XP": { "qty": 130, "chance": 100.0 }
+        "MERCI": { "qty": 2, "chance": 100.0 }
       }
     },
 	{
       "name": "Normi-quoi ?",
       "description": "Aidez Enchevri à mettre son code à la norme en moins d'une minute. Il ne sait plus s'y prendre depuis qu'il a touché au cpp.",
       "loots": {
-        "XP": { "qty": 100, "chance": 100.0 }
+        "MERCI": { "qty": 5, "chance": 100.0 }
       }
 	},
 	{
 	  "name": "Tic et Tac et Toe",
 	  "description": "Battez Acampion.",
 	  "loots": {
-		"XP": { "qty": 150, "chance": 100.0 }
+		"MERCI": { "qty": 3, "chance": 100.0 }
 	  }
 	},
 	{
 	  "name": "Des wraps ! Plus de wraps !",
 	  "description": "Réussissez à aider Iris en moins de 2 secondes.",
 	  "loots": {
-		"XP": { "qty": 130, "chance": 100.0 }
+		"MERCI": { "qty": 2, "chance": 100.0 }
 	  }
 	}
   ]
