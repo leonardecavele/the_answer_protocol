@@ -13,7 +13,7 @@ pub struct QuestCommand {
 pub struct QuestReward {
     pub qty: u32,
     pub chance: u32,
-    pub r#type: String
+    pub r#type: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
