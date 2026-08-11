@@ -56,7 +56,7 @@ impl Component for NotificationComponent {
             let text = format!("[X] {}", notif.message);
 
             let mut max_width = (area.width as f32 * 0.3) as u16;
-            max_width = std::cmp::max(max_width, 20);
+            max_width = std::cmp::max(max_width, 40);
 
             let text_length = text.chars().count() as u16;
 
