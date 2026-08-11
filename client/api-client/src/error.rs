@@ -1,4 +1,13 @@
+use std::time::Duration;
 use thiserror::Error;
+
+fn format_command(command: &str) -> String {
+    if command.is_empty() {
+        String::new()
+    } else {
+        format!(" (command: {command})")
+    }
+}
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct CommandError {
@@ -43,6 +52,7 @@ impl CommandError {
             502 => String::from("bad gateway"),
             503 => String::from("service unavailable"),
             504 => String::from("gateway timeout"),
+            900 => String::from("server unavailable"),
             _ => "unknown server error".to_string(),
         }
     }
@@ -61,6 +71,9 @@ pub enum NetworkError {
 
     #[error("connection to {addr} timed out")]
     ConnectionTimeout { addr: String },
+
+    #[error("the server did not answer within {}s{}", timeout.as_secs(), format_command(command))]
+    RequestTimeout { command: String, timeout: Duration },
 
     #[error("connection disconnected unexpectedly")]
     Disconnected,

@@ -3,8 +3,7 @@ use crate::client::event::ServerEvent;
 use crate::client::{BridgeHandle, Client, ServerInfo};
 use crate::error::{InternalError, NetworkError, TapError};
 use crate::protocol::handshake::HandshakeResponse;
-use crate::protocol::request::Request;
-use crate::protocol::response::ServerResponse;
+use crate::protocol::request::{Request, RequestResult};
 use std::fmt::Display;
 use std::time::Duration;
 use tokio::net::{TcpStream, ToSocketAddrs};
@@ -136,11 +135,13 @@ impl ClientConnect {
     }
 
     async fn await_handshake(
-        handshake_receiver: oneshot::Receiver<ServerResponse>,
+        handshake_receiver: oneshot::Receiver<RequestResult>,
     ) -> Result<HandshakeResponse, TapError> {
-        let response = handshake_receiver
+        let request_result = handshake_receiver
             .await
             .map_err(|_| NetworkError::Disconnected)?;
+
+        let response = request_result?;
         Ok(HandshakeResponse::try_from(response)?)
     }
 }

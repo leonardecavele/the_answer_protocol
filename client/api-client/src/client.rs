@@ -5,8 +5,8 @@ pub mod event;
 
 use crate::client::event::ServerEvent;
 use crate::error::{CommandError, InternalError, TapError};
-use crate::protocol::command::enums::{ApiRequest, ApiResponse};
 use crate::protocol::command::Command;
+use crate::protocol::command::enums::{ApiRequest, ApiResponse};
 use crate::protocol::request::Request;
 use crate::protocol::response::Opcode;
 use tokio::sync::broadcast;
@@ -53,13 +53,15 @@ impl Client {
                         ))
                     })?;
 
-                let response = response_receiver.await.map_err(|_| {
+                let request_result = response_receiver.await.map_err(|_| {
                     InternalError::BridgeUnavailable(format!(
                         "no response to '{}': the connection to {} dropped the command \
                         (server disconnected, or it replied with an unreadable frame)",
                         raw_command, self.server.addr
                     ))
                 })?;
+
+                let response = request_result?;
 
                 match response.opcode {
                     Opcode::Ok => Ok(command.parse_response(&self.server, response)),
