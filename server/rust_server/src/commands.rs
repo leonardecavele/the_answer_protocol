@@ -265,12 +265,12 @@ impl GameManager {
         command_name: &str,
         target_npc: &str,
     ) -> Result<NpcId, String> {
-        let npc_wrapped = Npc::parse_protocol_representation(target_npc);
         let player_room = {
             self.get_player_from_name(player_name)
                 .unwrap()
                 .get_current_room()
         };
+        let npc_wrapped = self.parse_npc(target_npc, player_room.to_string());
         if npc_wrapped.is_none() {
             return Err(
                 generate_json(player_name, command_name, ErrorCode::NpcNotFound, "").dump(),
@@ -433,7 +433,7 @@ impl GameManager {
                         .get_current_room()
                 };
                 let parsed_repr: Option<(NpcId, String)> =
-                    Npc::parse_protocol_representation(target_npc);
+                    self.parse_npc(target_npc, player_room.to_string());
                 if parsed_repr.is_none() {
                     return generate_json(player_name, command_name, ErrorCode::NpcNotFound, "")
                         .dump();
@@ -474,7 +474,7 @@ impl GameManager {
                     (player.get_id(), player.get_current_room().to_string())
                 };
                 let item = data;
-                let parsed_item: Option<(ItemId, String)> = Item::parse_item(item);
+                let parsed_item: Option<(ItemId, String)> = self.parse_item(item, player_room.to_string());
                 if parsed_item.is_none() {
                     return generate_json(player_name, command_name, ErrorCode::ItemNotFound, "")
                         .dump();
@@ -518,7 +518,8 @@ impl GameManager {
                 let player = self.get_player_from_name(player_name).unwrap();
                 let player_id = player.get_id();
                 let item = data;
-                let item_tuple: Option<(ItemId, String)> = Item::parse_item(item);
+                let room_name = player.get_current_room().to_string();
+                let item_tuple: Option<(ItemId, String)> = self.parse_item(item, room_name.to_string());
                 if item_tuple.is_none() {
                     return generate_json(player_name, command_name, ErrorCode::ItemNotFound, "")
                         .dump();
@@ -537,11 +538,9 @@ impl GameManager {
                     .dump();
                 }
 
-                let room_name = player.get_current_room().to_string();
                 self.remove_item_from_player(player_id, item_id);
                 self.add_item_to_room(&room_name, item_id);
 
-                //set the 2 minutes timer when we drop the item
 
                 self.start_dropped_at_for_item(item_id);
 
@@ -635,7 +634,7 @@ impl GameManager {
                         .get_current_room()
                 };
                 let parsed_repr: Option<(NpcId, String)> =
-                    Npc::parse_protocol_representation(target_npc);
+                    self.parse_npc(target_npc, player_room.to_string());
                 if parsed_repr.is_none() {
                     return generate_json(player_name, command_name, ErrorCode::NpcNotFound, "")
                         .dump();
