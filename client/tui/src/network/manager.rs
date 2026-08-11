@@ -50,13 +50,10 @@ impl NetworkManager {
 
                                         match event {
                                             Ok(server_event) => match server_event {
-                                                ServerEvent::ConnectionLost => {
+                                                ServerEvent::ConnectionLost(reason) => {
                                                     let _ = sender
                                                         .send(ApplicationEvent::Network(
-                                                            NetworkEvent::ConnectionLost {
-                                                                reason: "Server is down"
-                                                                    .to_string(),
-                                                            },
+                                                            NetworkEvent::ConnectionLost { reason },
                                                         ))
                                                         .await;
                                                 }
@@ -101,14 +98,7 @@ impl NetworkManager {
                                             .await;
                                     }
                                     Err(tap_error) => {
-                                        let _ = event_sender
-                                            .send(ApplicationEvent::Network(
-                                                NetworkEvent::ConnectionLost {
-                                                    reason: tap_error.to_string(),
-                                                },
-                                            ))
-                                            .await;
-                                        break;
+                                        warn!("command failed: {}", tap_error);
                                     }
                                 }
                             }

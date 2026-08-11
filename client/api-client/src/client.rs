@@ -9,15 +9,21 @@ use crate::protocol::command::Command;
 use crate::protocol::command::enums::{ApiRequest, ApiResponse};
 use crate::protocol::request::Request;
 use crate::protocol::response::Opcode;
+use std::time::Duration;
 use tokio::sync::broadcast;
 use tokio::sync::mpsc::Sender;
 use tokio::task::JoinHandle;
-use tracing::info;
+use tokio::time::timeout;
+use tokio_util::sync::CancellationToken;
+use tracing::{info, warn};
+
+const CLOSE_TIMEOUT: Duration = Duration::from_secs(2);
 
 struct BridgeHandle {
     task: JoinHandle<()>,
     command_sender: Sender<Request>,
     event_sender: broadcast::Sender<ServerEvent>,
+    cancellation: CancellationToken,
 }
 #[derive(Debug)]
 pub struct ServerInfo {
@@ -101,11 +107,18 @@ impl Client {
     }
 
     pub fn is_connected(&self) -> bool {
-        !self.bridge.task.is_finished()
+        !self.bridge.cancellation.is_cancelled() && !self.bridge.task.is_finished()
     }
 
-    pub fn close(self) {
-        drop(self)
+    pub async fn close(mut self) {
+        self.bridge.cancellation.cancel();
+
+        if timeout(CLOSE_TIMEOUT, &mut self.bridge.task).await.is_err() {
+            warn!(
+                "bridge did not shut down within {}s, falling back to abort",
+                CLOSE_TIMEOUT.as_secs()
+            );
+        }
     }
 }
 

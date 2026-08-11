@@ -158,6 +158,6 @@ impl Client {
         debug!("sending quit request");
 
         let _ = self.request(QuitCommand).await;
-        drop(self)
+        self.close().await;
     }
 }

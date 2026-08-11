@@ -10,14 +10,22 @@ use tokio::sync::broadcast;
 use tokio::sync::mpsc::Receiver;
 use tokio::time::{Instant, sleep_until};
 use tokio_util::codec::{Framed, LinesCodec, LinesCodecError};
+use tokio_util::sync::CancellationToken;
 use tracing::{debug, error, info, warn};
 
 const HANDSHAKE_TIMEOUT: Duration = Duration::from_secs(5);
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(10);
 
+enum Disconnection {
+    ClosedByClient,
+    ServerClosed,
+    RequestTimedOut { command: String, timeout: Duration },
+    Failed(TapError),
+}
+
 enum Flow {
     Continue,
-    Stop,
+    Stop(Disconnection),
 }
 
 struct PendingRequest {
@@ -57,6 +65,7 @@ impl Bridge {
         &mut self,
         handshake_request: Request,
         ready_sender: tokio::sync::oneshot::Sender<()>,
+        cancellation: CancellationToken,
     ) {
         self.pending_request = Some(PendingRequest {
             request: handshake_request,
@@ -67,7 +76,7 @@ impl Bridge {
 
         let _ = ready_sender.send(());
 
-        loop {
+        let disconnection = loop {
             let expires_at = self
                 .pending_request
                 .as_ref()
@@ -80,12 +89,11 @@ impl Bridge {
                 command = self.command_receiver.recv(), if self.pending_request.is_none() => {
                     match command {
                         Some(request) => self.handle_outgoing(request).await,
-                        None => {
-                            info!("command channel closed (client dropped), shutting down bridge");
-                            Ok(Flow::Stop)
-                        }
+                        None => Ok(Flow::Stop(Disconnection::ClosedByClient)),
                     }
                 },
+
+                _ = cancellation.cancelled() => Ok(Flow::Stop(Disconnection::ClosedByClient)),
 
                 _ = sleep_until(expires_at), if self.pending_request.is_some() => {
                     let PendingRequest { request, timeout, .. } = self
@@ -93,31 +101,52 @@ impl Bridge {
                         .take()
                         .expect("guarded by the select! precondition");
 
+                    let command = request.raw_command.clone();
                     let timeout_error = NetworkError::RequestTimeout {
                         command: request.raw_command,
                         timeout,
                     };
-                    warn!("{}", timeout_error);
-
                     let _ = request.reply_to.send(Err(timeout_error.into()));
-                    Ok(Flow::Stop)
+
+                    Ok(Flow::Stop(Disconnection::RequestTimedOut { command, timeout }))
                 }
             };
 
             match flow {
                 Ok(Flow::Continue) => {}
-                Ok(Flow::Stop) => break,
-                Err(fatal_error) => {
-                    error!(
-                        "bridge is shutting down, connection unusable: {}",
-                        fatal_error
-                    );
-                    break;
-                }
+                Ok(Flow::Stop(disconnection)) => break disconnection,
+                Err(fatal_error) => break Disconnection::Failed(fatal_error),
             }
+        };
+
+        let reason = match &disconnection {
+            Disconnection::ClosedByClient => None,
+            Disconnection::ServerClosed => Some("server closed the connection".to_string()),
+            Disconnection::RequestTimedOut { command, timeout } if command.is_empty() => {
+                Some(format!(
+                    "server did not complete the handshake within {}s",
+                    timeout.as_secs()
+                ))
+            }
+            Disconnection::RequestTimedOut { command, timeout } => Some(format!(
+                "no answer to '{}' within {}s",
+                command,
+                timeout.as_secs()
+            )),
+            Disconnection::Failed(fatal_error) => Some(fatal_error.to_string()),
+        };
+
+        match &reason {
+            None => info!("connection closed by the client"),
+            Some(reason) => warn!("connection lost: {}", reason),
         }
 
-        let _ = self.event_sender.send(ServerEvent::ConnectionLost);
+        let _ = SinkExt::<String>::close(&mut self.socket).await;
+
+        if let Some(reason) = reason {
+            let _ = self.event_sender.send(ServerEvent::ConnectionLost(reason));
+        }
+
         info!("network connection closed");
     }
 
@@ -132,9 +161,8 @@ impl Bridge {
                 return Err(NetworkError::Codec(codec_error).into());
             }
             None => {
-                info!("server closed the connection");
                 self.fail_pending_request(NetworkError::Disconnected.into());
-                return Ok(Flow::Stop);
+                return Ok(Flow::Stop(Disconnection::ServerClosed));
             }
         };
 

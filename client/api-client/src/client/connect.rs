@@ -11,6 +11,7 @@ use tokio::sync::{broadcast, mpsc, oneshot};
 use tokio::task::JoinHandle;
 use tokio::time::timeout;
 use tokio_util::codec::{Framed, LinesCodec};
+use tokio_util::sync::CancellationToken;
 use tracing::{debug, info};
 
 pub struct ClientConnect;
@@ -26,11 +27,13 @@ impl ClientConnect {
         let (request_sender, request_receiver) = mpsc::channel::<Request>(2048);
         let (event_sender, event_receiver) = broadcast::channel::<ServerEvent>(2048);
         let (handshake_request, handshake_receiver) = Request::handshake();
+        let cancellation = CancellationToken::new();
         let bridge_handler = Self::start_bridge(
             socket,
             handshake_request,
             event_sender.clone(),
             request_receiver,
+            cancellation.clone(),
         )
         .await?;
 
@@ -50,6 +53,7 @@ impl ClientConnect {
                 task: bridge_handler,
                 command_sender: request_sender,
                 event_sender,
+                cancellation,
             },
         };
 
@@ -116,12 +120,15 @@ impl ClientConnect {
         handshake_request: Request,
         event_sender: broadcast::Sender<ServerEvent>,
         command_receiver: mpsc::Receiver<Request>,
+        cancellation: CancellationToken,
     ) -> Result<JoinHandle<()>, InternalError> {
         let (ready_sender, ready_receiver) = oneshot::channel::<()>();
 
         let bridge_task = tokio::spawn(async move {
             let mut bridge = Bridge::new(socket, event_sender, command_receiver);
-            bridge.listen(handshake_request, ready_sender).await;
+            bridge
+                .listen(handshake_request, ready_sender, cancellation)
+                .await;
         });
 
         ready_receiver.await.map_err(|e| {
