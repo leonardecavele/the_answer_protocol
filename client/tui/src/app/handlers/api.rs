@@ -45,8 +45,6 @@ impl App {
             format!("{} - {:?}", envelope.id, envelope.response),
         );
 
-        self.state.network.is_connected = true;
-
         match envelope.response {
             ApiResponse::Connect(Ok(connect_res)) => {
                 self.state.game.player.name = Some(connect_res.player_name);
@@ -491,6 +489,8 @@ impl App {
                     self.state.ui.notification.push(Notification::info(
                         "Game server is online. Session restarted.",
                     ));
+
+                    self.state.network.is_connected = true;
 
                     self.handle_request(ApiRequest::Look(LookCommand));
                     self.load_state_from_server();
