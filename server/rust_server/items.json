@@ -6,11 +6,15 @@
     },
     {
       "name": "wrap_du_foyer",
-      "description": "un bon remontant pour réussir à continuer à faire ses heures"
+      "description": "Un bon remontant pour réussir à continuer à faire ses heures."
     },
     {
       "name": "t_shirt_bde",
-      "description": "dans ce tissu on se sent solide comme un rock"
+      "description": "Dans ce tissu on se sent solide comme un rock."
+    },
+    {
+      "name": "merci",
+      "description": "Un concentré pur de la gratitude de Nathan."
     }
   ]
 }
