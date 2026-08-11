@@ -460,6 +460,35 @@ impl GameManager {
     pub fn get_npc(&self, npc_id: NpcId) -> Option<&Npc> {
         self.all_npcs.get(&npc_id)
     }
+
+    pub fn parse_npc(&self, npc_rep: &str, room_needed: RoomName) -> Option<(NpcId, String)> {
+        if let Some(npc_wrapped) = Npc::parse_protocol_representation(npc_rep) {
+            let npc = self.get_npc(npc_wrapped.0)?;
+            return Some((npc.get_id(), npc.get_name()));
+        }
+
+        self.all_npcs
+            .iter()
+            .find(|(_, npc)| npc.get_spawn_room() == room_needed)
+            .map(|(npc_id, npc)| (npc_id.clone(), npc.get_name().clone()))
+    }
+
+    pub fn parse_item(&self, item_rep: &str, room_needed: RoomName) -> Option<(ItemId, String)> {
+        if let Some(item) = Item::parse_item(item_rep) {
+            return Some(item);
+        }
+        let room_items = self
+            .get_room_by_name(room_needed.as_str())
+            .unwrap()
+            .get_inventory()
+            .get_items()
+            .clone();
+        room_items
+            .iter()
+            .find(|item_id| self.get_item_name(item_id) == item_rep)
+            .map(|item_id| (item_id.clone(), self.get_item_name(item_id)))
+    }
+
     pub fn convert_items_to_string(&self, inventory: &Inventory) -> Vec<String> {
         inventory
             .get_items()
@@ -525,7 +554,10 @@ impl GameManager {
     pub fn kill_player(&mut self, player_id: PlayerId) {
         let (mut players_to_send_death_info, player_name) = {
             let player = self.get_player(player_id).unwrap();
-            (self.get_all_players_at_room(player.get_current_room()), player.get_name().to_string())
+            (
+                self.get_all_players_at_room(player.get_current_room()),
+                player.get_name().to_string(),
+            )
         };
         let path = format!("saves/{}.toml", player_name);
         let _ = std::fs::remove_file(path);
@@ -533,10 +565,14 @@ impl GameManager {
         // (in which case we do not need to delete the save)
         info!("deleted player {} save", player_name);
         self.get_mut_player(player_id).unwrap().reset();
-        let event = self.generate_event_json(&mut players_to_send_death_info, player_name.as_str(), "DEATH", "");
+        let event = self.generate_event_json(
+            &mut players_to_send_death_info,
+            player_name.as_str(),
+            "DEATH",
+            "",
+        );
         self.add_diff_to_tick(event);
     }
-
 
     pub fn get_player_instance_group(&self, player_id: PlayerId) -> Option<Vec<String>> {
         if let Some(instance) = self.combat_instances.get_instance_for_player(player_id) {
@@ -627,13 +663,23 @@ impl GameManager {
         npc.set_hp(Some(new_npc_hp));
         self.set_success_for_player(player_id, true);
         if let Some(mut players_to_send_event) = self.get_player_instance_group(player_id) {
-            let event = self.generate_event_json(&mut players_to_send_event, &player_name, "ATTACK", dealt_damage.to_string().as_str());
+            let event = self.generate_event_json(
+                &mut players_to_send_event,
+                &player_name,
+                "ATTACK",
+                dealt_damage.to_string().as_str(),
+            );
             self.add_diff_to_tick(event);
         }
 
         if new_npc_hp == 0 {
             self.kill_npc(npc_id);
-            let event = self.generate_event_json(&mut players_in_room, &player_name, "KILL", npc_repr.as_str());
+            let event = self.generate_event_json(
+                &mut players_in_room,
+                &player_name,
+                "KILL",
+                npc_repr.as_str(),
+            );
             self.add_diff_to_tick(event);
         }
 
