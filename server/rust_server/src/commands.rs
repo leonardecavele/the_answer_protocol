@@ -1,5 +1,5 @@
 use crate::constantes::{
-    BASE_COMMAND_RESPONSE, ErrorCode, LOST_ITEM, LOST_ITEM_SPAWN, NPC_DMG, NPC_MOB,
+    BASE_COMMAND_RESPONSE, ErrorCode, LOST_ITEM, LOST_ITEM_SPAWN, MIN_DMG_DEALT, NPC_DMG, NPC_MOB,
 };
 use crate::game_manager::GameManager;
 use crate::items::{Item, ItemId};
@@ -50,8 +50,11 @@ impl GameManager {
         emitted_by: &str,
         event_name: &str,
         data: &str,
+        ignore_emitted_by: bool,
     ) -> JsonValue {
-        players.retain(|player| player != emitted_by);
+        if ignore_emitted_by {
+            players.retain(|player| player != emitted_by);
+        }
         return object! {
             "players": players.as_slice(),
             "emitted_by": emitted_by,
@@ -149,11 +152,11 @@ impl GameManager {
 
         for p in &all_moving_players {
             let mut lrp = spectators_leave.clone();
-            let leave_diff = self.generate_event_json(&mut lrp, p, "ROOM", "PRESENCE LEAVE");
+            let leave_diff = self.generate_event_json(&mut lrp, p, "ROOM", "PRESENCE LEAVE", true);
             self.add_diff_to_tick(leave_diff);
 
             let mut crp = spectators_enter.clone();
-            let enter_diff = self.generate_event_json(&mut crp, p, "ROOM", "PRESENCE ENTER");
+            let enter_diff = self.generate_event_json(&mut crp, p, "ROOM", "PRESENCE ENTER", true);
             self.add_diff_to_tick(enter_diff);
 
             if p != &leader {
@@ -235,8 +238,12 @@ impl GameManager {
                     .iter()
                     .filter_map(|name| self.get_player_id(name).copied())
                     .collect();
-                self.combat_instances
-                    .add_instance(leader_id, npc_id, grouped_players_ids);
+                self.combat_instances.add_instance(
+                    leader_id,
+                    npc_id,
+                    self.get_npc_hp(npc_id).unwrap(),
+                    grouped_players_ids,
+                );
                 let npc_representation = self
                     .all_npcs
                     .get(&npc_id)
@@ -247,6 +254,7 @@ impl GameManager {
                     leader,
                     "AGGRO",
                     &npc_representation,
+                    true
                 );
                 self.add_diff_to_tick(event);
 
@@ -405,6 +413,7 @@ impl GameManager {
                         "DROP",
                         Item::protocol_representation(LOST_ITEM as ItemId, lost_item_name.as_str())
                             .as_str(),
+                        true
                     );
                     self.remove_item_from_player(player_id, LOST_ITEM as ItemId);
                     self.add_item_to_room(room, LOST_ITEM as ItemId);
@@ -474,7 +483,8 @@ impl GameManager {
                     (player.get_id(), player.get_current_room().to_string())
                 };
                 let item = data;
-                let parsed_item: Option<(ItemId, String)> = self.parse_item(item, player_room.to_string());
+                let parsed_item: Option<(ItemId, String)> =
+                    self.parse_item(item, player_room.to_string());
                 if parsed_item.is_none() {
                     return generate_json(player_name, command_name, ErrorCode::ItemNotFound, "")
                         .dump();
@@ -503,7 +513,7 @@ impl GameManager {
 
                 let mut players_to_send = self.get_all_players_at_room(player_room.as_str());
                 let events_json =
-                    self.generate_event_json(&mut players_to_send, player_name, "TAKE", item);
+                    self.generate_event_json(&mut players_to_send, player_name, "TAKE", item, true);
                 self.add_diff_to_tick(events_json);
 
                 return generate_json(
@@ -519,7 +529,8 @@ impl GameManager {
                 let player_id = player.get_id();
                 let item = data;
                 let room_name = player.get_current_room().to_string();
-                let item_tuple: Option<(ItemId, String)> = self.parse_item(item, room_name.to_string());
+                let item_tuple: Option<(ItemId, String)> =
+                    self.parse_item(item, room_name.to_string());
                 if item_tuple.is_none() {
                     return generate_json(player_name, command_name, ErrorCode::ItemNotFound, "")
                         .dump();
@@ -541,12 +552,11 @@ impl GameManager {
                 self.remove_item_from_player(player_id, item_id);
                 self.add_item_to_room(&room_name, item_id);
 
-
                 self.start_dropped_at_for_item(item_id);
 
                 let mut players_to_send = self.get_all_players_at_room(room_name.as_str());
                 let events_json =
-                    self.generate_event_json(&mut players_to_send, player_name, "DROP", item);
+                    self.generate_event_json(&mut players_to_send, player_name, "DROP", item, true);
                 self.add_diff_to_tick(events_json);
 
                 return generate_json(player_name, command_name, ErrorCode::NoError, item).dump();
@@ -571,23 +581,21 @@ impl GameManager {
                 if let Some(instance_player_count) =
                     self.get_nb_players_in_player_instance(player_id)
                 {
-                    let instance = self
-                        .combat_instances
-                        .get_instance_for_player(player_id)
-                        .unwrap();
-                    if let Some(_player) = instance.get_player_success(player_id) {
-                        if let Some(success) = _player {
-                            return generate_json(
-                                player_name,
-                                command_name,
-                                ErrorCode::ActionAlreadyTaken,
-                                "",
-                            )
-                            .dump();
-                        }
+                    if self.check_action_already_taken(player_id, npc_id) {
+                        return generate_json(
+                            player_name,
+                            command_name,
+                            ErrorCode::ActionAlreadyTaken,
+                            "",
+                        )
+                        .dump();
                     }
-                    let npc_max_hp = self.get_npc_max_hp(npc_id).unwrap();
-                    let dmg = npc_max_hp / instance_player_count + 1;
+                    let npc_combat_start_hp = self.get_npc_combat_start_hp(npc_id).unwrap();
+                    let npc_hp = self.get_npc_hp(npc_id).unwrap();
+                    let mut dmg = (npc_combat_start_hp / instance_player_count).min(MIN_DMG_DEALT);
+                    if dmg * 2 > npc_hp {
+                        dmg *= 2;
+                    }
                     let combat_result = self.player_attacks_npc(dmg, player_id, npc_id);
                     return generate_json(
                         player_name,
@@ -614,6 +622,21 @@ impl GameManager {
                     Err(json_response) => return json_response,
                 };
                 let player_id = *self.get_player_id(player_name).unwrap();
+
+                if let Some(_instance_player_count) =
+                    self.get_nb_players_in_player_instance(player_id)
+                {
+                    if self.check_action_already_taken(player_id, npc_id) {
+                        return generate_json(
+                            player_name,
+                            command_name,
+                            ErrorCode::ActionAlreadyTaken,
+                            "",
+                        )
+                        .dump();
+                    }
+                }
+
                 self.npc_attacks_player(NPC_DMG, npc_id, player_id)
             }
             "STATUS" => {

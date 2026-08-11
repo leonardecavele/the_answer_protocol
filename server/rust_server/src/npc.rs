@@ -138,6 +138,7 @@ impl Npc {
         self.death = Some(Instant::now());
     }
     pub fn revive(&mut self) {
+        self.hp = self.max_hp;
         self.death = None;
     }
 
