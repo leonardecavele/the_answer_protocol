@@ -66,6 +66,11 @@ impl GameManager {
     fn save_player(&mut self, player_id: PlayerId) {
         if let Some(player) = self.players.get(&player_id) {
             let inventory = player.get_inventory().clone();
+            let player_quests = self.quest_instances
+                .iter()
+                .filter(|q| q.get_player() == player_id)
+                .map(|q| (q.get_quest_name(), q.get_state()))
+                .collect();
             let save_data = Save {
                 name: player.get_name().to_string(),
                 id: player.get_id(),
@@ -74,6 +79,7 @@ impl GameManager {
                 inventory,
                 current_room: player.get_current_room().to_string(),
                 dialogs_index: std::collections::HashMap::new(),
+                quests: player_quests,
             };
             if let Err(e) =
                 confy::store_path(format!("saves/{}.toml", player.get_name()), save_data)
@@ -231,6 +237,16 @@ impl GameManager {
             }
         }
 
+        let player_id = save_data.id;
+        for (quest_id, state) in save_data.quests.iter() {
+            let quest_instance = QuestInstance::new(
+                player_id,
+                quest_id.clone(),
+                state.clone(),
+            );
+            self.quest_instances.push(quest_instance);
+        }
+
         return Some(Player::from_save(save_data));
     }
 
@@ -267,6 +283,7 @@ impl GameManager {
         self.save_player(player_id);
         self.players.remove(&player_id);
         self.players_by_name.remove(&name);
+        self.quest_instances.retain(|q| q.get_player() != player_id);
     }
 
     pub fn get_nb_players(&self) -> usize {
