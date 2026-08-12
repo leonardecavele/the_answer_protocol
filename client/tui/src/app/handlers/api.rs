@@ -502,15 +502,6 @@ impl App {
 
                     self.state.network.is_connected = false;
                 }
-            },
-            _ => {
-                self.state
-                    .ui
-                    .notification
-                    .push(Notification::warning(format!(
-                        "Missing handler for event: {:?}",
-                        event
-                    )));
             }
         }
     }

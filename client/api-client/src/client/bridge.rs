@@ -1,14 +1,15 @@
+use crate::client::connect::ConnectionState;
 use crate::client::event::ServerEvent;
 use crate::error::{NetworkError, TapError};
 use crate::protocol::request::Request;
 use crate::protocol::response::{Opcode, ServerResponse};
-use futures::SinkExt;
 use futures::stream::StreamExt;
+use futures::SinkExt;
 use std::time::Duration;
 use tokio::net::TcpStream;
-use tokio::sync::broadcast;
 use tokio::sync::mpsc::Receiver;
-use tokio::time::{Instant, sleep_until};
+use tokio::sync::{broadcast, watch};
+use tokio::time::{sleep_until, Instant};
 use tokio_util::codec::{Framed, LinesCodec, LinesCodecError};
 use tokio_util::sync::CancellationToken;
 use tracing::{debug, error, info, warn};
@@ -39,6 +40,7 @@ impl PendingRequest {
 
 pub struct Bridge {
     socket: Framed<TcpStream, LinesCodec>,
+    state_sender: watch::Sender<ConnectionState>,
     event_sender: broadcast::Sender<ServerEvent>,
     command_receiver: Receiver<Request>,
     pending_request: Option<PendingRequest>,
@@ -48,12 +50,14 @@ pub struct Bridge {
 impl Bridge {
     pub fn new(
         socket: Framed<TcpStream, LinesCodec>,
+        state_sender: watch::Sender<ConnectionState>,
         event_sender: broadcast::Sender<ServerEvent>,
         command_receiver: Receiver<Request>,
         request_timeout: Duration,
     ) -> Bridge {
         Bridge {
             socket,
+            state_sender,
             event_sender,
             command_receiver,
             pending_request: None,
@@ -125,9 +129,11 @@ impl Bridge {
 
         let _ = SinkExt::<String>::close(&mut self.socket).await;
 
-        if let Some(reason) = reason {
-            let _ = self.event_sender.send(ServerEvent::ConnectionLost(reason));
-        }
+        let state = match reason {
+            None => ConnectionState::Closed,
+            Some(reason) => ConnectionState::Lost(reason),
+        };
+        let _ = self.state_sender.send(state);
 
         info!("network connection closed");
     }

@@ -48,8 +48,7 @@ pub enum ServerEvent {
     GlobalChat(ChatMessage),
     PrivateChat(ChatMessage),
     Stats(u32),
-    Unknown(String),
-    ConnectionLost(String),
+    Unknown(String)
 }
 
 impl From<ServerResponse> for ServerEvent {

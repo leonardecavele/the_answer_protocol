@@ -3,15 +3,16 @@ pub mod bridge;
 pub mod connect;
 pub mod event;
 
+use crate::client::connect::ConnectionState;
 use crate::client::event::ServerEvent;
 use crate::error::{CommandError, InternalError, TapError};
-use crate::protocol::command::Command;
 use crate::protocol::command::enums::{ApiRequest, ApiResponse};
+use crate::protocol::command::Command;
 use crate::protocol::request::Request;
 use crate::protocol::response::Opcode;
 use std::time::Duration;
-use tokio::sync::broadcast;
 use tokio::sync::mpsc::Sender;
+use tokio::sync::{broadcast, watch};
 use tokio::task::JoinHandle;
 use tokio::time::timeout;
 use tokio_util::sync::CancellationToken;
@@ -32,6 +33,7 @@ pub struct Client {
     pub server: ServerInfo,
     bridge: BridgeHandle,
     close_timeout: Duration,
+    state: watch::Receiver<ConnectionState>,
 }
 
 pub struct ClientConfig {
@@ -59,6 +61,10 @@ impl Default for ClientConfig {
 }
 
 impl Client {
+    pub fn state(&self) -> watch::Receiver<ConnectionState> {
+        self.state.clone()
+    }
+
     pub fn subscribe(&self) -> broadcast::Receiver<ServerEvent> {
         self.bridge.event_sender.subscribe()
     }
@@ -127,7 +133,7 @@ impl Client {
     }
 
     pub fn is_connected(&self) -> bool {
-        !self.bridge.cancellation.is_cancelled() && !self.bridge.task.is_finished()
+        matches!(*self.state.borrow(), ConnectionState::Connected)
     }
 
     pub async fn close(mut self) {

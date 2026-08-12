@@ -9,7 +9,7 @@ use futures::StreamExt;
 use std::fmt::Display;
 use std::time::Duration;
 use tokio::net::{TcpStream, ToSocketAddrs};
-use tokio::sync::{broadcast, mpsc};
+use tokio::sync::{broadcast, mpsc, watch};
 use tokio::task::JoinHandle;
 use tokio::time::timeout;
 use tokio_util::codec::{Framed, LinesCodec};
@@ -17,6 +17,13 @@ use tokio_util::sync::CancellationToken;
 use tracing::info;
 
 const SUPPORTED_PROTOCOL: u32 = 1;
+
+#[derive(Debug, Clone)]
+pub enum ConnectionState {
+    Connected,
+    Closed,
+    Lost(String),
+}
 
 impl Client {
     pub async fn connect<A>(addr: A) -> Result<(Client, broadcast::Receiver<ServerEvent>), TapError>
@@ -51,6 +58,7 @@ impl Client {
             .into());
         }
 
+        let (state_sender, state_receiver) = watch::channel(ConnectionState::Connected);
         let (request_sender, request_receiver) =
             mpsc::channel::<Request>(config.command_channel_capacity);
         let (event_sender, event_receiver) =
@@ -59,6 +67,7 @@ impl Client {
 
         let bridge_task = Self::start_bridge(
             socket,
+            state_sender,
             event_sender.clone(),
             request_receiver,
             cancellation.clone(),
@@ -77,6 +86,7 @@ impl Client {
                 cancellation,
             },
             close_timeout: config.close_timeout,
+            state: state_receiver,
         };
 
         Ok((client, event_receiver))
@@ -112,13 +122,20 @@ impl Client {
 
     fn start_bridge(
         socket: Framed<TcpStream, LinesCodec>,
+        state_sender: watch::Sender<ConnectionState>,
         event_sender: broadcast::Sender<ServerEvent>,
         command_receiver: mpsc::Receiver<Request>,
         cancellation: CancellationToken,
         request_timeout: Duration,
     ) -> JoinHandle<()> {
         tokio::spawn(async move {
-            let mut bridge = Bridge::new(socket, event_sender, command_receiver, request_timeout);
+            let mut bridge = Bridge::new(
+                socket,
+                state_sender,
+                event_sender,
+                command_receiver,
+                request_timeout,
+            );
             bridge.listen(cancellation).await;
         })
     }

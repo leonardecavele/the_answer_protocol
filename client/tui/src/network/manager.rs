@@ -1,7 +1,7 @@
 use crate::events::{ApiEvent, ApplicationEvent, NetworkEvent};
 use crate::network::envelopes::{RequestEnvelope, ResponseEnvelope};
+use api_client::client::connect::ConnectionState;
 use api_client::client::Client;
-use api_client::client::event::ServerEvent;
 use mpsc::Sender;
 use tokio::sync::broadcast::error::RecvError;
 use tokio::sync::mpsc;
@@ -43,38 +43,50 @@ impl NetworkManager {
                                 ))
                                 .await;
 
-                            let _event_forward_task =
-                                AbortOnDropHandle::new(tokio::spawn(async move {
+                            let mut client_state = client.state();
+                            let _event_forward_task = AbortOnDropHandle::new(tokio::spawn(
+                                async move {
                                     loop {
-                                        let event = event_receiver.recv().await;
-
-                                        match event {
-                                            Ok(server_event) => match server_event {
-                                                ServerEvent::ConnectionLost(reason) => {
-                                                    let _ = sender
-                                                        .send(ApplicationEvent::Network(
-                                                            NetworkEvent::ConnectionLost { reason },
-                                                        ))
-                                                        .await;
-                                                }
-                                                _ => {
-                                                    let _ = sender
-                                                        .send(ApplicationEvent::Api(
-                                                            ApiEvent::Server(server_event),
-                                                        ))
-                                                        .await;
+                                        tokio::select! {
+                                            event = event_receiver.recv() => {
+                                                match event {
+                                                    Ok(server_event) => {
+                                                        let _ = sender
+                                                            .send(ApplicationEvent::Api(ApiEvent::Server(
+                                                                server_event,
+                                                            )))
+                                                            .await;
+                                                    }
+                                                    Err(RecvError::Lagged(count)) => {
+                                                        warn!("client lagged (missing {} event(s))", count);
+                                                    }
+                                                    Err(RecvError::Closed) => {
+                                                        info!("connection closed");
+                                                        break;
+                                                    }
                                                 }
                                             },
-                                            Err(RecvError::Lagged(count)) => {
-                                                warn!("client lagged (missing {} event(s))", count);
-                                            }
-                                            Err(RecvError::Closed) => {
+                                            _state = client_state.changed() => {
                                                 info!("connection closed");
+
+                                                let state = client_state.borrow().clone();
+                                                match state {
+                                                    ConnectionState::Lost(reason) => {
+                                                        let _ = sender
+                                                            .send(ApplicationEvent::Network(NetworkEvent::ConnectionLost {
+                                                                reason,
+                                                            })).await;
+                                                    },
+                                                    ConnectionState::Connected => {},
+                                                    ConnectionState::Closed => {}
+                                                }
+
                                                 break;
-                                            }
+                                            },
                                         }
                                     }
-                                }));
+                                },
+                            ));
 
                             while let Some(envelope) = command_rx.recv().await {
                                 let original_request = envelope.request.clone();
