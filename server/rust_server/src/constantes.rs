@@ -86,7 +86,7 @@ impl ErrorCode {
 
 #[derive(Clone, Copy, Debug)]
 pub enum LOOT {
-    XP,
+    Merci,
     TShirt,
     Bottle,
 }
@@ -94,7 +94,7 @@ pub enum LOOT {
 impl LOOT {
     pub fn from_string(s: &str) -> Option<Self> {
         match s.to_uppercase().as_str() {
-            "XP" => Some(Self::XP),
+            "MERCI" => Some(Self::Merci),
             "TSHIRT" => Some(Self::TShirt),
             "BOTTLE" => Some(Self::Bottle),
             _ => None,
@@ -103,7 +103,7 @@ impl LOOT {
 
     pub fn to_string(&self) -> String {
         match self {
-            Self::XP => "XP".to_string(),
+            Self::Merci => "MERCI".to_string(),
             Self::TShirt => "TSHIRT".to_string(),
             Self::Bottle => "BOTTLE".to_string(),
         }
