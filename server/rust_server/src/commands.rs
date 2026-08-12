@@ -4,6 +4,7 @@ use crate::constantes::{
 use crate::game_manager::GameManager;
 use crate::items::{Item, ItemId};
 use crate::npc::{Npc, NpcId};
+use crate::quests::QuestState;
 use crate::room::Room;
 use json::{JsonValue, object};
 use rand::RngExt;
@@ -254,7 +255,7 @@ impl GameManager {
                     leader,
                     "AGGRO",
                     &npc_representation,
-                    true
+                    true,
                 );
                 self.add_diff_to_tick(event);
 
@@ -413,7 +414,7 @@ impl GameManager {
                         "DROP",
                         Item::protocol_representation(LOST_ITEM as ItemId, lost_item_name.as_str())
                             .as_str(),
-                        true
+                        true,
                     );
                     self.remove_item_from_player(player_id, LOST_ITEM as ItemId);
                     self.add_item_to_room(room, LOST_ITEM as ItemId);
@@ -748,7 +749,7 @@ impl GameManager {
                     .quest_instances
                     .iter()
                     .filter(|q| q.get_player() == player_id)
-                    .map(|q| (q.get_quest_name(), q.get_state()))
+                    .map(|q| (q.get_quest_name(), QuestState::to_str(&q.get_state()).to_string()))
                     .collect::<Vec<_>>();
                 return generate_json(
                     player_name,
