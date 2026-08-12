@@ -24,7 +24,7 @@ impl GameManager {
 
     pub fn update_game_state(&mut self) -> std::io::Result<()> {
         self.remove_finished_combat_instances();
-
+        self.punish_inactive_players_in_combat();
         self.revive_dead_npcs();
         for quest_instance in self.quest_instances.iter_mut() {
             let _state = quest_instance.get_state();

@@ -1,5 +1,5 @@
 use crate::combat_instances::CombatInstanceManager;
-use crate::constantes::{Direction, NPC_RESPAWN_TIME};
+use crate::constantes::{Direction, MAX_TIME_FOR_COMBAT, NPC_DMG, NPC_RESPAWN_TIME};
 use crate::inventory::Inventory;
 use crate::items::{Item, ItemId};
 use crate::npc::{Npc, NpcId};
@@ -427,6 +427,22 @@ impl GameManager {
             .collect()
     }
 
+    pub fn punish_inactive_players_in_combat(&mut self) {
+        let mut players_to_punish: Vec<(PlayerId, NpcId)> = Vec::new();
+        for (npc_id, instance) in self.combat_instances.instances.iter() {
+            if instance.combat_start_time.elapsed() > MAX_TIME_FOR_COMBAT {
+                for (player_id, success) in instance.players_success.iter() {
+                    if success.is_none() {
+                        players_to_punish.push((*player_id, *npc_id));
+                    }
+                }
+            }
+        }
+        for (player_id, npc_id) in players_to_punish {
+            self.npc_attacks_player(NPC_DMG, npc_id, player_id);
+        }
+    }
+
     pub fn revive_dead_npcs(&mut self) {
         let mut npcs_to_revive = Vec::new();
         for (npc_id, ncp) in self.all_npcs.iter() {
@@ -455,6 +471,11 @@ impl GameManager {
             );
             self.add_diff_to_tick(event);
         }
+    }
+
+    pub fn get_npc_combat_start_hp(&self, npc_id: NpcId) -> Option<u32> {
+        let instance = self.combat_instances.get_instance_for_npc(npc_id);
+        instance.map(|i| i.get_npc_combat_start_hp())
     }
 
     pub fn get_npc(&self, npc_id: NpcId) -> Option<&Npc> {
@@ -545,6 +566,10 @@ impl GameManager {
         self.all_npcs.get(&npc_id).and_then(|npc| npc.get_max_hp())
     }
 
+    pub fn get_npc_hp(&self, npc_id: NpcId) -> Option<u32> {
+        self.all_npcs.get(&npc_id).and_then(|npc| npc.get_hp())
+    }
+
     pub fn kill_npc(&mut self, npc_id: NpcId) {
         if let Some(npc) = self.get_mut_npc(npc_id) {
             npc.die();
@@ -570,6 +595,7 @@ impl GameManager {
             player_name.as_str(),
             "DEATH",
             "",
+            true
         );
         self.add_diff_to_tick(event);
     }
@@ -589,6 +615,17 @@ impl GameManager {
         }
         None
     }
+
+    pub fn check_action_already_taken(&self, player_id: PlayerId, _npc_id: NpcId) -> bool {
+        if let Some(instance) = self.combat_instances.get_instance_for_player(player_id) {
+            if let Some(_player) = instance.get_player_success(player_id) {
+                if let Some(_success) = _player {
+                    return true;
+                }
+            }
+        }
+        false
+    }
     pub fn npc_attacks_player(
         &mut self,
         damage: u32,
@@ -599,6 +636,7 @@ impl GameManager {
         let npc_hp = npc.get_hp().unwrap();
         let mut dealt_damage = damage;
         let player = self.get_mut_player(player_id).unwrap();
+        let player_name = player.get_name().to_string();
         let player_hp = player.get_hp();
         let new_player_hp = if player_hp > damage {
             player_hp - damage
@@ -614,7 +652,23 @@ impl GameManager {
 
         let status = if player_hp > 0 { "combat" } else { "death" };
         player.set_hp(new_player_hp);
+
+        //does nothing if no the player is not in a combat instance
         self.set_success_for_player(player_id, false);
+        let mut players_to_send_event = self
+            .combat_instances
+            .get_all_players_in_combat(npc_id)
+            .iter()
+            .map(|player_id| self.get_player(*player_id).unwrap().get_name().to_string())
+            .collect::<Vec<String>>();
+        let event = self.generate_event_json(
+            &mut players_to_send_event,
+            player_name.as_str(),
+            "DEFEND",
+            dealt_damage.to_string().as_str(),
+            false,
+        );
+        self.add_diff_to_tick(event);
 
         if new_player_hp == 0 {
             self.kill_player(player_id);
@@ -661,6 +715,8 @@ impl GameManager {
 
         let status = if new_npc_hp > 0 { "combat" } else { "victory" };
         npc.set_hp(Some(new_npc_hp));
+
+        //does nothing if no the player is not in a combat instance
         self.set_success_for_player(player_id, true);
         if let Some(mut players_to_send_event) = self.get_player_instance_group(player_id) {
             let event = self.generate_event_json(
@@ -668,6 +724,7 @@ impl GameManager {
                 &player_name,
                 "ATTACK",
                 dealt_damage.to_string().as_str(),
+                true
             );
             self.add_diff_to_tick(event);
         }
@@ -679,10 +736,10 @@ impl GameManager {
                 &player_name,
                 "KILL",
                 npc_repr.as_str(),
+                true
             );
             self.add_diff_to_tick(event);
         }
-
         return format!(
             "{{\"attacker_hp\":{}, \"target_hp\":{}, \"damage\":{}, \"status\":\"{}\"}}",
             player_hp, new_npc_hp, dealt_damage, status
@@ -733,6 +790,6 @@ impl GameManager {
     }
 
     pub fn is_npc_in_combat(&self, npc_id: NpcId) -> bool {
-        self.combat_instances.instances.contains_key(&npc_id)
+        self.combat_instances.get_instance_for_npc(npc_id).is_some()
     }
 }
