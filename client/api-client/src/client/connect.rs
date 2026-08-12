@@ -34,7 +34,7 @@ impl Client {
         A: ToSocketAddrs + Clone + Display,
     {
         let (mut socket, server_addr) =
-            Self::connect_tcp(addr, config.connect_timeout, config.max_line_length).await?;
+            Self::connect_tcp(addr, config.connect_timeout, config.max_frame_length).await?;
         info!("successfully connected to TCP socket at {}", server_addr);
 
         let handshake = Self::handshake(&mut socket, config.handshake_timeout).await?;
@@ -52,9 +52,9 @@ impl Client {
         }
 
         let (request_sender, request_receiver) =
-            mpsc::channel::<Request>(config.command_queue_size);
+            mpsc::channel::<Request>(config.command_channel_capacity);
         let (event_sender, event_receiver) =
-            broadcast::channel::<ServerEvent>(config.event_buffer_size);
+            broadcast::channel::<ServerEvent>(config.event_channel_capacity);
         let cancellation = CancellationToken::new();
 
         let bridge_task = Self::start_bridge(
@@ -85,7 +85,7 @@ impl Client {
     async fn connect_tcp<A>(
         addr: A,
         connect_timeout: Duration,
-        max_line_length: usize,
+        max_frame_length: usize,
     ) -> Result<(Framed<TcpStream, LinesCodec>, String), NetworkError>
     where
         A: ToSocketAddrs + Clone + Display,
@@ -96,7 +96,7 @@ impl Client {
             Ok(Ok(stream)) => {
                 stream.set_nodelay(true)?;
                 let peer_addr = stream.peer_addr()?.to_string();
-                let socket = Framed::new(stream, LinesCodec::new_with_max_length(max_line_length));
+                let socket = Framed::new(stream, LinesCodec::new_with_max_length(max_frame_length));
                 Ok((socket, peer_addr))
             }
             Ok(Err(io_error)) => Err(NetworkError::ConnectionFailed {
