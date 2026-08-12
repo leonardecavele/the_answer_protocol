@@ -38,10 +38,7 @@ pub mod commands {
         InventoryCommand, InventoryResponse,
     };
     pub use crate::protocol::command::resource_interaction::quest::{
-        QuestCommand, QuestData, QuestResponse, QuestReward,
-    };
-    pub use crate::protocol::command::resource_interaction::quests::{
-        QuestListEntry, QuestsCommand, QuestsResponse,
+        QuestCommand, QuestData, QuestResponse, QuestReward, QuestsCommand, QuestsResponse,
     };
     pub use crate::protocol::command::resource_interaction::status::{
         PlayerStatus, StatusCommand, StatusResponse,

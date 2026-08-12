@@ -3,11 +3,6 @@ use crate::protocol::command::Command;
 use crate::protocol::response::ServerResponse;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone)]
-pub struct QuestCommand {
-    pub npc_name: String,
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QuestReward {
     pub qty: u32,
@@ -21,6 +16,15 @@ pub struct QuestData {
     pub description: String,
     pub reward: Vec<QuestReward>,
     pub status: String,
+}
+
+// =============================
+// ========= QUEST =============
+// =============================
+
+#[derive(Debug, Clone)]
+pub struct QuestCommand {
+    pub npc_name: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -57,5 +61,37 @@ impl Command for QuestCommand {
         Some(Self {
             npc_name: args.trim().to_string(),
         })
+    }
+}
+
+// ==============================
+// ========= QUESTS =============
+// ==============================
+
+#[derive(Debug, Clone)]
+pub struct QuestsCommand;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct QuestsResponse {
+    pub quest_list: Vec<QuestData>,
+}
+
+impl Command for QuestsCommand {
+    type ResponseData = QuestsResponse;
+
+    fn encode(&self) -> String {
+        "QUESTS".to_string()
+    }
+
+    fn parse_response(&self, response: ServerResponse) -> Result<Self::ResponseData, CommandError> {
+        let quest_list: Vec<QuestData> =
+            serde_json::from_str(response.arguments.join(" ").as_str())
+                .map_err(CommandError::invalid_json_response)?;
+
+        Ok(QuestsResponse { quest_list })
+    }
+
+    fn from_str(_args: &str) -> Option<Self> {
+        Some(Self)
     }
 }

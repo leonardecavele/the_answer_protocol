@@ -18,8 +18,7 @@ use crate::protocol::command::resource_interaction::drop::{DropCommand, DropResp
 use crate::protocol::command::resource_interaction::inventory::{
     InventoryCommand, InventoryResponse,
 };
-use crate::protocol::command::resource_interaction::quest::{QuestCommand, QuestResponse};
-use crate::protocol::command::resource_interaction::quests::{QuestsCommand, QuestsResponse};
+use crate::protocol::command::resource_interaction::quest::{QuestCommand, QuestResponse, QuestsCommand, QuestsResponse};
 use crate::protocol::command::resource_interaction::status::{StatusCommand, StatusResponse};
 use crate::protocol::command::resource_interaction::take::{TakeCommand, TakeResponse};
 use crate::protocol::command::resource_interaction::talk::{TalkCommand, TalkResponse};
