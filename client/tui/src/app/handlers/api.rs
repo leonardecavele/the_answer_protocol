@@ -1,7 +1,7 @@
 use crate::app::App;
 use crate::events::ApiEvent;
 use crate::network::envelopes::ResponseEnvelope;
-use crate::states::game::{ChatChannel, ChatMessage, DialogueState, Npc, END_OF_DIALOGUE_TAG};
+use crate::states::game::{ChatChannel, ChatMessage, DialogueState, END_OF_DIALOGUE_TAG, Npc};
 use crate::states::ui::Notification;
 use api_client::commands::LookCommand;
 use api_client::events::{GameServerEvent, GroupEvent, RoomEvent, ServerEvent};

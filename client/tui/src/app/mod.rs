@@ -1,18 +1,18 @@
 use crate::data::manifest::Manifest;
 use crate::errors::ApplicationError;
 use crate::events::{ApplicationEvent, EventBroker};
-use crate::network::envelopes::RequestEnvelope;
 use crate::network::NetworkManager;
+use crate::network::envelopes::RequestEnvelope;
 use crate::states::app::AppState;
 use crate::states::ui::Notification;
 use crate::ui::components::{Component, Lifecycle};
 use crate::ui::view::ViewManager;
+use api_client::ApiRequest;
 use api_client::commands::StatusCommand;
 use api_client::commands::WhoCommand;
 use api_client::commands::{InventoryCommand, QuestsCommand};
-use api_client::ApiRequest;
-use ratatui::backend::CrosstermBackend;
 use ratatui::Terminal;
+use ratatui::backend::CrosstermBackend;
 use std::io;
 use std::sync::Arc;
 
