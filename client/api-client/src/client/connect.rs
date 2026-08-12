@@ -1,18 +1,23 @@
 use crate::client::bridge::Bridge;
 use crate::client::event::ServerEvent;
 use crate::client::{BridgeHandle, Client, ServerInfo};
-use crate::error::{InternalError, NetworkError, TapError};
+use crate::error::{InternalError, NetworkError, ProtocolError, TapError};
 use crate::protocol::handshake::HandshakeResponse;
-use crate::protocol::request::{Request, RequestResult};
+use crate::protocol::request::Request;
+use crate::protocol::response::ServerResponse;
+use futures::StreamExt;
 use std::fmt::Display;
 use std::time::Duration;
 use tokio::net::{TcpStream, ToSocketAddrs};
-use tokio::sync::{broadcast, mpsc, oneshot};
+use tokio::sync::{broadcast, mpsc};
 use tokio::task::JoinHandle;
 use tokio::time::timeout;
 use tokio_util::codec::{Framed, LinesCodec};
 use tokio_util::sync::CancellationToken;
-use tracing::{debug, info};
+use tracing::info;
+
+const SUPPORTED_PROTOCOL: u32 = 1;
+const HANDSHAKE_TIMEOUT: Duration = Duration::from_secs(2);
 
 pub struct ClientConnect;
 
@@ -21,28 +26,34 @@ impl ClientConnect {
     where
         A: ToSocketAddrs + Clone + Display,
     {
-        let (socket, server_addr) = Self::connect_tcp(addr).await?;
+        let (mut socket, server_addr) = Self::connect_tcp(addr).await?;
         info!("successfully connected to TCP socket at {}", server_addr);
 
         let (request_sender, request_receiver) = mpsc::channel::<Request>(2048);
         let (event_sender, event_receiver) = broadcast::channel::<ServerEvent>(2048);
-        let (handshake_request, handshake_receiver) = Request::handshake();
         let cancellation = CancellationToken::new();
+
+        let handshake = Self::handshake(&mut socket, HANDSHAKE_TIMEOUT).await?;
+        info!(
+            "handshake successful, protocol version: {}",
+            handshake.server_protocol_version
+        );
+
+        if handshake.server_protocol_version != SUPPORTED_PROTOCOL {
+            return Err(ProtocolError::UnsupportedVersion {
+                server: handshake.server_protocol_version,
+                supported: SUPPORTED_PROTOCOL,
+            }
+            .into());
+        }
+
         let bridge_handler = Self::start_bridge(
             socket,
-            handshake_request,
             event_sender.clone(),
             request_receiver,
             cancellation.clone(),
         )
         .await?;
-
-        debug!("awaiting server handshake...");
-        let handshake = Self::await_handshake(handshake_receiver).await?;
-        info!(
-            "handshake successful, protocol version: {}",
-            handshake.server_protocol_version
-        );
 
         let client = Client {
             server: ServerInfo {
@@ -60,7 +71,7 @@ impl ClientConnect {
         Ok((client, event_receiver))
     }
 
-    async fn connect_tcp<A: ToSocketAddrs + Clone + Display>(
+    async fn connect_tcp<A>(
         addr: A,
     ) -> Result<(Framed<TcpStream, LinesCodec>, String), NetworkError>
     where
@@ -117,38 +128,36 @@ impl ClientConnect {
 
     async fn start_bridge(
         socket: Framed<TcpStream, LinesCodec>,
-        handshake_request: Request,
         event_sender: broadcast::Sender<ServerEvent>,
         command_receiver: mpsc::Receiver<Request>,
         cancellation: CancellationToken,
     ) -> Result<JoinHandle<()>, InternalError> {
-        let (ready_sender, ready_receiver) = oneshot::channel::<()>();
-
         let bridge_task = tokio::spawn(async move {
             let mut bridge = Bridge::new(socket, event_sender, command_receiver);
-            bridge
-                .listen(handshake_request, ready_sender, cancellation)
-                .await;
+            bridge.listen(cancellation).await;
         });
-
-        ready_receiver.await.map_err(|e| {
-            InternalError::BridgeStartFailed(format!(
-                "the connection task died before it could start listening: {}",
-                e
-            ))
-        })?;
 
         Ok(bridge_task)
     }
 
-    async fn await_handshake(
-        handshake_receiver: oneshot::Receiver<RequestResult>,
+    async fn handshake(
+        socket: &mut Framed<TcpStream, LinesCodec>,
+        timeout_duration: Duration,
     ) -> Result<HandshakeResponse, TapError> {
-        let request_result = handshake_receiver
+        let frame = timeout(timeout_duration, socket.next())
             .await
-            .map_err(|_| NetworkError::Disconnected)?;
+            .map_err(|_| {
+                TapError::Network(NetworkError::HandshakeTimeout {
+                    timeout: HANDSHAKE_TIMEOUT,
+                })
+            })?;
 
-        let response = request_result?;
-        Ok(HandshakeResponse::try_from(response)?)
+        match frame {
+            Some(Ok(line)) => Ok(HandshakeResponse::try_from(ServerResponse::try_from(
+                line,
+            )?)?),
+            Some(Err(codec_error)) => Err(NetworkError::Codec(codec_error).into()),
+            None => Err(NetworkError::Disconnected.into()),
+        }
     }
 }

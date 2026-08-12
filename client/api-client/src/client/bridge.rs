@@ -13,7 +13,6 @@ use tokio_util::codec::{Framed, LinesCodec, LinesCodecError};
 use tokio_util::sync::CancellationToken;
 use tracing::{debug, error, info, warn};
 
-const HANDSHAKE_TIMEOUT: Duration = Duration::from_secs(5);
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(10);
 
 enum Disconnection {
@@ -61,20 +60,8 @@ impl Bridge {
         }
     }
 
-    pub async fn listen(
-        &mut self,
-        handshake_request: Request,
-        ready_sender: tokio::sync::oneshot::Sender<()>,
-        cancellation: CancellationToken,
-    ) {
-        self.pending_request = Some(PendingRequest {
-            request: handshake_request,
-            created_at: Instant::now(),
-            timeout: HANDSHAKE_TIMEOUT,
-        });
+    pub async fn listen(&mut self, cancellation: CancellationToken) {
         info!("bridge is now listening for incoming and outgoing packets");
-
-        let _ = ready_sender.send(());
 
         let disconnection = loop {
             let expires_at = self
@@ -122,12 +109,6 @@ impl Bridge {
         let reason = match &disconnection {
             Disconnection::ClosedByClient => None,
             Disconnection::ServerClosed => Some("server closed the connection".to_string()),
-            Disconnection::RequestTimedOut { command, timeout } if command.is_empty() => {
-                Some(format!(
-                    "server did not complete the handshake within {}s",
-                    timeout.as_secs()
-                ))
-            }
             Disconnection::RequestTimedOut { command, timeout } => Some(format!(
                 "no answer to '{}' within {}s",
                 command,

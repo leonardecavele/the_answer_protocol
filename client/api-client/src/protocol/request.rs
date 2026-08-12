@@ -20,8 +20,4 @@ impl Request {
             receiver,
         )
     }
-
-    pub fn handshake() -> (Self, oneshot::Receiver<RequestResult>) {
-        Self::new(String::new())
-    }
 }

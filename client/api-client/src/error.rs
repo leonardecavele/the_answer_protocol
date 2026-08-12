@@ -1,14 +1,6 @@
 use std::time::Duration;
 use thiserror::Error;
 
-fn format_command(command: &str) -> String {
-    if command.is_empty() {
-        String::new()
-    } else {
-        format!(" (command: {command})")
-    }
-}
-
 #[derive(Debug, Clone, PartialEq)]
 pub struct CommandError {
     pub code: Option<i32>,
@@ -72,8 +64,11 @@ pub enum NetworkError {
     #[error("connection to {addr} timed out")]
     ConnectionTimeout { addr: String },
 
-    #[error("the server did not answer within {}s{}", timeout.as_secs(), format_command(command))]
+    #[error("the server did not answer within {}s (command: {command})", timeout.as_secs())]
     RequestTimeout { command: String, timeout: Duration },
+
+    #[error("the server did not handshake within {}s", timeout.as_secs())]
+    HandshakeTimeout { timeout: Duration },
 
     #[error("connection disconnected unexpectedly")]
     Disconnected,
@@ -86,6 +81,9 @@ pub enum ProtocolError {
 
     #[error("invalid arguments: expected {expected}, got '{received}'")]
     InvalidArguments { expected: String, received: String },
+
+    #[error("unsupported protocol version {server}, require {supported}")]
+    UnsupportedVersion { server: u32, supported: u32 },
 
     #[error("could not parse the server response: {0}")]
     Parse(String),
