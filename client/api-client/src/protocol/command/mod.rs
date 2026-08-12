@@ -4,7 +4,6 @@ pub mod enums;
 pub mod group;
 pub mod resource_interaction;
 
-use crate::client::ServerInfo;
 use crate::error::CommandError;
 use crate::protocol::response::ServerResponse;
 use serde_json::Error;
@@ -12,15 +11,11 @@ use serde_json::Error;
 pub trait Command {
     type ResponseData;
 
-    fn create_command(&self, server_info: &ServerInfo) -> Result<String, CommandError>;
+    fn create_command(&self) -> String;
 
-    fn parse_response(
-        &self,
-        server_info: &ServerInfo,
-        response: ServerResponse,
-    ) -> Result<Self::ResponseData, CommandError>;
+    fn parse_response(&self, response: ServerResponse) -> Result<Self::ResponseData, CommandError>;
 
-    fn refine_error(&self, _server_info: &ServerInfo, _error: &mut CommandError) {}
+    fn refine_error(&self, _error: &mut CommandError) {}
 
     fn from_str(args: &str) -> Option<Self>
     where
@@ -73,17 +68,10 @@ impl CommandError {
         }
     }
 
-    pub fn version_not_implemented(version: u32) -> Self {
-        CommandError {
-            code: None,
-            message: String::from(format!("server version {} is not supported yet", version)),
-        }
-    }
-
     pub fn invalid_json_response(e: Error) -> Self {
         CommandError {
             code: None,
-            message: String::from(format!("invalid json response: {}", e)),
+            message: format!("invalid json response: {}", e),
         }
     }
 }

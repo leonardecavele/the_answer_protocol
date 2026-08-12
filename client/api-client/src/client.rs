@@ -5,8 +5,8 @@ pub mod event;
 
 use crate::client::event::ServerEvent;
 use crate::error::{CommandError, InternalError, TapError};
-use crate::protocol::command::Command;
 use crate::protocol::command::enums::{ApiRequest, ApiResponse};
+use crate::protocol::command::Command;
 use crate::protocol::request::Request;
 use crate::protocol::response::Opcode;
 use std::time::Duration;
@@ -44,41 +44,38 @@ impl Client {
         &self,
         command: C,
     ) -> Result<Result<C::ResponseData, CommandError>, TapError> {
-        match command.create_command(&self.server) {
-            Ok(raw_command) => {
-                let (request, response_receiver) = Request::new(raw_command.clone());
+        let raw_command = command.create_command();
 
-                self.bridge
-                    .command_sender
-                    .send(request)
-                    .await
-                    .map_err(|_| {
-                        InternalError::BridgeUnavailable(format!(
-                            "cannot send '{}': the connection to {} is no longer running",
-                            raw_command, self.server.addr
-                        ))
-                    })?;
+        let (request, response_receiver) = Request::new(raw_command.clone());
 
-                let request_result = response_receiver.await.map_err(|_| {
-                    InternalError::BridgeUnavailable(format!(
-                        "no response to '{}': the connection to {} dropped the command \
+        self.bridge
+            .command_sender
+            .send(request)
+            .await
+            .map_err(|_| {
+                InternalError::BridgeUnavailable(format!(
+                    "cannot send '{}': the connection to {} is no longer running",
+                    raw_command, self.server.addr
+                ))
+            })?;
+
+        let request_result = response_receiver.await.map_err(|_| {
+            InternalError::BridgeUnavailable(format!(
+                "no response to '{}': the connection to {} dropped the command \
                         (server disconnected, or it replied with an unreadable frame)",
-                        raw_command, self.server.addr
-                    ))
-                })?;
+                raw_command, self.server.addr
+            ))
+        })?;
 
-                let response = request_result?;
+        let response = request_result?;
 
-                match response.opcode {
-                    Opcode::Ok => Ok(command.parse_response(&self.server, response)),
-                    _ => {
-                        let mut command_error = CommandError::from_response(response);
-                        command.refine_error(&self.server, &mut command_error);
-                        Ok(Err(command_error))
-                    }
-                }
+        match response.opcode {
+            Opcode::Ok => Ok(command.parse_response(response)),
+            _ => {
+                let mut command_error = CommandError::from_response(response);
+                command.refine_error(&mut command_error);
+                Ok(Err(command_error))
             }
-            Err(e) => Ok(Err(e)),
         }
     }
 

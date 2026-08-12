@@ -1,4 +1,3 @@
-use crate::client::ServerInfo;
 use crate::error::CommandError;
 use crate::protocol::command::Command;
 use crate::protocol::response::ServerResponse;
@@ -16,38 +15,26 @@ pub struct TalkResponse {
 impl Command for TalkCommand {
     type ResponseData = TalkResponse;
 
-    fn create_command(&self, server_info: &ServerInfo) -> Result<String, CommandError> {
-        match server_info.protocol_version {
-            1 => Ok(format!("TALK {}", self.npc_name)),
-            v => Err(CommandError::version_not_implemented(v)),
-        }
+    fn create_command(&self) -> String {
+        format!("TALK {}", self.npc_name)
     }
 
-    fn parse_response(
-        &self,
-        server_info: &ServerInfo,
-        response: ServerResponse,
-    ) -> Result<Self::ResponseData, CommandError> {
-        match server_info.protocol_version {
-            1 => {
-                if response.arguments.is_empty() {
-                    return Err(CommandError {
-                        code: None,
-                        message: "invalid arguments".to_string(),
-                    });
-                }
-
-                Ok(TalkResponse {
-                    dialogue: response.arguments.join(" "),
-                })
-            }
-            v => Err(CommandError::version_not_implemented(v)),
+    fn parse_response(&self, response: ServerResponse) -> Result<Self::ResponseData, CommandError> {
+        if response.arguments.is_empty() {
+            return Err(CommandError {
+                code: None,
+                message: "invalid arguments".to_string(),
+            });
         }
+
+        Ok(TalkResponse {
+            dialogue: response.arguments.join(" "),
+        })
     }
 
-    fn refine_error(&self, server_info: &ServerInfo, error: &mut CommandError) {
-        error.with_message(match (server_info.protocol_version, error.code) {
-            (1, Some(404)) => Some("npc not found".to_string()),
+    fn refine_error(&self, error: &mut CommandError) {
+        error.with_message(match error.code {
+            Some(404) => Some("npc not found".to_string()),
             _ => None,
         })
     }

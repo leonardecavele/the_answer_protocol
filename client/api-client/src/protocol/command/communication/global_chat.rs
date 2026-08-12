@@ -1,4 +1,3 @@
-use crate::client::ServerInfo;
 use crate::error::CommandError;
 use crate::protocol::command::Command;
 use crate::protocol::response::ServerResponse;
@@ -15,35 +14,23 @@ pub struct GlobalChatResponse;
 impl Command for GlobalChatCommand {
     type ResponseData = GlobalChatResponse;
 
-    fn create_command(&self, server_info: &ServerInfo) -> Result<String, CommandError> {
-        match server_info.protocol_version {
-            1 => Ok(format!("CHAT GLOBAL {}", self.message)),
-            v => Err(CommandError::version_not_implemented(v)),
-        }
+    fn create_command(&self) -> String {
+        format!("CHAT GLOBAL {}", self.message)
     }
 
-    fn parse_response(
-        &self,
-        server_info: &ServerInfo,
-        response: ServerResponse,
-    ) -> Result<Self::ResponseData, CommandError> {
-        match server_info.protocol_version {
-            1 => {
-                if response.arguments.len() != 0 {
-                    return Err(CommandError {
-                        code: None,
-                        message: "invalid arguments".to_string(),
-                    });
-                }
-                Ok(GlobalChatResponse)
-            }
-            v => Err(CommandError::version_not_implemented(v)),
+    fn parse_response(&self, response: ServerResponse) -> Result<Self::ResponseData, CommandError> {
+        if !response.arguments.is_empty() {
+            return Err(CommandError {
+                code: None,
+                message: "invalid arguments".to_string(),
+            });
         }
+        Ok(GlobalChatResponse)
     }
 
-    fn refine_error(&self, server_info: &ServerInfo, error: &mut CommandError) {
-        error.with_message(match (server_info.protocol_version, error.code) {
-            (1, Some(401)) => Some(format!("not in group")),
+    fn refine_error(&self, error: &mut CommandError) {
+        error.with_message(match error.code {
+            Some(401) => Some("not in group".to_string()),
             _ => None,
         })
     }
