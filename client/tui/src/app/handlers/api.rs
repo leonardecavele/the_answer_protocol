@@ -1,10 +1,9 @@
 use crate::app::App;
 use crate::events::ApiEvent;
 use crate::network::envelopes::ResponseEnvelope;
-use crate::states::game::{ChatChannel, ChatMessage, DialogueState, END_OF_DIALOGUE_TAG};
+use crate::states::game::{ChatChannel, ChatMessage, DialogueState, Npc, END_OF_DIALOGUE_TAG};
 use crate::states::ui::Notification;
 use api_client::commands::LookCommand;
-use api_client::commands::QuestListEntry;
 use api_client::events::{GameServerEvent, GroupEvent, RoomEvent, ServerEvent};
 use api_client::{ApiRequest, ApiResponse};
 
@@ -117,7 +116,14 @@ impl App {
                 self.state.game.room.name = Some(look_res.room.name);
                 self.state.game.room.description = Some(look_res.room.description);
                 self.state.game.room.players = look_res.players;
-                self.state.game.room.npcs = look_res.npcs;
+                self.state.game.room.npcs = look_res
+                    .npcs
+                    .iter()
+                    .map(|npc_id| Npc {
+                        id: npc_id.clone(),
+                        is_alive: true,
+                    })
+                    .collect();
                 self.state.game.room.items = look_res.items;
                 self.state.game.room.exits = look_res.room.exits;
             }
@@ -143,11 +149,7 @@ impl App {
                     .log_action("You checked your quests.".to_string());
             }
             ApiResponse::Quest(Ok(quest_res)) => {
-                self.state.game.player.quests.push(QuestListEntry {
-                    quest_id: quest_res.quest_data.quest_id,
-                    status: quest_res.quest_data.status,
-                    progress: Some("in progress".to_string()),
-                });
+                self.state.game.player.quests.push(quest_res.quest_data);
             }
             ApiResponse::Talk(Ok(talk_res)) => {
                 if let ApiRequest::Talk(cmd) = envelope.original_request {
@@ -237,9 +239,19 @@ impl App {
 
                     let text = match res.status.eq_ignore_ascii_case("Victory") {
                         true => {
-                            self.state.game.room.npcs.retain(|npc| npc != &cmd.npc_name);
+                            if let Some(npc) = self
+                                .state
+                                .game
+                                .room
+                                .npcs
+                                .iter_mut()
+                                .find(|n| n.id == cmd.npc_name)
+                            {
+                                npc.is_alive = false;
+                            }
+
                             format!(
-                                "Combat with {}: You dealt {} damage. {} is death. Victory.",
+                                "Combat with {}: You dealt {} damage. {} is dead. Victory.",
                                 display_name, res.damage, display_name
                             )
                         }
@@ -297,7 +309,17 @@ impl App {
                     self.state
                         .game
                         .log_action(format!("{} has respawn", npc_name));
-                    self.state.game.room.npcs.push(spawn_data.id);
+
+                    if let Some(npc) = self
+                        .state
+                        .game
+                        .room
+                        .npcs
+                        .iter_mut()
+                        .find(|n| n.id == spawn_data.id)
+                    {
+                        npc.is_alive = true;
+                    }
                 }
                 "ITEM" => {
                     let item_name = self
@@ -318,22 +340,6 @@ impl App {
                 }
             },
             ServerEvent::Despawn(spawn_data) => match spawn_data.r#type.as_str() {
-                "NPC" => {
-                    let npc_name = self
-                        .state
-                        .game
-                        .manifest
-                        .get_npc_name(spawn_data.id.as_str());
-
-                    self.state
-                        .game
-                        .log_action(format!("{} has been defeated", npc_name));
-                    self.state
-                        .game
-                        .room
-                        .npcs
-                        .retain(|npc| npc != spawn_data.id.as_str());
-                }
                 "ITEM" => {
                     let item_name = self
                         .state
@@ -359,6 +365,40 @@ impl App {
                         )));
                 }
             },
+            ServerEvent::Kill(kill_data) => {
+                let npc_name = self
+                    .state
+                    .game
+                    .manifest
+                    .get_npc_name(kill_data.npc_id.as_str());
+
+                let message = if kill_data.player
+                    == self
+                        .state
+                        .game
+                        .player
+                        .name
+                        .clone()
+                        .unwrap_or("".to_string())
+                {
+                    format!("{} has been defeated", npc_name)
+                } else {
+                    format!("{} has been defeated by {}", npc_name, kill_data.player)
+                };
+
+                self.state.game.log_action(message);
+
+                if let Some(npc) = self
+                    .state
+                    .game
+                    .room
+                    .npcs
+                    .iter_mut()
+                    .find(|n| n.id == kill_data.npc_id)
+                {
+                    npc.is_alive = false;
+                }
+            }
             ServerEvent::Quit(name) => {
                 self.state.game.server.online_players_count = self
                     .state

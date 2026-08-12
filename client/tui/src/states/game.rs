@@ -1,5 +1,5 @@
 use crate::data::manifest::Manifest;
-use api_client::commands::QuestListEntry;
+use api_client::commands::QuestData;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
@@ -78,7 +78,7 @@ pub struct PlayerState {
     pub hp: u32,
     pub max_hp: u32,
     pub inventory: Vec<String>,
-    pub quests: Vec<QuestListEntry>,
+    pub quests: Vec<QuestData>,
 }
 
 impl PlayerState {
@@ -136,13 +136,18 @@ impl GroupState {
     }
 }
 
+pub struct Npc {
+    pub id: String,
+    pub is_alive: bool,
+}
+
 pub struct RoomState {
     pub id: Option<String>,
     pub name: Option<String>,
     pub description: Option<String>,
     pub exits: HashMap<String, String>,
     pub players: Vec<String>,
-    pub npcs: Vec<String>,
+    pub npcs: Vec<Npc>,
     pub items: Vec<String>,
 }
 

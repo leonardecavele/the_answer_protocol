@@ -1,7 +1,7 @@
 use crate::data::manifest::NpcType;
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
-use crate::states::game::GameFocus;
+use crate::states::game::{GameFocus, Npc};
 use crate::ui::components::Component;
 use crate::ui::components::Lifecycle;
 use crate::ui::theme::default_block;
@@ -34,6 +34,41 @@ impl LeftPanelComponent {
             selected_quest_index: 0,
         }
     }
+}
+
+fn next_alive_npc_index(npcs: &[Npc], current: Option<usize>, forward: bool) -> Option<usize> {
+    let alive_indices: Vec<_> = npcs
+        .iter()
+        .enumerate()
+        .filter(|(_, npc)| npc.is_alive)
+        .map(|(i, _)| i)
+        .collect();
+
+    if alive_indices.is_empty() {
+        return None;
+    }
+
+    let current_pos = current.and_then(|idx| alive_indices.iter().position(|&i| i == idx));
+
+    let index = if forward {
+        current_pos.map_or(0, |p| {
+            if p >= alive_indices.len() - 1 {
+                0
+            } else {
+                p + 1
+            }
+        })
+    } else {
+        current_pos.map_or(alive_indices.len() - 1, |p| {
+            if p == 0 {
+                alive_indices.len() - 1
+            } else {
+                p - 1
+            }
+        })
+    };
+
+    Some(alive_indices[index])
 }
 
 impl Component for LeftPanelComponent {
@@ -73,25 +108,31 @@ impl Component for LeftPanelComponent {
             .room
             .npcs
             .iter()
-            .map(|npc_id| {
-                let (display_name, npc_type) = match state.game.manifest.npcs.get(npc_id) {
-                    Some(entry) => (entry.name.clone(), entry.npc_type.clone()),
-                    None => (npc_id.clone(), NpcType::Normal),
-                };
+            .map(|npc| {
+                let (mut display_name, npc_type) =
+                    match state.game.manifest.npcs.get(npc.id.as_str()) {
+                        Some(entry) => (entry.name.clone(), entry.npc_type.clone()),
+                        None => (npc.id.clone(), NpcType::Normal),
+                    };
 
-                let color = match npc_type {
+                let mut color = match npc_type {
                     NpcType::Enemy => Color::Red,
                     NpcType::QuestGiver => Color::Yellow,
                     NpcType::Dialogue => Color::Blue,
                     NpcType::Normal => Color::White,
                 };
 
+                if !npc.is_alive {
+                    color = Color::Gray;
+                    display_name = format!("(dead) {}", display_name);
+                }
+
                 let mut style = Style::default().fg(color);
 
                 if let Some(selected_idx) = self.selected_npc_index {
                     // Find the actual index of the npc_id in the room_npcs list
-                    if let Some(idx) = state.game.room.npcs.iter().position(|id| id == npc_id) {
-                        if idx == selected_idx {
+                    if let Some(idx) = state.game.room.npcs.iter().position(|n| n.id == npc.id) {
+                        if idx == selected_idx && npc.is_alive {
                             if state.game.ui.current_focus == GameFocus::NpcList {
                                 style = style.add_modifier(Modifier::REVERSED);
                             }
@@ -100,7 +141,7 @@ impl Component for LeftPanelComponent {
                 }
 
                 ListItem::new(Span::styled(
-                    format!("• {} ({})", display_name, npc_id),
+                    format!("• {} ({})", display_name, npc.id),
                     style,
                 ))
             })
@@ -203,24 +244,27 @@ impl Lifecycle for LeftPanelComponent {
         if state.game.ui.current_focus == GameFocus::NpcList {
             if let crossterm::event::Event::Key(key) = event {
                 let npc_count = state.game.room.npcs.len();
+
                 if npc_count > 0 {
                     match key.code {
                         crossterm::event::KeyCode::Up => {
-                            let current = self.selected_npc_index.unwrap_or(0);
-                            self.selected_npc_index = Some(if current == 0 {
-                                npc_count - 1
-                            } else {
-                                current - 1
-                            });
+                            if let Some(idx) = next_alive_npc_index(
+                                &state.game.room.npcs,
+                                self.selected_npc_index,
+                                false,
+                            ) {
+                                self.selected_npc_index = Some(idx);
+                            }
                             return true;
                         }
                         crossterm::event::KeyCode::Down => {
-                            let current = self.selected_npc_index.unwrap_or(npc_count - 1);
-                            self.selected_npc_index = Some(if current >= npc_count - 1 {
-                                0
-                            } else {
-                                current + 1
-                            });
+                            if let Some(idx) = next_alive_npc_index(
+                                &state.game.room.npcs,
+                                self.selected_npc_index,
+                                true,
+                            ) {
+                                self.selected_npc_index = Some(idx);
+                            }
                             return true;
                         }
                         crossterm::event::KeyCode::Enter => {
@@ -229,8 +273,8 @@ impl Lifecycle for LeftPanelComponent {
                             }
 
                             if let Some(idx) = self.selected_npc_index {
-                                if let Some(npc_id) = state.game.room.npcs.get(idx) {
-                                    state.game.ui.active_npc_popup = Some(npc_id.clone());
+                                if let Some(npc) = state.game.room.npcs.get(idx) {
+                                    state.game.ui.active_npc_popup = Some(npc.id.clone());
                                     return true;
                                 }
                             }
