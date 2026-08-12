@@ -1,5 +1,5 @@
-pub mod connect;
-pub mod look;
-pub mod r#move;
-pub mod quit;
-pub mod who;
+pub(crate) mod connect;
+pub(crate) mod look;
+pub(crate) mod r#move;
+pub(crate) mod quit;
+pub(crate) mod who;

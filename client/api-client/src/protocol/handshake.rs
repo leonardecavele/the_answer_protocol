@@ -7,7 +7,7 @@ static RE_TAP_HANDSHAKE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"OK hello proto=(?P<proto>\d+)").unwrap());
 
 #[derive(Debug)]
-pub struct HandshakeResponse {
+pub(crate) struct HandshakeResponse {
     pub server_protocol_version: u32,
 }
 

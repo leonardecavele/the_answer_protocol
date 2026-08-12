@@ -1,6 +1,6 @@
 use crate::network::envelopes::{RequestEnvelope, ResponseEnvelope};
-use api_client::client::event::ServerEvent;
-use api_client::protocol::command::enums::ApiRequest;
+use api_client::ApiRequest;
+use api_client::events::ServerEvent;
 use crossterm::event::Event as CrosstermEvent;
 
 /// The main event enum that encapsulates all possible events in the application.

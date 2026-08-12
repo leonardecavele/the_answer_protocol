@@ -1,2 +1,2 @@
-pub mod global_chat;
-pub mod private_chat;
+pub(crate) mod global_chat;
+pub(crate) mod private_chat;

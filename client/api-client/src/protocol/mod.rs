@@ -1,4 +1,4 @@
-pub mod command;
-pub mod handshake;
-pub mod request;
-pub mod response;
+pub(crate) mod command;
+pub(crate) mod handshake;
+pub(crate) mod request;
+pub(crate) mod response;

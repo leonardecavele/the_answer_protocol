@@ -3,10 +3,10 @@ use crate::events::ApiEvent;
 use crate::network::envelopes::ResponseEnvelope;
 use crate::states::game::{ChatChannel, ChatMessage, DialogueState, END_OF_DIALOGUE_TAG};
 use crate::states::ui::Notification;
-use api_client::client::event::{GameServerEvent, GroupEvent, RoomEvent, ServerEvent};
-use api_client::protocol::command::core::look::LookCommand;
-use api_client::protocol::command::enums::{ApiRequest, ApiResponse};
-use api_client::protocol::command::resource_interaction::quests::QuestListEntry;
+use api_client::commands::LookCommand;
+use api_client::commands::QuestListEntry;
+use api_client::events::{GameServerEvent, GroupEvent, RoomEvent, ServerEvent};
+use api_client::{ApiRequest, ApiResponse};
 
 impl App {
     pub(crate) fn handle_api_event(&mut self, api_event: ApiEvent) {
@@ -502,7 +502,7 @@ impl App {
 
                     self.state.network.is_connected = false;
                 }
-            }
+            },
         }
     }
 }

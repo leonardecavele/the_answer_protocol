@@ -1,13 +1,12 @@
-pub mod api;
-pub mod bridge;
-pub mod connect;
-pub mod event;
+pub(crate) mod api;
+pub(crate) mod bridge;
+pub(crate) mod connect;
+pub(crate) mod event;
 
-use crate::client::connect::ConnectionState;
 use crate::client::event::ServerEvent;
 use crate::error::{CommandError, InternalError, TapError};
-use crate::protocol::command::enums::{ApiRequest, ApiResponse};
 use crate::protocol::command::Command;
+use crate::protocol::command::enums::{ApiRequest, ApiResponse};
 use crate::protocol::request::Request;
 use crate::protocol::response::Opcode;
 use std::time::Duration;
@@ -17,6 +16,13 @@ use tokio::task::JoinHandle;
 use tokio::time::timeout;
 use tokio_util::sync::CancellationToken;
 use tracing::{info, warn};
+
+#[derive(Debug, Clone)]
+pub enum ConnectionState {
+    Connected,
+    Closed,
+    Lost(String),
+}
 
 struct BridgeHandle {
     task: JoinHandle<()>,

@@ -1,5 +1,5 @@
 use crate::data::manifest::Manifest;
-use api_client::protocol::command::resource_interaction::quests::QuestListEntry;
+use api_client::commands::QuestListEntry;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};

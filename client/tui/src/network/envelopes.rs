@@ -1,4 +1,4 @@
-use api_client::protocol::command::enums::{ApiRequest, ApiResponse};
+use api_client::{ApiRequest, ApiResponse};
 use std::fmt::Debug;
 use uuid::Uuid;
 

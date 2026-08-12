@@ -1,6 +1,6 @@
 use crate::client::bridge::Bridge;
 use crate::client::event::ServerEvent;
-use crate::client::{BridgeHandle, Client, ClientConfig, ServerInfo};
+use crate::client::{BridgeHandle, Client, ClientConfig, ConnectionState, ServerInfo};
 use crate::error::{NetworkError, ProtocolError, TapError};
 use crate::protocol::handshake::HandshakeResponse;
 use crate::protocol::request::Request;
@@ -17,13 +17,6 @@ use tokio_util::sync::CancellationToken;
 use tracing::info;
 
 const SUPPORTED_PROTOCOL: u32 = 1;
-
-#[derive(Debug, Clone)]
-pub enum ConnectionState {
-    Connected,
-    Closed,
-    Lost(String),
-}
 
 impl Client {
     pub async fn connect<A>(addr: A) -> Result<(Client, broadcast::Receiver<ServerEvent>), TapError>

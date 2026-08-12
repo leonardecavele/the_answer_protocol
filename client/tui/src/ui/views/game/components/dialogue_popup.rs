@@ -4,8 +4,8 @@ use crate::ui::components::Lifecycle;
 use crate::ui::components::scrollable::ScrollableComponent;
 use crate::ui::theme::overlay_block;
 use crate::ui::utils::wrap_str_to_lines;
-use api_client::protocol::command::enums::ApiRequest;
-use api_client::protocol::command::resource_interaction::talk::TalkCommand;
+use api_client::ApiRequest;
+use api_client::commands::TalkCommand;
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
 use mpsc::Sender;
 use ratatui::{

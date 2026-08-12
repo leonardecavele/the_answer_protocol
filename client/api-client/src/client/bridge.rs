@@ -1,15 +1,15 @@
-use crate::client::connect::ConnectionState;
+use crate::client::ConnectionState;
 use crate::client::event::ServerEvent;
 use crate::error::{NetworkError, TapError};
 use crate::protocol::request::Request;
 use crate::protocol::response::{Opcode, ServerResponse};
-use futures::stream::StreamExt;
 use futures::SinkExt;
+use futures::stream::StreamExt;
 use std::time::Duration;
 use tokio::net::TcpStream;
 use tokio::sync::mpsc::Receiver;
 use tokio::sync::{broadcast, watch};
-use tokio::time::{sleep_until, Instant};
+use tokio::time::{Instant, sleep_until};
 use tokio_util::codec::{Framed, LinesCodec, LinesCodecError};
 use tokio_util::sync::CancellationToken;
 use tracing::{debug, error, info, warn};
@@ -38,7 +38,7 @@ impl PendingRequest {
     }
 }
 
-pub struct Bridge {
+pub(crate) struct Bridge {
     socket: Framed<TcpStream, LinesCodec>,
     state_sender: watch::Sender<ConnectionState>,
     event_sender: broadcast::Sender<ServerEvent>,
@@ -48,7 +48,7 @@ pub struct Bridge {
 }
 
 impl Bridge {
-    pub fn new(
+    pub(crate) fn new(
         socket: Framed<TcpStream, LinesCodec>,
         state_sender: watch::Sender<ConnectionState>,
         event_sender: broadcast::Sender<ServerEvent>,
@@ -65,7 +65,7 @@ impl Bridge {
         }
     }
 
-    pub async fn listen(&mut self, cancellation: CancellationToken) {
+    pub(crate) async fn listen(&mut self, cancellation: CancellationToken) {
         info!("bridge is now listening for incoming and outgoing packets");
 
         let disconnection = loop {

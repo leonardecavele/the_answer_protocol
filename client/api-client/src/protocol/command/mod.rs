@@ -1,8 +1,10 @@
-pub mod communication;
-pub mod core;
-pub mod enums;
-pub mod group;
-pub mod resource_interaction;
+pub(crate) mod communication;
+pub(crate) mod core;
+pub(crate) mod enums;
+pub(crate) mod group;
+pub(crate) mod resource_interaction;
+
+pub use enums::{ApiRequest, ApiResponse};
 
 use crate::error::CommandError;
 use crate::protocol::response::ServerResponse;
