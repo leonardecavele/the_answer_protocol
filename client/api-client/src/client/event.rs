@@ -106,10 +106,10 @@ impl From<ServerResponse> for ServerEvent {
             ["QUIT", name] => ServerEvent::Quit(name.to_string()),
 
             // Room events
-            ["ROOM", name, "ENTER"] => {
+            ["ROOM", name, "PRESENCE", "ENTER"] => {
                 ServerEvent::Room(RoomEvent::PresenceEnter(name.to_string()))
             }
-            ["ROOM", name, "LEAVE"] => {
+            ["ROOM", name, "PRESENCE", "LEAVE"] => {
                 ServerEvent::Room(RoomEvent::PresenceLeave(name.to_string()))
             }
 
