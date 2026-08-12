@@ -17,8 +17,6 @@ use tokio::time::timeout;
 use tokio_util::sync::CancellationToken;
 use tracing::{info, warn};
 
-const CLOSE_TIMEOUT: Duration = Duration::from_secs(2);
-
 struct BridgeHandle {
     task: JoinHandle<()>,
     command_sender: Sender<Request>,
@@ -33,6 +31,31 @@ pub struct ServerInfo {
 pub struct Client {
     pub server: ServerInfo,
     bridge: BridgeHandle,
+    close_timeout: Duration,
+}
+
+pub struct ClientConfig {
+    pub connect_timeout: Duration,
+    pub max_line_length: usize,
+    pub command_queue_size: usize,
+    pub event_buffer_size: usize,
+    pub handshake_timeout: Duration,
+    pub request_timeout: Duration,
+    pub close_timeout: Duration,
+}
+
+impl Default for ClientConfig {
+    fn default() -> Self {
+        ClientConfig {
+            connect_timeout: Duration::from_secs(5),
+            max_line_length: 65536,
+            command_queue_size: 2048,
+            event_buffer_size: 2048,
+            handshake_timeout: Duration::from_secs(2),
+            request_timeout: Duration::from_secs(10),
+            close_timeout: Duration::from_secs(2),
+        }
+    }
 }
 
 impl Client {
@@ -110,10 +133,13 @@ impl Client {
     pub async fn close(mut self) {
         self.bridge.cancellation.cancel();
 
-        if timeout(CLOSE_TIMEOUT, &mut self.bridge.task).await.is_err() {
+        if timeout(self.close_timeout, &mut self.bridge.task)
+            .await
+            .is_err()
+        {
             warn!(
                 "bridge did not shut down within {}s, falling back to abort",
-                CLOSE_TIMEOUT.as_secs()
+                self.close_timeout.as_secs()
             );
         }
     }

@@ -1,7 +1,7 @@
 use crate::client::bridge::Bridge;
 use crate::client::event::ServerEvent;
-use crate::client::{BridgeHandle, Client, ServerInfo};
-use crate::error::{InternalError, NetworkError, ProtocolError, TapError};
+use crate::client::{BridgeHandle, Client, ClientConfig, ServerInfo};
+use crate::error::{NetworkError, ProtocolError, TapError};
 use crate::protocol::handshake::HandshakeResponse;
 use crate::protocol::request::Request;
 use crate::protocol::response::ServerResponse;
@@ -17,23 +17,27 @@ use tokio_util::sync::CancellationToken;
 use tracing::info;
 
 const SUPPORTED_PROTOCOL: u32 = 1;
-const HANDSHAKE_TIMEOUT: Duration = Duration::from_secs(2);
 
-pub struct ClientConnect;
-
-impl ClientConnect {
+impl Client {
     pub async fn connect<A>(addr: A) -> Result<(Client, broadcast::Receiver<ServerEvent>), TapError>
     where
         A: ToSocketAddrs + Clone + Display,
     {
-        let (mut socket, server_addr) = Self::connect_tcp(addr).await?;
+        Self::connect_with(addr, ClientConfig::default()).await
+    }
+
+    pub async fn connect_with<A>(
+        addr: A,
+        config: ClientConfig,
+    ) -> Result<(Client, broadcast::Receiver<ServerEvent>), TapError>
+    where
+        A: ToSocketAddrs + Clone + Display,
+    {
+        let (mut socket, server_addr) =
+            Self::connect_tcp(addr, config.connect_timeout, config.max_line_length).await?;
         info!("successfully connected to TCP socket at {}", server_addr);
 
-        let (request_sender, request_receiver) = mpsc::channel::<Request>(2048);
-        let (event_sender, event_receiver) = broadcast::channel::<ServerEvent>(2048);
-        let cancellation = CancellationToken::new();
-
-        let handshake = Self::handshake(&mut socket, HANDSHAKE_TIMEOUT).await?;
+        let handshake = Self::handshake(&mut socket, config.handshake_timeout).await?;
         info!(
             "handshake successful, protocol version: {}",
             handshake.server_protocol_version
@@ -47,13 +51,19 @@ impl ClientConnect {
             .into());
         }
 
-        let bridge_handler = Self::start_bridge(
+        let (request_sender, request_receiver) =
+            mpsc::channel::<Request>(config.command_queue_size);
+        let (event_sender, event_receiver) =
+            broadcast::channel::<ServerEvent>(config.event_buffer_size);
+        let cancellation = CancellationToken::new();
+
+        let bridge_task = Self::start_bridge(
             socket,
             event_sender.clone(),
             request_receiver,
             cancellation.clone(),
-        )
-        .await?;
+            config.request_timeout,
+        );
 
         let client = Client {
             server: ServerInfo {
@@ -61,11 +71,12 @@ impl ClientConnect {
                 protocol_version: handshake.server_protocol_version,
             },
             bridge: BridgeHandle {
-                task: bridge_handler,
+                task: bridge_task,
                 command_sender: request_sender,
                 event_sender,
                 cancellation,
             },
+            close_timeout: config.close_timeout,
         };
 
         Ok((client, event_receiver))
@@ -73,82 +84,54 @@ impl ClientConnect {
 
     async fn connect_tcp<A>(
         addr: A,
+        connect_timeout: Duration,
+        max_line_length: usize,
     ) -> Result<(Framed<TcpStream, LinesCodec>, String), NetworkError>
     where
         A: ToSocketAddrs + Clone + Display,
     {
         info!("try connection to server {}...", addr);
 
-        // let max_attempt: u32 = u32::MAX;
-        let max_attempt: u32 = 3;
-        let timeout_before_retry_ms: u64 = 1000;
-
-        for attempt in 1..=max_attempt {
-            let connection_future = TcpStream::connect(addr.clone());
-            let timeout_duration = Duration::from_secs(5);
-
-            match timeout(timeout_duration, connection_future).await {
-                Ok(Ok(stream)) => {
-                    stream.set_nodelay(true)?;
-                    let peer_addr = stream.peer_addr()?.to_string();
-                    let socket = Framed::new(stream, LinesCodec::new_with_max_length(65536));
-                    return Ok((socket, peer_addr));
-                }
-                Ok(Err(_)) => {
-                    if attempt >= max_attempt {
-                        return Err(NetworkError::ConnectionMaxRetry {
-                            addr: addr.to_string(),
-                        });
-                    }
-                    info!(
-                        "failed to connect to {}, retrying in {} milliseconds..",
-                        addr, timeout_before_retry_ms
-                    );
-                }
-                Err(_) => {
-                    if attempt >= max_attempt {
-                        return Err(NetworkError::ConnectionMaxRetry {
-                            addr: addr.to_string(),
-                        });
-                    }
-                    info!(
-                        "connection to {} timed out, retrying in {} milliseconds..",
-                        addr, timeout_before_retry_ms
-                    );
-                }
+        match timeout(connect_timeout, TcpStream::connect(addr.clone())).await {
+            Ok(Ok(stream)) => {
+                stream.set_nodelay(true)?;
+                let peer_addr = stream.peer_addr()?.to_string();
+                let socket = Framed::new(stream, LinesCodec::new_with_max_length(max_line_length));
+                Ok((socket, peer_addr))
             }
-
-            tokio::time::sleep(Duration::from_millis(timeout_before_retry_ms)).await;
+            Ok(Err(io_error)) => Err(NetworkError::ConnectionFailed {
+                addr: addr.to_string(),
+                source: io_error,
+            }),
+            Err(_) => Err(NetworkError::ConnectionTimeout {
+                addr: addr.to_string(),
+                timeout: connect_timeout,
+            }),
         }
-
-        Err(NetworkError::ConnectionTimeout {
-            addr: addr.to_string(),
-        })
     }
 
-    async fn start_bridge(
+    fn start_bridge(
         socket: Framed<TcpStream, LinesCodec>,
         event_sender: broadcast::Sender<ServerEvent>,
         command_receiver: mpsc::Receiver<Request>,
         cancellation: CancellationToken,
-    ) -> Result<JoinHandle<()>, InternalError> {
-        let bridge_task = tokio::spawn(async move {
-            let mut bridge = Bridge::new(socket, event_sender, command_receiver);
+        request_timeout: Duration,
+    ) -> JoinHandle<()> {
+        tokio::spawn(async move {
+            let mut bridge = Bridge::new(socket, event_sender, command_receiver, request_timeout);
             bridge.listen(cancellation).await;
-        });
-
-        Ok(bridge_task)
+        })
     }
 
     async fn handshake(
         socket: &mut Framed<TcpStream, LinesCodec>,
-        timeout_duration: Duration,
+        handshake_timeout: Duration,
     ) -> Result<HandshakeResponse, TapError> {
-        let frame = timeout(timeout_duration, socket.next())
+        let frame = timeout(handshake_timeout, socket.next())
             .await
             .map_err(|_| {
                 TapError::Network(NetworkError::HandshakeTimeout {
-                    timeout: HANDSHAKE_TIMEOUT,
+                    timeout: handshake_timeout,
                 })
             })?;
 

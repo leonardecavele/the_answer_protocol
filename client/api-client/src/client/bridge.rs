@@ -13,8 +13,6 @@ use tokio_util::codec::{Framed, LinesCodec, LinesCodecError};
 use tokio_util::sync::CancellationToken;
 use tracing::{debug, error, info, warn};
 
-const REQUEST_TIMEOUT: Duration = Duration::from_secs(10);
-
 enum Disconnection {
     ClosedByClient,
     ServerClosed,
@@ -44,6 +42,7 @@ pub struct Bridge {
     event_sender: broadcast::Sender<ServerEvent>,
     command_receiver: Receiver<Request>,
     pending_request: Option<PendingRequest>,
+    request_timeout: Duration,
 }
 
 impl Bridge {
@@ -51,12 +50,14 @@ impl Bridge {
         socket: Framed<TcpStream, LinesCodec>,
         event_sender: broadcast::Sender<ServerEvent>,
         command_receiver: Receiver<Request>,
+        request_timeout: Duration,
     ) -> Bridge {
         Bridge {
             socket,
             event_sender,
             command_receiver,
             pending_request: None,
+            request_timeout,
         }
     }
 
@@ -211,7 +212,7 @@ impl Bridge {
         self.pending_request = Some(PendingRequest {
             request,
             created_at: Instant::now(),
-            timeout: REQUEST_TIMEOUT,
+            timeout: self.request_timeout,
         });
 
         debug!("send frame: {}", raw_command);

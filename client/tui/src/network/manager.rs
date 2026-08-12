@@ -1,6 +1,6 @@
 use crate::events::{ApiEvent, ApplicationEvent, NetworkEvent};
 use crate::network::envelopes::{RequestEnvelope, ResponseEnvelope};
-use api_client::client::connect::ClientConnect;
+use api_client::client::Client;
 use api_client::client::event::ServerEvent;
 use mpsc::Sender;
 use tokio::sync::broadcast::error::RecvError;
@@ -27,11 +27,11 @@ impl NetworkManager {
         let _background_task = AbortOnDropHandle::new(tokio::spawn(async move {
             let server_address = format!("{}:{}", server_ip, server_port);
 
-            match ClientConnect::connect(&server_address).await {
+            match Client::connect(&server_address).await {
                 Ok((mut client, mut event_receiver)) => {
                     let sender = event_sender.clone();
 
-                    match client.connect(player_name.clone()).await {
+                    match client.login(player_name.clone()).await {
                         Ok(Ok(_)) => {
                             let _ = event_sender
                                 .send(ApplicationEvent::Network(

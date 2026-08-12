@@ -58,11 +58,14 @@ pub enum NetworkError {
     #[error("codec error: {0}")]
     Codec(#[from] tokio_util::codec::LinesCodecError),
 
-    #[error("could not connect to {addr}: every attempt was refused")]
-    ConnectionMaxRetry { addr: String },
+    #[error("could not connect to {addr}: {source}")]
+    ConnectionFailed {
+        addr: String,
+        source: std::io::Error,
+    },
 
-    #[error("connection to {addr} timed out")]
-    ConnectionTimeout { addr: String },
+    #[error("could not connect to {addr} within {}s", timeout.as_secs())]
+    ConnectionTimeout { addr: String, timeout: Duration },
 
     #[error("the server did not answer within {}s (command: {command})", timeout.as_secs())]
     RequestTimeout { command: String, timeout: Duration },
@@ -93,9 +96,6 @@ pub enum ProtocolError {
 pub enum InternalError {
     #[error("{0}")]
     BridgeUnavailable(String),
-
-    #[error("{0}")]
-    BridgeStartFailed(String),
 }
 
 #[derive(Error, Debug)]

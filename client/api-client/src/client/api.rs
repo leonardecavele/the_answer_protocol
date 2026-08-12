@@ -26,7 +26,7 @@ use crate::protocol::command::resource_interaction::talk::{TalkCommand, TalkResp
 use tracing::debug;
 
 impl Client {
-    pub async fn connect(
+    pub async fn login(
         &mut self,
         player_name: String,
     ) -> Result<Result<ConnectResponse, CommandError>, TapError> {
