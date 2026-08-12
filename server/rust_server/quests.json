@@ -4,7 +4,8 @@
       "name": "Librairie Quarante-Deux",
       "description": "Donnez un coup de main à Mdourdoi avec sa libft sans faire aucune erreur.",
       "loots": {
-		  "MERCI": { "qty": 3, "chance": 100.0 }
+		  "MERCI": { "qty": 3, "chance": 100.0 },
+		  "TSHIRT": { "qty": 1, "chance": 20.0 }
 	  }
     },
     {
@@ -39,7 +40,8 @@
 	  "name": "Des wraps ! Plus de wraps !",
 	  "description": "Réussissez à aider Iris en moins de 2 secondes.",
 	  "loots": {
-		"MERCI": { "qty": 2, "chance": 100.0 }
+		"MERCI": { "qty": 2, "chance": 100.0 },
+		"WRAP": { "qty": 3, "chance": 100.0 }
 	  }
 	}
   ]

@@ -88,7 +88,7 @@ impl ErrorCode {
 pub enum LOOT {
     Merci,
     TShirt,
-    Bottle,
+    Wrap,
 }
 
 impl LOOT {
@@ -96,7 +96,7 @@ impl LOOT {
         match s.to_uppercase().as_str() {
             "MERCI" => Some(Self::Merci),
             "TSHIRT" => Some(Self::TShirt),
-            "BOTTLE" => Some(Self::Bottle),
+            "WRAP" => Some(Self::Wrap),
             _ => None,
         }
     }
@@ -105,7 +105,7 @@ impl LOOT {
         match self {
             Self::Merci => "MERCI".to_string(),
             Self::TShirt => "TSHIRT".to_string(),
-            Self::Bottle => "BOTTLE".to_string(),
+            Self::Wrap => "WRAP".to_string(),
         }
     }
 }
