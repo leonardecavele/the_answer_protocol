@@ -3,33 +3,33 @@
         "0.vquetier": {
             "name": "vquetier",
             "type": "dialogue",
-            "image_path": "../../assets/final/mobs/talk/vquetier/vquetier.png",
+            "image_path": "../../assets/pictures/mobs/talk/vquetier/vquetier.png",
             "actions": ["Talk"]
         },
         "1.faon": {
             "name": "faon",
             "type": "dialogue",
-            "image_path": "../../assets/final/mobs/talk/faon/faon.png",
+            "image_path": "../../assets/pictures/mobs/talk/faon/faon.png",
             "actions": ["Talk"]
         },
         "2.smenard": {
             "name": "smenard",
             "type": "dialogue",
-            "image_path": "../../assets/final/mobs/talk/smenard/smenard.png",
+            "image_path": "../../assets/pictures/mobs/talk/smenard/smenard.png",
             "actions": ["Talk"]
         },
         "3.mdourdoi": {
             "name": "mdourdoi",
             "type": "enemy",
-            "image_path": "../../assets/final/mobs/fight/mdourdoi/mdourdoi_cluster_du_bas.png",
+            "image_path": "../../assets/pictures/mobs/fight/mdourdoi/mdourdoi_cluster_du_bas.png",
             "actions": ["Talk", "Attack"]
         },
         "4.gagulhon": {
             "name": "gagulhon",
             "type": "dialogue",
             "image_paths": [
-                "../../assets/final/mobs/talk/gagulhon/gagulhon1.png",
-                "../../assets/final/mobs/talk/gagulhon/gagulhon2.png"
+                "../../assets/pictures/mobs/talk/gagulhon/gagulhon1.png",
+                "../../assets/pictures/mobs/talk/gagulhon/gagulhon2.png"
             ],
             "animation_speed_ms": 500,
             "actions": ["Talk"]
@@ -37,25 +37,25 @@
         "5.ndalailallema": {
             "name": "ndalailallema",
             "type": "quest_giver",
-            "image_path": "../../assets/final/mobs/quest/ndalailallema/ndalailallema.png",
+            "image_path": "../../assets/pictures/mobs/quest/ndalailallema/ndalailallema.png",
             "actions": ["Talk", "Quest"]
         },
         "6.gabach": {
             "name": "gabach",
             "type": "dialogue",
-			"image_path": "../../assets/final/mobs/talk/gabach/gabach.jpg",
+			"image_path": "../../assets/pictures/mobs/talk/gabach/gabach.jpg",
             "actions": ["Talk"]
         },
         "7.enchevri": {
             "name": "enchevri",
             "type": "enemy",
-            "image_path": "../../assets/final/mobs/fight/enchevri/enchevri_cluster_du_haut.png",
+            "image_path": "../../assets/pictures/mobs/fight/enchevri/enchevri_cluster_du_haut.png",
             "actions": ["Talk", "Attack"]
         },
         "8.acampion": {
             "name": "acampion",
             "type": "enemy",
-            "image_path": "../../assets/final/mobs/fight/acampion/acampion_afk.png",
+            "image_path": "../../assets/pictures/mobs/fight/acampion/acampion_afk.png",
             "actions": ["Talk", "Attack"]
         },
         "9.mphippen": {
@@ -66,25 +66,25 @@
         "10.crappo": {
             "name": "crappo",
             "type": "enemy",
-			"image_path": "../../assets/final/mobs/fight/crappo/crappo.jpg",
+			"image_path": "../../assets/pictures/mobs/fight/crappo/crappo.jpg",
             "actions": ["Talk", "Attack"]
         },
         "11.ayteyssi": {
             "name": "ayteyssi",
             "type": "dialogue",
-            "image_path": "../../assets/final/mobs/talk/ayteyssi/ayteyssi.png",
+            "image_path": "../../assets/pictures/mobs/talk/ayteyssi/ayteyssi.png",
             "actions": ["Talk"]
         },
         "12.ldecavel": {
             "name": "ldecavel",
             "type": "enemy",
-            "image_path": "../../assets/final/mobs/fight/ldecavel/ldecavel.png",
+            "image_path": "../../assets/pictures/mobs/fight/ldecavel/ldecavel.png",
             "actions": ["Talk", "Attack"]
         },
         "13.cobussie": {
             "name": "cobussie",
             "type": "dialogue",
-			"image_path": "../../assets/final/mobs/talk/cobussie/cobussie.jpeg",
+			"image_path": "../../assets/pictures/mobs/talk/cobussie/cobussie.jpeg",
             "actions": ["Talk"]
         },
         "14.ibady": {
@@ -95,7 +95,7 @@
         "15.bokim": {
             "name": "bokim",
             "type": "dialogue",
-			"image_path": "../../assets/final/mobs/talk/bokim/bokim.jpg",
+			"image_path": "../../assets/pictures/mobs/talk/bokim/bokim.jpg",
             "actions": ["Talk"]
         }
     },
@@ -103,29 +103,34 @@
         "0.objet_perdu": {
             "name": "objet_perdu",
             "description": "Il faudrait déposer cet objet quelque part où son propriétaire pourrait le retrouver...",
-            "image_path": "../../assets/final/items/lost_item.png"
+            "image_path": "../../assets/pictures/items/lost_item.png"
         },
         "1.wrap_du_foyer": {
             "name": "wrap_du_foyer",
             "description": "un bon remontant pour réussir à continuer à faire ses heures",
-            "image_path": "../../assets/final/items/wrap.png"
+            "image_path": "../../assets/pictures/items/wrap.png"
         },
         "2.t_shirt_bde": {
             "name": "t_shirt_bde",
             "description": "dans ce tissu on se sent solide comme un rock",
-            "image_path": "../../assets/final/items/t_shirt.png"
+            "image_path": "../../assets/pictures/items/t_shirt.png"
+        },
+        "3.merci": {
+            "name": "merci",
+            "description": "Un concentré pur de la gratitude de Nathan.",
+            "image_path": "../../assets/pictures/items/merci.png"
         }
     },
     "rooms": {
-        "0.cluster_du_bas": { "image_path": "../../assets/final/cluster_du_bas.jpg" },
-        "1.pature": { "image_path": "../../assets/final/pature.jpeg" },
-        "2.devant_l_ecole": { "image_path": "../../assets/final/devant_l_ecole.jpg" },
-        "3.devant_le_bocal": { "image_path": "../../assets/final/devant_bocal.jpg" },
-        "4.cluster_du_haut": { "image_path": "../../assets/final/cluster_du_haut.jpeg" },
-        "5.afk": { "image_path": "../../assets/final/afk.jpg" },
-        "6.entree": { "image_path": "../../assets/final/entree.jpeg" },
-        "7.cantina": { "image_path": "../../assets/final/cantina.jpeg" },
-        "8.foyer": { "image_path": "../../assets/final/foyer.jpeg" }
+        "0.cluster_du_bas": { "image_path": "../../assets/pictures/cluster_du_bas.jpg" },
+        "1.pature": { "image_path": "../../assets/pictures/pature.jpeg" },
+        "2.devant_l_ecole": { "image_path": "../../assets/pictures/devant_l_ecole.jpg" },
+        "3.devant_le_bocal": { "image_path": "../../assets/pictures/devant_bocal.jpg" },
+        "4.cluster_du_haut": { "image_path": "../../assets/pictures/cluster_du_haut.jpeg" },
+        "5.afk": { "image_path": "../../assets/pictures/afk.jpg" },
+        "6.entree": { "image_path": "../../assets/pictures/entree.jpeg" },
+        "7.cantina": { "image_path": "../../assets/pictures/cantina.jpeg" },
+        "8.foyer": { "image_path": "../../assets/pictures/foyer.jpeg" }
     },
     "quests": {}
 }
