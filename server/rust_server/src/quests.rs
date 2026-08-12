@@ -10,6 +10,16 @@ pub struct Loot {
     pub loot_type: LOOT,
 }
 
+impl Loot {
+    pub fn to_json(&self) -> JsonValue {
+        json::object! {
+            "qty" => self.qty,
+            "chance" => self.chance,
+            "loot_type" => self.loot_type.to_string(),
+        }
+    }
+}
+
 #[derive(Clone)]
 pub struct Quest {
     id: Questid,
@@ -56,6 +66,12 @@ impl Quest {
 
     pub fn get_description(&self) -> &str {
         &self.description
+    }
+
+    pub fn get_json_loots(&self) -> Vec<JsonValue> {
+        return self.loots.iter().map(|loot| {
+            loot.to_json()
+        }).collect();
     }
 
     pub fn get_loots(&self) -> &Vec<Loot> {

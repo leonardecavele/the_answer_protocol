@@ -66,7 +66,8 @@ impl GameManager {
     fn save_player(&mut self, player_id: PlayerId) {
         if let Some(player) = self.players.get(&player_id) {
             let inventory = player.get_inventory().clone();
-            let player_quests = self.quest_instances
+            let player_quests = self
+                .quest_instances
                 .iter()
                 .filter(|q| q.get_player() == player_id)
                 .map(|q| (q.get_quest_name(), q.get_state()))
@@ -239,11 +240,7 @@ impl GameManager {
 
         let player_id = save_data.id;
         for (quest_id, state) in save_data.quests.iter() {
-            let quest_instance = QuestInstance::new(
-                player_id,
-                quest_id.clone(),
-                state.clone(),
-            );
+            let quest_instance = QuestInstance::new(player_id, quest_id.clone(), state.clone());
             self.quest_instances.push(quest_instance);
         }
 
@@ -612,7 +609,7 @@ impl GameManager {
             player_name.as_str(),
             "DEATH",
             "",
-            true
+            true,
         );
         self.add_diff_to_tick(event);
     }
@@ -741,7 +738,7 @@ impl GameManager {
                 &player_name,
                 "ATTACK",
                 dealt_damage.to_string().as_str(),
-                true
+                true,
             );
             self.add_diff_to_tick(event);
         }
@@ -753,7 +750,7 @@ impl GameManager {
                 &player_name,
                 "KILL",
                 npc_repr.as_str(),
-                true
+                true,
             );
             self.add_diff_to_tick(event);
         }
