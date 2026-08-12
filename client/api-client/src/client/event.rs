@@ -13,6 +13,12 @@ pub struct SpawnData {
 }
 
 #[derive(Debug, Clone)]
+pub struct KillData {
+    pub player: String,
+    pub npc_id: String,
+}
+
+#[derive(Debug, Clone)]
 pub enum RoomEvent {
     PresenceEnter(String),
     PresenceLeave(String),
@@ -42,6 +48,7 @@ pub enum ServerEvent {
     GameServer(GameServerEvent),
     Spawn(SpawnData),
     Despawn(SpawnData),
+    Kill(KillData),
     Quit(String),
     Room(RoomEvent),
     Group(GroupEvent),
@@ -102,6 +109,11 @@ impl From<ServerResponse> for ServerEvent {
                     ServerEvent::Unknown(args.join(" "))
                 }
             }
+
+            ["KILL", player_name, npc_id] => ServerEvent::Kill(KillData {
+                player: player_name.to_string(),
+                npc_id: npc_id.to_string(),
+            }),
 
             ["QUIT", name] => ServerEvent::Quit(name.to_string()),
 
