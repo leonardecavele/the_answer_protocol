@@ -4,6 +4,7 @@ use crate::constantes::{
 use crate::game_manager::GameManager;
 use crate::items::{Item, ItemId};
 use crate::npc::{Npc, NpcId};
+use crate::quests::QuestState;
 use crate::room::Room;
 use json::{JsonValue, object};
 use rand::RngExt;
@@ -254,7 +255,7 @@ impl GameManager {
                     leader,
                     "AGGRO",
                     &npc_representation,
-                    true
+                    true,
                 );
                 self.add_diff_to_tick(event);
 
@@ -413,7 +414,7 @@ impl GameManager {
                         "DROP",
                         Item::protocol_representation(LOST_ITEM as ItemId, lost_item_name.as_str())
                             .as_str(),
-                        true
+                        true,
                     );
                     self.remove_item_from_player(player_id, LOST_ITEM as ItemId);
                     self.add_item_to_room(room, LOST_ITEM as ItemId);
@@ -696,20 +697,13 @@ impl GameManager {
                     if let Some(quest_id) = quests.get(random_index) {
                         let quest_json_str;
                         if let Some(quest) = self.get_quest(quest_id) {
-                            let mut rewards_json = Vec::new();
-                            for loot in quest.get_loots() {
-                                rewards_json.push(json::object! {
-                                    "qty" => loot.qty,
-                                    "chance" => loot.chance,
-                                    "type" => loot.loot_type.to_string()
-                                });
-                            }
+                            let reward = quest.get_json_loots();
 
                             quest_json_str = json::object! {
                                 "quest_id" => quest.get_id().clone(),
                                 "description" => quest.get_description(),
-                                "reward" => rewards_json,
-                                "status" => crate::quests::QuestState::InProgress.to_str()
+                                "reward" => reward,
+                                "status" => QuestState::InProgress.to_str()
                             }
                             .dump();
                         } else {
@@ -748,7 +742,15 @@ impl GameManager {
                     .quest_instances
                     .iter()
                     .filter(|q| q.get_player() == player_id)
-                    .map(|q| (q.get_quest_name(), q.get_state()))
+                    .map(|q| {
+                        let quest = self.get_quest(&q.get_quest_name()).unwrap();
+                        json::object! {
+                        "quest_id" => quest.get_id().clone(),
+                        "description" => quest.get_description(),
+                        "reward" => quest.get_json_loots(),
+                        "status" => QuestState::InProgress.to_str() }
+                        .dump()
+                    })
                     .collect::<Vec<_>>();
                 return generate_json(
                     player_name,

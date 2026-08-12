@@ -2,6 +2,8 @@ use crate::constantes::{PLAYER_ROOM_SPAWN, PLAYER_STARTING_HP, PLAYER_STARTING_M
 use crate::inventory::Inventory;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use crate::quests::QuestState;
+use crate::quests::Questid;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Save {
@@ -12,6 +14,7 @@ pub struct Save {
     pub inventory: Inventory,
     pub current_room: String,
     pub dialogs_index: HashMap<String, (usize, usize)>,
+    pub quests: Vec<(Questid, QuestState)>,
 }
 
 
@@ -25,6 +28,7 @@ impl Default for Save {
             inventory: Inventory::new(),
             current_room: PLAYER_ROOM_SPAWN.to_string(),
             dialogs_index: HashMap::new(),
+            quests: Vec::new(),
         }
     }
 }
