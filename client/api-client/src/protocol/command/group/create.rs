@@ -13,7 +13,7 @@ pub struct GroupCreateResponse {
 impl Command for GroupCreateCommand {
     type ResponseData = GroupCreateResponse;
 
-    fn create_command(&self) -> String {
+    fn encode(&self) -> String {
         "GROUP CREATE".to_string()
     }
 

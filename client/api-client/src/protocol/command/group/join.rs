@@ -15,7 +15,7 @@ pub struct GroupJoinResponse {
 impl Command for GroupJoinCommand {
     type ResponseData = GroupJoinResponse;
 
-    fn create_command(&self) -> String {
+    fn encode(&self) -> String {
         format!("GROUP JOIN {}", self.leader_name)
     }
 

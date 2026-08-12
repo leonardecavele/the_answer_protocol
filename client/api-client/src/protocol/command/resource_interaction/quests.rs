@@ -21,7 +21,7 @@ pub struct QuestsResponse {
 impl Command for QuestsCommand {
     type ResponseData = QuestsResponse;
 
-    fn create_command(&self) -> String {
+    fn encode(&self) -> String {
         "QUESTS".to_string()
     }
 

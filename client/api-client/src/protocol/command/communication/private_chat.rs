@@ -15,7 +15,7 @@ pub struct PrivateChatResponse;
 impl Command for PrivateChatCommand {
     type ResponseData = PrivateChatResponse;
 
-    fn create_command(&self) -> String {
+    fn encode(&self) -> String {
         format!("CHAT PRIVATE {} {}", self.to, self.message)
     }
 

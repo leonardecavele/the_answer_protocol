@@ -42,7 +42,7 @@ pub struct Bridge {
     socket: Framed<TcpStream, LinesCodec>,
     state_sender: watch::Sender<ConnectionState>,
     event_sender: broadcast::Sender<ServerEvent>,
-    command_receiver: Receiver<Request>,
+    request_receiver: Receiver<Request>,
     pending_request: Option<PendingRequest>,
     request_timeout: Duration,
 }
@@ -52,14 +52,14 @@ impl Bridge {
         socket: Framed<TcpStream, LinesCodec>,
         state_sender: watch::Sender<ConnectionState>,
         event_sender: broadcast::Sender<ServerEvent>,
-        command_receiver: Receiver<Request>,
+        request_receiver: Receiver<Request>,
         request_timeout: Duration,
     ) -> Bridge {
         Bridge {
             socket,
             state_sender,
             event_sender,
-            command_receiver,
+            request_receiver,
             pending_request: None,
             request_timeout,
         }
@@ -78,8 +78,8 @@ impl Bridge {
             let flow = tokio::select! {
                 frame = self.socket.next() => self.handle_incoming(frame).await,
 
-                command = self.command_receiver.recv(), if self.pending_request.is_none() => {
-                    match command {
+                request_opt = self.request_receiver.recv(), if self.pending_request.is_none() => {
+                    match request_opt {
                         Some(request) => self.handle_outgoing(request).await,
                         None => Ok(Flow::Stop(Disconnection::ClosedByClient)),
                     }

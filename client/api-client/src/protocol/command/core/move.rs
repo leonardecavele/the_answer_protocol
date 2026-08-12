@@ -16,7 +16,7 @@ pub struct MoveResponse {
 impl Command for MoveCommand {
     type ResponseData = MoveResponse;
 
-    fn create_command(&self) -> String {
+    fn encode(&self) -> String {
         format!("MOVE {}", self.direction)
     }
 

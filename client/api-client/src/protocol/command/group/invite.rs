@@ -13,7 +13,7 @@ pub struct GroupInviteResponse {}
 impl Command for GroupInviteCommand {
     type ResponseData = GroupInviteResponse;
 
-    fn create_command(&self) -> String {
+    fn encode(&self) -> String {
         format!("GROUP INVITE {}", self.username)
     }
 

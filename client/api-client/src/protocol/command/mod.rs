@@ -11,7 +11,7 @@ use serde_json::Error;
 pub trait Command {
     type ResponseData;
 
-    fn create_command(&self) -> String;
+    fn encode(&self) -> String;
 
     fn parse_response(&self, response: ServerResponse) -> Result<Self::ResponseData, CommandError>;
 

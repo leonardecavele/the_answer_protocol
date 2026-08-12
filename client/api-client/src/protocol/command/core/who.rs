@@ -13,7 +13,7 @@ pub struct WhoResponse {
 impl Command for WhoCommand {
     type ResponseData = WhoResponse;
 
-    fn create_command(&self) -> String {
+    fn encode(&self) -> String {
         "WHO".to_string()
     }
 

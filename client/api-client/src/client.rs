@@ -20,7 +20,7 @@ use tracing::{info, warn};
 
 struct BridgeHandle {
     task: JoinHandle<()>,
-    command_sender: Sender<Request>,
+    request_sender: Sender<Request>,
     event_sender: broadcast::Sender<ServerEvent>,
     cancellation: CancellationToken,
 }
@@ -73,12 +73,12 @@ impl Client {
         &self,
         command: C,
     ) -> Result<Result<C::ResponseData, CommandError>, TapError> {
-        let raw_command = command.create_command();
+        let raw_command = command.encode();
 
         let (request, response_receiver) = Request::new(raw_command.clone());
 
         self.bridge
-            .command_sender
+            .request_sender
             .send(request)
             .await
             .map_err(|_| {

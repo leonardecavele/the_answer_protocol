@@ -28,7 +28,7 @@ pub struct LookRoom {
 impl Command for LookCommand {
     type ResponseData = LookResponse;
 
-    fn create_command(&self) -> String {
+    fn encode(&self) -> String {
         "LOOK".to_string()
     }
 

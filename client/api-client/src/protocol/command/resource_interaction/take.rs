@@ -15,7 +15,7 @@ pub struct TakeResponse {
 impl Command for TakeCommand {
     type ResponseData = TakeResponse;
 
-    fn create_command(&self) -> String {
+    fn encode(&self) -> String {
         format!("TAKE {}", self.item_identifier)
     }
 

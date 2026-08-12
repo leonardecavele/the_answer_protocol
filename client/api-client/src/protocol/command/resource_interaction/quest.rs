@@ -31,7 +31,7 @@ pub struct QuestResponse {
 impl Command for QuestCommand {
     type ResponseData = QuestResponse;
 
-    fn create_command(&self) -> String {
+    fn encode(&self) -> String {
         format!("QUEST {}", self.npc_name)
     }
 

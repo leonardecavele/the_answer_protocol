@@ -14,7 +14,7 @@ pub struct GlobalChatResponse;
 impl Command for GlobalChatCommand {
     type ResponseData = GlobalChatResponse;
 
-    fn create_command(&self) -> String {
+    fn encode(&self) -> String {
         format!("CHAT GLOBAL {}", self.message)
     }
 

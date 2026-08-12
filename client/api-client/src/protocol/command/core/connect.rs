@@ -16,7 +16,7 @@ pub struct ConnectResponse {
 impl Command for ConnectCommand {
     type ResponseData = ConnectResponse;
 
-    fn create_command(&self) -> String {
+    fn encode(&self) -> String {
         format!("CONNECT {}", self.player_name)
     }
 

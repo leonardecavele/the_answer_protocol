@@ -11,7 +11,7 @@ pub struct GroupLeaveResponse {}
 impl Command for GroupLeaveCommand {
     type ResponseData = GroupLeaveResponse;
 
-    fn create_command(&self) -> String {
+    fn encode(&self) -> String {
         "GROUP LEAVE".to_string()
     }
 

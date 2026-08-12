@@ -11,7 +11,7 @@ pub struct QuitResponse;
 impl Command for QuitCommand {
     type ResponseData = QuitResponse;
 
-    fn create_command(&self) -> String {
+    fn encode(&self) -> String {
         "QUIT".to_string()
     }
 

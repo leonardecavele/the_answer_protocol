@@ -15,7 +15,7 @@ pub struct DropResponse {
 impl Command for DropCommand {
     type ResponseData = DropResponse;
 
-    fn create_command(&self) -> String {
+    fn encode(&self) -> String {
         format!("DROP {}", self.item_identifier)
     }
 

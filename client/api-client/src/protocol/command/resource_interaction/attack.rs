@@ -24,7 +24,7 @@ pub struct AttackResponse {
 impl Command for AttackCommand {
     type ResponseData = AttackResponse;
 
-    fn create_command(&self) -> String {
+    fn encode(&self) -> String {
         format!("ATTACK {}", self.npc_name)
     }
 

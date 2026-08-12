@@ -21,7 +21,7 @@ pub struct StatusResponse {
 impl Command for StatusCommand {
     type ResponseData = StatusResponse;
 
-    fn create_command(&self) -> String {
+    fn encode(&self) -> String {
         "STATUS".to_string()
     }
 

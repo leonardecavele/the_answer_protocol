@@ -15,7 +15,7 @@ pub struct TalkResponse {
 impl Command for TalkCommand {
     type ResponseData = TalkResponse;
 
-    fn create_command(&self) -> String {
+    fn encode(&self) -> String {
         format!("TALK {}", self.npc_name)
     }
 

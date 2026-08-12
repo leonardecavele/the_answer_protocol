@@ -81,7 +81,7 @@ impl Client {
             },
             bridge: BridgeHandle {
                 task: bridge_task,
-                command_sender: request_sender,
+                request_sender,
                 event_sender,
                 cancellation,
             },
@@ -124,7 +124,7 @@ impl Client {
         socket: Framed<TcpStream, LinesCodec>,
         state_sender: watch::Sender<ConnectionState>,
         event_sender: broadcast::Sender<ServerEvent>,
-        command_receiver: mpsc::Receiver<Request>,
+        request_receiver: mpsc::Receiver<Request>,
         cancellation: CancellationToken,
         request_timeout: Duration,
     ) -> JoinHandle<()> {
@@ -133,7 +133,7 @@ impl Client {
                 socket,
                 state_sender,
                 event_sender,
-                command_receiver,
+                request_receiver,
                 request_timeout,
             );
             bridge.listen(cancellation).await;
@@ -153,9 +153,10 @@ impl Client {
             })?;
 
         match frame {
-            Some(Ok(line)) => Ok(HandshakeResponse::try_from(ServerResponse::try_from(
-                line,
-            )?)?),
+            Some(Ok(line)) => {
+                let response = ServerResponse::try_from(line)?;
+                Ok(HandshakeResponse::try_from(response)?)
+            }
             Some(Err(codec_error)) => Err(NetworkError::Codec(codec_error).into()),
             None => Err(NetworkError::Disconnected.into()),
         }

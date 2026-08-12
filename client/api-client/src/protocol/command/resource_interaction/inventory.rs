@@ -14,7 +14,7 @@ pub struct InventoryResponse {
 impl Command for InventoryCommand {
     type ResponseData = InventoryResponse;
 
-    fn create_command(&self) -> String {
+    fn encode(&self) -> String {
         "INVENTORY".to_string()
     }
 
