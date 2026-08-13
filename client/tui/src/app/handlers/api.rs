@@ -1,7 +1,7 @@
 use crate::app::App;
 use crate::events::ApiEvent;
 use crate::network::envelopes::ResponseEnvelope;
-use crate::states::game::{ChatChannel, ChatMessage, DialogueState, END_OF_DIALOGUE_TAG, Npc};
+use crate::states::game::{ChatChannel, ChatMessage, DialogueState, END_OF_DIALOGUE_TAG};
 use crate::states::ui::Notification;
 use api_client::commands::LookCommand;
 use api_client::events::{GameServerEvent, GroupEvent, RoomEvent, ServerEvent};
@@ -116,14 +116,7 @@ impl App {
                 self.state.game.room.name = Some(look_res.room.name);
                 self.state.game.room.description = Some(look_res.room.description);
                 self.state.game.room.players = look_res.players;
-                self.state.game.room.npcs = look_res
-                    .npcs
-                    .iter()
-                    .map(|npc_id| Npc {
-                        id: npc_id.clone(),
-                        is_alive: true,
-                    })
-                    .collect();
+                self.state.game.room.npcs = look_res.npcs;
                 self.state.game.room.items = look_res.items;
                 self.state.game.room.exits = look_res.room.exits;
             }
@@ -239,16 +232,11 @@ impl App {
 
                     let text = match res.status.eq_ignore_ascii_case("Victory") {
                         true => {
-                            if let Some(npc) = self
-                                .state
+                            self.state
                                 .game
                                 .room
                                 .npcs
-                                .iter_mut()
-                                .find(|n| n.id == cmd.npc_name)
-                            {
-                                npc.is_alive = false;
-                            }
+                                .retain(|npc_id| npc_id.to_string() != cmd.npc_name);
 
                             format!(
                                 "Combat with {}: You dealt {} damage. {} is dead. Victory.",
@@ -310,16 +298,7 @@ impl App {
                         .game
                         .log_action(format!("{} has respawn", npc_name));
 
-                    if let Some(npc) = self
-                        .state
-                        .game
-                        .room
-                        .npcs
-                        .iter_mut()
-                        .find(|n| n.id == spawn_data.id)
-                    {
-                        npc.is_alive = true;
-                    }
+                    self.state.game.room.npcs.push(spawn_data.id);
                 }
                 "ITEM" => {
                     let item_name = self
@@ -388,16 +367,11 @@ impl App {
 
                 self.state.game.log_action(message);
 
-                if let Some(npc) = self
-                    .state
+                self.state
                     .game
                     .room
                     .npcs
-                    .iter_mut()
-                    .find(|n| n.id == kill_data.npc_id)
-                {
-                    npc.is_alive = false;
-                }
+                    .retain(|npc_id| npc_id.to_string() != kill_data.npc_id);
             }
             ServerEvent::Quit(name) => {
                 self.state.game.server.online_players_count = self

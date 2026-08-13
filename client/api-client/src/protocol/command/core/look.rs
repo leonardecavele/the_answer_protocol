@@ -2,13 +2,11 @@ use crate::error::CommandError;
 use crate::protocol::command::Command;
 use crate::protocol::response::ServerResponse;
 use serde::{Deserialize, Serialize};
-use serde_with::serde_as;
 use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
 pub struct LookCommand;
 
-#[serde_as]
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct LookResponse {
     pub room: LookRoom,

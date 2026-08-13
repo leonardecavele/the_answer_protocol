@@ -136,18 +136,13 @@ impl GroupState {
     }
 }
 
-pub struct Npc {
-    pub id: String,
-    pub is_alive: bool,
-}
-
 pub struct RoomState {
     pub id: Option<String>,
     pub name: Option<String>,
     pub description: Option<String>,
     pub exits: HashMap<String, String>,
     pub players: Vec<String>,
-    pub npcs: Vec<Npc>,
+    pub npcs: Vec<String>,
     pub items: Vec<String>,
 }
 
