@@ -522,6 +522,7 @@ impl App {
                         .game
                         .log_action("Game server offline.".to_string());
 
+                    self.state.game.ui.close_all();
                     self.state.network.is_connected = false;
                 }
             },
