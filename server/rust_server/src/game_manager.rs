@@ -1,4 +1,4 @@
-use crate::combat_instances::CombatInstanceManager;
+use crate::combat_instances::{CombatInstance, CombatInstanceManager};
 use crate::constantes::{Direction, MAX_TIME_FOR_COMBAT, NPC_DMG, NPC_RESPAWN_TIME};
 use crate::inventory::Inventory;
 use crate::items::{Item, ItemId};
@@ -9,11 +9,12 @@ use crate::quests::{Quest, QuestInstance, QuestState, Questid};
 use crate::room::{Room, RoomId, RoomName};
 use crate::save::{Save, ServerSave};
 use json::JsonValue;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::io::Write;
 use std::net::TcpStream;
 use std::sync::mpsc;
 use std::time::Instant;
+use std::vec;
 use tracing::warn;
 use tracing::{error, info};
 
@@ -783,8 +784,38 @@ impl GameManager {
             .map(|room| room.get_id())
             .unwrap_or(2 as RoomId)
     }
-
+    pub fn get_finished_instances_players(&mut self) -> Vec<Vec<PlayerId>> {
+        let mut vec: Vec<Vec<PlayerId>> = Vec::new();
+        let mut players: Vec<PlayerId> = Vec::new();
+        for (_npc_id, instance) in self.combat_instances.instances.iter() {
+            if instance.all_players_finished() {
+                players.extend(instance.get_grouped_players());
+                players.push(instance.get_leader());
+            }
+            vec.push(players.clone());
+            players.clear();
+        }
+        vec
+    }
     pub fn remove_finished_combat_instances(&mut self) {
+        let finished_instances_players = self.get_finished_instances_players();
+        for grouped_players in finished_instances_players {
+            if !grouped_players.is_empty() {
+                let mut grouped_players_strings: Vec<String> = grouped_players
+                    .iter()
+                    .map(|id| self.players.get(id).unwrap().get_name().to_string())
+                    .collect();
+                let first_player = grouped_players_strings[0].clone();
+                let event = self.generate_event_json(
+                    &mut grouped_players_strings,
+                    first_player.as_str(),
+                    "FIGHT END",
+                    "",
+                    false,
+                );
+                self.add_diff_to_tick(event);
+            }
+        }
         self.combat_instances.remove_finished_instances();
     }
 
