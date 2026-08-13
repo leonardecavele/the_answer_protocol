@@ -61,6 +61,7 @@
         "9.mphippen": {
             "name": "mphippen",
             "type": "dialogue",
+            "image_path": "../../assets/pictures/mobs/talk/mphippen/mphippen.jpeg",
             "actions": ["Talk"]
         },
         "10.crappo": {
@@ -90,6 +91,7 @@
         "14.ibady": {
             "name": "ibady",
             "type": "enemy",
+            "image_path": "../../assets/pictures/mobs/fight/ibady/ibady.jpg",
             "actions": ["Talk", "Attack"]
         },
         "15.bokim": {
@@ -122,15 +124,15 @@
         }
     },
     "rooms": {
-        "0.cluster_du_bas": { "image_path": "../../assets/pictures/cluster_du_bas.jpg" },
-        "1.pature": { "image_path": "../../assets/pictures/pature.jpeg" },
-        "2.devant_l_ecole": { "image_path": "../../assets/pictures/devant_l_ecole.jpg" },
-        "3.devant_le_bocal": { "image_path": "../../assets/pictures/devant_bocal.jpg" },
-        "4.cluster_du_haut": { "image_path": "../../assets/pictures/cluster_du_haut.jpeg" },
-        "5.afk": { "image_path": "../../assets/pictures/afk.jpg" },
-        "6.entree": { "image_path": "../../assets/pictures/entree.jpeg" },
-        "7.cantina": { "image_path": "../../assets/pictures/cantina.jpeg" },
-        "8.foyer": { "image_path": "../../assets/pictures/foyer.jpeg" }
+        "0.cluster_du_bas": { "image_path": "../../assets/pictures/rooms/cluster_du_bas.jpg" },
+        "1.pature": { "image_path": "../../assets/pictures/rooms/pature.jpeg" },
+        "2.devant_l_ecole": { "image_path": "../../assets/pictures/rooms/devant_l_ecole.jpg" },
+        "3.devant_le_bocal": { "image_path": "../../assets/pictures/rooms/devant_bocal.jpg" },
+        "4.cluster_du_haut": { "image_path": "../../assets/pictures/rooms/cluster_du_haut.jpeg" },
+        "5.afk": { "image_path": "../../assets/pictures/rooms/afk.jpg" },
+        "6.entree": { "image_path": "../../assets/pictures/rooms/entree.jpeg" },
+        "7.cantina": { "image_path": "../../assets/pictures/rooms/cantina.jpeg" },
+        "8.foyer": { "image_path": "../../assets/pictures/rooms/foyer.jpeg" }
     },
     "quests": {}
 }
