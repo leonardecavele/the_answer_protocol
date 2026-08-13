@@ -2,9 +2,11 @@ use crate::data::manifest::NpcType;
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
 use crate::states::game::GameFocus;
+use crate::states::game::Overlay::{ItemActions, NpcActions};
 use crate::ui::components::Component;
 use crate::ui::components::Lifecycle;
 use crate::ui::theme::default_block;
+use crate::ui::utils::move_index;
 use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect},
@@ -208,20 +210,12 @@ impl Lifecycle for LeftPanelComponent {
                     match key.code {
                         crossterm::event::KeyCode::Up => {
                             let current = self.selected_npc_index.unwrap_or(0);
-                            self.selected_npc_index = Some(if current == 0 {
-                                npc_count - 1
-                            } else {
-                                current - 1
-                            });
+                            self.selected_npc_index = Some(move_index(current, npc_count, false));
                             return true;
                         }
                         crossterm::event::KeyCode::Down => {
                             let current = self.selected_npc_index.unwrap_or(npc_count - 1);
-                            self.selected_npc_index = Some(if current >= npc_count - 1 {
-                                0
-                            } else {
-                                current + 1
-                            });
+                            self.selected_npc_index = Some(move_index(current, npc_count, true));
                             return true;
                         }
                         crossterm::event::KeyCode::Enter => {
@@ -231,7 +225,9 @@ impl Lifecycle for LeftPanelComponent {
 
                             if let Some(idx) = self.selected_npc_index {
                                 if let Some(npc_id) = state.game.room.npcs.get(idx) {
-                                    state.game.ui.active_npc_popup = Some(npc_id.clone());
+                                    state.game.ui.open(NpcActions {
+                                        npc_id: npc_id.to_string(),
+                                    });
                                     return true;
                                 }
                             }
@@ -246,28 +242,22 @@ impl Lifecycle for LeftPanelComponent {
                 if item_count > 0 {
                     match key.code {
                         crossterm::event::KeyCode::Up => {
-                            let current = self.selected_item_index;
-                            self.selected_item_index = if current == 0 {
-                                item_count - 1
-                            } else {
-                                current - 1
-                            };
+                            self.selected_item_index =
+                                move_index(self.selected_item_index, item_count, false);
                             return true;
                         }
                         crossterm::event::KeyCode::Down => {
-                            let current = self.selected_item_index;
-                            self.selected_item_index = if current >= item_count - 1 {
-                                0
-                            } else {
-                                current + 1
-                            };
+                            self.selected_item_index =
+                                move_index(self.selected_item_index, item_count, true);
                             return true;
                         }
                         crossterm::event::KeyCode::Enter => {
                             if let Some(item_id) =
                                 state.game.room.items.get(self.selected_item_index)
                             {
-                                state.game.ui.active_item_popup = Some(item_id.clone());
+                                state.game.ui.open(ItemActions {
+                                    item_id: item_id.to_string(),
+                                });
                                 return true;
                             }
                         }
@@ -281,21 +271,13 @@ impl Lifecycle for LeftPanelComponent {
                 if quest_count > 0 {
                     match key.code {
                         crossterm::event::KeyCode::Up => {
-                            let current = self.selected_quest_index;
-                            self.selected_quest_index = if current == 0 {
-                                quest_count - 1
-                            } else {
-                                current - 1
-                            };
+                            self.selected_quest_index =
+                                move_index(self.selected_quest_index, quest_count, false);
                             return true;
                         }
                         crossterm::event::KeyCode::Down => {
-                            let current = self.selected_quest_index;
-                            self.selected_quest_index = if current >= quest_count - 1 {
-                                0
-                            } else {
-                                current + 1
-                            };
+                            self.selected_quest_index =
+                                move_index(self.selected_quest_index, quest_count, true);
                             return true;
                         }
                         crossterm::event::KeyCode::Enter => {

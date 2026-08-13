@@ -1,7 +1,9 @@
 use crate::app::App;
 use crate::events::ApiEvent;
 use crate::network::envelopes::ResponseEnvelope;
-use crate::states::game::{ChatChannel, ChatMessage, DialogueState, END_OF_DIALOGUE_TAG};
+use crate::states::game::{
+    ChatChannel, ChatMessage, DialogueState, END_OF_DIALOGUE_TAG, Overlay, OverlayKind,
+};
 use crate::states::ui::Notification;
 use api_client::commands::LookCommand;
 use api_client::events::{GameServerEvent, GroupEvent, RoomEvent, ServerEvent};
@@ -151,10 +153,10 @@ impl App {
                     let ends_dialog_only = ends_dialog && text.starts_with(END_OF_DIALOGUE_TAG);
 
                     if ends_dialog_only {
-                        if self.state.game.ui.active_dialogue.is_none() {
+                        if !self.state.game.ui.is_open(OverlayKind::Dialogue) {
                             text = "**nothing**".to_string();
                         } else {
-                            self.state.game.ui.close_dialogue();
+                            self.state.game.ui.close(OverlayKind::Dialogue);
                             return;
                         }
                     } else if ends_dialog {
@@ -165,7 +167,7 @@ impl App {
 
                     let display_name = self.state.game.manifest.get_npc_name(&cmd.npc_name);
 
-                    if self.state.game.ui.active_dialogue.is_none() {
+                    if !self.state.game.ui.is_open(OverlayKind::Dialogue) {
                         self.state
                             .game
                             .log_action(format!("You talked to {}.", display_name));
@@ -177,15 +179,18 @@ impl App {
                             .log_action(format!("[{}] says: \"{}\"", display_name, text));
                     }
 
-                    if let Some(ref mut dialog) = self.state.game.ui.active_dialogue {
+                    if let Some(dialog) = self.state.game.ui.dialogue_mut() {
                         dialog.add(text, ends_dialog);
                     } else {
-                        self.state.game.ui.active_dialogue = Some(DialogueState::new(
-                            cmd.npc_name,
-                            display_name,
-                            text,
-                            ends_dialog,
-                        ));
+                        self.state
+                            .game
+                            .ui
+                            .open(Overlay::Dialogue(DialogueState::new(
+                                cmd.npc_name,
+                                display_name,
+                                text,
+                                ends_dialog,
+                            )));
                     }
                 }
             }
@@ -251,12 +256,15 @@ impl App {
                         }
                     };
 
-                    self.state.game.ui.active_dialogue = Some(DialogueState::new(
-                        cmd.npc_name,
-                        display_name.clone(),
-                        text.clone(),
-                        true,
-                    ));
+                    self.state
+                        .game
+                        .ui
+                        .open(Overlay::Dialogue(DialogueState::new(
+                            cmd.npc_name,
+                            display_name.clone(),
+                            text.clone(),
+                            true,
+                        )));
 
                     self.state.game.log_action(text);
                 }

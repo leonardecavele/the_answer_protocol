@@ -1,5 +1,6 @@
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
+use crate::states::game::OverlayKind;
 use crate::ui::components::Lifecycle;
 use crate::ui::components::scrollable::ScrollableComponent;
 use crate::ui::theme::overlay_block;
@@ -26,7 +27,7 @@ impl HelpOverlayComponent {
 
 impl ScrollableComponent for HelpOverlayComponent {
     fn get_area(&self, state: &AppState, max_area: Rect) -> Rect {
-        if !state.game.ui.show_help_overlay {
+        if !state.game.ui.is_open(OverlayKind::Help) {
             return Rect::default();
         }
 
@@ -146,7 +147,7 @@ impl Lifecycle for HelpOverlayComponent {
         if let CrosstermEvent::Key(key) = event {
             match key.code {
                 KeyCode::Esc | KeyCode::Char('q') => {
-                    state.game.ui.show_help_overlay = false;
+                    state.game.ui.close(OverlayKind::Help);
                     return true;
                 }
                 KeyCode::Char('h') => {
@@ -154,7 +155,7 @@ impl Lifecycle for HelpOverlayComponent {
                         .modifiers
                         .contains(crossterm::event::KeyModifiers::CONTROL)
                     {
-                        state.game.ui.show_help_overlay = false;
+                        state.game.ui.close(OverlayKind::Help);
                         return true;
                     }
                 }

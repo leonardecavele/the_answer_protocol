@@ -1,8 +1,10 @@
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
+use crate::states::game::{Overlay, OverlayKind};
 use crate::ui::components::Component;
 use crate::ui::components::Lifecycle;
 use crate::ui::theme::overlay_block;
+use crate::ui::utils::{centered_rect, move_index};
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
 use mpsc::Sender;
 use ratatui::{
@@ -13,6 +15,8 @@ use ratatui::{
     widgets::{Clear, List, ListItem},
 };
 use tokio::sync::mpsc;
+
+const POPUP_WIDTH: u16 = 30;
 
 pub struct ItemPopupComponent {
     pub selected_action_index: usize,
@@ -41,24 +45,14 @@ impl ItemPopupComponent {
 
 impl Component for ItemPopupComponent {
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
-        let item_id = if let Some(id) = &state.game.ui.active_item_popup {
-            id
-        } else {
-            return;
+        let item_id = match state.game.ui.target_of(OverlayKind::ItemActions) {
+            Some(id) => id,
+            None => return,
         };
 
         let actions = self.get_actions(state, item_id);
 
-        let width = 30;
-        let height = actions.len() as u16 + 2; // +2 for borders
-        let x = area.x + (area.width.saturating_sub(width)) / 2;
-        let y = area.y + (area.height.saturating_sub(height)) / 2;
-        let popup_area = Rect {
-            x,
-            y,
-            width,
-            height,
-        };
+        let popup_area = centered_rect(area, POPUP_WIDTH, actions.len() as u16 + 2);
 
         let display_name = state
             .game
@@ -66,7 +60,7 @@ impl Component for ItemPopupComponent {
             .items
             .get(item_id)
             .map(|n| n.name.clone())
-            .unwrap_or_else(|| item_id.clone());
+            .unwrap_or_else(|| item_id.to_string());
 
         let title = format!(" {} ", display_name);
 
@@ -101,10 +95,9 @@ impl Lifecycle for ItemPopupComponent {
         event: &CrosstermEvent,
         event_sender: &Sender<ApplicationEvent>,
     ) -> bool {
-        let item_id = if let Some(id) = state.game.ui.active_item_popup.clone() {
-            id
-        } else {
-            return false;
+        let item_id = match state.game.ui.target_of(OverlayKind::ItemActions) {
+            Some(id) => id.to_string(),
+            None => return false,
         };
 
         if let CrosstermEvent::Key(key) = event {
@@ -113,24 +106,17 @@ impl Lifecycle for ItemPopupComponent {
 
             match key.code {
                 KeyCode::Up => {
-                    self.selected_action_index = if self.selected_action_index == 0 {
-                        count.saturating_sub(1)
-                    } else {
-                        self.selected_action_index - 1
-                    };
+                    self.selected_action_index =
+                        move_index(self.selected_action_index, count, false);
                     return true;
                 }
                 KeyCode::Down => {
                     self.selected_action_index =
-                        if self.selected_action_index >= count.saturating_sub(1) {
-                            0
-                        } else {
-                            self.selected_action_index + 1
-                        };
+                        move_index(self.selected_action_index, count, true);
                     return true;
                 }
                 KeyCode::Esc => {
-                    state.game.ui.active_item_popup = None;
+                    state.game.ui.close_top();
                     self.selected_action_index = 0;
                     return true;
                 }
@@ -138,7 +124,9 @@ impl Lifecycle for ItemPopupComponent {
                     if let Some(act) = actions.get(self.selected_action_index) {
                         match act.as_str() {
                             "VIEW" => {
-                                state.game.ui.active_item_view_popup = Some(item_id.clone());
+                                state.game.ui.open(Overlay::ItemView {
+                                    item_id: item_id.clone(),
+                                });
                                 return true;
                             }
                             "CANCEL" => {}
@@ -150,7 +138,7 @@ impl Lifecycle for ItemPopupComponent {
                         }
                     }
 
-                    state.game.ui.active_item_popup = None;
+                    state.game.ui.close_top();
                     self.selected_action_index = 0;
                     return true;
                 }
