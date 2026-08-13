@@ -231,7 +231,7 @@ impl GameManager {
                     data,
                 );
             }
-            "FIGHT CREATE" => {
+            "FIGHT_CREATE" => {
                 let npc_id = match self.verify_combat_target(leader, command_name, data) {
                     Ok(id) => id,
                     Err(json_response) => return json_response,
@@ -606,7 +606,7 @@ impl GameManager {
                 .dump();
             }
 
-            "FIGHT ATTACK" => {
+            "FIGHT_ATTACK" => {
                 // NOT IMPLEMENTED YET,
                 // this will be the part that refactors attack and defend part since it will be used to
                 // send code to the server so it can be tested
