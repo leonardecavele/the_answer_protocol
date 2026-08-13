@@ -10,6 +10,7 @@ import (
 	"go_server/helper"
 	"go_server/logger"
 	"go_server/session"
+	"io"
 	"net"
 	"os"
 	"os/signal"
@@ -30,6 +31,14 @@ func shutdownServer(quit chan struct{}, listener net.Listener, stopOnce *sync.On
 }
 
 func main() {
+	logFile, logErr := os.Create("app.log")
+	if logErr != nil {
+		logger.AppLogger.Error("Log file error: %v", logErr)
+		return
+	}
+	defer logFile.Close()
+	logger.AppLogger.SetOutput(io.MultiWriter(os.Stdout, logFile))
+
 	validProtocol := false
 	for n := range config.SupportedProtocols {
 		if config.SupportedProtocols[n] == config.ProtocolVersion {
