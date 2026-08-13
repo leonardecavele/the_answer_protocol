@@ -89,6 +89,15 @@ impl ScrollableComponent for HelpOverlayComponent {
             Line::from("  enter: open interaction menu"),
             Line::from(""),
             Line::from(vec![Span::styled(
+                "Quest list",
+                Style::default()
+                    .fg(Color::Yellow)
+                    .add_modifier(Modifier::BOLD),
+            )]),
+            Line::from("  up/down: select quest"),
+            Line::from("  enter: open quest details"),
+            Line::from(""),
+            Line::from(vec![Span::styled(
                 "Interaction menus & chat",
                 Style::default()
                     .fg(Color::Yellow)

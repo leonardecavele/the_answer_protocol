@@ -12,7 +12,7 @@ use crate::ui::views::game::components::{INVENTORY_ITEM_HEIGHT, INVENTORY_ITEM_W
 use components::{
     CenterPanelComponent, ChatOverlayComponent, DialoguePopupComponent, FooterComponent,
     HeaderComponent, HelpOverlayComponent, ItemPopupComponent, ItemViewPopupComponent,
-    LeftPanelComponent, NpcActionPopup, RightPanelComponent,
+    LeftPanelComponent, NpcActionPopup, QuestViewPopupComponent, RightPanelComponent,
 };
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
 use ratatui::Frame;
@@ -29,6 +29,7 @@ pub struct GameView {
     npc_popup: NpcActionPopup,
     item_popup: ItemPopupComponent,
     item_view_popup: ItemViewPopupComponent,
+    quest_view_popup: QuestViewPopupComponent,
     dialogue_popup: Scrollable<DialoguePopupComponent>,
     help_overlay: Scrollable<HelpOverlayComponent>,
     right_panel_area: Option<Rect>,
@@ -47,6 +48,7 @@ impl GameView {
             npc_popup: NpcActionPopup::new(),
             item_popup: ItemPopupComponent::new(),
             item_view_popup: ItemViewPopupComponent::new(),
+            quest_view_popup: QuestViewPopupComponent::new(),
             dialogue_popup: Scrollable::new(DialoguePopupComponent::new()),
             help_overlay: Scrollable::new(HelpOverlayComponent::new()),
             right_panel_area: None,
@@ -104,6 +106,7 @@ impl Component for GameView {
                 OverlayKind::NpcActions => self.npc_popup.draw(state, frame, area),
                 OverlayKind::ItemActions => self.item_popup.draw(state, frame, area),
                 OverlayKind::ItemView => self.item_view_popup.draw(state, frame, area),
+                OverlayKind::QuestView => self.quest_view_popup.draw(state, frame, area),
                 OverlayKind::Dialogue => self.dialogue_popup.draw(state, frame, area),
             }
         }
@@ -143,6 +146,10 @@ impl Lifecycle for GameView {
                 }
                 OverlayKind::ItemView => {
                     self.item_view_popup
+                        .handle_terminal_event(state, event, event_sender)
+                }
+                OverlayKind::QuestView => {
+                    self.quest_view_popup
                         .handle_terminal_event(state, event, event_sender)
                 }
                 OverlayKind::Dialogue => {

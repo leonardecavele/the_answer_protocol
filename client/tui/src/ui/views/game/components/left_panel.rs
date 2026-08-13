@@ -2,7 +2,7 @@ use crate::data::manifest::NpcType;
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
 use crate::states::game::GameFocus;
-use crate::states::game::Overlay::{ItemActions, NpcActions};
+use crate::states::game::Overlay::{ItemActions, NpcActions, QuestView};
 use crate::ui::components::Component;
 use crate::ui::components::Lifecycle;
 use crate::ui::theme::default_block;
@@ -281,12 +281,11 @@ impl Lifecycle for LeftPanelComponent {
                             return true;
                         }
                         crossterm::event::KeyCode::Enter => {
-                            if let Some(_quest_id) =
+                            if let Some(quest) =
                                 state.game.player.quests.get(self.selected_quest_index)
                             {
-                                state
-                                    .game
-                                    .log_action("TODO: overlay for quest selection".to_string());
+                                let quest_id = quest.quest_id.clone();
+                                state.game.ui.open(QuestView { quest_id });
                                 return true;
                             }
                         }

@@ -45,6 +45,7 @@ pub enum Overlay {
     NpcActions { npc_id: String },
     ItemActions { item_id: String },
     ItemView { item_id: String },
+    QuestView { quest_id: String },
     Dialogue(DialogueState),
 }
 
@@ -55,6 +56,7 @@ pub enum OverlayKind {
     NpcActions,
     ItemActions,
     ItemView,
+    QuestView,
     Dialogue,
 }
 
@@ -66,6 +68,7 @@ impl Overlay {
             Overlay::NpcActions { .. } => OverlayKind::NpcActions,
             Overlay::ItemActions { .. } => OverlayKind::ItemActions,
             Overlay::ItemView { .. } => OverlayKind::ItemView,
+            Overlay::QuestView { .. } => OverlayKind::QuestView,
             Overlay::Dialogue(_) => OverlayKind::Dialogue,
         }
     }
@@ -301,6 +304,7 @@ impl GameUiState {
                 Overlay::ItemActions { item_id } | Overlay::ItemView { item_id } => {
                     Some(item_id.as_str())
                 }
+                Overlay::QuestView { quest_id } => Some(quest_id.as_str()),
                 _ => None,
             })
     }
