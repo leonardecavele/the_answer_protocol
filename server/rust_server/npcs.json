@@ -182,12 +182,19 @@
         ]
       ],
       "quests": [
-        "Librairie Quarante-Deux",
-        "Tunnel",
-        "Caillou Papier Ciseaux",
-        "Normi-quoi ?",
-        "Tic et Tac et Toe",
-        "Des wraps ! Plus de wraps !"
+        "Le pourriez-vous ?",
+        "Peut-être que oui",
+        "Bon bah trois",
+        "Aucune idée",
+        "Le premier truc",
+        "Plus haut encore",
+        "Tout en bas là",
+        "Ça devrait passer",
+        "Un petit effort",
+        "Dedans, dehors",
+        "SIX ! SEVEN !",
+        "Une marche s'impose.",
+        "Tunnel"
       ],
       "spawns": "devant_le_bocal"
     },
