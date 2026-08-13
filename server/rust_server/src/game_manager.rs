@@ -505,7 +505,7 @@ impl GameManager {
 
         self.all_npcs
             .iter()
-            .find(|(_, npc)| npc.get_spawn_room() == room_needed)
+            .find(|(_, npc)| npc.get_spawn_room() == room_needed && npc.get_name() == npc_rep)
             .map(|(npc_id, npc)| (npc_id.clone(), npc.get_name().clone()))
     }
 
