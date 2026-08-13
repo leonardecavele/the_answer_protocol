@@ -15,7 +15,7 @@ impl Loot {
         json::object! {
             "qty" => self.qty,
             "chance" => self.chance,
-            "loot_type" => self.loot_type.to_string(),
+            "type" => self.loot_type.to_string(),
         }
     }
 }
@@ -68,10 +68,11 @@ impl Quest {
         &self.description
     }
 
-    pub fn get_json_loots(&self) -> Vec<JsonValue> {
-        return self.loots.iter().map(|loot| {
+    pub fn get_json_loots(&self) -> JsonValue {
+        let vec: Vec<JsonValue> = self.loots.iter().map(|loot| {
             loot.to_json()
         }).collect();
+        JsonValue::Array(vec)
     }
 
     pub fn get_loots(&self) -> &Vec<Loot> {

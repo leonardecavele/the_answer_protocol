@@ -3,7 +3,7 @@ use crate::constantes::{
 };
 use crate::game_manager::GameManager;
 use crate::items::{Item, ItemId};
-use crate::npc::{Npc, NpcId};
+use crate::npc::NpcId;
 use crate::quests::QuestState;
 use crate::room::Room;
 use json::{JsonValue, object};
@@ -572,6 +572,12 @@ impl GameManager {
                 )
                 .dump();
             }
+
+            // "SEND_CODE_PART" => {
+            //     // NOT IMPLEMENTED YET
+            //     // this will be the part that refactors attack and defend part since it will be used to
+            //     // send code to the server so it can be tested
+            // }
             "ATTACK" => {
                 let npc_id = match self.verify_combat_target(player_name, command_name, data) {
                     Ok(id) => id,
