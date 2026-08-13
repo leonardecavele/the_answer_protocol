@@ -744,6 +744,7 @@ impl GameManager {
             }
             "QUESTS" => {
                 let player_id = *self.get_player_id(player_name).unwrap();
+                
                 let quests = self
                     .quest_instances
                     .iter()
@@ -755,14 +756,16 @@ impl GameManager {
                         "description" => quest.get_description(),
                         "reward" => quest.get_json_loots(),
                         "status" => QuestState::InProgress.to_str() }
-                        .dump()
                     })
                     .collect::<Vec<_>>();
+                let quests_json: JsonValue = JsonValue::Array(quests);
+                
+                
                 return generate_json(
                     player_name,
                     command_name,
                     ErrorCode::NoError,
-                    format!("{:?}", quests).as_str(),
+                    quests_json.dump().as_str(),
                 )
                 .dump();
             }
