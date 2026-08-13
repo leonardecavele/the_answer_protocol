@@ -3,7 +3,9 @@ use crate::protocol::command::Command;
 use crate::protocol::response::ServerResponse;
 
 #[derive(Debug, Clone)]
-pub struct FightCreateCommand;
+pub struct FightCreateCommand {
+    pub npc_id: String,
+}
 
 #[derive(Debug, Clone)]
 pub struct FightCreateResponse;
@@ -12,7 +14,7 @@ impl Command for FightCreateCommand {
     type ResponseData = FightCreateResponse;
 
     fn encode(&self) -> String {
-        "FIGHT CREATE".to_string()
+        format!("FIGHT CREATE {}", self.npc_id)
     }
 
     fn parse_response(&self, response: ServerResponse) -> Result<Self::ResponseData, CommandError> {
@@ -39,7 +41,9 @@ impl Command for FightCreateCommand {
         Ok(FightCreateResponse)
     }
 
-    fn from_str(_args: &str) -> Option<Self> {
-        Some(Self)
+    fn from_str(args: &str) -> Option<Self> {
+        Some(Self {
+            npc_id: args.to_string(),
+        })
     }
 }
