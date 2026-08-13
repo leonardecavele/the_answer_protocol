@@ -623,7 +623,7 @@ impl GameManager {
                             player_name,
                             command_name,
                             ErrorCode::NoError,
-                            "OK SUCCEED",
+                            "SUCCEED",
                         )
                         .dump();
                     }
