@@ -573,11 +573,11 @@ impl GameManager {
                 .dump();
             }
 
-            "SEND_CODE_PART" => {
-                // NOT IMPLEMENTED YET
-                // this will be the part that refactors attack and defend part since it will be used to
-                // send code to the server so it can be tested
-            }
+            // "SEND_CODE_PART" => {
+            //     // NOT IMPLEMENTED YET
+            //     // this will be the part that refactors attack and defend part since it will be used to
+            //     // send code to the server so it can be tested
+            // }
             "ATTACK" => {
                 let npc_id = match self.verify_combat_target(player_name, command_name, data) {
                     Ok(id) => id,
