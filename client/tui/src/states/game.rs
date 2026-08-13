@@ -46,6 +46,7 @@ pub enum Overlay {
     ItemActions { item_id: String },
     ItemView { item_id: String },
     QuestView { quest_id: String },
+    EditorCode { code: String },
     Dialogue(DialogueState),
 }
 
@@ -57,6 +58,7 @@ pub enum OverlayKind {
     ItemActions,
     ItemView,
     QuestView,
+    EditorView,
     Dialogue,
 }
 
@@ -69,6 +71,7 @@ impl Overlay {
             Overlay::ItemActions { .. } => OverlayKind::ItemActions,
             Overlay::ItemView { .. } => OverlayKind::ItemView,
             Overlay::QuestView { .. } => OverlayKind::QuestView,
+            Overlay::EditorCode { .. } => OverlayKind::EditorView,
             Overlay::Dialogue(_) => OverlayKind::Dialogue,
         }
     }
@@ -305,6 +308,7 @@ impl GameUiState {
                     Some(item_id.as_str())
                 }
                 Overlay::QuestView { quest_id } => Some(quest_id.as_str()),
+                Overlay::EditorCode { code } => Some(code.as_str()),
                 _ => None,
             })
     }

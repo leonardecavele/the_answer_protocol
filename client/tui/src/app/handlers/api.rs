@@ -2,7 +2,7 @@ use crate::app::App;
 use crate::events::ApiEvent;
 use crate::network::envelopes::ResponseEnvelope;
 use crate::states::game::{
-    ChatChannel, ChatMessage, DialogueState, END_OF_DIALOGUE_TAG, Overlay, OverlayKind,
+    ChatChannel, ChatMessage, DialogueState, Overlay, OverlayKind, END_OF_DIALOGUE_TAG,
 };
 use crate::states::ui::Notification;
 use api_client::commands::LookCommand;
@@ -56,6 +56,8 @@ impl App {
                     .game
                     .log_action("You checked who is here.".to_string());
             }
+            ApiResponse::FightCreate(Ok(_)) => {}
+            ApiResponse::FightAttack(Ok(_)) => {}
             ApiResponse::Status(Ok(status_res)) => {
                 self.state.game.player.hp = status_res.player_status.hp;
                 self.state.game.player.max_hp = status_res.player_status.max_hp;
@@ -380,6 +382,16 @@ impl App {
                     .room
                     .npcs
                     .retain(|npc_id| npc_id.to_string() != kill_data.npc_id);
+            }
+            ServerEvent::FightStart(fight_data) => {
+                self.state
+                    .game
+                    .log_action("[TODO] fight start server event".to_string());
+            }
+            ServerEvent::FightEnd => {
+                self.state
+                    .game
+                    .log_action("[TODO] fight end server event".to_string());
             }
             ServerEvent::Quit(name) => {
                 self.state.game.server.online_players_count = self

@@ -1,4 +1,5 @@
 use crate::protocol::response::ServerResponse;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone)]
 pub struct ChatMessage {
@@ -16,6 +17,15 @@ pub struct SpawnData {
 pub struct KillData {
     pub player: String,
     pub npc_id: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct FightStartData {
+    pub code: String,
+    pub time: u64,
+    pub nl_sep: String,
+    pub sp_sep: String,
+    pub npc: String,
 }
 
 #[derive(Debug, Clone)]
@@ -49,6 +59,8 @@ pub enum ServerEvent {
     Spawn(SpawnData),
     Despawn(SpawnData),
     Kill(KillData),
+    FightStart(FightStartData),
+    FightEnd,
     Quit(String),
     Room(RoomEvent),
     Group(GroupEvent),
@@ -114,6 +126,16 @@ impl From<ServerResponse> for ServerEvent {
                 player: player_name.to_string(),
                 npc_id: npc_id.to_string(),
             }),
+
+            ["FIGHT", "START", args @ ..] => {
+                let parsed_args = serde_json::from_str::<FightStartData>(args.join(" ").as_str());
+
+                match parsed_args {
+                    Ok(fight_start_data) => ServerEvent::FightStart(fight_start_data),
+                    Err(_) => ServerEvent::Unknown(args.join(" ")),
+                }
+            }
+            ["FIGHT", "END"] => ServerEvent::FightEnd,
 
             ["QUIT", name] => ServerEvent::Quit(name.to_string()),
 

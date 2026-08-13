@@ -12,6 +12,8 @@ pub mod left_panel;
 pub mod npc_popup;
 pub mod quest_view_popup;
 pub mod right_panel;
+pub mod editor_view_popup;
+
 pub use center_panel::CenterPanelComponent;
 pub use chat_overlay::ChatOverlayComponent;
 pub use dialogue_popup::DialoguePopupComponent;

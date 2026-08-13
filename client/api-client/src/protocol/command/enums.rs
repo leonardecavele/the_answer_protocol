@@ -1,3 +1,4 @@
+use crate::commands::{FightAttackCommand, FightAttackResponse, FightCreateCommand, FightCreateResponse};
 use crate::error::CommandError;
 
 // Command Imports
@@ -97,6 +98,8 @@ define_api_protocol! {
     Look(LookCommand, LookResponse) => "look",
     Move(MoveCommand, MoveResponse) => "move",
     Who(WhoCommand, WhoResponse) => "who",
+    FightCreate(FightCreateCommand, FightCreateResponse) => "fc",
+    FightAttack(FightAttackCommand, FightAttackResponse) => "fa",
     GlobalChat(GlobalChatCommand, GlobalChatResponse) => "say",
     PrivateChat(PrivateChatCommand, PrivateChatResponse) => "msg",
     Take(TakeCommand, TakeResponse) => "take",
