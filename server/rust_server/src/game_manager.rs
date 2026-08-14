@@ -826,7 +826,10 @@ impl GameManager {
         let sender = self.tester_sender.clone();
         let mut response = object! {"player": player, "npc_id": npc_id, "success": false};
         std::thread::spawn(move || {
-            let result = crate::tester::test(code.as_str());
+            // The combat instance does not expose its exercise file yet.
+            // Keep this fail-closed until that filename is stored and passed
+            // here: tester::test rejects unknown filenames.
+            let result = test("", code.as_str());
             response["success"] = result.into();
             let _ = sender.send(response.dump());
         });
