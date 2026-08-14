@@ -13,7 +13,7 @@ pub enum FightAttackStatus {
 
 #[derive(Debug, Clone)]
 pub struct FightAttackCommand {
-    code: String,
+    pub code: String,
 }
 
 #[derive(Debug, Clone)]
@@ -42,7 +42,7 @@ impl Command for FightAttackCommand {
             });
         }
 
-        if [SUCCESS_KEY, FAILURE_KEY].contains(&response.arguments[0].as_str()) {
+        if ![SUCCESS_KEY, FAILURE_KEY].contains(&response.arguments[0].as_str()) {
             return Err(CommandError {
                 code: None,
                 message: failed_arguments_message,

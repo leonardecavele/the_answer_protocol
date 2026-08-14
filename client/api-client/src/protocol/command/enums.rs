@@ -1,4 +1,6 @@
-use crate::commands::{FightAttackCommand, FightAttackResponse, FightCreateCommand, FightCreateResponse};
+use crate::commands::{
+    FightAttackCommand, FightAttackResponse, FightCreateCommand, FightCreateResponse,
+};
 use crate::error::CommandError;
 
 // Command Imports

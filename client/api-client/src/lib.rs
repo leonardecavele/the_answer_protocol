@@ -10,7 +10,8 @@ pub use protocol::response::{Opcode, ServerResponse};
 
 pub mod events {
     pub use crate::client::event::{
-        ChatMessage, GameServerEvent, GroupEvent, RoomEvent, ServerEvent, SpawnData,
+        ChatMessage, FightStartData, GameServerEvent, GroupEvent, KillData, RoomEvent, ServerEvent,
+        SpawnData,
     };
 }
 
@@ -29,8 +30,8 @@ pub mod commands {
         FightCreateCommand, FightCreateResponse,
     };
     pub use crate::protocol::command::core::look::{LookCommand, LookResponse, LookRoom};
-    pub use crate::protocol::command::core::quit::{QuitCommand, QuitResponse};
     pub use crate::protocol::command::core::r#move::{MoveCommand, MoveResponse};
+    pub use crate::protocol::command::core::quit::{QuitCommand, QuitResponse};
     pub use crate::protocol::command::core::who::{WhoCommand, WhoResponse};
     pub use crate::protocol::command::group::create::{GroupCreateCommand, GroupCreateResponse};
     pub use crate::protocol::command::group::invite::{GroupInviteCommand, GroupInviteResponse};

@@ -1,5 +1,5 @@
 use crate::data::manifest::Manifest;
-use api_client::commands::QuestData;
+use api_client::commands::{FightAttackStatus, QuestData};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
@@ -46,7 +46,6 @@ pub enum Overlay {
     ItemActions { item_id: String },
     ItemView { item_id: String },
     QuestView { quest_id: String },
-    EditorCode { code: String },
     Dialogue(DialogueState),
 }
 
@@ -58,7 +57,6 @@ pub enum OverlayKind {
     ItemActions,
     ItemView,
     QuestView,
-    EditorView,
     Dialogue,
 }
 
@@ -71,7 +69,6 @@ impl Overlay {
             Overlay::ItemActions { .. } => OverlayKind::ItemActions,
             Overlay::ItemView { .. } => OverlayKind::ItemView,
             Overlay::QuestView { .. } => OverlayKind::QuestView,
-            Overlay::EditorCode { .. } => OverlayKind::EditorView,
             Overlay::Dialogue(_) => OverlayKind::Dialogue,
         }
     }
@@ -308,7 +305,6 @@ impl GameUiState {
                     Some(item_id.as_str())
                 }
                 Overlay::QuestView { quest_id } => Some(quest_id.as_str()),
-                Overlay::EditorCode { code } => Some(code.as_str()),
                 _ => None,
             })
     }
@@ -345,12 +341,34 @@ impl GameUiState {
 }
 //endregion
 
+//region Fight
+pub struct FightState {
+    pub submitted: bool,
+    pub status: Option<FightAttackStatus>,
+}
+
+impl FightState {
+    pub fn new() -> Self {
+        Self {
+            submitted: false,
+            status: None,
+        }
+    }
+
+    pub fn reset(&mut self) {
+        self.submitted = false;
+        self.status = None;
+    }
+}
+//endregion
+
 pub struct GameState {
     pub player: PlayerState,
     pub group: GroupState,
     pub room: RoomState,
     pub server: ServerState,
     pub ui: GameUiState,
+    pub fight: FightState,
     pub manifest: Arc<Manifest>,
 
     pub chat_history: Vec<ChatMessage>,
@@ -365,6 +383,7 @@ impl GameState {
             room: RoomState::new(),
             server: ServerState::new(),
             ui: GameUiState::new(),
+            fight: FightState::new(),
             manifest,
             chat_history: Vec::new(),
             action_logs: Vec::new(),

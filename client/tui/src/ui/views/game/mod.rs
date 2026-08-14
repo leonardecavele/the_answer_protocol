@@ -1,23 +1,23 @@
 pub mod components;
 
-use crate::events::ApplicationEvent;
+use crate::events::{ApiEvent, ApplicationEvent};
 use crate::states::app::AppState;
+use crate::ui::components::scrollable::Scrollable;
 use crate::ui::components::Component;
 use crate::ui::components::Lifecycle;
-use crate::ui::components::scrollable::Scrollable;
 
 use crate::states::game::{GameFocus, Overlay, OverlayKind};
 use crate::ui::components::interactive::is_mouse_in_rect;
-use crate::ui::views::game::components::editor_view_popup::EditorViewPopupComponent;
 use crate::ui::views::game::components::{INVENTORY_ITEM_HEIGHT, INVENTORY_ITEM_WIDTH};
+use api_client::events::{FightStartData, ServerEvent};
 use components::{
     CenterPanelComponent, ChatOverlayComponent, DialoguePopupComponent, FooterComponent,
     HeaderComponent, HelpOverlayComponent, ItemPopupComponent, ItemViewPopupComponent,
     LeftPanelComponent, NpcActionPopup, QuestViewPopupComponent, RightPanelComponent,
 };
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
-use ratatui::Frame;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
+use ratatui::Frame;
 use tokio::sync::mpsc;
 
 pub struct GameView {
@@ -31,7 +31,6 @@ pub struct GameView {
     item_popup: ItemPopupComponent,
     item_view_popup: ItemViewPopupComponent,
     quest_view_popup: QuestViewPopupComponent,
-    editor_view_popup: EditorViewPopupComponent,
     dialogue_popup: Scrollable<DialoguePopupComponent>,
     help_overlay: Scrollable<HelpOverlayComponent>,
     right_panel_area: Option<Rect>,
@@ -51,7 +50,6 @@ impl GameView {
             item_popup: ItemPopupComponent::new(),
             item_view_popup: ItemViewPopupComponent::new(),
             quest_view_popup: QuestViewPopupComponent::new(),
-            editor_view_popup: EditorViewPopupComponent::new(),
             dialogue_popup: Scrollable::new(DialoguePopupComponent::new()),
             help_overlay: Scrollable::new(HelpOverlayComponent::new()),
             right_panel_area: None,
@@ -110,7 +108,6 @@ impl Component for GameView {
                 OverlayKind::ItemActions => self.item_popup.draw(state, frame, area),
                 OverlayKind::ItemView => self.item_view_popup.draw(state, frame, area),
                 OverlayKind::QuestView => self.quest_view_popup.draw(state, frame, area),
-                OverlayKind::EditorView => self.editor_view_popup.draw(state, frame, area),
                 OverlayKind::Dialogue => self.dialogue_popup.draw(state, frame, area),
             }
         }
@@ -156,10 +153,6 @@ impl Lifecycle for GameView {
                     self.quest_view_popup
                         .handle_terminal_event(state, event, event_sender)
                 }
-                OverlayKind::EditorView => {
-                    self.editor_view_popup
-                        .handle_terminal_event(state, event, event_sender)
-                }
                 OverlayKind::Dialogue => {
                     self.dialogue_popup
                         .handle_terminal_event(state, event, event_sender)
@@ -178,18 +171,6 @@ impl Lifecycle for GameView {
                     .contains(crossterm::event::KeyModifiers::CONTROL)
             {
                 state.game.ui.toggle(Overlay::Help);
-                return true;
-            }
-
-            // TODO: a retirer
-            if key.code == KeyCode::Char('g')
-                && key
-                    .modifiers
-                    .contains(crossterm::event::KeyModifiers::CONTROL)
-            {
-                state.game.ui.toggle(Overlay::EditorCode {
-                    code: "int main(){}".to_string(),
-                });
                 return true;
             }
         }

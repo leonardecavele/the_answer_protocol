@@ -100,7 +100,7 @@ impl App {
     }
 
     fn push_event(&mut self, title: &str, text: String) {
-        let time_str = chrono::Local::now().format("%H:%M:%S").to_string();
+        let time_str = chrono::Local::now().format("%H:%M:%S%.3f").to_string();
         self.state.ui.event_history.push(format!(
             "[{}] [{}] {}",
             time_str,

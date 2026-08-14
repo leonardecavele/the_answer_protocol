@@ -25,7 +25,9 @@ pub struct FightStartData {
     pub time: u64,
     pub nl_sep: String,
     pub sp_sep: String,
-    pub npc: String,
+    pub npc_id: String,
+    pub npc_hp: u64,
+    pub npc_max_hp: u64,
 }
 
 #[derive(Debug, Clone)]
