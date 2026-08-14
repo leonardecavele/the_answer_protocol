@@ -51,6 +51,7 @@ impl CombatInstanceManager {
         let instance = CombatInstance::new(npc_id, leader, npc_hp, players_ids);
         self.instances.insert(npc_id, instance);
     }
+
     pub fn remove_finished_instances(&mut self) {
         self.instances
             .retain(|_, instance| !instance.all_players_finished());
@@ -101,7 +102,6 @@ impl CombatInstance {
     pub fn all_players_finished(&self) -> bool {
         self.players_success.values().all(|s| s.is_some())
     }
-    
 
     pub fn set_player_success(&mut self, player_id: PlayerId, success: bool) {
         self.players_success.insert(player_id, Some(success));

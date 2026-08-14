@@ -476,13 +476,10 @@ impl GameManager {
                     ncp.get_protocol_representation(),
                 )
             };
-            let mut players_to_send_event = self.get_all_players_at_room(&room_name);
+            let players_to_send_event = self.get_all_players_at_room(&room_name);
             let data = format!("type=NPC id={}", ncp_rep);
-            let event = GameManager::generate_no_player_event_json(
-                &mut players_to_send_event,
-                "SPAWN",
-                &data,
-            );
+            let event =
+                GameManager::generate_no_player_event_json(&players_to_send_event, "SPAWN", &data);
             self.add_diff_to_tick(event);
         }
     }
@@ -504,7 +501,7 @@ impl GameManager {
 
         self.all_npcs
             .iter()
-            .find(|(_, npc)| npc.get_spawn_room() == room_needed)
+            .find(|(_, npc)| npc.get_spawn_room() == room_needed && npc.get_name() == npc_rep)
             .map(|(npc_id, npc)| (npc_id.clone(), npc.get_name().clone()))
     }
 
@@ -783,8 +780,37 @@ impl GameManager {
             .map(|room| room.get_id())
             .unwrap_or(2 as RoomId)
     }
-
+    pub fn get_finished_instances_players(&mut self) -> Vec<Vec<PlayerId>> {
+        let mut vec: Vec<Vec<PlayerId>> = Vec::new();
+        let mut players: Vec<PlayerId> = Vec::new();
+        for (_npc_id, instance) in self.combat_instances.instances.iter() {
+            if instance.all_players_finished() {
+                players.extend(instance.get_grouped_players());
+                players.push(instance.get_leader());
+            }
+            vec.push(players.clone());
+            players.clear();
+        }
+        vec
+    }
     pub fn remove_finished_combat_instances(&mut self) {
+        let finished_instances_players = self.get_finished_instances_players();
+        for grouped_players in finished_instances_players {
+            if !grouped_players.is_empty() {
+                let mut grouped_players_strings: Vec<String> = Vec::new();
+                for player in grouped_players {
+                    if let Some(player) = self.get_player(player) {
+                        grouped_players_strings.push(player.get_name().to_string());
+                    }
+                }
+                let event = GameManager::generate_no_player_event_json(
+                    &grouped_players_strings,
+                    "FIGHT END",
+                    "",
+                );
+                self.add_diff_to_tick(event);
+            }
+        }
         self.combat_instances.remove_finished_instances();
     }
 

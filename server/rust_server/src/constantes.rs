@@ -6,10 +6,12 @@ pub const NPC_DMG: u32 = 20;
 pub const MIN_DMG_DEALT: u32 = 5;
 pub const LOST_ITEM: u8 = 0;
 pub const T_SHIRT: u8 = 2;
+pub const CODE_NL_SEP: &str = "<NL>";
+pub const CODE_SP_SEP: &str = "<SP>";
 pub const LOST_ITEM_SPAWN: &str = "pature";
 pub const LOST_ITEM_SPAWN_ID: RoomId = 2 as RoomId;
 pub const PLAYER_ROOM_SPAWN: &str = "devant_l_ecole";
-pub const MAX_TIME_FOR_COMBAT: Duration = Duration::from_secs(45);
+pub const MAX_TIME_FOR_COMBAT: Duration = Duration::from_mins(3);
 pub const NPC_RESPAWN_TIME: Duration = Duration::from_secs(30);
 pub const ITEM_DESPAWN_TIME: Duration = Duration::from_mins(1);
 pub const TICK_TIME_AMPLIFICATION: u64 = 1;
@@ -52,6 +54,8 @@ pub enum ErrorCode {
     PlayerNotFound,
     NpcInCombat,
     ActionAlreadyTaken,
+    PlayerAlreadyInCombat,
+    PlayerNotInCombat,
 }
 
 impl ErrorCode {
@@ -75,6 +79,8 @@ impl ErrorCode {
             Self::NpcNotInRoom => 407,
             Self::NpcInCombat => 408,
             Self::ActionAlreadyTaken => 409,
+            Self::PlayerAlreadyInCombat => 410,
+            Self::PlayerNotInCombat => 411,
             Self::ConnectionFailed => 900,
             Self::SendFailed => 901,
             Self::InvalidGroupCommand => 997,
