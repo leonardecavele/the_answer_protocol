@@ -133,11 +133,14 @@ impl GameManager {
             .iter()
             .filter_map(|name| self.get_player_id(name).copied())
             .collect();
+
+        let file_name = self.get_random_test_file_name();
         self.combat_instances.add_instance(
             leader_id,
             npc_id,
             self.get_npc_hp(npc_id).unwrap(),
             grouped_players_ids,
+            file_name.clone(),
         );
         let npc_representation = self
             .all_npcs
@@ -145,10 +148,17 @@ impl GameManager {
             .unwrap()
             .get_protocol_representation();
 
+        let code: String = std::fs::read_to_string(&file_name).unwrap();
+        let code_without_nl_sp = code.replace(" ", CODE_SP_SEP).replace("\n", CODE_NL_SEP);
         let mut players_to_notify = players.clone();
         players_to_notify.push(leader.to_string());
-        let code: String = format!("test1{}test2{}test3", CODE_SP_SEP, CODE_NL_SEP);
-        let args_to_send = object! { "code": code,"time": MAX_TIME_FOR_COMBAT.as_secs(), "nl_sep": CODE_NL_SEP, "sp_sep": CODE_SP_SEP, "npc_id": npc_representation, "npc_hp": self.get_npc_hp(npc_id).unwrap(), "npc_max_hp": self.get_npc_max_hp(npc_id).unwrap()}.dump();
+        let args_to_send = object! { "code": code_without_nl_sp,
+                                     "time": MAX_TIME_FOR_COMBAT.as_secs(),
+                                     "nl_sep": CODE_NL_SEP,
+                                     "sp_sep": CODE_SP_SEP,
+                                     "npc_id": npc_representation,
+                                     "npc_hp": self.get_npc_hp(npc_id).unwrap(),
+                                     "npc_max_hp": self.get_npc_max_hp(npc_id).unwrap()}.dump();
         let event = GameManager::generate_no_player_event_json(
             &players_to_notify,
             "FIGHT START",
@@ -350,10 +360,12 @@ impl GameManager {
                 let player_success = json["success"].as_bool().unwrap();
                 if player_success {
                     self.player_attacks_npc(20, *player_id, npc_id);
-                    let response_msg = generate_json(player, "FIGHT ATTACK", ErrorCode::NoError, "SUCCEED").dump();
+                    let response_msg =
+                        generate_json(player, "FIGHT ATTACK", ErrorCode::NoError, "SUCCEED").dump();
                     self.send_msg_to_client(response_msg)?;
                 } else {
-                    let response_msg = generate_json(player, "FIGHT ATTACK", ErrorCode::NoError, "FAIL").dump();
+                    let response_msg =
+                        generate_json(player, "FIGHT ATTACK", ErrorCode::NoError, "FAIL").dump();
                     self.send_msg_to_client(response_msg)?;
                 }
             }
@@ -642,10 +654,11 @@ impl GameManager {
                     .combat_instances
                     .get_instance_for_player(*self.get_player_id(player_name).unwrap())
                 {
+                    let file_name = player_instance.get_assigned_file_name();
                     let npc_id = player_instance.get_npc_id();
                     let sent_code = data;
                     /*check if the code is correct*/
-                    self.test_code(sent_code, player_name, npc_id);
+                    self.test_code(file_name, sent_code, player_name, npc_id);
                 }
 
                 return generate_json(player_name, command_name, ErrorCode::PlayerNotInCombat, "")
