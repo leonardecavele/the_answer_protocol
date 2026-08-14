@@ -797,10 +797,12 @@ impl GameManager {
         let finished_instances_players = self.get_finished_instances_players();
         for grouped_players in finished_instances_players {
             if !grouped_players.is_empty() {
-                let grouped_players_strings: Vec<String> = grouped_players
-                    .iter()
-                    .map(|id| self.players.get(id).unwrap().get_name().to_string())
-                    .collect();
+                let mut grouped_players_strings: Vec<String> = Vec::new();
+                for player in grouped_players {
+                    if let Some(player) = self.get_player(player) {
+                        grouped_players_strings.push(player.get_name().to_string());
+                    }
+                }
                 let event = GameManager::generate_no_player_event_json(
                     &grouped_players_strings,
                     "FIGHT END",

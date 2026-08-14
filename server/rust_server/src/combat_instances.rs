@@ -1,6 +1,6 @@
 use crate::npc::NpcId;
 use crate::player::PlayerId;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::time::Instant;
 
 pub struct CombatInstanceManager {
