@@ -1,5 +1,8 @@
 use crate::combat_instances::CombatInstanceManager;
-use crate::constantes::{Direction, MAX_TIME_FOR_COMBAT, NPC_DMG, NPC_RESPAWN_TIME};
+use crate::constantes::{
+    CODE_NL_SEP, CODE_SP_SEP, Direction, MAX_TIME_FOR_COMBAT, NPC_DMG, NPC_RESPAWN_TIME,
+    TEST_FILES_DIR,
+};
 use crate::inventory::Inventory;
 use crate::items::{Item, ItemId};
 use crate::npc::{Npc, NpcId};
@@ -13,6 +16,7 @@ use json::{JsonValue, object};
 use std::collections::HashMap;
 use std::io::Write;
 use std::net::TcpStream;
+use std::path::Path;
 use std::sync::mpsc;
 use std::time::Instant;
 use tracing::warn;
@@ -780,6 +784,41 @@ impl GameManager {
         self.all_items.get_mut(&item_id).unwrap()
     }
 
+    pub fn get_random_test_file_name(&self) -> String {
+        let mut all_files = Vec::new();
+        match std::fs::read_dir(TEST_FILES_DIR) {
+            Ok(entries) => {
+                for entry in entries {
+                    match entry {
+                        Ok(entry) => {
+                            let path = entry.path();
+                            if path.is_file() {
+                                if let Some(name) = path.file_name() {
+                                    all_files.push(name.to_str().unwrap().to_owned());
+                                }
+                            }
+                        }
+                        Err(e) => {
+                            warn!("error {}", e);
+                        }
+                    }
+                }
+            }
+            Err(e) => {
+                warn!("Failed to read test files directory: {}", e);
+            }
+        }
+
+        if all_files.is_empty() {
+            return String::new();
+        }
+
+        use rand::RngExt;
+        let mut rng = rand::rng();
+        let idx = rng.random_range(0..all_files.len());
+        all_files[idx].clone()
+    }
+
     pub fn get_room_id_from_name(&self, room_name: &str) -> RoomId {
         self.all_rooms
             .values()
@@ -821,17 +860,21 @@ impl GameManager {
         self.combat_instances.remove_finished_instances();
     }
 
-    pub fn test_code(&self, code_to_test: &str, player: &str, npc_id: NpcId) {
-        let code = code_to_test.to_string();
+    pub fn test_code(&self, file_name: &str, sent_code: &str, player: &str, npc_id: NpcId) {
         let sender = self.tester_sender.clone();
         let mut response = object! {"player": player, "npc_id": npc_id, "success": false};
+        let file_name_owned = file_name.to_owned();
+        let sent_code_owned = sent_code
+            .to_owned()
+            .replace(CODE_NL_SEP, "\n")
+            .replace(CODE_SP_SEP, " ");
+
         std::thread::spawn(move || {
-            let result = crate::tester::test(code.as_str());
+            let result = crate::tester::test(&file_name_owned, &sent_code_owned);
             response["success"] = result.into();
             let _ = sender.send(response.dump());
         });
     }
-
     pub fn get_nb_players_in_player_instance(&self, player_id: PlayerId) -> Option<u32> {
         self.combat_instances
             .instances
