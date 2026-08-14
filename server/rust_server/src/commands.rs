@@ -341,6 +341,26 @@ impl GameManager {
         Ok(npc_id)
     }
 
+    pub fn process_tester_responses(&mut self) -> std::io::Result<()> {
+        while let Ok(response) = self.tester_receiver.try_recv() {
+            let json = json::parse(&response).unwrap();
+            let player = json["player"].as_str().unwrap();
+            let npc_id = json["npc_id"].as_u32().unwrap();
+            if let Some(player_id) = self.get_player_id(player) {
+                let player_success = json["success"].as_bool().unwrap();
+                if player_success {
+                    self.player_attacks_npc(20, *player_id, npc_id);
+                    let response_msg = generate_json(player, "FIGHT ATTACK", ErrorCode::NoError, "SUCCEED").dump();
+                    self.send_msg_to_client(response_msg)?;
+                } else {
+                    let response_msg = generate_json(player, "FIGHT ATTACK", ErrorCode::NoError, "FAIL").dump();
+                    self.send_msg_to_client(response_msg)?;
+                }
+            }
+        }
+        Ok(())
+    }
+
     pub fn handle_message(&mut self, msg: String) -> String {
         /*
         read the message, simulate the corresponding action and return the response
@@ -622,21 +642,10 @@ impl GameManager {
                     .combat_instances
                     .get_instance_for_player(*self.get_player_id(player_name).unwrap())
                 {
-                    let player_id = *self.get_player_id(player_name).unwrap();
                     let npc_id = player_instance.get_npc_id();
                     let sent_code = data;
-                    if
-                    /*check if the code is good*/
-                    true {
-                        self.player_attacks_npc(20, player_id, npc_id);
-                        return generate_json(
-                            player_name,
-                            command_name,
-                            ErrorCode::NoError,
-                            "SUCCEED",
-                        )
-                        .dump();
-                    }
+                    /*check if the code is correct*/
+                    self.test_code(sent_code, player_name, npc_id);
                 }
 
                 return generate_json(player_name, command_name, ErrorCode::PlayerNotInCombat, "")
