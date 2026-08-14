@@ -18,7 +18,6 @@ use ratatui_code_editor::theme::vesper;
 use std::time::Instant;
 use tokio::sync::mpsc;
 
-
 // TODO: ajouter un timeout si l'event FightEnd n'est jamais envoye (timeout: time + 10s)
 // TODO: ajouter une barre de vie + image du mob
 

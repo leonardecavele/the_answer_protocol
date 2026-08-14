@@ -1,3 +1,4 @@
+use crate::collections::SelectableList;
 use crate::data::manifest::Manifest;
 use api_client::commands::{FightAttackStatus, QuestData};
 use std::collections::HashMap;
@@ -120,8 +121,8 @@ pub struct PlayerState {
     pub name: Option<String>,
     pub hp: u32,
     pub max_hp: u32,
-    pub inventory: Vec<String>,
-    pub quests: Vec<QuestData>,
+    pub inventory: SelectableList<String>,
+    pub quests: SelectableList<QuestData>,
 }
 
 impl PlayerState {
@@ -130,8 +131,8 @@ impl PlayerState {
             name: None,
             hp: 100,
             max_hp: 100,
-            inventory: Vec::new(),
-            quests: Vec::new(),
+            inventory: SelectableList::new(),
+            quests: SelectableList::new(),
         }
     }
 
@@ -185,8 +186,8 @@ pub struct RoomState {
     pub description: Option<String>,
     pub exits: HashMap<String, String>,
     pub players: Vec<String>,
-    pub npcs: Vec<String>,
-    pub items: Vec<String>,
+    pub npcs: SelectableList<String>,
+    pub items: SelectableList<String>,
 }
 
 impl RoomState {
@@ -197,8 +198,8 @@ impl RoomState {
             description: None,
             exits: HashMap::new(),
             players: Vec::new(),
-            npcs: Vec::new(),
-            items: Vec::new(),
+            npcs: SelectableList::new(),
+            items: SelectableList::new(),
         }
     }
 
@@ -231,7 +232,6 @@ impl ServerState {
 
 pub struct GameUiState {
     pub current_focus: GameFocus,
-    pub inventory_cursor: usize,
     pub focused_entity_id: Option<String>,
     pub dialogue_closed_at: Option<Instant>,
     overlays: Vec<Overlay>,
@@ -241,7 +241,6 @@ impl GameUiState {
     pub fn new() -> Self {
         Self {
             current_focus: GameFocus::default(),
-            inventory_cursor: 0,
             focused_entity_id: None,
             dialogue_closed_at: None,
             overlays: Vec::new(),

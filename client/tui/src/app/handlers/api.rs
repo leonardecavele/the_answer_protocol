@@ -124,8 +124,8 @@ impl App {
                 self.state.game.room.name = Some(look_res.room.name);
                 self.state.game.room.description = Some(look_res.room.description);
                 self.state.game.room.players = look_res.players;
-                self.state.game.room.npcs = look_res.npcs;
-                self.state.game.room.items = look_res.items;
+                self.state.game.room.npcs.set_items(look_res.npcs);
+                self.state.game.room.items.set_items(look_res.items);
                 self.state.game.room.exits = look_res.room.exits;
             }
             ApiResponse::Move(Ok(_move_res)) => {
@@ -138,13 +138,21 @@ impl App {
                 self.handle_request(ApiRequest::Look(LookCommand));
             }
             ApiResponse::Inventory(Ok(inv_res)) => {
-                self.state.game.player.inventory = inv_res.inventory;
+                self.state
+                    .game
+                    .player
+                    .inventory
+                    .set_items(inv_res.inventory);
                 self.state
                     .game
                     .log_action("You checked your inventory.".to_string());
             }
             ApiResponse::Quests(Ok(quests_res)) => {
-                self.state.game.player.quests = quests_res.quest_list;
+                self.state
+                    .game
+                    .player
+                    .quests
+                    .set_items(quests_res.quest_list);
                 self.state
                     .game
                     .log_action("You checked your quests.".to_string());
