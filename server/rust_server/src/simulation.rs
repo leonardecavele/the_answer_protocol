@@ -7,6 +7,9 @@ use std::time::Instant;
 impl GameManager {
     pub fn apply_players_changes(&mut self, tick_timer: Instant) -> std::io::Result<TickResult> {
         loop {
+            // Process any pending responses from the code tester thread
+            self.process_tester_responses()?;
+
             if tick_timer.elapsed() >= TICK_TIME {
                 break;
             }
@@ -23,7 +26,6 @@ impl GameManager {
     }
 
     pub fn update_game_state(&mut self) -> std::io::Result<()> {
-
         self.remove_finished_combat_instances();
         self.punish_inactive_players_in_combat();
         self.revive_dead_npcs();
@@ -35,7 +37,7 @@ impl GameManager {
                 _ => {}
             }
         }
-        
+
         let current_time = Instant::now();
 
         let mut actions: Vec<(String, ItemId, bool, String)> = Vec::new();
@@ -64,7 +66,7 @@ impl GameManager {
         for (room_name, item_id, is_lost_item, item_rep) in actions {
             self.remove_item_from_room(&room_name, item_id);
             self.reset_dropped_at_for_item(item_id);
-            let mut players = self.get_all_players_at_room(&room_name);
+            let players = self.get_all_players_at_room(&room_name);
             let data = format!("type={} id={}", "ITEM", item_rep);
 
             let event_despawn =

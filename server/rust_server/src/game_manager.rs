@@ -8,7 +8,8 @@ use crate::player::{Player, PlayerCount, PlayerId};
 use crate::quests::{Quest, QuestInstance, QuestState, Questid};
 use crate::room::{Room, RoomId, RoomName};
 use crate::save::{Save, ServerSave};
-use json::JsonValue;
+use crate::tester::test;
+use json::{JsonValue, object};
 use std::collections::HashMap;
 use std::io::Write;
 use std::net::TcpStream;
@@ -29,6 +30,8 @@ pub struct GameManager {
     pub quest_instances: Vec<QuestInstance>,
     pub combat_instances: CombatInstanceManager,
     mpsc_receiver: mpsc::Receiver<String>,
+    pub tester_receiver: mpsc::Receiver<String>,
+    pub tester_sender: mpsc::Sender<String>,
     writer_stream: TcpStream,
     tick_diff: HashMap<String, JsonValue>,
 }
@@ -36,6 +39,8 @@ pub struct GameManager {
 impl GameManager {
     pub fn new(
         mpsc_receiver: mpsc::Receiver<String>,
+        tester_receiver: mpsc::Receiver<String>,
+        tester_sender: mpsc::Sender<String>,
         writer_stream: TcpStream,
         parser: Parser,
     ) -> Self {
@@ -51,6 +56,8 @@ impl GameManager {
             combat_instances: CombatInstanceManager::new(),
             quest_instances: Vec::new(),
             mpsc_receiver,
+            tester_receiver,
+            tester_sender,
             writer_stream,
             tick_diff: HashMap::new(),
         };
@@ -812,6 +819,17 @@ impl GameManager {
             }
         }
         self.combat_instances.remove_finished_instances();
+    }
+
+    pub fn test_code(&self, code_to_test: &str, player: &str, npc_id: NpcId) {
+        let code = code_to_test.to_string();
+        let sender = self.tester_sender.clone();
+        let mut response = object! {"player": player, "npc_id": npc_id, "success": false};
+        std::thread::spawn(move || {
+            let result = crate::tester::test(code.as_str());
+            response["success"] = result.into();
+            let _ = sender.send(response.dump());
+        });
     }
 
     pub fn get_nb_players_in_player_instance(&self, player_id: PlayerId) -> Option<u32> {
