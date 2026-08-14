@@ -1,4 +1,4 @@
-use crate::combat_instances::{CombatInstance, CombatInstanceManager};
+use crate::combat_instances::CombatInstanceManager;
 use crate::constantes::{Direction, MAX_TIME_FOR_COMBAT, NPC_DMG, NPC_RESPAWN_TIME};
 use crate::inventory::Inventory;
 use crate::items::{Item, ItemId};
@@ -9,12 +9,11 @@ use crate::quests::{Quest, QuestInstance, QuestState, Questid};
 use crate::room::{Room, RoomId, RoomName};
 use crate::save::{Save, ServerSave};
 use json::JsonValue;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::io::Write;
 use std::net::TcpStream;
 use std::sync::mpsc;
 use std::time::Instant;
-use std::vec;
 use tracing::warn;
 use tracing::{error, info};
 
