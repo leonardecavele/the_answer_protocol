@@ -4,12 +4,14 @@ import (
 	"bufio"
 	"errors"
 	"go_server/client_conn/tap_commands"
+	"go_server/config"
 	"go_server/game_conn"
 	"go_server/logger"
 	"go_server/protocol"
 	"go_server/session"
 	"io"
 	"strings"
+	"time"
 )
 
 func parseCommand(msg string) (string, string, string) {
@@ -86,6 +88,11 @@ func HandleClient(client *session.Client, gameServerManager *game_conn.GameServe
 
 	reader := bufio.NewReader(client.Conn)
 	for {
+		if err := client.Conn.SetReadDeadline(time.Now().Add(config.ClientReadTimeout)); err != nil {
+			logger.AppLogger.Error("%s Failed to set read timeout: %v\n", client.Id, err)
+			return
+		}
+
 		str, err := reader.ReadString('\n')
 		if err != nil {
 			if !errors.Is(err, io.EOF) {

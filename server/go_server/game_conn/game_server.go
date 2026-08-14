@@ -12,6 +12,7 @@ import (
 	"net"
 	"strings"
 	"sync"
+	"time"
 )
 
 type GameServer struct {
@@ -44,8 +45,11 @@ func (gameServer *GameServer) Write(message string) error {
 	gameServer.PrintMutex.Lock()
 	defer gameServer.PrintMutex.Unlock()
 
-	if gameServer.Writer == nil {
+	if gameServer.Conn == nil || gameServer.Writer == nil {
 		return serverError.ErrGameServerNotConnected
+	}
+	if err := gameServer.Conn.SetWriteDeadline(time.Now().Add(config.TCPWriteTimeout)); err != nil {
+		return err
 	}
 
 	if _, err := gameServer.Writer.WriteString(message); err != nil {

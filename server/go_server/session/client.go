@@ -3,6 +3,7 @@ package session
 import (
 	"encoding/json"
 	"errors"
+	"go_server/config"
 	serverError "go_server/error"
 	"go_server/game_conn"
 	"go_server/protocol"
@@ -89,6 +90,10 @@ func (c *Client) DeleteClient(gameServerManager *game_conn.GameServerManager) er
 func (c *Client) Write(message string) error {
 	c.writeMutex.Lock()
 	defer c.writeMutex.Unlock()
+
+	if err := c.Conn.SetWriteDeadline(time.Now().Add(config.TCPWriteTimeout)); err != nil {
+		return err
+	}
 
 	_, err := c.Conn.Write([]byte(message + "\n"))
 	return err
