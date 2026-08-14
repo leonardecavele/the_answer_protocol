@@ -476,13 +476,10 @@ impl GameManager {
                     ncp.get_protocol_representation(),
                 )
             };
-            let mut players_to_send_event = self.get_all_players_at_room(&room_name);
+            let players_to_send_event = self.get_all_players_at_room(&room_name);
             let data = format!("type=NPC id={}", ncp_rep);
-            let event = GameManager::generate_no_player_event_json(
-                &mut players_to_send_event,
-                "SPAWN",
-                &data,
-            );
+            let event =
+                GameManager::generate_no_player_event_json(&players_to_send_event, "SPAWN", &data);
             self.add_diff_to_tick(event);
         }
     }
@@ -800,17 +797,14 @@ impl GameManager {
         let finished_instances_players = self.get_finished_instances_players();
         for grouped_players in finished_instances_players {
             if !grouped_players.is_empty() {
-                let mut grouped_players_strings: Vec<String> = grouped_players
+                let grouped_players_strings: Vec<String> = grouped_players
                     .iter()
                     .map(|id| self.players.get(id).unwrap().get_name().to_string())
                     .collect();
-                let first_player = grouped_players_strings[0].clone();
-                let event = self.generate_event_json(
-                    &mut grouped_players_strings,
-                    first_player.as_str(),
+                let event = GameManager::generate_no_player_event_json(
+                    &grouped_players_strings,
                     "FIGHT END",
                     "",
-                    false,
                 );
                 self.add_diff_to_tick(event);
             }

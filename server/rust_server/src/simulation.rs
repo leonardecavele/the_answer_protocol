@@ -68,15 +68,15 @@ impl GameManager {
             let data = format!("type={} id={}", "ITEM", item_rep);
 
             let event_despawn =
-                GameManager::generate_no_player_event_json(&mut players, "DESPAWN", &data);
+                GameManager::generate_no_player_event_json(&players, "DESPAWN", &data);
 
             self.add_diff_to_tick(event_despawn);
 
             if is_lost_item {
-                let mut lost_item_spawn_players = self.get_all_players_at_room(LOST_ITEM_SPAWN);
+                let lost_item_spawn_players = self.get_all_players_at_room(LOST_ITEM_SPAWN);
                 self.add_item_to_room(LOST_ITEM_SPAWN, item_id);
                 let event_spawn = GameManager::generate_no_player_event_json(
-                    &mut lost_item_spawn_players,
+                    &lost_item_spawn_players,
                     "SPAWN",
                     &data,
                 );
