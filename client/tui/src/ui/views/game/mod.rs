@@ -6,13 +6,13 @@ use crate::ui::components::Component;
 use crate::ui::components::Lifecycle;
 use crate::ui::components::scrollable::Scrollable;
 
-use crate::states::game::GameFocus;
+use crate::states::game::{GameFocus, Overlay, OverlayKind};
 use crate::ui::components::interactive::is_mouse_in_rect;
 use crate::ui::views::game::components::{INVENTORY_ITEM_HEIGHT, INVENTORY_ITEM_WIDTH};
 use components::{
     CenterPanelComponent, ChatOverlayComponent, DialoguePopupComponent, FooterComponent,
     HeaderComponent, HelpOverlayComponent, ItemPopupComponent, ItemViewPopupComponent,
-    LeftPanelComponent, NpcActionPopup, RightPanelComponent,
+    LeftPanelComponent, NpcActionPopup, QuestViewPopupComponent, RightPanelComponent,
 };
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
 use ratatui::Frame;
@@ -29,6 +29,7 @@ pub struct GameView {
     npc_popup: NpcActionPopup,
     item_popup: ItemPopupComponent,
     item_view_popup: ItemViewPopupComponent,
+    quest_view_popup: QuestViewPopupComponent,
     dialogue_popup: Scrollable<DialoguePopupComponent>,
     help_overlay: Scrollable<HelpOverlayComponent>,
     right_panel_area: Option<Rect>,
@@ -47,6 +48,7 @@ impl GameView {
             npc_popup: NpcActionPopup::new(),
             item_popup: ItemPopupComponent::new(),
             item_view_popup: ItemViewPopupComponent::new(),
+            quest_view_popup: QuestViewPopupComponent::new(),
             dialogue_popup: Scrollable::new(DialoguePopupComponent::new()),
             help_overlay: Scrollable::new(HelpOverlayComponent::new()),
             right_panel_area: None,
@@ -94,36 +96,26 @@ impl Component for GameView {
         self.right_panel_area = Some(horizontal_chunks[2]);
         self.footer_area = Some(vertical_chunks[2]);
 
-        if state.game.ui.show_help_overlay {
-            self.help_overlay.draw(state, frame, area);
-        }
+        let center_area = horizontal_chunks[1];
+        let overlay_kinds: Vec<OverlayKind> = state.game.ui.overlays().map(Overlay::kind).collect();
 
-        if state.game.ui.show_chat {
-            let center_area = horizontal_chunks[1];
-            self.chat_overlay.draw(state, frame, center_area);
-        }
-
-        if state.game.ui.active_npc_popup.is_some() {
-            self.npc_popup.draw(state, frame, area);
-        }
-
-        if state.game.ui.active_item_popup.is_some() {
-            self.item_popup.draw(state, frame, area);
-        }
-
-        if state.game.ui.active_dialogue.is_some() {
-            self.dialogue_popup.draw(state, frame, area);
-        }
-
-        if state.game.ui.active_item_view_popup.is_some() {
-            self.item_view_popup.draw(state, frame, area);
+        for kind in overlay_kinds {
+            match kind {
+                OverlayKind::Help => self.help_overlay.draw(state, frame, area),
+                OverlayKind::Chat => self.chat_overlay.draw(state, frame, center_area),
+                OverlayKind::NpcActions => self.npc_popup.draw(state, frame, area),
+                OverlayKind::ItemActions => self.item_popup.draw(state, frame, area),
+                OverlayKind::ItemView => self.item_view_popup.draw(state, frame, area),
+                OverlayKind::QuestView => self.quest_view_popup.draw(state, frame, area),
+                OverlayKind::Dialogue => self.dialogue_popup.draw(state, frame, area),
+            }
         }
     }
 }
 
 impl Lifecycle for GameView {
     fn on_tick(&mut self, state: &mut AppState) {
-        if state.game.ui.active_dialogue.is_some() {
+        if state.game.ui.is_open(OverlayKind::Dialogue) {
             self.dialogue_popup.on_tick(state);
         }
     }
@@ -134,37 +126,41 @@ impl Lifecycle for GameView {
         event: &CrosstermEvent,
         event_sender: &mpsc::Sender<ApplicationEvent>,
     ) -> bool {
-        if state.game.ui.show_help_overlay {
-            self.help_overlay
-                .handle_terminal_event(state, event, event_sender);
-            return true;
-        }
+        if let Some(kind) = state.game.ui.top_kind() {
+            let handled = match kind {
+                OverlayKind::Help => {
+                    self.help_overlay
+                        .handle_terminal_event(state, event, event_sender)
+                }
+                OverlayKind::Chat => {
+                    self.chat_overlay
+                        .handle_terminal_event(state, event, event_sender)
+                }
+                OverlayKind::NpcActions => {
+                    self.npc_popup
+                        .handle_terminal_event(state, event, event_sender)
+                }
+                OverlayKind::ItemActions => {
+                    self.item_popup
+                        .handle_terminal_event(state, event, event_sender)
+                }
+                OverlayKind::ItemView => {
+                    self.item_view_popup
+                        .handle_terminal_event(state, event, event_sender)
+                }
+                OverlayKind::QuestView => {
+                    self.quest_view_popup
+                        .handle_terminal_event(state, event, event_sender)
+                }
+                OverlayKind::Dialogue => {
+                    self.dialogue_popup
+                        .handle_terminal_event(state, event, event_sender)
+                }
+            };
 
-        if state.game.ui.active_item_view_popup.is_some() {
-            if self
-                .item_view_popup
-                .handle_terminal_event(state, event, event_sender)
-            {
+            if handled || kind.is_modal() {
                 return true;
             }
-        }
-
-        if state.game.ui.active_dialogue.is_some() {
-            self.dialogue_popup
-                .handle_terminal_event(state, event, event_sender);
-            return true;
-        }
-
-        if state.game.ui.active_npc_popup.is_some() {
-            self.npc_popup
-                .handle_terminal_event(state, event, event_sender);
-            return true;
-        }
-
-        if state.game.ui.active_item_popup.is_some() {
-            self.item_popup
-                .handle_terminal_event(state, event, event_sender);
-            return true;
         }
 
         if let CrosstermEvent::Key(key) = event {
@@ -173,14 +169,14 @@ impl Lifecycle for GameView {
                     .modifiers
                     .contains(crossterm::event::KeyModifiers::CONTROL)
             {
-                state.game.ui.show_help_overlay = !state.game.ui.show_help_overlay;
+                state.game.ui.toggle(Overlay::Help);
                 return true;
             }
         }
 
         if let CrosstermEvent::Key(key) = event {
             if key.code == KeyCode::F(1) {
-                state.game.ui.show_chat = !state.game.ui.show_chat;
+                state.game.ui.toggle(Overlay::Chat);
                 return true;
             }
             if key.code == KeyCode::Tab {
@@ -291,15 +287,6 @@ impl Lifecycle for GameView {
                         state.game.ui.current_focus = GameFocus::Input;
                     }
                 }
-            }
-        }
-
-        if state.game.ui.show_chat {
-            if self
-                .chat_overlay
-                .handle_terminal_event(state, event, event_sender)
-            {
-                return true;
             }
         }
 

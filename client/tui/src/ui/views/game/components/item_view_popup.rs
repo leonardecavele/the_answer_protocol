@@ -1,8 +1,9 @@
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
+use crate::states::game::OverlayKind;
 use crate::ui::components::{Component, Lifecycle};
 use crate::ui::theme::overlay_block;
-use crate::ui::utils::{center_area_with_aspect_ratio, wrap_str_to_lines};
+use crate::ui::utils::{center_area_with_aspect_ratio, centered_rect, wrap_str_to_lines};
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
 use ratatui::{
     Frame,
@@ -29,17 +30,16 @@ impl ItemViewPopupComponent {
 
 impl Component for ItemViewPopupComponent {
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
-        let item_id = if let Some(id) = &state.game.ui.active_item_view_popup {
-            id
-        } else {
-            return;
+        let item_id = match state.game.ui.target_of(OverlayKind::ItemView) {
+            Some(id) => id,
+            None => return,
         };
 
         let manifest_item = state.game.manifest.items.get(item_id);
 
         let display_name = manifest_item
             .map(|i| i.name.clone())
-            .unwrap_or_else(|| item_id.clone());
+            .unwrap_or_else(|| item_id.to_string());
 
         let description = manifest_item
             .map(|i| i.description.clone())
@@ -47,16 +47,11 @@ impl Component for ItemViewPopupComponent {
 
         let image_path = manifest_item.and_then(|i| i.image_path.clone());
 
-        let width = (area.width * POPUP_WIDTH_PERCENT) / 100;
-        let height = (area.height * POPUP_HEIGHT_PERCENT) / 100;
-        let x = area.x + (area.width.saturating_sub(width)) / 2;
-        let y = area.y + (area.height.saturating_sub(height)) / 2;
-        let popup_area = Rect {
-            x,
-            y,
-            width,
-            height,
-        };
+        let popup_area = centered_rect(
+            area,
+            (area.width * POPUP_WIDTH_PERCENT) / 100,
+            (area.height * POPUP_HEIGHT_PERCENT) / 100,
+        );
 
         frame.render_widget(Clear, popup_area);
 
@@ -121,14 +116,14 @@ impl Lifecycle for ItemViewPopupComponent {
         event: &CrosstermEvent,
         _event_sender: &Sender<ApplicationEvent>,
     ) -> bool {
-        if state.game.ui.active_item_view_popup.is_none() {
+        if !state.game.ui.is_open(OverlayKind::ItemView) {
             return false;
         }
 
         if let CrosstermEvent::Key(key) = event {
             match key.code {
                 KeyCode::Esc | KeyCode::Enter | KeyCode::Char('q') => {
-                    state.game.ui.active_item_view_popup = None;
+                    state.game.ui.close_top();
                 }
                 _ => {}
             }

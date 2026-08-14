@@ -1,10 +1,12 @@
 use crate::data::manifest::NpcType;
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
-use crate::states::game::{GameFocus, Npc};
+use crate::states::game::GameFocus;
+use crate::states::game::Overlay::{ItemActions, NpcActions, QuestView};
 use crate::ui::components::Component;
 use crate::ui::components::Lifecycle;
 use crate::ui::theme::default_block;
+use crate::ui::utils::move_index;
 use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect},
@@ -34,41 +36,6 @@ impl LeftPanelComponent {
             selected_quest_index: 0,
         }
     }
-}
-
-fn next_alive_npc_index(npcs: &[Npc], current: Option<usize>, forward: bool) -> Option<usize> {
-    let alive_indices: Vec<_> = npcs
-        .iter()
-        .enumerate()
-        .filter(|(_, npc)| npc.is_alive)
-        .map(|(i, _)| i)
-        .collect();
-
-    if alive_indices.is_empty() {
-        return None;
-    }
-
-    let current_pos = current.and_then(|idx| alive_indices.iter().position(|&i| i == idx));
-
-    let index = if forward {
-        current_pos.map_or(0, |p| {
-            if p >= alive_indices.len() - 1 {
-                0
-            } else {
-                p + 1
-            }
-        })
-    } else {
-        current_pos.map_or(alive_indices.len() - 1, |p| {
-            if p == 0 {
-                alive_indices.len() - 1
-            } else {
-                p - 1
-            }
-        })
-    };
-
-    Some(alive_indices[index])
 }
 
 impl Component for LeftPanelComponent {
@@ -108,31 +75,25 @@ impl Component for LeftPanelComponent {
             .room
             .npcs
             .iter()
-            .map(|npc| {
-                let (mut display_name, npc_type) =
-                    match state.game.manifest.npcs.get(npc.id.as_str()) {
-                        Some(entry) => (entry.name.clone(), entry.npc_type.clone()),
-                        None => (npc.id.clone(), NpcType::Normal),
-                    };
+            .map(|npc_id| {
+                let (display_name, npc_type) = match state.game.manifest.npcs.get(npc_id.as_str()) {
+                    Some(entry) => (entry.name.clone(), entry.npc_type.clone()),
+                    None => (npc_id.clone(), NpcType::Normal),
+                };
 
-                let mut color = match npc_type {
+                let color = match npc_type {
                     NpcType::Enemy => Color::Red,
                     NpcType::QuestGiver => Color::Yellow,
                     NpcType::Dialogue => Color::Blue,
                     NpcType::Normal => Color::White,
                 };
 
-                if !npc.is_alive {
-                    color = Color::Gray;
-                    display_name = format!("(dead) {}", display_name);
-                }
-
                 let mut style = Style::default().fg(color);
 
                 if let Some(selected_idx) = self.selected_npc_index {
                     // Find the actual index of the npc_id in the room_npcs list
-                    if let Some(idx) = state.game.room.npcs.iter().position(|n| n.id == npc.id) {
-                        if idx == selected_idx && npc.is_alive {
+                    if let Some(idx) = state.game.room.npcs.iter().position(|n_id| n_id == npc_id) {
+                        if idx == selected_idx {
                             if state.game.ui.current_focus == GameFocus::NpcList {
                                 style = style.add_modifier(Modifier::REVERSED);
                             }
@@ -141,7 +102,7 @@ impl Component for LeftPanelComponent {
                 }
 
                 ListItem::new(Span::styled(
-                    format!("• {} ({})", display_name, npc.id),
+                    format!("• {} ({})", display_name, npc_id),
                     style,
                 ))
             })
@@ -248,23 +209,13 @@ impl Lifecycle for LeftPanelComponent {
                 if npc_count > 0 {
                     match key.code {
                         crossterm::event::KeyCode::Up => {
-                            if let Some(idx) = next_alive_npc_index(
-                                &state.game.room.npcs,
-                                self.selected_npc_index,
-                                false,
-                            ) {
-                                self.selected_npc_index = Some(idx);
-                            }
+                            let current = self.selected_npc_index.unwrap_or(0);
+                            self.selected_npc_index = Some(move_index(current, npc_count, false));
                             return true;
                         }
                         crossterm::event::KeyCode::Down => {
-                            if let Some(idx) = next_alive_npc_index(
-                                &state.game.room.npcs,
-                                self.selected_npc_index,
-                                true,
-                            ) {
-                                self.selected_npc_index = Some(idx);
-                            }
+                            let current = self.selected_npc_index.unwrap_or(npc_count - 1);
+                            self.selected_npc_index = Some(move_index(current, npc_count, true));
                             return true;
                         }
                         crossterm::event::KeyCode::Enter => {
@@ -273,8 +224,10 @@ impl Lifecycle for LeftPanelComponent {
                             }
 
                             if let Some(idx) = self.selected_npc_index {
-                                if let Some(npc) = state.game.room.npcs.get(idx) {
-                                    state.game.ui.active_npc_popup = Some(npc.id.clone());
+                                if let Some(npc_id) = state.game.room.npcs.get(idx) {
+                                    state.game.ui.open(NpcActions {
+                                        npc_id: npc_id.to_string(),
+                                    });
                                     return true;
                                 }
                             }
@@ -289,28 +242,22 @@ impl Lifecycle for LeftPanelComponent {
                 if item_count > 0 {
                     match key.code {
                         crossterm::event::KeyCode::Up => {
-                            let current = self.selected_item_index;
-                            self.selected_item_index = if current == 0 {
-                                item_count - 1
-                            } else {
-                                current - 1
-                            };
+                            self.selected_item_index =
+                                move_index(self.selected_item_index, item_count, false);
                             return true;
                         }
                         crossterm::event::KeyCode::Down => {
-                            let current = self.selected_item_index;
-                            self.selected_item_index = if current >= item_count - 1 {
-                                0
-                            } else {
-                                current + 1
-                            };
+                            self.selected_item_index =
+                                move_index(self.selected_item_index, item_count, true);
                             return true;
                         }
                         crossterm::event::KeyCode::Enter => {
                             if let Some(item_id) =
                                 state.game.room.items.get(self.selected_item_index)
                             {
-                                state.game.ui.active_item_popup = Some(item_id.clone());
+                                state.game.ui.open(ItemActions {
+                                    item_id: item_id.to_string(),
+                                });
                                 return true;
                             }
                         }
@@ -324,30 +271,21 @@ impl Lifecycle for LeftPanelComponent {
                 if quest_count > 0 {
                     match key.code {
                         crossterm::event::KeyCode::Up => {
-                            let current = self.selected_quest_index;
-                            self.selected_quest_index = if current == 0 {
-                                quest_count - 1
-                            } else {
-                                current - 1
-                            };
+                            self.selected_quest_index =
+                                move_index(self.selected_quest_index, quest_count, false);
                             return true;
                         }
                         crossterm::event::KeyCode::Down => {
-                            let current = self.selected_quest_index;
-                            self.selected_quest_index = if current >= quest_count - 1 {
-                                0
-                            } else {
-                                current + 1
-                            };
+                            self.selected_quest_index =
+                                move_index(self.selected_quest_index, quest_count, true);
                             return true;
                         }
                         crossterm::event::KeyCode::Enter => {
-                            if let Some(_quest_id) =
+                            if let Some(quest) =
                                 state.game.player.quests.get(self.selected_quest_index)
                             {
-                                state
-                                    .game
-                                    .log_action("TODO: overlay for quest selection".to_string());
+                                let quest_id = quest.quest_id.clone();
+                                state.game.ui.open(QuestView { quest_id });
                                 return true;
                             }
                         }

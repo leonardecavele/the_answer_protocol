@@ -22,6 +22,31 @@ pub fn wrap_slice_to_lines(strs: &[String], max_width: usize) -> Vec<Line<'stati
     visual_lines
 }
 
+/// Helper to compute a sub-area of the given size, centered inside `outer_area`.
+pub fn centered_rect(outer_area: Rect, width: u16, height: u16) -> Rect {
+    Rect {
+        x: outer_area.x + outer_area.width.saturating_sub(width) / 2,
+        y: outer_area.y + outer_area.height.saturating_sub(height) / 2,
+        width,
+        height,
+    }
+}
+
+/// Helper to move a selection cursor through `count` items, wrapping at both ends.
+pub fn move_index(current: usize, count: usize, forward: bool) -> usize {
+    if count == 0 {
+        return 0;
+    }
+
+    if forward {
+        if current + 1 >= count { 0 } else { current + 1 }
+    } else if current == 0 {
+        count - 1
+    } else {
+        current - 1
+    }
+}
+
 /// Helper to compute the centered sub-area that respects the image's original aspect ratio.
 pub fn center_area_with_aspect_ratio(outer_area: Rect, img_width: u32, img_height: u32) -> Rect {
     let mut centered_area = outer_area;

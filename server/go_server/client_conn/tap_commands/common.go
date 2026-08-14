@@ -40,7 +40,7 @@ var resourceInteractionTapCommands = map[string]handleTapCommandArgs{
 
 var customTapCommands = map[string]handleTapCommandArgs{
 	"USE":   handleUseCommand,
-	"AGGRO": handleAggroCommand,
+	"FIGHT": handleFightCommand,
 }
 
 var TapCommands = func(commandGroups ...map[string]handleTapCommandArgs) map[string]handleTapCommandArgs {

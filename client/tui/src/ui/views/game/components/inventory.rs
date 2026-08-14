@@ -1,6 +1,6 @@
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
-use crate::states::game::GameFocus;
+use crate::states::game::{GameFocus, Overlay};
 use crate::ui::components::Component;
 use crate::ui::components::Lifecycle;
 use crate::ui::theme::default_block;
@@ -146,7 +146,9 @@ impl Lifecycle for InventoryComponent {
                                 .inventory
                                 .get(state.game.ui.inventory_cursor)
                             {
-                                state.game.ui.active_item_popup = Some(item_id.clone());
+                                state.game.ui.open(Overlay::ItemActions {
+                                    item_id: item_id.clone(),
+                                });
                                 return true;
                             }
                         }

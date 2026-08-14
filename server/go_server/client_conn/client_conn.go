@@ -113,9 +113,9 @@ func HandleClient(client *session.Client, gameServerManager *game_conn.GameServe
 				Data:      "DISCONNECTED",
 			})
 		}
+		logger.AppLogger.Info("%s Client Write: %s", client.Id, response)
 		if response == protocol.ResponseBye {
 			return
 		}
-		logger.AppLogger.Info("%s Client Write: %s", client.Id, response)
 	}
 }

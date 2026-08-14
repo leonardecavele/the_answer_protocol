@@ -1,7 +1,9 @@
 use crate::app::App;
 use crate::events::ApiEvent;
 use crate::network::envelopes::ResponseEnvelope;
-use crate::states::game::{ChatChannel, ChatMessage, DialogueState, END_OF_DIALOGUE_TAG, Npc};
+use crate::states::game::{
+    ChatChannel, ChatMessage, DialogueState, END_OF_DIALOGUE_TAG, Overlay, OverlayKind,
+};
 use crate::states::ui::Notification;
 use api_client::commands::LookCommand;
 use api_client::events::{GameServerEvent, GroupEvent, RoomEvent, ServerEvent};
@@ -116,14 +118,7 @@ impl App {
                 self.state.game.room.name = Some(look_res.room.name);
                 self.state.game.room.description = Some(look_res.room.description);
                 self.state.game.room.players = look_res.players;
-                self.state.game.room.npcs = look_res
-                    .npcs
-                    .iter()
-                    .map(|npc_id| Npc {
-                        id: npc_id.clone(),
-                        is_alive: true,
-                    })
-                    .collect();
+                self.state.game.room.npcs = look_res.npcs;
                 self.state.game.room.items = look_res.items;
                 self.state.game.room.exits = look_res.room.exits;
             }
@@ -158,10 +153,10 @@ impl App {
                     let ends_dialog_only = ends_dialog && text.starts_with(END_OF_DIALOGUE_TAG);
 
                     if ends_dialog_only {
-                        if self.state.game.ui.active_dialogue.is_none() {
+                        if !self.state.game.ui.is_open(OverlayKind::Dialogue) {
                             text = "**nothing**".to_string();
                         } else {
-                            self.state.game.ui.close_dialogue();
+                            self.state.game.ui.close(OverlayKind::Dialogue);
                             return;
                         }
                     } else if ends_dialog {
@@ -172,7 +167,7 @@ impl App {
 
                     let display_name = self.state.game.manifest.get_npc_name(&cmd.npc_name);
 
-                    if self.state.game.ui.active_dialogue.is_none() {
+                    if !self.state.game.ui.is_open(OverlayKind::Dialogue) {
                         self.state
                             .game
                             .log_action(format!("You talked to {}.", display_name));
@@ -184,15 +179,18 @@ impl App {
                             .log_action(format!("[{}] says: \"{}\"", display_name, text));
                     }
 
-                    if let Some(ref mut dialog) = self.state.game.ui.active_dialogue {
+                    if let Some(dialog) = self.state.game.ui.dialogue_mut() {
                         dialog.add(text, ends_dialog);
                     } else {
-                        self.state.game.ui.active_dialogue = Some(DialogueState::new(
-                            cmd.npc_name,
-                            display_name,
-                            text,
-                            ends_dialog,
-                        ));
+                        self.state
+                            .game
+                            .ui
+                            .open(Overlay::Dialogue(DialogueState::new(
+                                cmd.npc_name,
+                                display_name,
+                                text,
+                                ends_dialog,
+                            )));
                     }
                 }
             }
@@ -239,16 +237,11 @@ impl App {
 
                     let text = match res.status.eq_ignore_ascii_case("Victory") {
                         true => {
-                            if let Some(npc) = self
-                                .state
+                            self.state
                                 .game
                                 .room
                                 .npcs
-                                .iter_mut()
-                                .find(|n| n.id == cmd.npc_name)
-                            {
-                                npc.is_alive = false;
-                            }
+                                .retain(|npc_id| npc_id.to_string() != cmd.npc_name);
 
                             format!(
                                 "Combat with {}: You dealt {} damage. {} is dead. Victory.",
@@ -263,12 +256,15 @@ impl App {
                         }
                     };
 
-                    self.state.game.ui.active_dialogue = Some(DialogueState::new(
-                        cmd.npc_name,
-                        display_name.clone(),
-                        text.clone(),
-                        true,
-                    ));
+                    self.state
+                        .game
+                        .ui
+                        .open(Overlay::Dialogue(DialogueState::new(
+                            cmd.npc_name,
+                            display_name.clone(),
+                            text.clone(),
+                            true,
+                        )));
 
                     self.state.game.log_action(text);
                 }
@@ -310,16 +306,7 @@ impl App {
                         .game
                         .log_action(format!("{} has respawn", npc_name));
 
-                    if let Some(npc) = self
-                        .state
-                        .game
-                        .room
-                        .npcs
-                        .iter_mut()
-                        .find(|n| n.id == spawn_data.id)
-                    {
-                        npc.is_alive = true;
-                    }
+                    self.state.game.room.npcs.push(spawn_data.id);
                 }
                 "ITEM" => {
                     let item_name = self
@@ -388,16 +375,11 @@ impl App {
 
                 self.state.game.log_action(message);
 
-                if let Some(npc) = self
-                    .state
+                self.state
                     .game
                     .room
                     .npcs
-                    .iter_mut()
-                    .find(|n| n.id == kill_data.npc_id)
-                {
-                    npc.is_alive = false;
-                }
+                    .retain(|npc_id| npc_id.to_string() != kill_data.npc_id);
             }
             ServerEvent::Quit(name) => {
                 self.state.game.server.online_players_count = self
@@ -540,6 +522,7 @@ impl App {
                         .game
                         .log_action("Game server offline.".to_string());
 
+                    self.state.game.ui.close_all();
                     self.state.network.is_connected = false;
                 }
             },
