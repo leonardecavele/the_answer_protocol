@@ -2,6 +2,7 @@ use std::time::Duration;
 
 use crate::room::RoomId;
 
+pub const TEST_FILES_DIR: &str = "assets/code";
 pub const NPC_DMG: u32 = 20;
 pub const MIN_DMG_DEALT: u32 = 5;
 pub const LOST_ITEM: u8 = 0;
@@ -109,9 +110,9 @@ impl LOOT {
 
     pub fn to_string(&self) -> String {
         match self {
-            Self::Merci => "MERCI".to_string(),
-            Self::TShirt => "TSHIRT".to_string(),
-            Self::Wrap => "WRAP".to_string(),
+            Self::Merci => "MERCI".to_owned(),
+            Self::TShirt => "TSHIRT".to_owned(),
+            Self::Wrap => "WRAP".to_owned(),
         }
     }
 }

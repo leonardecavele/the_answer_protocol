@@ -47,8 +47,9 @@ impl CombatInstanceManager {
         npc_id: NpcId,
         npc_hp: u32,
         players_ids: Vec<PlayerId>,
+        file_name: String,
     ) {
-        let instance = CombatInstance::new(npc_id, leader, npc_hp, players_ids);
+        let instance = CombatInstance::new(npc_id, leader, npc_hp, players_ids, file_name);
         self.instances.insert(npc_id, instance);
     }
 
@@ -65,6 +66,7 @@ pub struct CombatInstance {
     pub players_success: HashMap<PlayerId, Option<bool>>,
     npc_combat_start_hp: u32,
     pub combat_start_time: Instant, // Option<bool> because the success is None until the player played
+    file_name: String,
 }
 
 impl CombatInstance {
@@ -73,6 +75,7 @@ impl CombatInstance {
         leader: PlayerId,
         npc_hp: u32,
         grouped_players: Vec<PlayerId>,
+        file_name: String,
     ) -> Self {
         let mut player_success = grouped_players
             .iter()
@@ -86,6 +89,7 @@ impl CombatInstance {
             players_success: player_success,
             npc_combat_start_hp: npc_hp,
             combat_start_time: Instant::now(),
+            file_name,
         }
     }
 
@@ -94,6 +98,10 @@ impl CombatInstance {
     }
     pub fn get_grouped_players(&self) -> &Vec<PlayerId> {
         &self.grouped_players
+    }
+
+    pub fn get_assigned_file_name(&self) -> &str {
+        &self.file_name
     }
 
     pub fn get_npc_id(&self) -> NpcId {
