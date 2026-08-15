@@ -84,12 +84,12 @@ impl GameManager {
                 .map(|q| (q.get_quest_name(), q.get_state()))
                 .collect();
             let save_data = Save {
-                name: player.get_name().to_string(),
+                name: player.get_name().to_owned(),
                 id: player.get_id(),
                 hp: player.get_hp(),
                 max_hp: player.get_max_hp(),
                 inventory,
-                current_room: player.get_current_room().to_string(),
+                current_room: player.get_current_room().to_owned(),
                 dialogs_index: std::collections::HashMap::new(),
                 quests: player_quests,
             };
@@ -259,7 +259,7 @@ impl GameManager {
     }
 
     fn add_player_to_game(&mut self, player: Player) {
-        let player_name = player.get_name().to_string();
+        let player_name = player.get_name().to_owned();
         let player_id = player.get_id();
         self.players.insert(player_id, player);
         self.players_by_name.insert(player_name, player_id);
@@ -299,7 +299,7 @@ impl GameManager {
     }
 
     pub fn get_item_name(&self, item_id: &ItemId) -> String {
-        self.all_items.get(item_id).unwrap().get_name().to_string()
+        self.all_items.get(item_id).unwrap().get_name().to_owned()
     }
 
     pub fn remove_item_from_player(&mut self, player_id: PlayerId, item_id: ItemId) {
@@ -414,7 +414,7 @@ impl GameManager {
         let mut filtered = diff.clone();
         filtered.remove("players");
         for player in players {
-            let key = player.as_str().unwrap().to_string();
+            let key = player.as_str().unwrap().to_owned();
             let entry = self.tick_diff.entry(key).or_insert(JsonValue::new_array());
 
             entry.push(filtered.clone()).unwrap();
@@ -428,7 +428,7 @@ impl GameManager {
         let mut players: Vec<String> = Vec::new();
         for player in self.players.values() {
             if player.get_current_room() == room_name {
-                players.push(player.get_name().to_string());
+                players.push(player.get_name().to_owned());
             }
         }
         return players;
@@ -441,7 +441,7 @@ impl GameManager {
 
     pub fn move_player_to_room(&mut self, player_name: &str, room_name: &str) {
         let player = self.get_mut_player_from_name(player_name).unwrap();
-        player.move_to_room(&room_name.to_string());
+        player.move_to_room(&room_name.to_owned());
     }
 
     pub fn get_npcs_in_room_as_protocol_representations(&self, room_name: &str) -> Vec<String> {
@@ -483,7 +483,7 @@ impl GameManager {
                 let ncp = self.all_npcs.get_mut(&npc_id).unwrap();
                 ncp.revive();
                 (
-                    ncp.get_spawn_room().to_string(),
+                    ncp.get_spawn_room().to_owned(),
                     ncp.get_protocol_representation(),
                 )
             };
@@ -603,7 +603,7 @@ impl GameManager {
             let player = self.get_player(player_id).unwrap();
             (
                 self.get_all_players_at_room(player.get_current_room()),
-                player.get_name().to_string(),
+                player.get_name().to_owned(),
             )
         };
         let path = format!("saves/{}.toml", player_name);
@@ -627,11 +627,11 @@ impl GameManager {
             let mut vec = Vec::new();
             for player_id in instance.get_grouped_players() {
                 if let Some(player) = self.get_player(*player_id) {
-                    vec.push(player.get_name().to_string());
+                    vec.push(player.get_name().to_owned());
                 }
             }
             if let Some(leader) = self.get_player(instance.get_leader()) {
-                vec.push(leader.get_name().to_string());
+                vec.push(leader.get_name().to_owned());
             }
             return Some(vec);
         }
@@ -658,7 +658,7 @@ impl GameManager {
         let npc_hp = npc.get_hp().unwrap();
         let mut dealt_damage = damage;
         let player = self.get_mut_player(player_id).unwrap();
-        let player_name = player.get_name().to_string();
+        let player_name = player.get_name().to_owned();
         let player_hp = player.get_hp();
         let new_player_hp = if player_hp > damage {
             player_hp - damage
@@ -681,7 +681,7 @@ impl GameManager {
             .combat_instances
             .get_all_players_in_combat(npc_id)
             .iter()
-            .map(|player_id| self.get_player(*player_id).unwrap().get_name().to_string())
+            .map(|player_id| self.get_player(*player_id).unwrap().get_name().to_owned())
             .collect::<Vec<String>>();
         let event = self.generate_event_json(
             &mut players_to_send_event,
@@ -720,9 +720,9 @@ impl GameManager {
         npc_id: NpcId,
     ) -> String {
         let player = self.get_player(player_id).unwrap();
-        let npc_room = self.get_npc(npc_id).unwrap().get_spawn_room().to_string();
+        let npc_room = self.get_npc(npc_id).unwrap().get_spawn_room().to_owned();
         let mut players_in_room = self.get_all_players_at_room(npc_room.as_str()).clone();
-        let player_name = player.get_name().to_string();
+        let player_name = player.get_name().to_owned();
         let player_hp = player.get_hp();
         let npc = self.get_mut_npc(npc_id).unwrap();
         let npc_repr = npc.get_protocol_representation();
@@ -846,7 +846,7 @@ impl GameManager {
                 let mut grouped_players_strings: Vec<String> = Vec::new();
                 for player in grouped_players {
                     if let Some(player) = self.get_player(player) {
-                        grouped_players_strings.push(player.get_name().to_string());
+                        grouped_players_strings.push(player.get_name().to_owned());
                     }
                 }
                 let event = GameManager::generate_no_player_event_json(

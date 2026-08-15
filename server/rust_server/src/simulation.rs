@@ -52,7 +52,7 @@ impl GameManager {
                                 || no_despawn_room.unwrap() != room.get_id()
                             {
                                 actions.push((
-                                    room.get_name().to_string(),
+                                    room.get_name().to_owned(),
                                     *item_id,
                                     item.get_id() == (LOST_ITEM as ItemId),
                                     item.get_protocol_representation(),

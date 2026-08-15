@@ -30,7 +30,7 @@ impl Player {
             hp: PLAYER_STARTING_HP,
             max_hp: PLAYER_STARTING_MAX_HP,
             inventory: Inventory::new(),
-            current_room: PLAYER_ROOM_SPAWN.to_string(),
+            current_room: PLAYER_ROOM_SPAWN.to_owned(),
             dialogs_index: HashMap::new(),
         }
     }
@@ -38,7 +38,7 @@ impl Player {
         self.hp = PLAYER_STARTING_HP;
         self.max_hp = PLAYER_STARTING_MAX_HP;
         self.inventory = Inventory::new();
-        self.current_room = PLAYER_ROOM_SPAWN.to_string();
+        self.current_room = PLAYER_ROOM_SPAWN.to_owned();
         self.dialogs_index.clear();
     }
     
@@ -96,7 +96,7 @@ impl Player {
     pub fn talk_with(&mut self, npc: &Npc) -> String {
         let dialogs = match npc.get_dialogs() {
             Some(d) if !d.is_empty() => d,
-            _ => return NO_MORE_MESSAGES.to_string(),
+            _ => return NO_MORE_MESSAGES.to_owned(),
         };
 
         let (dialog_list_index, current_line_index) = self.dialogs_index
@@ -110,20 +110,20 @@ impl Player {
             });
 
         if dialog_list_index >= dialogs.len() {
-            return NO_MORE_MESSAGES.to_string();
+            return NO_MORE_MESSAGES.to_owned();
         }
 
         let current_dialog_list = &dialogs[dialog_list_index];
 
         if current_line_index >= current_dialog_list.len() {
             self.dialogs_index.remove(&npc.get_name());
-            return NO_MORE_MESSAGES.to_string();
+            return NO_MORE_MESSAGES.to_owned();
         }
 
         let message = &current_dialog_list[current_line_index];
         self.dialogs_index.insert(npc.get_name(), (dialog_list_index, current_line_index + 1));
 
-        message.to_string()
+        message.to_owned()
     }
     pub fn has_item(&self, item_id: ItemId) -> bool {
         self.inventory.contains_item(item_id)

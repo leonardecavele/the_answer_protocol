@@ -27,7 +27,7 @@ pub struct Npc {
 
 impl Npc {
     pub fn new(json: &JsonValue, id: NpcId) -> Option<Self> {
-        let name = json["name"].as_str()?.to_string();
+        let name = json["name"].as_str()?.to_owned();
 
         let max_hp = json["max_hp"].as_u32();
         let hp = max_hp;
@@ -40,12 +40,12 @@ impl Npc {
                         let mut lines = Vec::new();
                         for line in item.members() {
                             if let Some(line_str) = line.as_str() {
-                                lines.push(line_str.to_string());
+                                lines.push(line_str.to_owned());
                             }
                         }
                         dialogs.push(lines);
                     } else if let Some(dialog) = item.as_str() {
-                        dialogs.push(vec![dialog.to_string()]);
+                        dialogs.push(vec![dialog.to_owned()]);
                     }
                 }
                 Some(dialogs)
@@ -62,7 +62,7 @@ impl Npc {
                         return None;
                     } else {
                         // normal case
-                        quests.push(quest_id.to_string());
+                        quests.push(quest_id.to_owned());
                     }
                 }
             }
@@ -87,7 +87,7 @@ impl Npc {
             return None;
         }
 
-        let room_spawn = json["spawns"].as_str()?.to_string();
+        let room_spawn = json["spawns"].as_str()?.to_owned();
 
         Some(Self {
             id,
@@ -129,7 +129,7 @@ impl Npc {
     }
     pub fn parse_protocol_representation(protocol_name: &str) -> Option<(NpcId, String)> {
         if let Some((id, name)) = protocol_name.split_once('.') {
-            id.parse::<NpcId>().ok().map(|id| (id, name.to_string()))
+            id.parse::<NpcId>().ok().map(|id| (id, name.to_owned()))
         } else {
             None
         }
