@@ -57,6 +57,7 @@ pub enum ErrorCode {
     ActionAlreadyTaken,
     PlayerAlreadyInCombat,
     PlayerNotInCombat,
+    FileNotFound,
 }
 
 impl ErrorCode {
@@ -82,6 +83,7 @@ impl ErrorCode {
             Self::ActionAlreadyTaken => 409,
             Self::PlayerAlreadyInCombat => 410,
             Self::PlayerNotInCombat => 411,
+            Self::FileNotFound => 412,
             Self::ConnectionFailed => 900,
             Self::SendFailed => 901,
             Self::InvalidGroupCommand => 997,

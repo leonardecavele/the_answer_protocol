@@ -1,6 +1,5 @@
 use crate::constantes::{
-    BASE_COMMAND_RESPONSE, CODE_NL_SEP, CODE_SP_SEP, ErrorCode, LOST_ITEM, LOST_ITEM_SPAWN,
-    MAX_TIME_FOR_COMBAT, MIN_DMG_DEALT, NPC_DMG, NPC_MOB,
+    BASE_COMMAND_RESPONSE, CODE_NL_SEP, CODE_SP_SEP, ErrorCode, LOST_ITEM, LOST_ITEM_SPAWN, MAX_TIME_FOR_COMBAT, MIN_DMG_DEALT, NPC_DMG, NPC_MOB, TEST_FILES_DIR,
 };
 use crate::game_manager::GameManager;
 use crate::items::{Item, ItemId};
@@ -148,17 +147,26 @@ impl GameManager {
             .unwrap()
             .get_protocol_representation();
 
-        let code: String = std::fs::read_to_string(&file_name).unwrap();
-        let code_without_nl_sp = code.replace(" ", CODE_SP_SEP).replace("\n", CODE_NL_SEP);
+        let file_path = format!("{}/{}", TEST_FILES_DIR, file_name);
+        let code: Result<String, std::io::Error> = std::fs::read_to_string(&file_path);
+        if code.is_err() {
+            error!("Failed to read code from file: {:?}", file_name);
+            return generate_json(leader, command_name, ErrorCode::FileNotFound, "").dump();
+        }
+        let code_without_nl_sp = code
+            .unwrap()
+            .replace(" ", CODE_SP_SEP)
+            .replace("\n", CODE_NL_SEP);
         let mut players_to_notify = players.clone();
         players_to_notify.push(leader.to_owned());
         let args_to_send = object! { "code": code_without_nl_sp,
-                                     "time": MAX_TIME_FOR_COMBAT.as_secs(),
-                                     "nl_sep": CODE_NL_SEP,
-                                     "sp_sep": CODE_SP_SEP,
-                                     "npc_id": npc_representation,
-                                     "npc_hp": self.get_npc_hp(npc_id).unwrap(),
-                                     "npc_max_hp": self.get_npc_max_hp(npc_id).unwrap()}.dump();
+        "time": MAX_TIME_FOR_COMBAT.as_secs(),
+        "nl_sep": CODE_NL_SEP,
+        "sp_sep": CODE_SP_SEP,
+        "npc_id": npc_representation,
+        "npc_hp": self.get_npc_hp(npc_id).unwrap(),
+        "npc_max_hp": self.get_npc_max_hp(npc_id).unwrap()}
+        .dump();
         let event = GameManager::generate_no_player_event_json(
             &players_to_notify,
             "FIGHT START",
@@ -461,12 +469,7 @@ impl GameManager {
                 .dump();
             }
             "MOVE" => {
-                return self.group_command_move(
-                    player_name.to_owned(),
-                    command_name,
-                    vec![],
-                    data,
-                );
+                return self.group_command_move(player_name.to_owned(), command_name, vec![], data);
             }
 
             "QUIT" => {
