@@ -110,9 +110,9 @@ impl LOOT {
 
     pub fn to_string(&self) -> String {
         match self {
-            Self::Merci => "MERCI".to_string(),
-            Self::TShirt => "TSHIRT".to_string(),
-            Self::Wrap => "WRAP".to_string(),
+            Self::Merci => "MERCI".to_owned(),
+            Self::TShirt => "TSHIRT".to_owned(),
+            Self::Wrap => "WRAP".to_owned(),
         }
     }
 }
