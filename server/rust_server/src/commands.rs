@@ -1,5 +1,6 @@
 use crate::constantes::{
-    BASE_COMMAND_RESPONSE, CODE_NL_SEP, CODE_SP_SEP, ErrorCode, LOST_ITEM, LOST_ITEM_SPAWN, MAX_TIME_FOR_COMBAT, MIN_DMG_DEALT, NPC_DMG, NPC_MOB, TEST_FILES_DIR,
+    BASE_COMMAND_RESPONSE, CODE_NL_SEP, CODE_SP_SEP, ErrorCode, LOST_ITEM, LOST_ITEM_SPAWN,
+    MAX_TIME_FOR_COMBAT, MIN_DMG_DEALT, NPC_DMG, NPC_MOB, TEST_FILES_DIR,
 };
 use crate::game_manager::GameManager;
 use crate::items::{Item, ItemId};
@@ -364,14 +365,24 @@ impl GameManager {
             let json = json::parse(&response).unwrap();
             let player = json["player"].as_str().unwrap();
             let npc_id = json["npc_id"].as_u32().unwrap();
-            if let Some(player_id) = self.get_player_id(player) {
+            if let Some(player_id_pointer) = self.get_player_id(player) {
                 let player_success = json["success"].as_bool().unwrap();
+                let player_id = *player_id_pointer;
                 if player_success {
-                    self.player_attacks_npc(20, *player_id, npc_id);
+                    let instance_player_count =
+                        self.get_nb_players_in_player_instance(player_id).unwrap();
+                    let npc_combat_start_hp = self.get_npc_combat_start_hp(npc_id).unwrap();
+                    let npc_hp = self.get_npc_hp(npc_id).unwrap();
+                    let mut dmg = (npc_combat_start_hp / instance_player_count).min(MIN_DMG_DEALT);
+                    if dmg * 2 > npc_hp {
+                        dmg *= 2;
+                    }
+                    self.player_attacks_npc(dmg, player_id, npc_id);
                     let response_msg =
                         generate_json(player, "FIGHT ATTACK", ErrorCode::NoError, "SUCCEED").dump();
                     self.send_msg_to_client(response_msg)?;
                 } else {
+                    self.npc_attacks_player(10, npc_id, player_id);
                     let response_msg =
                         generate_json(player, "FIGHT ATTACK", ErrorCode::NoError, "FAIL").dump();
                     self.send_msg_to_client(response_msg)?;
