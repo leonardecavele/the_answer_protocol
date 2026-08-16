@@ -1,5 +1,5 @@
 use crate::data::manifest::Manifest;
-use api_client::commands::QuestData;
+use api_client::commands::{FightAttackStatus, QuestData};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
@@ -341,12 +341,34 @@ impl GameUiState {
 }
 //endregion
 
+//region Fight
+pub struct FightState {
+    pub submitted: bool,
+    pub status: Option<FightAttackStatus>,
+}
+
+impl FightState {
+    pub fn new() -> Self {
+        Self {
+            submitted: false,
+            status: None,
+        }
+    }
+
+    pub fn reset(&mut self) {
+        self.submitted = false;
+        self.status = None;
+    }
+}
+//endregion
+
 pub struct GameState {
     pub player: PlayerState,
     pub group: GroupState,
     pub room: RoomState,
     pub server: ServerState,
     pub ui: GameUiState,
+    pub fight: FightState,
     pub manifest: Arc<Manifest>,
 
     pub chat_history: Vec<ChatMessage>,
@@ -361,6 +383,7 @@ impl GameState {
             room: RoomState::new(),
             server: ServerState::new(),
             ui: GameUiState::new(),
+            fight: FightState::new(),
             manifest,
             chat_history: Vec::new(),
             action_logs: Vec::new(),

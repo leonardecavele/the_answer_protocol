@@ -5,6 +5,8 @@ use crate::states::game::{
     ChatChannel, ChatMessage, DialogueState, END_OF_DIALOGUE_TAG, Overlay, OverlayKind,
 };
 use crate::states::ui::Notification;
+use crate::ui::views::editor::EditorView;
+use crate::ui::views::game::GameView;
 use api_client::commands::LookCommand;
 use api_client::events::{GameServerEvent, GroupEvent, RoomEvent, ServerEvent};
 use api_client::{ApiRequest, ApiResponse};
@@ -55,6 +57,10 @@ impl App {
                 self.state
                     .game
                     .log_action("You checked who is here.".to_string());
+            }
+            ApiResponse::FightCreate(Ok(_)) => {}
+            ApiResponse::FightAttack(Ok(fight_attack_res)) => {
+                self.state.game.fight.status = Some(fight_attack_res.status);
             }
             ApiResponse::Status(Ok(status_res)) => {
                 self.state.game.player.hp = status_res.player_status.hp;
@@ -380,6 +386,28 @@ impl App {
                     .room
                     .npcs
                     .retain(|npc_id| npc_id.to_string() != kill_data.npc_id);
+            }
+            ServerEvent::FightStart(fight_data) => {
+                let npc_name = self.state.game.manifest.get_npc_name(&fight_data.npc_id);
+
+                match EditorView::new(&fight_data) {
+                    Ok(view) => {
+                        self.state.game.fight.reset();
+                        self.state.game.ui.close_all();
+                        self.state
+                            .game
+                            .log_action(format!("A fight started against {}.", npc_name));
+                        self.view_manager.set_view(Box::new(view));
+                    }
+                    Err(error) => {
+                        self.state.ui.notification.push(Notification::error(error));
+                    }
+                }
+            }
+            ServerEvent::FightEnd => {
+                self.state.game.fight.reset();
+                self.state.game.log_action("The fight ended.".to_string());
+                self.view_manager.set_view(Box::new(GameView::new()));
             }
             ServerEvent::Quit(name) => {
                 self.state.game.server.online_players_count = self
