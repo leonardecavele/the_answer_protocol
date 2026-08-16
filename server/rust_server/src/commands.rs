@@ -1,6 +1,6 @@
 use crate::constantes::{
     BASE_COMMAND_RESPONSE, CODE_NL_SEP, CODE_SP_SEP, ErrorCode, LOST_ITEM, LOST_ITEM_SPAWN,
-    MAX_TIME_FOR_COMBAT, MIN_DMG_DEALT, NPC_DMG, NPC_MOB,
+    MAX_TIME_FOR_COMBAT, MIN_DMG_DEALT, NPC_DMG, NPC_MOB, TEST_FILES_DIR,
 };
 use crate::game_manager::GameManager;
 use crate::items::{Item, ItemId};
@@ -148,17 +148,26 @@ impl GameManager {
             .unwrap()
             .get_protocol_representation();
 
-        let code: String = std::fs::read_to_string(&file_name).unwrap();
-        let code_without_nl_sp = code.replace(" ", CODE_SP_SEP).replace("\n", CODE_NL_SEP);
+        let file_path = format!("{}/{}", TEST_FILES_DIR, file_name);
+        let code: Result<String, std::io::Error> = std::fs::read_to_string(&file_path);
+        if code.is_err() {
+            error!("Failed to read code from file: {:?}", file_name);
+            return generate_json(leader, command_name, ErrorCode::FileNotFound, "").dump();
+        }
+        let code_without_nl_sp = code
+            .unwrap()
+            .replace(" ", CODE_SP_SEP)
+            .replace("\n", CODE_NL_SEP);
         let mut players_to_notify = players.clone();
         players_to_notify.push(leader.to_owned());
         let args_to_send = object! { "code": code_without_nl_sp,
-                                     "time": MAX_TIME_FOR_COMBAT.as_secs(),
-                                     "nl_sep": CODE_NL_SEP,
-                                     "sp_sep": CODE_SP_SEP,
-                                     "npc_id": npc_representation,
-                                     "npc_hp": self.get_npc_hp(npc_id).unwrap(),
-                                     "npc_max_hp": self.get_npc_max_hp(npc_id).unwrap()}.dump();
+        "time": MAX_TIME_FOR_COMBAT.as_secs(),
+        "nl_sep": CODE_NL_SEP,
+        "sp_sep": CODE_SP_SEP,
+        "npc_id": npc_representation,
+        "npc_hp": self.get_npc_hp(npc_id).unwrap(),
+        "npc_max_hp": self.get_npc_max_hp(npc_id).unwrap()}
+        .dump();
         let event = GameManager::generate_no_player_event_json(
             &players_to_notify,
             "FIGHT START",
@@ -356,14 +365,24 @@ impl GameManager {
             let json = json::parse(&response).unwrap();
             let player = json["player"].as_str().unwrap();
             let npc_id = json["npc_id"].as_u32().unwrap();
-            if let Some(player_id) = self.get_player_id(player) {
+            if let Some(player_id_pointer) = self.get_player_id(player) {
                 let player_success = json["success"].as_bool().unwrap();
+                let player_id = *player_id_pointer;
                 if player_success {
-                    self.player_attacks_npc(20, *player_id, npc_id);
+                    let instance_player_count =
+                        self.get_nb_players_in_player_instance(player_id).unwrap();
+                    let npc_combat_start_hp = self.get_npc_combat_start_hp(npc_id).unwrap();
+                    let npc_hp = self.get_npc_hp(npc_id).unwrap();
+                    let mut dmg = (npc_combat_start_hp / instance_player_count).min(MIN_DMG_DEALT);
+                    if dmg * 2 > npc_hp {
+                        dmg *= 2;
+                    }
+                    self.player_attacks_npc(dmg, player_id, npc_id);
                     let response_msg =
                         generate_json(player, "FIGHT ATTACK", ErrorCode::NoError, "SUCCEED").dump();
                     self.send_msg_to_client(response_msg)?;
                 } else {
+                    self.npc_attacks_player(10, npc_id, player_id);
                     let response_msg =
                         generate_json(player, "FIGHT ATTACK", ErrorCode::NoError, "FAIL").dump();
                     self.send_msg_to_client(response_msg)?;
@@ -461,12 +480,7 @@ impl GameManager {
                 .dump();
             }
             "MOVE" => {
-                return self.group_command_move(
-                    player_name.to_owned(),
-                    command_name,
-                    vec![],
-                    data,
-                );
+                return self.group_command_move(player_name.to_owned(), command_name, vec![], data);
             }
 
             "QUIT" => {
