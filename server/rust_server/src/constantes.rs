@@ -3,7 +3,7 @@ use std::time::Duration;
 use crate::room::RoomId;
 
 pub const TEST_FILES_DIR: &str = "assets/code";
-pub const NPC_DMG: u32 = 20;
+pub const NPC_DMG: u32 = 100;
 pub const MIN_DMG_DEALT: u32 = 5;
 pub const LOST_ITEM: u8 = 0;
 pub const T_SHIRT: u8 = 2;
