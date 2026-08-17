@@ -50,24 +50,14 @@
         "7.enchevri": {
             "name": "enchevri",
             "type": "enemy",
-<<<<<<< HEAD
             "image_path": "../assets/pictures/mobs/fight/enchevri/enchevri_cluster_du_haut.png",
-            "actions": ["Talk", "Attack"]
-=======
-            "image_path": "../../assets/pictures/mobs/fight/enchevri/enchevri_cluster_du_haut.png",
             "actions": ["Talk", "Fight Create"]
->>>>>>> feature/tui
         },
         "8.acampion": {
             "name": "acampion",
             "type": "enemy",
-<<<<<<< HEAD
             "image_path": "../assets/pictures/mobs/fight/acampion/acampion_afk.png",
-            "actions": ["Talk", "Attack"]
-=======
-            "image_path": "../../assets/pictures/mobs/fight/acampion/acampion_afk.png",
             "actions": ["Talk", "Fight Create"]
->>>>>>> feature/tui
         },
         "9.mphippen": {
             "name": "mphippen",
@@ -78,13 +68,8 @@
         "10.crappo": {
             "name": "crappo",
             "type": "enemy",
-<<<<<<< HEAD
 			"image_path": "../assets/pictures/mobs/fight/crappo/crappo.jpg",
-            "actions": ["Talk", "Attack"]
-=======
-			"image_path": "../../assets/pictures/mobs/fight/crappo/crappo.jpg",
             "actions": ["Talk", "Fight Create"]
->>>>>>> feature/tui
         },
         "11.ayteyssi": {
             "name": "ayteyssi",
@@ -95,13 +80,8 @@
         "12.ldecavel": {
             "name": "ldecavel",
             "type": "enemy",
-<<<<<<< HEAD
             "image_path": "../assets/pictures/mobs/fight/ldecavel/ldecavel.png",
-            "actions": ["Talk", "Attack"]
-=======
-            "image_path": "../../assets/pictures/mobs/fight/ldecavel/ldecavel.png",
             "actions": ["Talk", "Fight Create"]
->>>>>>> feature/tui
         },
         "13.cobussie": {
             "name": "cobussie",
@@ -112,12 +92,8 @@
         "14.ibady": {
             "name": "ibady",
             "type": "enemy",
-<<<<<<< HEAD
             "image_path": "../assets/pictures/mobs/fight/ibady/ibady.jpg",
-            "actions": ["Talk", "Attack"]
-=======
             "actions": ["Talk", "Fight Create"]
->>>>>>> feature/tui
         },
         "15.bokim": {
             "name": "bokim",
