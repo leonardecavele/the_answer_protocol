@@ -113,6 +113,14 @@ impl CombatInstance {
     pub fn get_npc_id(&self) -> NpcId {
         self.npc_id
     }
+    
+    pub fn force_finish(&mut self) {
+        for success in self.players_success.values_mut() {
+            if success.is_none() {
+                *success = Some(true);
+            }
+        }
+    }
     pub fn all_players_finished(&self) -> bool {
         self.players_success.values().all(|s| s.is_some())
     }

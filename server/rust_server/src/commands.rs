@@ -134,7 +134,7 @@ impl GameManager {
             .filter_map(|name| self.get_player_id(name).copied())
             .collect();
 
-        let file_name = self.get_random_test_file_name();
+        let file_name = "add_one.c".to_string(); // self.get_random_test_file_name();
         self.combat_instances.add_instance(
             leader_id,
             npc_id,
@@ -381,7 +381,12 @@ impl GameManager {
                     let event = self.generate_event_json(&mut vec![player.to_string()], player, "FIGHT_RESULT", "SUCCESS", false);
                     self.add_diff_to_tick(event);
                 } else {
-                    let event = self.generate_event_json(&mut vec![player.to_string()], player, "FIGHT_RESULT", "FAIL", false);
+                    self.npc_attacks_player(NPC_DMG, player_id, npc_id);
+                    let event = GameManager::generate_no_player_event_json(
+                        &mut vec![player.to_string()],
+                        "FIGHT RESULT",
+                        "FAIL",
+                    );
                     self.add_diff_to_tick(event);
                 }
             }
@@ -424,7 +429,7 @@ impl GameManager {
         let data = json_object["data"].as_str().unwrap();
 
         info!(
-            "received command {} from player {} with args {}",
+            "received command {} from player {} with args <{}>",
             command_name, player_name, data
         );
 
@@ -434,6 +439,14 @@ impl GameManager {
 
                 // }
                 self.connect_player(player_name.to_owned());
+                let mut room_players = self.get_all_players_at_room(
+                    self.get_player_from_name(player_name)
+                        .unwrap()
+                        .get_current_room(),
+                );
+                let enter_diff = self.generate_event_json(&mut room_players, player_name, "ROOM", "PRESENCE ENTER", true);
+                self.add_diff_to_tick(enter_diff);
+
                 return BASE_COMMAND_RESPONSE.to_owned();
             }
             "LOOK" => {
@@ -507,7 +520,7 @@ impl GameManager {
                         .get_instance_for_player(player_id)
                         .unwrap()
                         .get_npc_id();
-                    self.npc_attacks_player(NPC_DMG, npc_id, player_id);
+                    self.npc_attacks_player(NPC_DMG, player_id, npc_id);
                 }
 
                 self.disconnect_player(player_name.to_owned());
@@ -685,6 +698,7 @@ impl GameManager {
                 let (file_name, npc_id) = file_and_npc_id.unwrap();
 
                 let sent_code = data;
+
                 /*check if the code is correct*/
                 self.test_code(&file_name, sent_code, player_name, npc_id);
                 return generate_json(player_name, command_name, ErrorCode::NoError, "Processing").dump();
@@ -755,7 +769,7 @@ impl GameManager {
             //         }
             //     }
 
-            //     self.npc_attacks_player(NPC_DMG, npc_id, player_id)
+            //     self.npc_attacks_player(NPC_DMG, player_id ,npc_id)
             // }
             "STATUS" => {
                 let player_status = self.get_player_status_as_string(player_name);
