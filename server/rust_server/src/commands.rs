@@ -378,10 +378,18 @@ impl GameManager {
                         dmg *= 2;
                     }
                     self.player_attacks_npc(dmg, player_id, npc_id);
-                    let event = self.generate_event_json(&mut vec![player.to_string()], player, "FIGHT_RESULT", "SUCCESS", false);
+                    let event = GameManager::generate_no_player_event_json(
+                        &mut vec![player.to_string()],
+                        "FIGHT_RESULT",
+                        "SUCCESS",
+                    );
                     self.add_diff_to_tick(event);
                 } else {
-                    let event = self.generate_event_json(&mut vec![player.to_string()], player, "FIGHT_RESULT", "FAIL", false);
+                    let event = GameManager::generate_no_player_event_json(
+                        &mut vec![player.to_string()],
+                        "FIGHT_RESULT",
+                        "FAIL",
+                    );
                     self.add_diff_to_tick(event);
                 }
             }
@@ -687,7 +695,8 @@ impl GameManager {
                 let sent_code = data;
                 /*check if the code is correct*/
                 self.test_code(&file_name, sent_code, player_name, npc_id);
-                return generate_json(player_name, command_name, ErrorCode::NoError, "Processing").dump();
+                return generate_json(player_name, command_name, ErrorCode::NoError, "Processing")
+                    .dump();
             }
             "ATTACK" => {
                 let npc_id = match self.verify_combat_target(player_name, command_name, data) {
