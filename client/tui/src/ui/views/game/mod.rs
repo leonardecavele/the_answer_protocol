@@ -180,7 +180,7 @@ impl Lifecycle for GameView {
                 return true;
             }
             if key.code == KeyCode::Tab {
-                state.game.ui.current_focus = match state.game.ui.current_focus {
+                state.game.current_focus = match state.game.current_focus {
                     GameFocus::Input => GameFocus::NpcList,
                     GameFocus::NpcList => GameFocus::RoomItemsList,
                     GameFocus::RoomItemsList => GameFocus::QuestList,
@@ -192,7 +192,7 @@ impl Lifecycle for GameView {
                 return true;
             }
             if key.code == KeyCode::BackTab {
-                state.game.ui.current_focus = match state.game.ui.current_focus {
+                state.game.current_focus = match state.game.current_focus {
                     GameFocus::Input => GameFocus::RightPanel,
                     GameFocus::RightPanel => GameFocus::InventoryGrid,
                     GameFocus::InventoryGrid => GameFocus::ActionHistory,
@@ -209,82 +209,69 @@ impl Lifecycle for GameView {
             if mouse.kind
                 == crossterm::event::MouseEventKind::Down(crossterm::event::MouseButton::Left)
             {
-                if let Some(r) = self.left_panel.npcs_area {
-                    if is_mouse_in_rect(mouse.column, mouse.row, r) {
-                        state.game.ui.current_focus = GameFocus::NpcList;
+                if let Some(area) = self.left_panel.npcs_area {
+                    if is_mouse_in_rect(mouse.column, mouse.row, area) {
+                        state.game.current_focus = GameFocus::NpcList;
 
-                        // Select the clicked NPC
-                        let y = mouse.row.saturating_sub(r.y);
-                        // y=0 is top border, y=1 is first item
+                        let y = mouse.row.saturating_sub(area.y);
                         if y > 0 {
-                            let idx = (y - 1) as usize;
-                            if idx < state.game.room.npcs.len() {
-                                self.left_panel.selected_npc_index = Some(idx);
-                            }
+                            state.game.room.npcs.select_index((y - 1) as usize);
                         }
                     }
                 }
 
-                if let Some(r) = self.left_panel.items_area {
-                    if is_mouse_in_rect(mouse.column, mouse.row, r) {
-                        state.game.ui.current_focus = GameFocus::RoomItemsList;
+                if let Some(area) = self.left_panel.items_area {
+                    if is_mouse_in_rect(mouse.column, mouse.row, area) {
+                        state.game.current_focus = GameFocus::RoomItemsList;
 
-                        let y = mouse.row.saturating_sub(r.y);
+                        let y = mouse.row.saturating_sub(area.y);
                         if y > 0 {
-                            let idx = (y - 1) as usize;
-                            if idx < state.game.room.items.len() {
-                                self.left_panel.selected_item_index = idx;
-                            }
+                            state.game.room.items.select_index((y - 1) as usize);
                         }
                     }
                 }
 
-                if let Some(r) = self.left_panel.quests_area {
-                    if is_mouse_in_rect(mouse.column, mouse.row, r) {
-                        state.game.ui.current_focus = GameFocus::QuestList;
+                if let Some(area) = self.left_panel.quests_area {
+                    if is_mouse_in_rect(mouse.column, mouse.row, area) {
+                        state.game.current_focus = GameFocus::QuestList;
 
-                        let y = mouse.row.saturating_sub(r.y);
+                        let y = mouse.row.saturating_sub(area.y);
                         if y > 0 {
-                            let idx = (y - 1) as usize;
-                            if idx < state.game.room.items.len() {
-                                self.left_panel.selected_quest_index = idx;
-                            }
+                            state.game.player.quests.select_index((y - 1) as usize);
                         }
                     }
                 }
 
-                if let Some(r) = self.center_panel.history_area {
-                    if is_mouse_in_rect(mouse.column, mouse.row, r) {
-                        state.game.ui.current_focus = GameFocus::ActionHistory;
+                if let Some(area) = self.center_panel.history_area {
+                    if is_mouse_in_rect(mouse.column, mouse.row, area) {
+                        state.game.current_focus = GameFocus::ActionHistory;
                     }
                 }
 
-                if let Some(r) = self.center_panel.inventory_area {
-                    if is_mouse_in_rect(mouse.column, mouse.row, r) {
-                        state.game.ui.current_focus = GameFocus::InventoryGrid;
+                if let Some(area) = self.center_panel.inventory_area {
+                    if is_mouse_in_rect(mouse.column, mouse.row, area) {
+                        state.game.current_focus = GameFocus::InventoryGrid;
 
-                        let rel_x = mouse.column.saturating_sub(r.x);
-                        let rel_y = mouse.row.saturating_sub(r.y);
+                        let rel_x = mouse.column.saturating_sub(area.x);
+                        let rel_y = mouse.row.saturating_sub(area.y);
                         if rel_x > 0 && rel_y > 0 {
                             let col = (rel_x - 1) as usize / INVENTORY_ITEM_WIDTH as usize;
                             let row = (rel_y - 1) as usize / INVENTORY_ITEM_HEIGHT as usize;
                             let cols = self.center_panel.inventory.inventory_cols.max(1);
                             let idx = row * cols + col;
-                            if idx < state.game.player.inventory.len() {
-                                state.game.ui.inventory_cursor = idx;
-                            }
+                            state.game.player.inventory.select_index(idx);
                         }
                     }
                 }
 
-                if let Some(r) = self.right_panel_area {
-                    if is_mouse_in_rect(mouse.column, mouse.row, r) {
-                        state.game.ui.current_focus = GameFocus::RightPanel;
+                if let Some(area) = self.right_panel_area {
+                    if is_mouse_in_rect(mouse.column, mouse.row, area) {
+                        state.game.current_focus = GameFocus::RightPanel;
                     }
                 }
-                if let Some(r) = self.footer_area {
-                    if is_mouse_in_rect(mouse.column, mouse.row, r) {
-                        state.game.ui.current_focus = GameFocus::Input;
+                if let Some(area) = self.footer_area {
+                    if is_mouse_in_rect(mouse.column, mouse.row, area) {
+                        state.game.current_focus = GameFocus::Input;
                     }
                 }
             }

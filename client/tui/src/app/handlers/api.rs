@@ -2,9 +2,11 @@ use crate::app::App;
 use crate::events::ApiEvent;
 use crate::network::envelopes::ResponseEnvelope;
 use crate::states::game::{
-    ChatChannel, ChatMessage, DialogueState, END_OF_DIALOGUE_TAG, Overlay, OverlayKind,
+    ChatChannel, ChatMessage, DialogueState, Overlay, OverlayKind, END_OF_DIALOGUE_TAG,
 };
 use crate::states::ui::Notification;
+use crate::ui::views::editor::EditorView;
+use crate::ui::views::game::GameView;
 use api_client::commands::LookCommand;
 use api_client::events::{GameServerEvent, GroupEvent, RoomEvent, ServerEvent};
 use api_client::{ApiRequest, ApiResponse};
@@ -56,6 +58,8 @@ impl App {
                     .game
                     .log_action("You checked who is here.".to_string());
             }
+            ApiResponse::FightCreate(Ok(_)) => {}
+            ApiResponse::FightAttack(Ok(_)) => {}
             ApiResponse::Status(Ok(status_res)) => {
                 self.state.game.player.hp = status_res.player_status.hp;
                 self.state.game.player.max_hp = status_res.player_status.max_hp;
@@ -118,12 +122,12 @@ impl App {
                 self.state.game.room.name = Some(look_res.room.name);
                 self.state.game.room.description = Some(look_res.room.description);
                 self.state.game.room.players = look_res.players;
-                self.state.game.room.npcs = look_res.npcs;
-                self.state.game.room.items = look_res.items;
+                self.state.game.room.npcs.set_items(look_res.npcs);
+                self.state.game.room.items.set_items(look_res.items);
                 self.state.game.room.exits = look_res.room.exits;
             }
             ApiResponse::Move(Ok(_move_res)) => {
-                self.state.game.ui.focused_entity_id = None;
+                self.state.game.ui.inspected_entity_id = None;
                 if let ApiRequest::Move(cmd) = envelope.original_request {
                     self.state
                         .game
@@ -132,13 +136,21 @@ impl App {
                 self.handle_request(ApiRequest::Look(LookCommand));
             }
             ApiResponse::Inventory(Ok(inv_res)) => {
-                self.state.game.player.inventory = inv_res.inventory;
+                self.state
+                    .game
+                    .player
+                    .inventory
+                    .set_items(inv_res.inventory);
                 self.state
                     .game
                     .log_action("You checked your inventory.".to_string());
             }
             ApiResponse::Quests(Ok(quests_res)) => {
-                self.state.game.player.quests = quests_res.quest_list;
+                self.state
+                    .game
+                    .player
+                    .quests
+                    .set_items(quests_res.quest_list);
                 self.state
                     .game
                     .log_action("You checked your quests.".to_string());
@@ -163,7 +175,7 @@ impl App {
                         text = text.replace(END_OF_DIALOGUE_TAG, "").trim().to_string();
                     }
 
-                    self.state.game.ui.focused_entity_id = Some(cmd.npc_name.clone());
+                    self.state.game.ui.inspected_entity_id = Some(cmd.npc_name.clone());
 
                     let display_name = self.state.game.manifest.get_npc_name(&cmd.npc_name);
 
@@ -222,7 +234,7 @@ impl App {
             }
             ApiResponse::Attack(Ok(attack_res)) => {
                 if let ApiRequest::Attack(cmd) = envelope.original_request {
-                    self.state.game.ui.focused_entity_id = Some(cmd.npc_name.clone());
+                    self.state.game.ui.inspected_entity_id = Some(cmd.npc_name.clone());
 
                     let display_name = self.state.game.manifest.get_npc_name(&cmd.npc_name);
 
@@ -235,26 +247,10 @@ impl App {
                     // Update HP manually from attack result
                     self.state.game.player.hp = res.attacker_hp;
 
-                    let text = match res.status.eq_ignore_ascii_case("Victory") {
-                        true => {
-                            self.state
-                                .game
-                                .room
-                                .npcs
-                                .retain(|npc_id| npc_id.to_string() != cmd.npc_name);
-
-                            format!(
-                                "Combat with {}: You dealt {} damage. {} is dead. Victory.",
-                                display_name, res.damage, display_name
-                            )
-                        }
-                        false => {
-                            format!(
-                                "Combat with {}: You dealt {} damage. (Your HP: {} | Target HP: {}) ",
-                                display_name, res.damage, res.attacker_hp, res.target_hp
-                            )
-                        }
-                    };
+                    let text = format!(
+                        "Combat with {}: You dealt {} damage. (Your HP: {} | Target HP: {}) ",
+                        display_name, res.damage, res.attacker_hp, res.target_hp
+                    );
 
                     self.state
                         .game
@@ -368,7 +364,7 @@ impl App {
                         .clone()
                         .unwrap_or("".to_string())
                 {
-                    format!("{} has been defeated", npc_name)
+                    format!("You have defeated {}", npc_name)
                 } else {
                     format!("{} has been defeated by {}", npc_name, kill_data.player)
                 };
@@ -380,6 +376,144 @@ impl App {
                     .room
                     .npcs
                     .retain(|npc_id| npc_id.to_string() != kill_data.npc_id);
+            }
+            ServerEvent::Death(death_data) => {
+                let current_player_name = self
+                    .state
+                    .game
+                    .player
+                    .name
+                    .clone()
+                    .unwrap_or("unknown".to_string());
+                let current_room_id = self
+                    .state
+                    .game
+                    .room
+                    .name
+                    .clone()
+                    .unwrap_or("unknown".to_string());
+
+                let is_current_player = current_player_name == death_data.player_name;
+                let respawn_room_is_current = current_room_id == death_data.respawn_room_id;
+
+                let message = match (is_current_player, respawn_room_is_current) {
+                    (true, true) => "You died and respawned here".to_string(),
+                    (true, false) => {
+                        format!("You died and respawned in {}", death_data.respawn_room_id)
+                    }
+                    (false, true) => {
+                        if !self
+                            .state
+                            .game
+                            .room
+                            .players
+                            .contains(&death_data.player_name)
+                        {
+                            self.state
+                                .game
+                                .room
+                                .players
+                                .push(death_data.player_name.clone());
+                        }
+                        format!("{} died and respawned here", death_data.player_name)
+                    }
+                    (false, false) => {
+                        if self
+                            .state
+                            .game
+                            .room
+                            .players
+                            .contains(&death_data.player_name)
+                        {
+                            self.state
+                                .game
+                                .room
+                                .players
+                                .retain(|p| p != &death_data.player_name);
+                        }
+                        format!(
+                            "{} died and respawned in {}",
+                            death_data.player_name, death_data.respawn_room_id
+                        )
+                    }
+                };
+
+                if is_current_player {
+                    self.handle_request(ApiRequest::Look(LookCommand));
+                }
+
+                self.state.game.log_action(message);
+            }
+            ServerEvent::FightStart(fight_data) => {
+                let npc_name = self.state.game.manifest.get_npc_name(&fight_data.npc_id);
+
+                match EditorView::new(&fight_data) {
+                    Ok(view) => {
+                        self.state.game.fight.reset();
+                        self.state.game.ui.close_all();
+                        self.state
+                            .game
+                            .log_action(format!("A fight started against {}.", npc_name));
+                        self.view_manager.set_view(Box::new(view));
+                    }
+                    Err(error) => {
+                        self.state.ui.notification.push(Notification::error(error));
+                    }
+                }
+            }
+            ServerEvent::FightResult(fight_status) => {
+                let current_player_name = self
+                    .state
+                    .game
+                    .player
+                    .name
+                    .clone()
+                    .unwrap_or("unknown".to_string());
+
+                let is_current_player = current_player_name == fight_status.player_name;
+
+                let message = match is_current_player {
+                    true => {
+                        self.state.game.fight.success = Some(fight_status.success);
+                        match fight_status.success {
+                            true => {
+                                format!("You dealt {} damage", fight_status.damage_dealt)
+                            }
+                            false => {
+                                format!("You receive {} damage", fight_status.damage_dealt)
+                            }
+                        }
+                    }
+                    false => match fight_status.success {
+                        true => {
+                            format!(
+                                "{} dealt {} damage",
+                                fight_status.player_name, fight_status.damage_dealt
+                            )
+                        }
+                        false => {
+                            format!(
+                                "{} receive {} damage",
+                                fight_status.player_name, fight_status.damage_dealt
+                            )
+                        }
+                    },
+                };
+
+                self.state.game.log_action(message.clone());
+
+                let notification = if fight_status.success {
+                    Notification::success(message).with_duration(8000)
+                } else {
+                    Notification::error(message).with_duration(8000)
+                };
+
+                self.state.ui.notification.push(notification);
+            }
+            ServerEvent::FightEnd => {
+                self.state.game.fight.reset();
+                self.state.game.log_action("The fight ended.".to_string());
+                self.view_manager.set_view(Box::new(GameView::new()));
             }
             ServerEvent::Quit(name) => {
                 self.state.game.server.online_players_count = self

@@ -6,6 +6,8 @@ pub mod network;
 pub mod states;
 pub mod ui;
 
+pub(crate) mod collections;
+
 use crate::app::App;
 use clap::Parser;
 use crossterm::event::{DisableMouseCapture, EnableMouseCapture};

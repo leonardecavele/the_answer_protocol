@@ -21,3 +21,4 @@ textwrap = "0.16.2"
 chrono = "0.4.45"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 tokio-util = { version = "0.7.18", features = ["rt"] }
+ratatui-code-editor = { version = "0.0.6", features = ["crossterm"] }

@@ -6,6 +6,7 @@ use crate::ui::theme::overlay_block;
 use crate::ui::utils::{centered_rect, wrap_str_to_lines};
 use api_client::commands::QuestData;
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
+use ratatui::widgets::Padding;
 use ratatui::{
     Frame,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
@@ -13,7 +14,6 @@ use ratatui::{
     text::{Line, Span},
     widgets::{Clear, Paragraph},
 };
-use ratatui::widgets::Padding;
 use tokio::sync::mpsc::Sender;
 
 const POPUP_WIDTH_PERCENT: u16 = 60;

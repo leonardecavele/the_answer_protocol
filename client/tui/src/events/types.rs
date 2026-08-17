@@ -47,4 +47,5 @@ pub enum NotificationType {
     Information,
     Warning,
     Error,
+    Success,
 }
