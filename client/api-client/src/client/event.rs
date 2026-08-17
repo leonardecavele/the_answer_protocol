@@ -31,6 +31,11 @@ pub struct FightStartData {
 }
 
 #[derive(Debug, Clone)]
+pub struct FightResultData {
+    pub is_success: bool,
+}
+
+#[derive(Debug, Clone)]
 pub enum RoomEvent {
     PresenceEnter(String),
     PresenceLeave(String),
@@ -62,6 +67,7 @@ pub enum ServerEvent {
     Despawn(SpawnData),
     Kill(KillData),
     FightStart(FightStartData),
+    FightResult(FightResultData),
     FightEnd,
     Quit(String),
     Room(RoomEvent),
@@ -135,6 +141,16 @@ impl From<ServerResponse> for ServerEvent {
                 match parsed_args {
                     Ok(fight_start_data) => ServerEvent::FightStart(fight_start_data),
                     Err(_) => ServerEvent::Unknown(args.join(" ")),
+                }
+            }
+            ["FIGHT", "RESULT", status] => {
+                let failed_arguments_message =
+                    format!("invalid arguments. expected SUCCESS/FAIL, got: {}", status);
+
+                match status.to_uppercase().as_str() {
+                    "SUCCESS" => ServerEvent::FightResult(FightResultData { is_success: true }),
+                    "FAIL" => ServerEvent::FightResult(FightResultData { is_success: false }),
+                    _ => ServerEvent::Unknown(failed_arguments_message),
                 }
             }
             ["FIGHT", "END"] => ServerEvent::FightEnd,

@@ -1,10 +1,11 @@
+use crate::collections::{Step, move_index};
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
 use crate::states::game::{Overlay, OverlayKind};
 use crate::ui::components::Component;
 use crate::ui::components::Lifecycle;
 use crate::ui::theme::overlay_block;
-use crate::ui::utils::{centered_rect, move_index};
+use crate::ui::utils::centered_rect;
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
 use mpsc::Sender;
 use ratatui::{
@@ -107,12 +108,12 @@ impl Lifecycle for ItemPopupComponent {
             match key.code {
                 KeyCode::Up => {
                     self.selected_action_index =
-                        move_index(self.selected_action_index, count, false);
+                        move_index(self.selected_action_index, count, Step::Previous);
                     return true;
                 }
                 KeyCode::Down => {
                     self.selected_action_index =
-                        move_index(self.selected_action_index, count, true);
+                        move_index(self.selected_action_index, count, Step::Next);
                     return true;
                 }
                 KeyCode::Esc => {

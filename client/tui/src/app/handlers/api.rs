@@ -2,7 +2,7 @@ use crate::app::App;
 use crate::events::ApiEvent;
 use crate::network::envelopes::ResponseEnvelope;
 use crate::states::game::{
-    ChatChannel, ChatMessage, DialogueState, END_OF_DIALOGUE_TAG, Overlay, OverlayKind,
+    ChatChannel, ChatMessage, DialogueState, Overlay, OverlayKind, END_OF_DIALOGUE_TAG,
 };
 use crate::states::ui::Notification;
 use crate::ui::views::editor::EditorView;
@@ -59,9 +59,7 @@ impl App {
                     .log_action("You checked who is here.".to_string());
             }
             ApiResponse::FightCreate(Ok(_)) => {}
-            ApiResponse::FightAttack(Ok(fight_attack_res)) => {
-                self.state.game.fight.status = Some(fight_attack_res.status);
-            }
+            ApiResponse::FightAttack(Ok(_)) => {}
             ApiResponse::Status(Ok(status_res)) => {
                 self.state.game.player.hp = status_res.player_status.hp;
                 self.state.game.player.max_hp = status_res.player_status.max_hp;
@@ -124,12 +122,12 @@ impl App {
                 self.state.game.room.name = Some(look_res.room.name);
                 self.state.game.room.description = Some(look_res.room.description);
                 self.state.game.room.players = look_res.players;
-                self.state.game.room.npcs = look_res.npcs;
-                self.state.game.room.items = look_res.items;
+                self.state.game.room.npcs.set_items(look_res.npcs);
+                self.state.game.room.items.set_items(look_res.items);
                 self.state.game.room.exits = look_res.room.exits;
             }
             ApiResponse::Move(Ok(_move_res)) => {
-                self.state.game.ui.focused_entity_id = None;
+                self.state.game.ui.inspected_entity_id = None;
                 if let ApiRequest::Move(cmd) = envelope.original_request {
                     self.state
                         .game
@@ -138,13 +136,21 @@ impl App {
                 self.handle_request(ApiRequest::Look(LookCommand));
             }
             ApiResponse::Inventory(Ok(inv_res)) => {
-                self.state.game.player.inventory = inv_res.inventory;
+                self.state
+                    .game
+                    .player
+                    .inventory
+                    .set_items(inv_res.inventory);
                 self.state
                     .game
                     .log_action("You checked your inventory.".to_string());
             }
             ApiResponse::Quests(Ok(quests_res)) => {
-                self.state.game.player.quests = quests_res.quest_list;
+                self.state
+                    .game
+                    .player
+                    .quests
+                    .set_items(quests_res.quest_list);
                 self.state
                     .game
                     .log_action("You checked your quests.".to_string());
@@ -169,7 +175,7 @@ impl App {
                         text = text.replace(END_OF_DIALOGUE_TAG, "").trim().to_string();
                     }
 
-                    self.state.game.ui.focused_entity_id = Some(cmd.npc_name.clone());
+                    self.state.game.ui.inspected_entity_id = Some(cmd.npc_name.clone());
 
                     let display_name = self.state.game.manifest.get_npc_name(&cmd.npc_name);
 
@@ -228,7 +234,7 @@ impl App {
             }
             ApiResponse::Attack(Ok(attack_res)) => {
                 if let ApiRequest::Attack(cmd) = envelope.original_request {
-                    self.state.game.ui.focused_entity_id = Some(cmd.npc_name.clone());
+                    self.state.game.ui.inspected_entity_id = Some(cmd.npc_name.clone());
 
                     let display_name = self.state.game.manifest.get_npc_name(&cmd.npc_name);
 
@@ -403,6 +409,9 @@ impl App {
                         self.state.ui.notification.push(Notification::error(error));
                     }
                 }
+            }
+            ServerEvent::FightResult(fight_status) => {
+                self.state.game.fight.success = Some(fight_status.is_success);
             }
             ServerEvent::FightEnd => {
                 self.state.game.fight.reset();
