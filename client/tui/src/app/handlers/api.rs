@@ -399,15 +399,45 @@ impl App {
                 let respawn_room_is_current = current_room_id == death_data.respawn_room_id;
 
                 let message = match (is_current_player, respawn_room_is_current) {
-                    (true, true) => "You died and respawned".to_string(),
+                    (true, true) => "You died and respawned here".to_string(),
                     (true, false) => {
                         format!("You died and respawned in {}", death_data.respawn_room_id)
                     }
-                    (false, true) => format!("{} died and respawned", death_data.player_name),
-                    (false, false) => format!(
-                        "{} died and respawned in {}",
-                        death_data.player_name, death_data.respawn_room_id
-                    ),
+                    (false, true) => {
+                        if !self
+                            .state
+                            .game
+                            .room
+                            .players
+                            .contains(&death_data.player_name)
+                        {
+                            self.state
+                                .game
+                                .room
+                                .players
+                                .push(death_data.player_name.clone());
+                        }
+                        format!("{} died and respawned here", death_data.player_name)
+                    }
+                    (false, false) => {
+                        if self
+                            .state
+                            .game
+                            .room
+                            .players
+                            .contains(&death_data.player_name)
+                        {
+                            self.state
+                                .game
+                                .room
+                                .players
+                                .retain(|p| p != &death_data.player_name);
+                        }
+                        format!(
+                            "{} died and respawned in {}",
+                            death_data.player_name, death_data.respawn_room_id
+                        )
+                    }
                 };
 
                 if is_current_player {
