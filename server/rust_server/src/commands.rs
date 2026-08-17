@@ -664,17 +664,32 @@ impl GameManager {
                 return self.fight_create_command(player_name, npc_id, Vec::new());
             }
             "FIGHT_ATTACK" => {
-                if let Some(player_instance) = self
-                    .combat_instances
-                    .get_instance_for_player(*self.get_player_id(player_name).unwrap())
-                {
-                    let file_name = player_instance.get_assigned_file_name();
-                    let npc_id = player_instance.get_npc_id();
-                    let sent_code = data;
-                    /*check if the code is correct*/
-                    self.test_code(file_name, sent_code, player_name, npc_id);
+                let file_and_npc_id = {
+                    if let Some(instance) = self
+                        .combat_instances
+                        .get_instance_for_player(*self.get_player_id(player_name).unwrap())
+                    {
+                        let file_name = instance.get_assigned_file_name().to_string();
+                        let npc_id = instance.get_npc_id();
+                        Some((file_name, npc_id))
+                    } else {
+                        None
+                    }
+                };
+                if file_and_npc_id.is_none() {
+                    return generate_json(
+                        player_name,
+                        command_name,
+                        ErrorCode::PlayerNotInCombat,
+                        "",
+                    )
+                    .dump();
                 }
+                let (file_name, npc_id) = file_and_npc_id.unwrap();
 
+                let sent_code = data;
+                /*check if the code is correct*/
+                self.test_code(&file_name, sent_code, player_name, npc_id);
                 return generate_json(player_name, command_name, ErrorCode::PlayerNotInCombat, "")
                     .dump();
             }
