@@ -58,6 +58,7 @@ pub enum ErrorCode {
     PlayerAlreadyInCombat,
     PlayerNotInCombat,
     FileNotFound,
+    NoContent,
 }
 
 impl ErrorCode {
@@ -65,6 +66,7 @@ impl ErrorCode {
         match self {
             Self::NoError => 0,
             Self::NameInUse => 201,
+            Self::NoContent => 204,
             Self::NoExit => 301,
             Self::AlreadyConnected | Self::InvalidScope => 400,
             Self::NotInGroup => 401,

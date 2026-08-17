@@ -378,14 +378,11 @@ impl GameManager {
                         dmg *= 2;
                     }
                     self.player_attacks_npc(dmg, player_id, npc_id);
-                    let response_msg =
-                        generate_json(player, "FIGHT ATTACK", ErrorCode::NoError, "SUCCEED").dump();
-                    self.send_msg_to_client(response_msg)?;
+                    let event = self.generate_event_json(&mut vec![player.to_string()], player, "FIGHT_RESULT", "SUCCESS", false);
+                    self.add_diff_to_tick(event);
                 } else {
-                    self.npc_attacks_player(10, npc_id, player_id);
-                    let response_msg =
-                        generate_json(player, "FIGHT ATTACK", ErrorCode::NoError, "FAIL").dump();
-                    self.send_msg_to_client(response_msg)?;
+                    let event = self.generate_event_json(&mut vec![player.to_string()], player, "FIGHT_RESULT", "FAIL", false);
+                    self.add_diff_to_tick(event);
                 }
             }
         }
@@ -690,8 +687,7 @@ impl GameManager {
                 let sent_code = data;
                 /*check if the code is correct*/
                 self.test_code(&file_name, sent_code, player_name, npc_id);
-                return generate_json(player_name, command_name, ErrorCode::PlayerNotInCombat, "")
-                    .dump();
+                return generate_json(player_name, command_name, ErrorCode::NoError, "Processing").dump();
             }
             "ATTACK" => {
                 let npc_id = match self.verify_combat_target(player_name, command_name, data) {
