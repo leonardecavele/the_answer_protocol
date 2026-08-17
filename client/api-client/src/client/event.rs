@@ -36,9 +36,11 @@ pub struct FightStartData {
     pub npc_max_hp: u64,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct FightResultData {
-    pub is_success: bool,
+    pub player_name: String,
+    pub success: bool,
+    pub damage_dealt: u32,
 }
 
 #[derive(Debug, Clone)]
@@ -164,14 +166,12 @@ impl From<ServerResponse> for ServerEvent {
                     Err(_) => ServerEvent::Unknown(args.join(" ")),
                 }
             }
-            ["FIGHT", "RESULT", status] => {
-                let failed_arguments_message =
-                    format!("invalid arguments. expected SUCCESS/FAIL, got: {}", status);
+            ["FIGHT", "RESULT", args @ ..] => {
+                let parsed_args = serde_json::from_str::<FightResultData>(args.join(" ").as_str());
 
-                match status.to_uppercase().as_str() {
-                    "SUCCESS" => ServerEvent::FightResult(FightResultData { is_success: true }),
-                    "FAIL" => ServerEvent::FightResult(FightResultData { is_success: false }),
-                    _ => ServerEvent::Unknown(failed_arguments_message),
+                match parsed_args {
+                    Ok(fight_result_data) => ServerEvent::FightResult(fight_result_data),
+                    Err(_) => ServerEvent::Unknown(args.join(" ")),
                 }
             }
             ["FIGHT", "END"] => ServerEvent::FightEnd,
