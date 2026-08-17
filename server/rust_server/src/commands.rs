@@ -372,10 +372,8 @@ impl GameManager {
                         self.get_nb_players_in_player_instance(player_id).unwrap();
                     let npc_combat_start_hp = self.get_npc_combat_start_hp(npc_id).unwrap();
                     let npc_hp = self.get_npc_hp(npc_id).unwrap();
-                    let mut dmg = (npc_combat_start_hp / instance_player_count).clamp(MIN_DMG_DEALT, MAX_DMG_DEALT);
-                    if dmg * 2 > npc_hp {
-                        dmg *= 2;
-                    }
+                    let dmg = self.calculate_dmg(npc_combat_start_hp, instance_player_count, npc_hp);
+
                     self.player_attacks_npc(dmg, player_id, npc_id);
                     let players_in_instance = self.get_player_instance_group(player_id).unwrap();
                     let event = GameManager::generate_no_player_event_json(
@@ -729,10 +727,7 @@ impl GameManager {
                     }
                     let npc_combat_start_hp = self.get_npc_combat_start_hp(npc_id).unwrap();
                     let npc_hp = self.get_npc_hp(npc_id).unwrap();
-                    let mut dmg = (npc_combat_start_hp / instance_player_count).clamp(MIN_DMG_DEALT, MAX_DMG_DEALT);
-                    if dmg * 2 > npc_hp {
-                        dmg *= 2;
-                    }
+                    let dmg = self.calculate_dmg(npc_combat_start_hp, instance_player_count, npc_hp);
                     let combat_result = self.player_attacks_npc(dmg, player_id, npc_id);
                     return generate_json(
                         player_name,
