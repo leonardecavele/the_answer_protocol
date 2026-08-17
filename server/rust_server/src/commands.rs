@@ -380,14 +380,14 @@ impl GameManager {
                     self.player_attacks_npc(dmg, player_id, npc_id);
                     let event = GameManager::generate_no_player_event_json(
                         &mut vec![player.to_string()],
-                        "FIGHT_RESULT",
+                        "FIGHT RESULT",
                         "SUCCESS",
                     );
                     self.add_diff_to_tick(event);
                 } else {
                     let event = GameManager::generate_no_player_event_json(
                         &mut vec![player.to_string()],
-                        "FIGHT_RESULT",
+                        "FIGHT RESULT",
                         "FAIL",
                     );
                     self.add_diff_to_tick(event);
