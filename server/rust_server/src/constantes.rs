@@ -5,6 +5,7 @@ use crate::room::RoomId;
 pub const TEST_FILES_DIR: &str = "assets/code";
 pub const NPC_DMG: u32 = 100;
 pub const MIN_DMG_DEALT: u32 = 5;
+pub const MAX_DMG_DEALT: u32 = u32::MAX;
 pub const LOST_ITEM: u8 = 0;
 pub const T_SHIRT: u8 = 2;
 pub const CODE_NL_SEP: &str = "<NL>";
