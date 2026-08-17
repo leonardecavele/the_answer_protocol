@@ -32,6 +32,10 @@ impl CombatInstanceManager {
         return vec;
     }
 
+    pub fn get_mut_instance_for_npc(&mut self, npc_id: NpcId) -> Option<&mut CombatInstance> {
+        self.instances.get_mut(&npc_id)
+    }
+
     pub fn get_mut_instance_for_player(
         &mut self,
         player_id: PlayerId,
@@ -67,6 +71,7 @@ pub struct CombatInstance {
     npc_combat_start_hp: u32,
     pub combat_start_time: Instant, // Option<bool> because the success is None until the player played
     file_name: String,
+    pub is_evaluating_response: bool,
 }
 
 impl CombatInstance {
@@ -90,6 +95,7 @@ impl CombatInstance {
             npc_combat_start_hp: npc_hp,
             combat_start_time: Instant::now(),
             file_name,
+            is_evaluating_response: false,
         }
     }
 

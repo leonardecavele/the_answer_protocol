@@ -455,7 +455,9 @@ impl GameManager {
     pub fn punish_inactive_players_in_combat(&mut self) {
         let mut players_to_punish: Vec<(PlayerId, NpcId)> = Vec::new();
         for (npc_id, instance) in self.combat_instances.instances.iter() {
-            if instance.combat_start_time.elapsed() > MAX_TIME_FOR_COMBAT {
+            if instance.combat_start_time.elapsed() > MAX_TIME_FOR_COMBAT
+                && !instance.is_evaluating_response
+            {
                 for (player_id, success) in instance.players_success.iter() {
                     if success.is_none() {
                         players_to_punish.push((*player_id, *npc_id));
@@ -860,7 +862,7 @@ impl GameManager {
         self.combat_instances.remove_finished_instances();
     }
 
-    pub fn test_code(&self, file_name: &str, sent_code: &str, player: &str, npc_id: NpcId) {
+    pub fn test_code(&mut self, file_name: &str, sent_code: &str, player: &str, npc_id: NpcId) {
         let sender = self.tester_sender.clone();
         let mut response = object! {"player": player, "npc_id": npc_id, "success": false};
         let file_name_owned = file_name.to_owned();
@@ -869,6 +871,8 @@ impl GameManager {
             .replace(CODE_NL_SEP, "\n")
             .replace(CODE_SP_SEP, " ");
 
+        let instance = self.combat_instances.get_mut_instance_for_npc(npc_id).unwrap();
+        instance.is_evaluating_response = true;
         std::thread::spawn(move || {
             let result = test(&file_name_owned, &sent_code_owned);
             response["success"] = result.into();
