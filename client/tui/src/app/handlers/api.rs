@@ -410,6 +410,10 @@ impl App {
                     ),
                 };
 
+                if is_current_player {
+                    self.handle_request(ApiRequest::Look(LookCommand));
+                }
+
                 self.state.game.log_action(message);
             }
             ServerEvent::FightStart(fight_data) => {
