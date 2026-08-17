@@ -377,14 +377,20 @@ impl GameManager {
                         dmg *= 2;
                     }
                     self.player_attacks_npc(dmg, player_id, npc_id);
-                    let event = self.generate_event_json(&mut vec![player.to_string()], player, "FIGHT_RESULT", "SUCCESS", false);
+                    let players_in_instance = self.get_player_instance_group(player_id).unwrap();
+                    let event = GameManager::generate_no_player_event_json(
+                        &players_in_instance,
+                        "FIGHT RESULT",
+                        object! { "player_name": player.to_string(), "success": true, "damage_dealt": dmg}.dump().as_str(),
+                    );
                     self.add_diff_to_tick(event);
                 } else {
                     self.npc_attacks_player(NPC_DMG, player_id, npc_id);
+                    let players_in_instance = self.get_player_instance_group(player_id).unwrap();
                     let event = GameManager::generate_no_player_event_json(
-                        &mut vec![player.to_string()],
+                        &players_in_instance,
                         "FIGHT RESULT",
-                        "FAIL",
+                        object! { "player_name": player.to_string(), "success": false, "damage_dealt": NPC_DMG}.dump().as_str(),
                     );
                     self.add_diff_to_tick(event);
                 }
@@ -747,29 +753,6 @@ impl GameManager {
                 )
                 .dump();
             }
-            // "DEFEND" => {
-            //     let npc_id = match self.verify_combat_target(player_name, command_name, data) {
-            //         Ok(id) => id,
-            //         Err(json_response) => return json_response,
-            //     };
-            //     let player_id = *self.get_player_id(player_name).unwrap();
-
-            //     if let Some(_instance_player_count) =
-            //         self.get_nb_players_in_player_instance(player_id)
-            //     {
-            //         if self.check_action_already_taken(player_id, npc_id) {
-            //             return generate_json(
-            //                 player_name,
-            //                 command_name,
-            //                 ErrorCode::ActionAlreadyTaken,
-            //                 "",
-            //             )
-            //             .dump();
-            //         }
-            //     }
-
-            //     self.npc_attacks_player(NPC_DMG, player_id ,npc_id)
-            // }
             "STATUS" => {
                 let player_status = self.get_player_status_as_string(player_name);
                 return generate_json(

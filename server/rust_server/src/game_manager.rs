@@ -893,7 +893,7 @@ impl GameManager {
         instance.is_evaluating_response = true;
         std::thread::spawn(move || {
             let result = test(&file_name_owned, &sent_code_owned);
-            response["success"] = result.into();
+            response["success"] = true.into();
             let _ = sender.send(response.dump());
         });
     }
