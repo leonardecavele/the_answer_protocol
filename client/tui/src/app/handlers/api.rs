@@ -247,26 +247,10 @@ impl App {
                     // Update HP manually from attack result
                     self.state.game.player.hp = res.attacker_hp;
 
-                    let text = match res.status.eq_ignore_ascii_case("Victory") {
-                        true => {
-                            self.state
-                                .game
-                                .room
-                                .npcs
-                                .retain(|npc_id| npc_id.to_string() != cmd.npc_name);
-
-                            format!(
-                                "Combat with {}: You dealt {} damage. {} is dead. Victory.",
-                                display_name, res.damage, display_name
-                            )
-                        }
-                        false => {
-                            format!(
-                                "Combat with {}: You dealt {} damage. (Your HP: {} | Target HP: {}) ",
-                                display_name, res.damage, res.attacker_hp, res.target_hp
-                            )
-                        }
-                    };
+                    let text = format!(
+                        "Combat with {}: You dealt {} damage. (Your HP: {} | Target HP: {}) ",
+                        display_name, res.damage, res.attacker_hp, res.target_hp
+                    );
 
                     self.state
                         .game
@@ -380,7 +364,7 @@ impl App {
                         .clone()
                         .unwrap_or("".to_string())
                 {
-                    format!("{} has been defeated", npc_name)
+                    format!("You have defeated {}", npc_name)
                 } else {
                     format!("{} has been defeated by {}", npc_name, kill_data.player)
                 };
@@ -392,6 +376,41 @@ impl App {
                     .room
                     .npcs
                     .retain(|npc_id| npc_id.to_string() != kill_data.npc_id);
+            }
+            ServerEvent::Death(death_data) => {
+                let current_player_name = self
+                    .state
+                    .game
+                    .player
+                    .name
+                    .clone()
+                    .unwrap_or("unknown".to_string())
+                    .to_lowercase();
+                let current_room_id = self
+                    .state
+                    .game
+                    .room
+                    .name
+                    .clone()
+                    .unwrap_or("unknown".to_string());
+
+                let is_current_player =
+                    current_player_name == death_data.player_name.to_lowercase();
+                let respawn_room_is_current = current_room_id == death_data.respawn_room_id;
+
+                let message = match (is_current_player, respawn_room_is_current) {
+                    (true, true) => "You died and respawned".to_string(),
+                    (true, false) => {
+                        format!("You died and respawned in {}", death_data.respawn_room_id)
+                    }
+                    (false, true) => format!("{} died and respawned", death_data.player_name),
+                    (false, false) => format!(
+                        "{} died and respawned in {}",
+                        death_data.player_name, death_data.respawn_room_id
+                    ),
+                };
+
+                self.state.game.log_action(message);
             }
             ServerEvent::FightStart(fight_data) => {
                 let npc_name = self.state.game.manifest.get_npc_name(&fight_data.npc_id);

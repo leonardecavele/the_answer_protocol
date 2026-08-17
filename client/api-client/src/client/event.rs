@@ -14,6 +14,12 @@ pub struct SpawnData {
 }
 
 #[derive(Debug, Clone)]
+pub struct DeathData {
+    pub player_name: String,
+    pub respawn_room_id: String,
+}
+
+#[derive(Debug, Clone)]
 pub struct KillData {
     pub player: String,
     pub npc_id: String,
@@ -66,6 +72,7 @@ pub enum ServerEvent {
     Spawn(SpawnData),
     Despawn(SpawnData),
     Kill(KillData),
+    Death(DeathData),
     FightStart(FightStartData),
     FightResult(FightResultData),
     FightEnd,
@@ -134,6 +141,20 @@ impl From<ServerResponse> for ServerEvent {
                 player: player_name.to_string(),
                 npc_id: npc_id.to_string(),
             }),
+            ["DEATH", player_name, respawn_room] => {
+                let arg_respawn_room_id = respawn_room
+                    .strip_prefix("respawn_room_id=")
+                    .and_then(|s| s.parse::<String>().ok());
+
+                if let Some(respawn_room_id) = arg_respawn_room_id {
+                    ServerEvent::Death(DeathData {
+                        player_name: player_name.to_string(),
+                        respawn_room_id: respawn_room_id.to_string(),
+                    })
+                } else {
+                    ServerEvent::Unknown(args.join(" "))
+                }
+            }
 
             ["FIGHT", "START", args @ ..] => {
                 let parsed_args = serde_json::from_str::<FightStartData>(args.join(" ").as_str());
