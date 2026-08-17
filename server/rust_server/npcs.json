@@ -114,9 +114,9 @@
       "max_hp": null,
       "dialogs": [
         [
-          "༺ ᛚᛖ ᚠᚨᛟᚾ ᚾᛖ ᛈᚨᚱᛚᛖ ᛈᚨᛋ ᚨᚢᛪ ᚺᛟᛗᛗᛖᛋ ༻",
-          "☽ ᛁᛚ ᛈᛟᚱᛏᛖ ᛚᚨ ᚹᛟᛁᛪ ᛞᛖᛋ ᚱᚨᚲᛁᚾᛖᛋ ☾",
-          "⟁ ᛚᚨ ᛗᛟᚢᛋᛋᛖ ᚱᛖᛏᛁᛖᚾᛏ ᛋᛖᛋ ᛈᚨᛋ ⟁"
+          "ᛚᛖ ᚠᚨᛟᚾ ᚾᛖ ᛈᚨᚱᛚᛖ ᛈᚨᛋ ᚨᚢᛪ ᚺᛟᛗᛗᛖᛋ",
+          "ᛁᛚ ᛈᛟᚱᛏᛖ ᛚᚨ ᚹᛟᛁᛪ ᛞᛖᛋ ᚱᚨᚲᛁᚾᛖᛋ",
+          "ᛚᚨ ᛗᛟᚢᛋᛋᛖ ᚱᛖᛏᛁᛖᚾᛏ ᛋᛖᛋ ᛈᚨᛋ"
         ]
       ],
       "quests": [],
@@ -139,9 +139,7 @@
       "dialogs": [
         [
           "Jeune homme !",
-          "Je n'arrive pas à faire",
-          "fonctionner la calculette lumineuse !",
-          "Aide moi à réparer ma libft et vite !"
+          "Je n'arrive pas à faire fonctionner la calculette lumineuse !"
         ]
       ],
       "quests": [],
@@ -152,7 +150,19 @@
       "npc_type": 5,
       "hp": null,
       "max_hp": null,
-      "dialogs": [["hmphhhh hmphhhh"]],
+      "dialogs": [
+        [
+          "hmphhhh",
+          "hmphhhh"
+        ],
+        [
+          "hmphhhhhhhhhhhh",
+          "hmmmmmphhhhhh"
+        ],
+        [
+          "ça fart ?"
+        ]
+      ],
       "quests": [],
       "spawns": "devant_l_ecole"
     },
@@ -164,23 +174,27 @@
       "dialogs": [
         [
           "Salutations jeune programmeur.",
-          "Je constate que tu ne connais guère",
-          "les principes SOLID...",
-          "Voici la quête idéale pour overflow",
-          "ton bouddhisme jusqu'à l'éveil."
+          "Je constate que tu ne connais guère les principes SOLID...",
+          "Voici la quête idéale pour overflow ton bouddhisme jusqu'à l'éveil."
         ],
         [
-          "*Nathan discute avec son alter",
-          "ego Parad0xe et semble ne pas vous entendre*"
+          "*Nathan discute avec son alter ego Parad0xe et semble ne pas vous entendre*"
         ]
       ],
       "quests": [
-        "Librairie Quarante-Deux",
-        "Tunnel",
-        "Caillou Papier Ciseaux",
-        "Normi-quoi ?",
-        "Tic et Tac et Toe",
-        "Des wraps ! Plus de wraps !"
+        "Kaizen",
+        "Tu peux le faire",
+        "Entrequote",
+        "AEIOU",
+        "OG",
+        "Vers l'infini et l'haut-dela",
+        "Quel est-t-il ?",
+        "Au plus...",
+        "MINIMUM",
+        "Mais que contient-elle ?",
+        "SIX ! SEVEN !",
+        "Une marche s'impose.",
+        "Tunnel"
       ],
       "spawns": "devant_le_bocal"
     },
@@ -192,10 +206,8 @@
       "dialogs": [
         [
           "J'ai remarqué quelque chose.",
-          "Tu te déplaces de room en room mais",
-          "tu n'utilises pas les vim motions.",
-          "Savais-tu que hjkl étaient respectivement",
-          "gauche bas haut droite ?",
+          "Tu te déplaces de room en room mais tu n'utilises pas les vim motions.",
+          "Savais-tu que hjkl étaient respectivement gauche bas haut droite ?",
           "C'est bien plus efficace tu sais."
         ],
         [
@@ -233,11 +245,11 @@
       "max_hp": 120,
       "dialogs": [
         [
-          "Je comprends rien a la norme...",
-          "Pitié aide moi...",
-          "J'ai compté à la main parce que je sais pas",
-          "me servir de grep et j'ai 1242 lignes d'erreur...",
-          "Mets mon code à la norme s'il-te-plaît... :("
+          "Je comprends rien au C...",
+          "Pitié aide moi..."
+        ],
+        [
+          "Je suis très très beau"
         ]
       ],
       "quests": [],
@@ -252,11 +264,8 @@
         [
           "Coucou !",
           "Mon crâne rayonne aujourd'hui.",
-          "Tu sais jouer au morpion ?",
-          "J'ai tellement de niveau que tu vas t'en arracher les cheveux.",
-          "...",
-          "...",
-          "Arrête de me regarder comme ça !"
+          "Tu sais coder ?",
+          "Moi j'ai travaillé à m'en arracher les cheveux pour devenir meilleur."
         ]
       ],
       "quests": [],
@@ -270,15 +279,12 @@
       "dialogs": [
         [
           "Sigsegven !",
-          "Tu savais que 67 c'etait l'origine",
-          "de l'univers ?",
-          "Les gens pensent que c'est 42 mais",
-          "c'est 67 en fait.",
-          "C'est moi qui ait créé l'univers donc",
-          "je sais de quoi je parle.",
+          "Tu savais que 67 c'etait l'origine de l'univers ?",
+          "Les gens pensent que c'est 42 mais c'est 67 en fait.",
+          "C'est moi qui ait créé l'univers donc je sais de quoi je parle.",
           "Tu veux que je t'apprenne à le faire ?",
           "Il faut d'abors faire SIX.",
-          "puis SEVEN !",
+          "Puis SEVEN !",
           "SIX !",
           "SEVEN !"
         ]
@@ -319,8 +325,6 @@
       "max_hp": 100,
       "dialogs": [
         [
-          "mhh...",
-          "MHHH.....",
           "Ah bonsoir !",
           "Tu ne me reconnais pas ?",
           "Je suis le grand gagnant du shifumi explorer enfin !",
@@ -335,7 +339,12 @@
       "npc_type": 5,
       "hp": null,
       "max_hp": null,
-      "dialogs": [["mhhh mhh mh", "mhh mh ?", "mhh !!!", "mhh mhh MHHHH !"]],
+      "dialogs": [
+        ["mhhh mhh mh"],
+        ["mhh mh ?"],
+        ["mhh !!!"],
+        ["mhh mhh MHHHH !"]
+      ],
       "quests": [],
       "spawns": "cantina"
     },
@@ -346,8 +355,7 @@
       "max_hp": 142,
       "dialogs": [
         [
-          "UN WRAP SAUCE",
-          "MIAMI POUR ENCHEVRI !",
+          "UN WRAP SAUCE MIAMI POUR ENCHEVRI !",
           "Qu'est-ce que tu fais là toi ?!",
           "Tu vois pas que c'est le rush ?!",
           "Allez on se magne et au fourneau !"

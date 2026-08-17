@@ -7,6 +7,9 @@ use std::time::Instant;
 impl GameManager {
     pub fn apply_players_changes(&mut self, tick_timer: Instant) -> std::io::Result<TickResult> {
         loop {
+            // Process any pending responses from the code tester thread
+            self.process_tester_responses()?;
+
             if tick_timer.elapsed() >= TICK_TIME {
                 break;
             }
@@ -34,7 +37,7 @@ impl GameManager {
                 _ => {}
             }
         }
-        
+
         let current_time = Instant::now();
 
         let mut actions: Vec<(String, ItemId, bool, String)> = Vec::new();
@@ -49,7 +52,7 @@ impl GameManager {
                                 || no_despawn_room.unwrap() != room.get_id()
                             {
                                 actions.push((
-                                    room.get_name().to_string(),
+                                    room.get_name().to_owned(),
                                     *item_id,
                                     item.get_id() == (LOST_ITEM as ItemId),
                                     item.get_protocol_representation(),
@@ -63,19 +66,19 @@ impl GameManager {
         for (room_name, item_id, is_lost_item, item_rep) in actions {
             self.remove_item_from_room(&room_name, item_id);
             self.reset_dropped_at_for_item(item_id);
-            let mut players = self.get_all_players_at_room(&room_name);
+            let players = self.get_all_players_at_room(&room_name);
             let data = format!("type={} id={}", "ITEM", item_rep);
 
             let event_despawn =
-                GameManager::generate_no_player_event_json(&mut players, "DESPAWN", &data);
+                GameManager::generate_no_player_event_json(&players, "DESPAWN", &data);
 
             self.add_diff_to_tick(event_despawn);
 
             if is_lost_item {
-                let mut lost_item_spawn_players = self.get_all_players_at_room(LOST_ITEM_SPAWN);
+                let lost_item_spawn_players = self.get_all_players_at_room(LOST_ITEM_SPAWN);
                 self.add_item_to_room(LOST_ITEM_SPAWN, item_id);
                 let event_spawn = GameManager::generate_no_player_event_json(
-                    &mut lost_item_spawn_players,
+                    &lost_item_spawn_players,
                     "SPAWN",
                     &data,
                 );

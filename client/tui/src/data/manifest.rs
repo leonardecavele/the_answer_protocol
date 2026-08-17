@@ -41,6 +41,7 @@ pub struct ItemEntry {
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct RoomEntry {
     pub image_path: Option<String>,
+    pub direction: String,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]

@@ -1,48 +1,95 @@
 {
   "quests": [
     {
-      "name": "Librairie Quarante-Deux",
-      "description": "Donnez un coup de main à Mdourdoi avec sa libft sans faire aucune erreur.",
+      "name": "Kaizen",
+      "description": "Réussissez une fois l'épreuve is_sorted_ascending.c en moins de 55 secondes.",
       "loots": {
-		  "MERCI": { "qty": 3, "chance": 100.0 },
-		  "TSHIRT": { "qty": 1, "chance": 20.0 }
-	  }
+        "MERCI": { "qty": 3, "chance": 100.0 }
+      }
+    },
+    {
+      "name": "Tu peux le faire",
+      "description": "Réussissez une fois l'épreuve string_equals.c en moins de 50 secondes.",
+      "loots": {
+        "MERCI": { "qty": 3, "chance": 100.0 }
+      }
+    },
+    {
+      "name": "Entrequote",
+      "description": "Réussissez une fois l'épreuve middle_of_three.c en moins de 45 secondes.",
+      "loots": {
+        "MERCI": { "qty": 3, "chance": 100.0 }
+      }
+    },
+    {
+      "name": "AEIOU",
+      "description": "Réussissez une fois l'épreuve count_vowels.c en moins de 45 secondes.",
+      "loots": {
+        "MERCI": { "qty": 3, "chance": 100.0 }
+      }
+    },
+    {
+      "name": "OG",
+      "description": "Réussissez une fois l'épreuve first_index_of.c en moins de 40 secondes.",
+      "loots": {
+        "MERCI": { "qty": 4, "chance": 100.0 }
+      }
+    },
+    {
+      "name": "Vers l'infini et l'haut-dela",
+      "description": "Réussissez une fois l'épreuve find_max_index.c en moins de 40 secondes.",
+      "loots": {
+        "MERCI": { "qty": 3, "chance": 100.0 }
+      }
+    },
+    {
+      "name": "Quel est-t-il ?",
+      "description": "Réussissez une fois l'épreuve find_min_index.c en moins de 40 secondes.",
+      "loots": {
+        "MERCI": { "qty": 3, "chance": 100.0 }
+      }
+    },
+    {
+      "name": "Au plus...",
+      "description": "Réussissez une fois l'épreuve array_max.c en moins de 35 secondes.",
+      "loots": {
+        "MERCI": { "qty": 3, "chance": 100.0 }
+      }
+    },
+    {
+      "name": "MINIMUM",
+      "description": "Réussissez une fois l'épreuve array_min.c en moins de 35 secondes.",
+      "loots": {
+        "MERCI": { "qty": 3, "chance": 100.0 }
+      }
+    },
+    {
+      "name": "Mais que contient-elle ?",
+      "description": "Réussissez une fois l'épreuve array_contains.c en moins de 35 secondes.",
+      "loots": {
+        "MERCI": { "qty": 3, "chance": 100.0 }
+      }
+    },
+    {
+      "name": "SIX ! SEVEN !",
+      "description": "Parlez 50 fois avec mphippen. Peut-être finira-t-il par révéler pourquoi 67 est la véritable origine de l'univers.",
+      "loots": {
+        "MERCI": { "qty": 10, "chance": 100.0 }
+      }
+    },
+    {
+      "name": "Une marche s'impose.",
+      "description": "Faites 5 fois le tour complet de la map. Courage.",
+      "loots": {
+        "MERCI": { "qty": 8, "chance": 100.0 }
+      }
     },
     {
       "name": "Tunnel",
       "description": "Parlez à Vquetier si vous osez.",
       "loots": {
-		  "MERCI": { "qty": 10, "chance": 100.0 }
-	  }
-    },
-    {
-      "name": "Caillou Papier Ciseaux",
-      "description": "Battez Ldecavel (triple champion du monde en pierre feuille ciseaux) en cantina du premier coup.",
-      "loots": {
-        "MERCI": { "qty": 2, "chance": 100.0 }
+        "MERCI": { "qty": 8, "chance": 100.0 }
       }
-    },
-	{
-      "name": "Normi-quoi ?",
-      "description": "Aidez Enchevri à mettre son code à la norme en moins d'une minute. Il ne sait plus s'y prendre depuis qu'il a touché au cpp.",
-      "loots": {
-        "MERCI": { "qty": 5, "chance": 100.0 }
-      }
-	},
-	{
-	  "name": "Tic et Tac et Toe",
-	  "description": "Battez Acampion.",
-	  "loots": {
-		"MERCI": { "qty": 3, "chance": 100.0 }
-	  }
-	},
-	{
-	  "name": "Des wraps ! Plus de wraps !",
-	  "description": "Réussissez à aider Iris en moins de 2 secondes.",
-	  "loots": {
-		"MERCI": { "qty": 2, "chance": 100.0 },
-		"WRAP": { "qty": 3, "chance": 100.0 }
-	  }
-	}
+    }
   ]
 }
