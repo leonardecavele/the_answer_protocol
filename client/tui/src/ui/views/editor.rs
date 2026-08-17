@@ -3,16 +3,16 @@ use crate::states::app::AppState;
 use crate::ui::components::Component;
 use crate::ui::components::Lifecycle;
 use crate::ui::theme::default_block;
-use api_client::ApiRequest;
-use api_client::commands::{FightAttackCommand, FightAttackStatus};
+use api_client::commands::FightAttackCommand;
 use api_client::events::FightStartData;
+use api_client::ApiRequest;
 use crossterm::event::{Event as CrosstermEvent, KeyCode, KeyModifiers};
 use mpsc::Sender;
-use ratatui::Frame;
 use ratatui::layout::{Alignment, Constraint, Direction, Layout, Position, Rect};
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::Span;
 use ratatui::widgets::Paragraph;
+use ratatui::Frame;
 use ratatui_code_editor::editor::Editor;
 use ratatui_code_editor::theme::vesper;
 use std::time::Instant;
@@ -98,12 +98,12 @@ impl EditorView {
     }
 
     fn footer(&self, state: &AppState) -> Paragraph<'static> {
-        let (text, color) = match (&state.game.fight.status, state.game.fight.submitted) {
-            (Some(FightAttackStatus::Success), _) => (
+        let (text, color) = match (&state.game.fight.success, state.game.fight.submitted) {
+            (Some(true), _) => (
                 "Your code succeeded. Waiting for the other players...",
                 Color::Green,
             ),
-            (Some(FightAttackStatus::Failure), _) => (
+            (Some(false), _) => (
                 "Your code failed. Waiting for the other players...",
                 Color::Red,
             ),

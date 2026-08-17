@@ -180,7 +180,7 @@ impl Lifecycle for GameView {
                 return true;
             }
             if key.code == KeyCode::Tab {
-                state.game.ui.current_focus = match state.game.ui.current_focus {
+                state.game.current_focus = match state.game.current_focus {
                     GameFocus::Input => GameFocus::NpcList,
                     GameFocus::NpcList => GameFocus::RoomItemsList,
                     GameFocus::RoomItemsList => GameFocus::QuestList,
@@ -192,7 +192,7 @@ impl Lifecycle for GameView {
                 return true;
             }
             if key.code == KeyCode::BackTab {
-                state.game.ui.current_focus = match state.game.ui.current_focus {
+                state.game.current_focus = match state.game.current_focus {
                     GameFocus::Input => GameFocus::RightPanel,
                     GameFocus::RightPanel => GameFocus::InventoryGrid,
                     GameFocus::InventoryGrid => GameFocus::ActionHistory,
@@ -211,7 +211,7 @@ impl Lifecycle for GameView {
             {
                 if let Some(area) = self.left_panel.npcs_area {
                     if is_mouse_in_rect(mouse.column, mouse.row, area) {
-                        state.game.ui.current_focus = GameFocus::NpcList;
+                        state.game.current_focus = GameFocus::NpcList;
 
                         let y = mouse.row.saturating_sub(area.y);
                         if y > 0 {
@@ -222,7 +222,7 @@ impl Lifecycle for GameView {
 
                 if let Some(area) = self.left_panel.items_area {
                     if is_mouse_in_rect(mouse.column, mouse.row, area) {
-                        state.game.ui.current_focus = GameFocus::RoomItemsList;
+                        state.game.current_focus = GameFocus::RoomItemsList;
 
                         let y = mouse.row.saturating_sub(area.y);
                         if y > 0 {
@@ -233,7 +233,7 @@ impl Lifecycle for GameView {
 
                 if let Some(area) = self.left_panel.quests_area {
                     if is_mouse_in_rect(mouse.column, mouse.row, area) {
-                        state.game.ui.current_focus = GameFocus::QuestList;
+                        state.game.current_focus = GameFocus::QuestList;
 
                         let y = mouse.row.saturating_sub(area.y);
                         if y > 0 {
@@ -244,13 +244,13 @@ impl Lifecycle for GameView {
 
                 if let Some(area) = self.center_panel.history_area {
                     if is_mouse_in_rect(mouse.column, mouse.row, area) {
-                        state.game.ui.current_focus = GameFocus::ActionHistory;
+                        state.game.current_focus = GameFocus::ActionHistory;
                     }
                 }
 
                 if let Some(area) = self.center_panel.inventory_area {
                     if is_mouse_in_rect(mouse.column, mouse.row, area) {
-                        state.game.ui.current_focus = GameFocus::InventoryGrid;
+                        state.game.current_focus = GameFocus::InventoryGrid;
 
                         let rel_x = mouse.column.saturating_sub(area.x);
                         let rel_y = mouse.row.saturating_sub(area.y);
@@ -266,12 +266,12 @@ impl Lifecycle for GameView {
 
                 if let Some(area) = self.right_panel_area {
                     if is_mouse_in_rect(mouse.column, mouse.row, area) {
-                        state.game.ui.current_focus = GameFocus::RightPanel;
+                        state.game.current_focus = GameFocus::RightPanel;
                     }
                 }
                 if let Some(area) = self.footer_area {
                     if is_mouse_in_rect(mouse.column, mouse.row, area) {
-                        state.game.ui.current_focus = GameFocus::Input;
+                        state.game.current_focus = GameFocus::Input;
                     }
                 }
             }

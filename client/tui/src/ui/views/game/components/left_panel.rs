@@ -86,7 +86,7 @@ impl Component for LeftPanelComponent {
                 let mut style = Style::default().fg(color);
 
                 if state.game.room.npcs.is_selected(idx)
-                    && state.game.ui.current_focus == GameFocus::NpcList
+                    && state.game.current_focus == GameFocus::NpcList
                 {
                     style = style.add_modifier(Modifier::REVERSED);
                 }
@@ -98,7 +98,7 @@ impl Component for LeftPanelComponent {
             })
             .collect();
         let mut npcs_block = default_block().title(" Room NPCs ");
-        if state.game.ui.current_focus == GameFocus::NpcList {
+        if state.game.current_focus == GameFocus::NpcList {
             npcs_block = npcs_block.border_style(Style::default().fg(Color::Yellow));
         }
         let npcs_list = List::new(npcs_items).block(npcs_block);
@@ -123,7 +123,7 @@ impl Component for LeftPanelComponent {
                 let mut style = Style::default().fg(Color::Cyan);
 
                 if state.game.room.items.is_selected(idx)
-                    && state.game.ui.current_focus == GameFocus::RoomItemsList
+                    && state.game.current_focus == GameFocus::RoomItemsList
                 {
                     style = style.add_modifier(Modifier::REVERSED);
                 }
@@ -134,7 +134,7 @@ impl Component for LeftPanelComponent {
             })
             .collect();
         let mut items_block = default_block().title(" Room Items ");
-        if state.game.ui.current_focus == GameFocus::RoomItemsList {
+        if state.game.current_focus == GameFocus::RoomItemsList {
             items_block = items_block.border_style(Style::default().fg(Color::Yellow));
         }
         let items_list = List::new(items).block(items_block);
@@ -164,7 +164,7 @@ impl Component for LeftPanelComponent {
                 };
 
                 if state.game.player.quests.is_selected(idx)
-                    && state.game.ui.current_focus == GameFocus::QuestList
+                    && state.game.current_focus == GameFocus::QuestList
                 {
                     style = style.add_modifier(Modifier::REVERSED);
                 }
@@ -176,7 +176,7 @@ impl Component for LeftPanelComponent {
             })
             .collect();
         let mut quests_block = default_block().title(" Quests ");
-        if state.game.ui.current_focus == GameFocus::QuestList {
+        if state.game.current_focus == GameFocus::QuestList {
             quests_block = quests_block.border_style(Style::default().fg(Color::Yellow));
         }
         let quests_list = List::new(quests_items).block(quests_block);
@@ -197,7 +197,7 @@ impl Lifecycle for LeftPanelComponent {
             _ => return false,
         };
 
-        match state.game.ui.current_focus {
+        match state.game.current_focus {
             GameFocus::NpcList => match key.code {
                 crossterm::event::KeyCode::Up => {
                     state.game.room.npcs.move_selection(Step::Previous);
