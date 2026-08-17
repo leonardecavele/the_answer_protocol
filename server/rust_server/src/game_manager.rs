@@ -605,8 +605,11 @@ impl GameManager {
     pub fn kill_player(&mut self, player_id: PlayerId) {
         let (mut players_to_send_death_info, player_name) = {
             let player = self.get_player(player_id).unwrap();
+            let mut players = self.get_all_players_at_room(player.get_current_room());
+            players.extend(self.get_all_players_at_room(PLAYER_ROOM_SPAWN));
+
             (
-                self.get_all_players_at_room(player.get_current_room()),
+                players,
                 player.get_name().to_owned(),
             )
         };
