@@ -1,6 +1,7 @@
 use crate::combat_instances::CombatInstanceManager;
 use crate::constantes::{
-    CODE_NL_SEP, CODE_SP_SEP, Direction, MAX_TIME_FOR_COMBAT, NPC_DMG, NPC_RESPAWN_TIME, PLAYER_ROOM_SPAWN, TEST_FILES_DIR,
+    CODE_NL_SEP, CODE_SP_SEP, Direction, MAX_TIME_FOR_COMBAT, NPC_DMG, NPC_RESPAWN_TIME,
+    PLAYER_ROOM_SPAWN, TEST_FILES_DIR,
 };
 use crate::inventory::Inventory;
 use crate::items::{Item, ItemId};
@@ -608,10 +609,7 @@ impl GameManager {
             let mut players = self.get_all_players_at_room(player.get_current_room());
             players.extend(self.get_all_players_at_room(PLAYER_ROOM_SPAWN));
 
-            (
-                players,
-                player.get_name().to_owned(),
-            )
+            (players, player.get_name().to_owned())
         };
         let path = format!("saves/{}.toml", player_name);
         let _ = std::fs::remove_file(path);
@@ -623,7 +621,7 @@ impl GameManager {
             &mut players_to_send_death_info,
             player_name.as_str(),
             "DEATH",
-            format!("respawn_room_id={}",PLAYER_ROOM_SPAWN).as_str(),
+            format!("respawn_room_id={}", PLAYER_ROOM_SPAWN).as_str(),
             false,
         );
         self.add_diff_to_tick(event);
@@ -753,18 +751,19 @@ impl GameManager {
 
         //does nothing if no the player is not in a combat instance
         self.set_success_for_player(player_id, true);
-        if let Some(mut players_to_send_event) = self.get_player_instance_group(player_id) {
-            let event = self.generate_event_json(
-                &mut players_to_send_event,
-                &player_name,
-                "ATTACK",
-                dealt_damage.to_string().as_str(),
-                true,
-            );
-            self.add_diff_to_tick(event);
-        }
-
+        // if let Some(mut players_to_send_event) = self.get_player_instance_group(player_id) {
+        //     let event = self.generate_event_json(
+        //         &mut players_to_send_event,
+        //         &player_name,
+        //         "ATTACK",
+        //         dealt_damage.to_string().as_str(),
+        //         true,
+        //     );
+        //     self.add_diff_to_tick(event);
+        // }
+        debug!("npc hp:{}", new_npc_hp);
         if new_npc_hp == 0 {
+            debug!("killed npc");
             self.kill_npc(npc_id);
             let event = self.generate_event_json(
                 &mut players_in_room,
@@ -893,7 +892,7 @@ impl GameManager {
             .unwrap();
         instance.is_evaluating_response = true;
         std::thread::spawn(move || {
-            let result = crate::tester::test(&file_name_owned, &sent_code_owned);
+            let result = test(&file_name_owned, &sent_code_owned);
             response["success"] = result.into();
             let _ = sender.send(response.dump());
         });

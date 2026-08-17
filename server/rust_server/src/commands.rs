@@ -1,6 +1,5 @@
 use crate::constantes::{
-    BASE_COMMAND_RESPONSE, CODE_NL_SEP, CODE_SP_SEP, ErrorCode, LOST_ITEM, LOST_ITEM_SPAWN,
-    MAX_TIME_FOR_COMBAT, MIN_DMG_DEALT, NPC_DMG, NPC_MOB, TEST_FILES_DIR,
+    BASE_COMMAND_RESPONSE, CODE_NL_SEP, CODE_SP_SEP, ErrorCode, LOST_ITEM, LOST_ITEM_SPAWN, MAX_DMG_DEALT, MAX_TIME_FOR_COMBAT, MIN_DMG_DEALT, NPC_DMG, NPC_MOB, TEST_FILES_DIR,
 };
 use crate::game_manager::GameManager;
 use crate::items::{Item, ItemId};
@@ -373,7 +372,7 @@ impl GameManager {
                         self.get_nb_players_in_player_instance(player_id).unwrap();
                     let npc_combat_start_hp = self.get_npc_combat_start_hp(npc_id).unwrap();
                     let npc_hp = self.get_npc_hp(npc_id).unwrap();
-                    let mut dmg = (npc_combat_start_hp / instance_player_count).min(MIN_DMG_DEALT);
+                    let mut dmg = (npc_combat_start_hp / instance_player_count).clamp(MIN_DMG_DEALT, MAX_DMG_DEALT);
                     if dmg * 2 > npc_hp {
                         dmg *= 2;
                     }
@@ -724,7 +723,7 @@ impl GameManager {
                     }
                     let npc_combat_start_hp = self.get_npc_combat_start_hp(npc_id).unwrap();
                     let npc_hp = self.get_npc_hp(npc_id).unwrap();
-                    let mut dmg = (npc_combat_start_hp / instance_player_count).min(MIN_DMG_DEALT);
+                    let mut dmg = (npc_combat_start_hp / instance_player_count).clamp(MIN_DMG_DEALT, MAX_DMG_DEALT);
                     if dmg * 2 > npc_hp {
                         dmg *= 2;
                     }
@@ -738,7 +737,7 @@ impl GameManager {
                     .dump();
                 }
 
-                let combat_result = self.player_attacks_npc(NPC_DMG, player_id, npc_id);
+                let combat_result = self.player_attacks_npc(1, player_id, npc_id);
 
                 return generate_json(
                     player_name,
