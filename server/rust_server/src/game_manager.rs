@@ -1,7 +1,6 @@
 use crate::combat_instances::CombatInstanceManager;
 use crate::constantes::{
-    CODE_NL_SEP, CODE_SP_SEP, Direction, MAX_TIME_FOR_COMBAT, NPC_DMG, NPC_RESPAWN_TIME,
-    TEST_FILES_DIR,
+    CODE_NL_SEP, CODE_SP_SEP, Direction, MAX_DMG_DEALT, MAX_TIME_FOR_COMBAT, MIN_DMG_DEALT, NPC_DMG, NPC_RESPAWN_TIME, PLAYER_ROOM_SPAWN, TEST_FILES_DIR,
 };
 use crate::inventory::Inventory;
 use crate::items::{Item, ItemId};
@@ -20,7 +19,7 @@ use std::path::Path;
 use std::sync::mpsc;
 use std::time::Instant;
 use tracing::warn;
-use tracing::{error, info};
+use tracing::{debug, error, info};
 
 pub struct GameManager {
     players: HashMap<PlayerId, Player>,
@@ -455,7 +454,9 @@ impl GameManager {
     pub fn punish_inactive_players_in_combat(&mut self) {
         let mut players_to_punish: Vec<(PlayerId, NpcId)> = Vec::new();
         for (npc_id, instance) in self.combat_instances.instances.iter() {
-            if instance.combat_start_time.elapsed() > MAX_TIME_FOR_COMBAT {
+            if instance.combat_start_time.elapsed() > MAX_TIME_FOR_COMBAT
+                && !instance.is_evaluating_response
+            {
                 for (player_id, success) in instance.players_success.iter() {
                     if success.is_none() {
                         players_to_punish.push((*player_id, *npc_id));
@@ -464,8 +465,16 @@ impl GameManager {
             }
         }
         for (player_id, npc_id) in players_to_punish {
-            self.npc_attacks_player(NPC_DMG, npc_id, player_id);
+            self.npc_attacks_player(NPC_DMG, player_id, npc_id);
         }
+    }
+
+    pub fn calculate_dmg(&self, npc_combat_start_hp: u32, instance_player_count: u32, npc_hp: u32) -> u32 {
+        let mut dmg = (npc_combat_start_hp / instance_player_count).clamp(MIN_DMG_DEALT, MAX_DMG_DEALT);
+        if dmg * 2 > npc_hp {
+            dmg = npc_hp;
+        }
+        dmg
     }
 
     pub fn revive_dead_npcs(&mut self) {
@@ -596,15 +605,18 @@ impl GameManager {
         if let Some(npc) = self.get_mut_npc(npc_id) {
             npc.die();
         }
+        if let Some(instance) = self.combat_instances.get_mut_instance_for_npc(npc_id) {
+            instance.force_finish();
+        }
     }
 
     pub fn kill_player(&mut self, player_id: PlayerId) {
         let (mut players_to_send_death_info, player_name) = {
             let player = self.get_player(player_id).unwrap();
-            (
-                self.get_all_players_at_room(player.get_current_room()),
-                player.get_name().to_owned(),
-            )
+            let mut players = self.get_all_players_at_room(player.get_current_room());
+            players.extend(self.get_all_players_at_room(PLAYER_ROOM_SPAWN));
+
+            (players, player.get_name().to_owned())
         };
         let path = format!("saves/{}.toml", player_name);
         let _ = std::fs::remove_file(path);
@@ -616,8 +628,8 @@ impl GameManager {
             &mut players_to_send_death_info,
             player_name.as_str(),
             "DEATH",
-            "",
-            true,
+            format!("respawn_room_id={}", PLAYER_ROOM_SPAWN).as_str(),
+            false,
         );
         self.add_diff_to_tick(event);
     }
@@ -651,10 +663,16 @@ impl GameManager {
     pub fn npc_attacks_player(
         &mut self,
         damage: u32,
-        npc_id: NpcId,
-        player_id: PlayerId,
+        player_id: NpcId,
+        npc_id: PlayerId,
     ) -> String {
         let npc = self.get_mut_npc(npc_id).unwrap();
+
+        debug!(
+            "npc: {}, npc_id_received: {}",
+            npc.get_protocol_representation(),
+            npc_id
+        );
         let npc_hp = npc.get_hp().unwrap();
         let mut dealt_damage = damage;
         let player = self.get_mut_player(player_id).unwrap();
@@ -681,7 +699,7 @@ impl GameManager {
             .combat_instances
             .get_all_players_in_combat(npc_id)
             .iter()
-            .map(|player_id| self.get_player(*player_id).unwrap().get_name().to_owned())
+            .filter_map(|player_id| self.get_player(*player_id).and_then(|player| Some(player.get_name().to_owned())))
             .collect::<Vec<String>>();
         let event = self.generate_event_json(
             &mut players_to_send_event,
@@ -740,25 +758,26 @@ impl GameManager {
 
         //does nothing if no the player is not in a combat instance
         self.set_success_for_player(player_id, true);
-        if let Some(mut players_to_send_event) = self.get_player_instance_group(player_id) {
-            let event = self.generate_event_json(
-                &mut players_to_send_event,
-                &player_name,
-                "ATTACK",
-                dealt_damage.to_string().as_str(),
-                true,
-            );
-            self.add_diff_to_tick(event);
-        }
-
+        // if let Some(mut players_to_send_event) = self.get_player_instance_group(player_id) {
+        //     let event = self.generate_event_json(
+        //         &mut players_to_send_event,
+        //         &player_name,
+        //         "ATTACK",
+        //         dealt_damage.to_string().as_str(),
+        //         true,
+        //     );
+        //     self.add_diff_to_tick(event);
+        // }
+        debug!("npc hp:{}", new_npc_hp);
         if new_npc_hp == 0 {
+            debug!("killed npc");
             self.kill_npc(npc_id);
             let event = self.generate_event_json(
                 &mut players_in_room,
                 &player_name,
                 "KILL",
                 npc_repr.as_str(),
-                true,
+                false,
             );
             self.add_diff_to_tick(event);
         }
@@ -833,14 +852,18 @@ impl GameManager {
             if instance.all_players_finished() {
                 players.extend(instance.get_grouped_players());
                 players.push(instance.get_leader());
+                vec.push(players.clone());
+                players.clear();
             }
-            vec.push(players.clone());
-            players.clear();
         }
         vec
     }
     pub fn remove_finished_combat_instances(&mut self) {
         let finished_instances_players = self.get_finished_instances_players();
+        if finished_instances_players.is_empty() {
+            return;
+        }
+        debug!("finished players: {:?}", finished_instances_players);
         for grouped_players in finished_instances_players {
             if !grouped_players.is_empty() {
                 let mut grouped_players_strings: Vec<String> = Vec::new();
@@ -860,7 +883,7 @@ impl GameManager {
         self.combat_instances.remove_finished_instances();
     }
 
-    pub fn test_code(&self, file_name: &str, sent_code: &str, player: &str, npc_id: NpcId) {
+    pub fn test_code(&mut self, file_name: &str, sent_code: &str, player: &str, npc_id: NpcId) {
         let sender = self.tester_sender.clone();
         let mut response = object! {"player": player, "npc_id": npc_id, "success": false};
         let file_name_owned = file_name.to_owned();
@@ -868,10 +891,16 @@ impl GameManager {
             .to_owned()
             .replace(CODE_NL_SEP, "\n")
             .replace(CODE_SP_SEP, " ");
+        // debug!("code sent to ldecavel: {}", sent_code_owned);
 
+        let instance = self
+            .combat_instances
+            .get_mut_instance_for_npc(npc_id)
+            .unwrap();
+        instance.is_evaluating_response = true;
         std::thread::spawn(move || {
-            let result = crate::tester::test(&file_name_owned, &sent_code_owned);
-            response["success"] = result.into();
+            let result = test(&file_name_owned, &sent_code_owned);
+            response["success"] = true.into();
             let _ = sender.send(response.dump());
         });
     }

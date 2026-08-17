@@ -3,8 +3,9 @@ use std::time::Duration;
 use crate::room::RoomId;
 
 pub const TEST_FILES_DIR: &str = "assets/code";
-pub const NPC_DMG: u32 = 20;
+pub const NPC_DMG: u32 = 100;
 pub const MIN_DMG_DEALT: u32 = 5;
+pub const MAX_DMG_DEALT: u32 = u32::MAX;
 pub const LOST_ITEM: u8 = 0;
 pub const T_SHIRT: u8 = 2;
 pub const CODE_NL_SEP: &str = "<NL>";
@@ -57,6 +58,8 @@ pub enum ErrorCode {
     ActionAlreadyTaken,
     PlayerAlreadyInCombat,
     PlayerNotInCombat,
+    FileNotFound,
+    NoContent,
 }
 
 impl ErrorCode {
@@ -64,6 +67,7 @@ impl ErrorCode {
         match self {
             Self::NoError => 0,
             Self::NameInUse => 201,
+            Self::NoContent => 204,
             Self::NoExit => 301,
             Self::AlreadyConnected | Self::InvalidScope => 400,
             Self::NotInGroup => 401,
@@ -82,6 +86,7 @@ impl ErrorCode {
             Self::ActionAlreadyTaken => 409,
             Self::PlayerAlreadyInCombat => 410,
             Self::PlayerNotInCombat => 411,
+            Self::FileNotFound => 412,
             Self::ConnectionFailed => 900,
             Self::SendFailed => 901,
             Self::InvalidGroupCommand => 997,
