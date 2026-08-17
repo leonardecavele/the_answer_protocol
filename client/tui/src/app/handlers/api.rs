@@ -384,8 +384,7 @@ impl App {
                     .player
                     .name
                     .clone()
-                    .unwrap_or("unknown".to_string())
-                    .to_lowercase();
+                    .unwrap_or("unknown".to_string());
                 let current_room_id = self
                     .state
                     .game
@@ -394,8 +393,7 @@ impl App {
                     .clone()
                     .unwrap_or("unknown".to_string());
 
-                let is_current_player =
-                    current_player_name == death_data.player_name.to_lowercase();
+                let is_current_player = current_player_name == death_data.player_name;
                 let respawn_room_is_current = current_room_id == death_data.respawn_room_id;
 
                 let message = match (is_current_player, respawn_room_is_current) {
@@ -464,7 +462,52 @@ impl App {
                 }
             }
             ServerEvent::FightResult(fight_status) => {
-                self.state.game.fight.success = Some(fight_status.is_success);
+                let current_player_name = self
+                    .state
+                    .game
+                    .player
+                    .name
+                    .clone()
+                    .unwrap_or("unknown".to_string());
+
+                let is_current_player = current_player_name == fight_status.player_name;
+
+                let message = match is_current_player {
+                    true => match fight_status.success {
+                        true => {
+                            format!("You dealt {} damage", fight_status.damage_dealt)
+                        }
+                        false => {
+                            format!("You receive {} damage", fight_status.damage_dealt)
+                        }
+                    },
+                    false => match fight_status.success {
+                        true => {
+                            format!(
+                                "{} dealt {} damage",
+                                fight_status.player_name, fight_status.damage_dealt
+                            )
+                        }
+                        false => {
+                            format!(
+                                "{} receive {} damage",
+                                fight_status.player_name, fight_status.damage_dealt
+                            )
+                        }
+                    },
+                };
+
+                self.state.game.log_action(message.clone());
+
+                let notification = if fight_status.success {
+                    Notification::error(message).with_duration(8000)
+                } else {
+                    Notification::success(message).with_duration(8000)
+                };
+
+                self.state.ui.notification.push(notification);
+
+                self.state.game.fight.success = Some(fight_status.success);
             }
             ServerEvent::FightEnd => {
                 self.state.game.fight.reset();

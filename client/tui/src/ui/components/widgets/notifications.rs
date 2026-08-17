@@ -47,6 +47,7 @@ impl Component for NotificationComponent {
                 NotificationType::Information => Color::Blue,
                 NotificationType::Warning => Color::Yellow,
                 NotificationType::Error => Color::Red,
+                NotificationType::Success => Color::Green,
             };
 
             let block =
