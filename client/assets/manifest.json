@@ -21,9 +21,8 @@
         "3.mdourdoi": {
             "name": "mdourdoi",
             "type": "enemy",
-
             "image_path": "../assets/pictures/mobs/fight/mdourdoi/mdourdoi_cluster_du_bas.png",
-            "actions": ["Talk", "Fight Create"]
+            "actions": ["Talk", "Attack"]
         },
         "4.gagulhon": {
             "name": "gagulhon",
@@ -51,13 +50,13 @@
             "name": "enchevri",
             "type": "enemy",
             "image_path": "../assets/pictures/mobs/fight/enchevri/enchevri_cluster_du_haut.png",
-            "actions": ["Talk", "Fight Create"]
+            "actions": ["Talk", "Attack"]
         },
         "8.acampion": {
             "name": "acampion",
             "type": "enemy",
             "image_path": "../assets/pictures/mobs/fight/acampion/acampion_afk.png",
-            "actions": ["Talk", "Fight Create"]
+            "actions": ["Talk", "Attack"]
         },
         "9.mphippen": {
             "name": "mphippen",
@@ -69,7 +68,7 @@
             "name": "crappo",
             "type": "enemy",
 			"image_path": "../assets/pictures/mobs/fight/crappo/crappo.jpg",
-            "actions": ["Talk", "Fight Create"]
+            "actions": ["Talk", "Attack"]
         },
         "11.ayteyssi": {
             "name": "ayteyssi",
@@ -81,7 +80,7 @@
             "name": "ldecavel",
             "type": "enemy",
             "image_path": "../assets/pictures/mobs/fight/ldecavel/ldecavel.png",
-            "actions": ["Talk", "Fight Create"]
+            "actions": ["Talk", "Attack"]
         },
         "13.cobussie": {
             "name": "cobussie",
@@ -93,7 +92,7 @@
             "name": "ibady",
             "type": "enemy",
             "image_path": "../assets/pictures/mobs/fight/ibady/ibady.jpg",
-            "actions": ["Talk", "Fight Create"]
+            "actions": ["Talk", "Attack"]
         },
         "15.bokim": {
             "name": "bokim",
