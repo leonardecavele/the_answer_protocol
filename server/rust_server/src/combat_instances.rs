@@ -113,7 +113,7 @@ impl CombatInstance {
     pub fn get_npc_id(&self) -> NpcId {
         self.npc_id
     }
-    
+
     pub fn force_finish(&mut self) {
         for success in self.players_success.values_mut() {
             if success.is_none() {
@@ -135,5 +135,10 @@ impl CombatInstance {
 
     pub fn get_npc_combat_start_hp(&self) -> u32 {
         self.npc_combat_start_hp
+    }
+    pub fn get_all_players(&self) -> Vec<PlayerId> {
+        let mut vec = self.grouped_players.clone();
+        vec.push(self.leader);
+        vec
     }
 }
