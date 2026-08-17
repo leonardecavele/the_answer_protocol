@@ -473,14 +473,17 @@ impl App {
                 let is_current_player = current_player_name == fight_status.player_name;
 
                 let message = match is_current_player {
-                    true => match fight_status.success {
-                        true => {
-                            format!("You dealt {} damage", fight_status.damage_dealt)
+                    true => {
+                        self.state.game.fight.success = Some(fight_status.success);
+                        match fight_status.success {
+                            true => {
+                                format!("You dealt {} damage", fight_status.damage_dealt)
+                            }
+                            false => {
+                                format!("You receive {} damage", fight_status.damage_dealt)
+                            }
                         }
-                        false => {
-                            format!("You receive {} damage", fight_status.damage_dealt)
-                        }
-                    },
+                    }
                     false => match fight_status.success {
                         true => {
                             format!(
@@ -500,14 +503,12 @@ impl App {
                 self.state.game.log_action(message.clone());
 
                 let notification = if fight_status.success {
-                    Notification::error(message).with_duration(8000)
-                } else {
                     Notification::success(message).with_duration(8000)
+                } else {
+                    Notification::error(message).with_duration(8000)
                 };
 
                 self.state.ui.notification.push(notification);
-
-                self.state.game.fight.success = Some(fight_status.success);
             }
             ServerEvent::FightEnd => {
                 self.state.game.fight.reset();
