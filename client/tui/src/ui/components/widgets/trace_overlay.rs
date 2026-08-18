@@ -1,7 +1,7 @@
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
-use crate::ui::components::Lifecycle;
 use crate::ui::components::scrollable::ScrollableComponent;
+use crate::ui::components::Lifecycle;
 use crate::ui::theme::overlay_block;
 use crate::ui::utils::wrap_slice_to_lines;
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
@@ -46,7 +46,7 @@ impl ScrollableComponent for TraceOverlay {
         let raw_lines = state
             .ui
             .trace_log
-            .iter()
+            .into_iter()
             .map(|line| format!("• {}", line))
             .collect::<Vec<_>>();
 

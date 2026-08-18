@@ -1,3 +1,4 @@
+use std::collections::VecDeque;
 use std::ops::Deref;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -120,4 +121,31 @@ impl<T> FromIterator<T> for SelectableList<T> {
     fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
         Self::with_items(iter.into_iter().collect())
     }
+}
+
+pub struct BoundedLog<T> {
+    items: VecDeque<T>,
+    capacity: usize,
+}
+
+impl<T> BoundedLog<T> {
+    pub fn with_max_capacity(capacity: usize) -> Self {
+        Self {
+            items: VecDeque::new(),
+            capacity,
+        }
+    }
+
+    pub fn push(&mut self, item: T) {
+        if self.items.len() >= self.capacity {
+            self.items.pop_front();
+        }
+        self.items.push_back(item);
+    }
+}
+
+impl<'a, T> IntoIterator for &'a BoundedLog<T> {
+    type Item = &'a T;
+    type IntoIter = std::collections::vec_deque::Iter<'a, T>;
+    fn into_iter(self) -> Self::IntoIter { self.items.iter() }
 }

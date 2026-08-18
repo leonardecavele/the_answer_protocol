@@ -1,3 +1,4 @@
+use crate::collections::BoundedLog;
 use crate::events::types::NotificationType;
 use ratatui::layout::Rect;
 use ratatui::Frame;
@@ -8,7 +9,6 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::time::{Duration, Instant};
 use uuid::Uuid;
-use crate::states::TraceLog;
 
 pub const NOTIF_DEFAULT_DURATION_MS: u64 = 5000;
 
@@ -172,7 +172,7 @@ pub struct UiState {
     pub notifications: Notifications,
     pub image_manager: ImageManager,
     pub show_trace_log: bool,
-    pub trace_log: TraceLog,
+    pub trace_log: BoundedLog<String>,
 }
 
 impl UiState {
@@ -181,7 +181,7 @@ impl UiState {
             notifications: Notifications::new(),
             image_manager: ImageManager::new(),
             show_trace_log: false,
-            trace_log: TraceLog::new(),
+            trace_log: BoundedLog::with_max_capacity(100),
         }
     }
 }
