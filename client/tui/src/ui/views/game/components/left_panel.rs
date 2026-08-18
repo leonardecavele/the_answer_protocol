@@ -3,7 +3,7 @@ use crate::data::manifest::NpcType;
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
 use crate::states::game::GameFocus;
-use crate::states::game::Overlay::{ItemActions, NpcActions, QuestView};
+use crate::states::game::Overlay::{ItemActions, NpcActions, QuestDetail};
 use crate::ui::components::Component;
 use crate::ui::components::Lifecycle;
 use crate::ui::theme::default_block;
@@ -16,13 +16,13 @@ use ratatui::{
 };
 use tokio::sync::mpsc::Sender;
 
-pub struct LeftPanelComponent {
+pub struct LeftPanel {
     pub npcs_area: Option<Rect>,
     pub items_area: Option<Rect>,
     pub quests_area: Option<Rect>,
 }
 
-impl LeftPanelComponent {
+impl LeftPanel {
     pub fn new() -> Self {
         Self {
             npcs_area: None,
@@ -32,7 +32,7 @@ impl LeftPanelComponent {
     }
 }
 
-impl Component for LeftPanelComponent {
+impl Component for LeftPanel {
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
         // TODO: refactoriser cette fonction (decouper en plus petit bloc)
 
@@ -86,7 +86,7 @@ impl Component for LeftPanelComponent {
                 let mut style = Style::default().fg(color);
 
                 if state.game.room.npcs.is_selected(idx)
-                    && state.game.current_focus == GameFocus::NpcList
+                    && state.game.focus == GameFocus::NpcList
                 {
                     style = style.add_modifier(Modifier::REVERSED);
                 }
@@ -98,7 +98,7 @@ impl Component for LeftPanelComponent {
             })
             .collect();
         let mut npcs_block = default_block().title(" Room NPCs ");
-        if state.game.current_focus == GameFocus::NpcList {
+        if state.game.focus == GameFocus::NpcList {
             npcs_block = npcs_block.border_style(Style::default().fg(Color::Yellow));
         }
         let npcs_list = List::new(npcs_items).block(npcs_block);
@@ -123,7 +123,7 @@ impl Component for LeftPanelComponent {
                 let mut style = Style::default().fg(Color::Cyan);
 
                 if state.game.room.items.is_selected(idx)
-                    && state.game.current_focus == GameFocus::RoomItemsList
+                    && state.game.focus == GameFocus::RoomItemsList
                 {
                     style = style.add_modifier(Modifier::REVERSED);
                 }
@@ -134,7 +134,7 @@ impl Component for LeftPanelComponent {
             })
             .collect();
         let mut items_block = default_block().title(" Room Items ");
-        if state.game.current_focus == GameFocus::RoomItemsList {
+        if state.game.focus == GameFocus::RoomItemsList {
             items_block = items_block.border_style(Style::default().fg(Color::Yellow));
         }
         let items_list = List::new(items).block(items_block);
@@ -164,7 +164,7 @@ impl Component for LeftPanelComponent {
                 };
 
                 if state.game.player.quests.is_selected(idx)
-                    && state.game.current_focus == GameFocus::QuestList
+                    && state.game.focus == GameFocus::QuestList
                 {
                     style = style.add_modifier(Modifier::REVERSED);
                 }
@@ -176,7 +176,7 @@ impl Component for LeftPanelComponent {
             })
             .collect();
         let mut quests_block = default_block().title(" Quests ");
-        if state.game.current_focus == GameFocus::QuestList {
+        if state.game.focus == GameFocus::QuestList {
             quests_block = quests_block.border_style(Style::default().fg(Color::Yellow));
         }
         let quests_list = List::new(quests_items).block(quests_block);
@@ -185,7 +185,7 @@ impl Component for LeftPanelComponent {
     }
 }
 
-impl Lifecycle for LeftPanelComponent {
+impl Lifecycle for LeftPanel {
     fn handle_terminal_event(
         &mut self,
         state: &mut AppState,
@@ -197,7 +197,7 @@ impl Lifecycle for LeftPanelComponent {
             _ => return false,
         };
 
-        match state.game.current_focus {
+        match state.game.focus {
             GameFocus::NpcList => match key.code {
                 crossterm::event::KeyCode::Up => {
                     state.game.room.npcs.move_selection(Step::Previous);
@@ -208,13 +208,13 @@ impl Lifecycle for LeftPanelComponent {
                     true
                 }
                 crossterm::event::KeyCode::Enter => {
-                    if !state.game.ui.is_npc_dialogue_available() {
+                    if !state.game.overlays.dialogue_cooldown_elapsed() {
                         return true;
                     }
 
                     match state.game.room.npcs.selected().cloned() {
                         Some(npc_id) => {
-                            state.game.ui.open(NpcActions { npc_id });
+                            state.game.overlays.open(NpcActions { npc_id });
                             true
                         }
                         None => false,
@@ -234,7 +234,7 @@ impl Lifecycle for LeftPanelComponent {
                 crossterm::event::KeyCode::Enter => {
                     match state.game.room.items.selected().cloned() {
                         Some(item_id) => {
-                            state.game.ui.open(ItemActions { item_id });
+                            state.game.overlays.open(ItemActions { item_id });
                             true
                         }
                         None => false,
@@ -254,7 +254,7 @@ impl Lifecycle for LeftPanelComponent {
                 crossterm::event::KeyCode::Enter => match state.game.player.quests.selected() {
                     Some(quest) => {
                         let quest_id = quest.quest_id.clone();
-                        state.game.ui.open(QuestView { quest_id });
+                        state.game.overlays.open(QuestDetail { quest_id });
                         true
                     }
                     None => false,

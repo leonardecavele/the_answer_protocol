@@ -4,8 +4,8 @@ use crate::states::ui::Notification;
 use crate::ui::components::Component;
 use crate::ui::components::Lifecycle;
 use crate::ui::components::interactive::Interactive;
-use crate::ui::components::widgets::button::ButtonComponent;
-use crate::ui::components::widgets::text_input::TextInputComponent;
+use crate::ui::components::widgets::button::Button;
+use crate::ui::components::widgets::text_input::TextInput;
 use crossterm::event::{Event as CrosstermEvent, KeyCode, KeyEvent, MouseEvent, MouseEventKind};
 use mpsc::Sender;
 use ratatui::Frame;
@@ -22,20 +22,20 @@ pub enum LoginFocus {
 
 pub struct LoginView {
     pub current_focus: LoginFocus,
-    pub name_input: Interactive<TextInputComponent>,
-    pub ip_input: Interactive<TextInputComponent>,
-    pub port_input: Interactive<TextInputComponent>,
-    pub connect_button: Interactive<ButtonComponent>,
+    pub name_input: Interactive<TextInput>,
+    pub ip_input: Interactive<TextInput>,
+    pub port_input: Interactive<TextInput>,
+    pub connect_button: Interactive<Button>,
 }
 
 impl LoginView {
     pub fn new(ip: String, port: String) -> Self {
         let mut view = Self {
             current_focus: LoginFocus::PlayerName,
-            name_input: Interactive::new(TextInputComponent::new("Player Name")),
-            ip_input: Interactive::new(TextInputComponent::new("Server IP")),
-            port_input: Interactive::new(TextInputComponent::new("Server Port")),
-            connect_button: Interactive::new(ButtonComponent::new("Connect")),
+            name_input: Interactive::new(TextInput::new("Player Name")),
+            ip_input: Interactive::new(TextInput::new("Server IP")),
+            port_input: Interactive::new(TextInput::new("Server Port")),
+            connect_button: Interactive::new(Button::new("Connect")),
         };
         // Set initial value for defaults
         view.ip_input.inner.value = ip;
@@ -200,10 +200,10 @@ impl Lifecycle for LoginView {
                     if name.is_empty() || ip.is_empty() || port.is_empty() {
                         state
                             .ui
-                            .notification
+                            .notifications
                             .push(Notification::warning("All fields must be filled"));
                     } else {
-                        state.ui.notification.push(
+                        state.ui.notifications.push(
                             Notification::info("Connecting...")
                                 .with_id(crate::network::manager::NOTIF_ID_CONNECTION_ATTEMPT)
                                 .with_duration(60000),

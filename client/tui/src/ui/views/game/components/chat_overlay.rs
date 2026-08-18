@@ -12,15 +12,15 @@ use ratatui::widgets::Block;
 const CHAT_WIDTH_PERCENTAGE: u16 = 80;
 const CHAT_HEIGHT_PERCENTAGE: u16 = 80;
 
-pub struct ChatOverlayComponent;
+pub struct ChatOverlay;
 
-impl ChatOverlayComponent {
+impl ChatOverlay {
     pub fn new() -> Self {
         Self
     }
 }
 
-impl ScrollableComponent for ChatOverlayComponent {
+impl ScrollableComponent for ChatOverlay {
     fn get_area(&self, _state: &AppState, max_area: Rect) -> Rect {
         let chat_width = (max_area.width * CHAT_WIDTH_PERCENTAGE) / 100;
         let chat_height = (max_area.height * CHAT_HEIGHT_PERCENTAGE) / 100;
@@ -39,7 +39,7 @@ impl ScrollableComponent for ChatOverlayComponent {
     fn get_content<'a>(&self, state: &'a AppState, max_width: usize) -> Vec<Line<'a>> {
         let mut visual_lines = Vec::new();
 
-        for msg in &state.game.chat_history {
+        for msg in &state.game.chat_log {
             let (prefix, _) = match &msg.channel {
                 ChatChannel::Global => ("[GLOBAL] ", Color::Yellow),
                 ChatChannel::Group => ("[GROUP] ", Color::LightGreen),
@@ -55,4 +55,4 @@ impl ScrollableComponent for ChatOverlayComponent {
     }
 }
 
-impl Lifecycle for ChatOverlayComponent {}
+impl Lifecycle for ChatOverlay {}

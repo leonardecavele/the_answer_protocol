@@ -20,9 +20,9 @@ const POPUP_WIDTH_PERCENT: u16 = 60;
 const POPUP_HEIGHT_PERCENT: u16 = 60;
 const FOOTER_HEIGHT: u16 = 2;
 
-pub struct QuestViewPopupComponent;
+pub struct QuestDetailPopup;
 
-impl QuestViewPopupComponent {
+impl QuestDetailPopup {
     pub fn new() -> Self {
         Self
     }
@@ -66,9 +66,9 @@ impl QuestViewPopupComponent {
     }
 }
 
-impl Component for QuestViewPopupComponent {
+impl Component for QuestDetailPopup {
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
-        let quest_id = match state.game.ui.target_of(OverlayKind::QuestView) {
+        let quest_id = match state.game.overlays.target_of(OverlayKind::QuestDetail) {
             Some(id) => id,
             None => return,
         };
@@ -115,21 +115,21 @@ impl Component for QuestViewPopupComponent {
     }
 }
 
-impl Lifecycle for QuestViewPopupComponent {
+impl Lifecycle for QuestDetailPopup {
     fn handle_terminal_event(
         &mut self,
         state: &mut AppState,
         event: &CrosstermEvent,
         _event_sender: &Sender<ApplicationEvent>,
     ) -> bool {
-        if !state.game.ui.is_open(OverlayKind::QuestView) {
+        if !state.game.overlays.is_open(OverlayKind::QuestDetail) {
             return false;
         }
 
         if let CrosstermEvent::Key(key) = event {
             match key.code {
                 KeyCode::Esc | KeyCode::Enter | KeyCode::Char('q') => {
-                    state.game.ui.close_top();
+                    state.game.overlays.close_top();
                 }
                 _ => {}
             }

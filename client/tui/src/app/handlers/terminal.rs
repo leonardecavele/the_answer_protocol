@@ -12,7 +12,7 @@ impl App {
             }
             if key_event.modifiers == KeyModifiers::CONTROL && key_event.code == KeyCode::Char('e')
             {
-                self.state.ui.show_event_overlay = !self.state.ui.show_event_overlay;
+                self.state.ui.show_trace_log = !self.state.ui.show_trace_log;
                 return;
             }
         }

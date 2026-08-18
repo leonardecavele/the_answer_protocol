@@ -2,11 +2,11 @@ use std::ops::Deref;
 
 const MAX_SIZE: usize = 50;
 
-pub struct LogState(Vec<String>);
+pub struct ActionLog(Vec<String>);
 
-impl LogState {
+impl ActionLog {
     pub fn new() -> Self {
-        LogState(Vec::new())
+        ActionLog(Vec::new())
     }
 
     pub fn push(&mut self, message: String) {
@@ -17,13 +17,13 @@ impl LogState {
     }
 }
 
-impl Default for LogState {
+impl Default for ActionLog {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl Deref for LogState {
+impl Deref for ActionLog {
     type Target = [String];
 
     fn deref(&self) -> &Self::Target {
@@ -31,7 +31,7 @@ impl Deref for LogState {
     }
 }
 
-impl<'a> IntoIterator for &'a LogState {
+impl<'a> IntoIterator for &'a ActionLog {
     type Item = &'a String;
     type IntoIter = std::slice::Iter<'a, String>;
 
@@ -40,7 +40,7 @@ impl<'a> IntoIterator for &'a LogState {
     }
 }
 
-impl FromIterator<String> for LogState {
+impl FromIterator<String> for ActionLog {
     fn from_iter<I: IntoIterator<Item = String>>(iter: I) -> Self {
         Self(iter.into_iter().collect())
     }

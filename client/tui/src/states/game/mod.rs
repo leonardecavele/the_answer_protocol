@@ -1,22 +1,22 @@
-mod chat;
+mod chat_log;
 mod dialogue;
 mod fight;
 mod group;
-mod log;
-mod overlay;
+mod action_log;
+mod overlays;
 mod player;
 mod room;
 mod server;
 
-pub use chat::{ChatChannel, ChatMessage, ChatState};
+pub use chat_log::{ChatChannel, ChatMessage, ChatLog};
 pub use dialogue::{DialogueState, END_OF_DIALOGUE_TAG};
 pub use fight::FightState;
 pub use group::GroupState;
-pub use overlay::{GameUiState, Overlay, OverlayKind};
+pub use overlays::{Overlays, Overlay, OverlayKind};
 pub use player::PlayerState;
 pub use room::RoomState;
 pub use server::ServerState;
-pub use log::LogState;
+pub use action_log::ActionLog;
 
 use crate::data::manifest::Manifest;
 use std::sync::Arc;
@@ -43,14 +43,14 @@ pub struct GameState {
     pub group: GroupState,
     pub room: RoomState,
     pub server: ServerState,
-    pub ui: GameUiState,
+    pub overlays: Overlays,
     pub fight: FightState,
     pub manifest: Arc<Manifest>,
 
-    pub chat_history: ChatState,
-    pub action_logs: LogState,
+    pub chat_log: ChatLog,
+    pub action_log: ActionLog,
 
-    pub current_focus: GameFocus,
+    pub focus: GameFocus,
 }
 
 impl GameState {
@@ -60,17 +60,17 @@ impl GameState {
             group: GroupState::new(),
             room: RoomState::new(),
             server: ServerState::new(),
-            ui: GameUiState::new(),
+            overlays: Overlays::new(),
             fight: FightState::new(),
             manifest,
-            chat_history: ChatState::new(),
-            action_logs: LogState::new(),
-            current_focus: GameFocus::default(),
+            chat_log: ChatLog::new(),
+            action_log: ActionLog::new(),
+            focus: GameFocus::default(),
         }
     }
 
     pub fn log_action(&mut self, text: String) {
         let time_str = chrono::Local::now().format("%H:%M:%S").to_string();
-        self.action_logs.push(format!("[{}] {}", time_str, text));
+        self.action_log.push(format!("[{}] {}", time_str, text));
     }
 }

@@ -9,22 +9,22 @@ use ratatui::style::{Color, Style};
 use ratatui::text::Line;
 use ratatui::widgets::Block;
 
-pub struct ActionHistoryComponent;
+pub struct ActionHistoryPanel;
 
-impl ActionHistoryComponent {
+impl ActionHistoryPanel {
     pub fn new() -> Self {
         Self
     }
 }
 
-impl Lifecycle for ActionHistoryComponent {}
+impl Lifecycle for ActionHistoryPanel {}
 
-impl ScrollableComponent for ActionHistoryComponent {
+impl ScrollableComponent for ActionHistoryPanel {
     fn get_block<'a>(&self, state: &AppState) -> Block<'a> {
         let mut history_block = default_block()
             .title(" Action History ")
             .title_bottom(Line::from(" Press Ctrl + H to open help ").alignment(Alignment::Center));
-        if state.game.current_focus == GameFocus::ActionHistory {
+        if state.game.focus == GameFocus::ActionHistory {
             history_block = history_block.border_style(Style::default().fg(Color::Yellow));
         }
         history_block
@@ -33,7 +33,7 @@ impl ScrollableComponent for ActionHistoryComponent {
     fn get_content<'a>(&self, state: &'a AppState, max_width: usize) -> Vec<Line<'a>> {
         let raw_lines = state
             .game
-            .action_logs
+            .action_log
             .iter()
             .map(|line| format!("• {}", line))
             .collect::<Vec<_>>();

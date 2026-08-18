@@ -1,36 +1,35 @@
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
 use crate::states::game::GameFocus;
+use crate::ui::components::scrollable::Scrollable;
 use crate::ui::components::Component;
 use crate::ui::components::Lifecycle;
-use crate::ui::components::scrollable::Scrollable;
-use crate::ui::views::game::components::action_history::ActionHistoryComponent;
-use crate::ui::views::game::components::inventory::InventoryComponent;
+use crate::ui::views::game::components::{ActionHistoryPanel, InventoryPanel};
 use ratatui::{
-    Frame,
     layout::{Constraint, Direction, Layout, Rect},
+    Frame,
 };
 use tokio::sync::mpsc::Sender;
 
-pub struct CenterPanelComponent {
-    pub action_history: Scrollable<ActionHistoryComponent>,
-    pub inventory: InventoryComponent,
+pub struct CenterPanel {
+    pub action_history: Scrollable<ActionHistoryPanel>,
+    pub inventory: InventoryPanel,
     pub history_area: Option<Rect>,
     pub inventory_area: Option<Rect>,
 }
 
-impl CenterPanelComponent {
+impl CenterPanel {
     pub fn new() -> Self {
         Self {
-            action_history: Scrollable::new(ActionHistoryComponent::new()),
-            inventory: InventoryComponent::new(),
+            action_history: Scrollable::new(ActionHistoryPanel::new()),
+            inventory: InventoryPanel::new(),
             history_area: None,
             inventory_area: None,
         }
     }
 }
 
-impl Component for CenterPanelComponent {
+impl Component for CenterPanel {
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
@@ -45,14 +44,14 @@ impl Component for CenterPanelComponent {
     }
 }
 
-impl Lifecycle for CenterPanelComponent {
+impl Lifecycle for CenterPanel {
     fn handle_terminal_event(
         &mut self,
         state: &mut AppState,
         event: &crossterm::event::Event,
         event_sender: &Sender<ApplicationEvent>,
     ) -> bool {
-        if state.game.current_focus == GameFocus::ActionHistory {
+        if state.game.focus == GameFocus::ActionHistory {
             if self
                 .action_history
                 .handle_terminal_event(state, event, event_sender)
@@ -60,7 +59,7 @@ impl Lifecycle for CenterPanelComponent {
                 return true;
             }
         }
-        if state.game.current_focus == GameFocus::InventoryGrid {
+        if state.game.focus == GameFocus::InventoryGrid {
             if self
                 .inventory
                 .handle_terminal_event(state, event, event_sender)

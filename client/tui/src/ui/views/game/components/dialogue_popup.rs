@@ -21,15 +21,15 @@ use tokio::sync::mpsc;
 pub const CHAR_DELAY_MS: u128 = 2;
 const MAX_HEIGHT_PERCENTAGE: u16 = 40;
 
-pub struct DialoguePopupComponent;
+pub struct DialoguePopup;
 
-impl DialoguePopupComponent {
+impl DialoguePopup {
     pub fn new() -> Self {
         Self
     }
 }
 
-impl ScrollableComponent for DialoguePopupComponent {
+impl ScrollableComponent for DialoguePopup {
     fn get_area(&self, state: &AppState, max_area: Rect) -> Rect {
         let width = max_area.width.saturating_sub(4);
         let x = max_area.x + 2;
@@ -54,7 +54,7 @@ impl ScrollableComponent for DialoguePopupComponent {
     }
 
     fn get_block<'a>(&self, state: &AppState) -> Block<'a> {
-        if let Some(dialog) = state.game.ui.dialogue() {
+        if let Some(dialog) = state.game.overlays.dialogue() {
             overlay_block()
                 .title(format!(" {} ", dialog.npc_name))
                 .style(Style::default().fg(Color::Yellow))
@@ -65,7 +65,7 @@ impl ScrollableComponent for DialoguePopupComponent {
     }
 
     fn get_content<'a>(&self, state: &'a AppState, max_width: usize) -> Vec<Line<'a>> {
-        if let Some(dialog) = state.game.ui.dialogue() {
+        if let Some(dialog) = state.game.overlays.dialogue() {
             let visible_text: String = dialog
                 .full_text
                 .chars()
@@ -89,23 +89,23 @@ impl ScrollableComponent for DialoguePopupComponent {
     }
 }
 
-impl Lifecycle for DialoguePopupComponent {
+impl Lifecycle for DialoguePopup {
     fn handle_terminal_event(
         &mut self,
         state: &mut AppState,
         event: &CrosstermEvent,
         sender: &Sender<ApplicationEvent>,
     ) -> bool {
-        if let Some(dialog) = state.game.ui.dialogue().cloned() {
+        if let Some(dialog) = state.game.overlays.dialogue().cloned() {
             if let CrosstermEvent::Key(key) = event {
                 if key.code == KeyCode::Enter {
                     if dialog.visible_chars < dialog.full_text.chars().count() {
-                        if let Some(d) = state.game.ui.dialogue_mut() {
+                        if let Some(d) = state.game.overlays.dialogue_mut() {
                             d.visible_chars = d.full_text.chars().count();
                         }
                     } else {
                         if dialog.ends_dialog {
-                            state.game.ui.close(OverlayKind::Dialogue);
+                            state.game.overlays.close(OverlayKind::Dialogue);
                         } else {
                             let request = ApiRequest::Talk(TalkCommand {
                                 npc_name: dialog.npc_id.clone(),
@@ -124,7 +124,7 @@ impl Lifecycle for DialoguePopupComponent {
     }
 
     fn on_tick(&mut self, state: &mut AppState) {
-        if let Some(dialog) = state.game.ui.dialogue_mut() {
+        if let Some(dialog) = state.game.overlays.dialogue_mut() {
             if dialog.visible_chars < dialog.full_text.chars().count() {
                 if dialog.last_tick.elapsed().as_millis() > CHAR_DELAY_MS {
                     dialog.visible_chars += 1;

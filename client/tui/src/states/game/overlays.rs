@@ -6,8 +6,8 @@ pub enum Overlay {
     Chat,
     NpcActions { npc_id: String },
     ItemActions { item_id: String },
-    ItemView { item_id: String },
-    QuestView { quest_id: String },
+    ItemDetail { item_id: String },
+    QuestDetail { quest_id: String },
     Dialogue(DialogueState),
 }
 
@@ -17,8 +17,8 @@ pub enum OverlayKind {
     Chat,
     NpcActions,
     ItemActions,
-    ItemView,
-    QuestView,
+    ItemDetail,
+    QuestDetail,
     Dialogue,
 }
 
@@ -29,8 +29,8 @@ impl Overlay {
             Overlay::Chat => OverlayKind::Chat,
             Overlay::NpcActions { .. } => OverlayKind::NpcActions,
             Overlay::ItemActions { .. } => OverlayKind::ItemActions,
-            Overlay::ItemView { .. } => OverlayKind::ItemView,
-            Overlay::QuestView { .. } => OverlayKind::QuestView,
+            Overlay::ItemDetail { .. } => OverlayKind::ItemDetail,
+            Overlay::QuestDetail { .. } => OverlayKind::QuestDetail,
             Overlay::Dialogue(_) => OverlayKind::Dialogue,
         }
     }
@@ -42,16 +42,16 @@ impl OverlayKind {
     }
 }
 
-pub struct GameUiState {
-    pub inspected_entity_id: Option<String>,
-    pub dialogue_closed_at: Option<Instant>,
+pub struct Overlays {
+    pub inspected_entity: Option<String>,
+    dialogue_closed_at: Option<Instant>,
     overlays: Vec<Overlay>,
 }
 
-impl GameUiState {
+impl Overlays {
     pub fn new() -> Self {
         Self {
-            inspected_entity_id: None,
+            inspected_entity: None,
             dialogue_closed_at: None,
             overlays: Vec::new(),
         }
@@ -91,7 +91,7 @@ impl GameUiState {
         }
     }
 
-    pub fn overlays(&self) -> impl Iterator<Item = &Overlay> {
+    pub fn iter(&self) -> impl Iterator<Item = &Overlay> {
         self.overlays.iter()
     }
 
@@ -110,10 +110,10 @@ impl GameUiState {
             .find(|o| o.kind() == kind)
             .and_then(|o| match o {
                 Overlay::NpcActions { npc_id } => Some(npc_id.as_str()),
-                Overlay::ItemActions { item_id } | Overlay::ItemView { item_id } => {
+                Overlay::ItemActions { item_id } | Overlay::ItemDetail { item_id } => {
                     Some(item_id.as_str())
                 }
-                Overlay::QuestView { quest_id } => Some(quest_id.as_str()),
+                Overlay::QuestDetail { quest_id } => Some(quest_id.as_str()),
                 _ => None,
             })
     }
@@ -132,7 +132,7 @@ impl GameUiState {
         })
     }
 
-    pub fn is_npc_dialogue_available(&self) -> bool {
+    pub fn dialogue_cooldown_elapsed(&self) -> bool {
         if let Some(time) = self.dialogue_closed_at {
             if time.elapsed() < Duration::from_millis(300) {
                 return false;
@@ -143,13 +143,13 @@ impl GameUiState {
 
     fn after_close(&mut self, kind: OverlayKind) {
         if kind == OverlayKind::Dialogue {
-            self.inspected_entity_id = None;
+            self.inspected_entity = None;
             self.dialogue_closed_at = Some(Instant::now());
         }
     }
 }
 
-impl Default for GameUiState {
+impl Default for Overlays {
     fn default() -> Self {
         Self::new()
     }

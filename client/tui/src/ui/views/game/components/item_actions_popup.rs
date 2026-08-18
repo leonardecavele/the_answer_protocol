@@ -19,11 +19,11 @@ use tokio::sync::mpsc;
 
 const POPUP_WIDTH: u16 = 30;
 
-pub struct ItemPopupComponent {
+pub struct ItemActionsPopup {
     pub selected_action_index: usize,
 }
 
-impl ItemPopupComponent {
+impl ItemActionsPopup {
     pub fn new() -> Self {
         Self {
             selected_action_index: 0,
@@ -44,9 +44,9 @@ impl ItemPopupComponent {
     }
 }
 
-impl Component for ItemPopupComponent {
+impl Component for ItemActionsPopup {
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
-        let item_id = match state.game.ui.target_of(OverlayKind::ItemActions) {
+        let item_id = match state.game.overlays.target_of(OverlayKind::ItemActions) {
             Some(id) => id,
             None => return,
         };
@@ -89,14 +89,14 @@ impl Component for ItemPopupComponent {
     }
 }
 
-impl Lifecycle for ItemPopupComponent {
+impl Lifecycle for ItemActionsPopup {
     fn handle_terminal_event(
         &mut self,
         state: &mut AppState,
         event: &CrosstermEvent,
         event_sender: &Sender<ApplicationEvent>,
     ) -> bool {
-        let item_id = match state.game.ui.target_of(OverlayKind::ItemActions) {
+        let item_id = match state.game.overlays.target_of(OverlayKind::ItemActions) {
             Some(id) => id.to_string(),
             None => return false,
         };
@@ -117,7 +117,7 @@ impl Lifecycle for ItemPopupComponent {
                     return true;
                 }
                 KeyCode::Esc => {
-                    state.game.ui.close_top();
+                    state.game.overlays.close_top();
                     self.selected_action_index = 0;
                     return true;
                 }
@@ -125,7 +125,7 @@ impl Lifecycle for ItemPopupComponent {
                     if let Some(act) = actions.get(self.selected_action_index) {
                         match act.as_str() {
                             "VIEW" => {
-                                state.game.ui.open(Overlay::ItemView {
+                                state.game.overlays.open(Overlay::ItemDetail {
                                     item_id: item_id.clone(),
                                 });
                                 return true;
@@ -139,7 +139,7 @@ impl Lifecycle for ItemPopupComponent {
                         }
                     }
 
-                    state.game.ui.close_top();
+                    state.game.overlays.close_top();
                     self.selected_action_index = 0;
                     return true;
                 }

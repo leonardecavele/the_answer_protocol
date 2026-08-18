@@ -4,37 +4,37 @@ use crate::states::game::GameFocus;
 use crate::ui::components::Component;
 use crate::ui::components::Lifecycle;
 use crate::ui::components::interactive::Interactive;
-use crate::ui::components::widgets::text_input::TextInputComponent;
+use crate::ui::components::widgets::text_input::TextInput;
 use crossterm::event::{Event as CrosstermEvent, KeyCode, KeyEvent};
 use ratatui::{Frame, layout::Rect};
 
-pub struct FooterComponent {
-    pub input: Interactive<TextInputComponent>,
+pub struct Footer {
+    pub input: Interactive<TextInput>,
 }
 
-impl FooterComponent {
+impl Footer {
     pub fn new() -> Self {
-        let mut input = Interactive::new(TextInputComponent::new("Command"));
+        let mut input = Interactive::new(TextInput::new("Command"));
         input.inner.is_focused = true;
         Self { input }
     }
 }
 
-impl Component for FooterComponent {
+impl Component for Footer {
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
-        self.input.inner.is_focused = state.game.current_focus == GameFocus::Input;
+        self.input.inner.is_focused = state.game.focus == GameFocus::Input;
         self.input.draw(state, frame, area);
     }
 }
 
-impl Lifecycle for FooterComponent {
+impl Lifecycle for Footer {
     fn handle_terminal_event(
         &mut self,
         state: &mut AppState,
         event: &CrosstermEvent,
         event_sender: &tokio::sync::mpsc::Sender<ApplicationEvent>,
     ) -> bool {
-        if state.game.current_focus == GameFocus::Input {
+        if state.game.focus == GameFocus::Input {
             if let CrosstermEvent::Key(KeyEvent {
                 code: KeyCode::Enter,
                 ..
@@ -45,13 +45,13 @@ impl Lifecycle for FooterComponent {
                     self.input.inner.value.clear();
                     let _ = event_sender.try_send(ApplicationEvent::SendRawCommand(command));
                 } else {
-                    state.game.current_focus = GameFocus::RightPanel;
+                    state.game.focus = GameFocus::RightPanel;
                 }
                 return true;
             }
         }
 
-        if state.game.current_focus == GameFocus::Input {
+        if state.game.focus == GameFocus::Input {
             self.input.handle_terminal_event(state, event, event_sender)
         } else {
             false

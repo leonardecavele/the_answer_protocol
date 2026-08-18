@@ -1,8 +1,8 @@
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
 use crate::ui::components::scrollable::Scrollable;
-use crate::ui::components::widgets::event_overlay::EventOverlayComponent;
-use crate::ui::components::widgets::notifications::NotificationComponent;
+use crate::ui::components::widgets::trace_overlay::TraceOverlay;
+use crate::ui::components::widgets::notifications::NotificationsOverlay;
 use crate::ui::components::{Component, Lifecycle};
 use crate::ui::views::login::LoginView;
 use crossterm::event::Event as CrosstermEvent;
@@ -12,16 +12,16 @@ use tokio::sync::mpsc::Sender;
 
 pub struct ViewManager {
     active_view: Box<dyn Component>,
-    event_overlay: Scrollable<EventOverlayComponent>,
-    notification_overlay: NotificationComponent,
+    event_overlay: Scrollable<TraceOverlay>,
+    notification_overlay: NotificationsOverlay,
 }
 
 impl ViewManager {
     pub fn new(ip: String, port: String) -> Self {
         Self {
             active_view: Box::new(LoginView::new(ip, port)),
-            event_overlay: Scrollable::new(EventOverlayComponent::new()),
-            notification_overlay: NotificationComponent::new(),
+            event_overlay: Scrollable::new(TraceOverlay::new()),
+            notification_overlay: NotificationsOverlay::new(),
         }
     }
 
@@ -34,7 +34,7 @@ impl Component for ViewManager {
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
         self.active_view.draw(state, frame, area);
 
-        if state.ui.show_event_overlay {
+        if state.ui.show_trace_log {
             self.event_overlay.draw(state, frame, area);
         }
 
@@ -49,7 +49,7 @@ impl Lifecycle for ViewManager {
         event: &CrosstermEvent,
         sender: &Sender<ApplicationEvent>,
     ) -> bool {
-        if state.ui.show_event_overlay {
+        if state.ui.show_trace_log {
             if self
                 .event_overlay
                 .handle_terminal_event(state, &event, sender)

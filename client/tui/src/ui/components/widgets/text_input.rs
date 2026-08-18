@@ -10,13 +10,13 @@ use ratatui::style::{Color, Style};
 use ratatui::widgets::Paragraph;
 use tokio::sync::mpsc::Sender;
 
-pub struct TextInputComponent {
+pub struct TextInput {
     pub label: String,
     pub value: String,
     pub is_focused: bool,
 }
 
-impl TextInputComponent {
+impl TextInput {
     pub fn new(label: &str) -> Self {
         Self {
             label: label.to_string(),
@@ -26,7 +26,7 @@ impl TextInputComponent {
     }
 }
 
-impl InteractiveComponent for TextInputComponent {
+impl InteractiveComponent for TextInput {
     fn render(&mut self, _state: &AppState, frame: &mut Frame, area: Rect) {
         let text_color = if self.is_focused {
             Color::Cyan
@@ -77,4 +77,4 @@ impl InteractiveComponent for TextInputComponent {
     }
 }
 
-impl Lifecycle for TextInputComponent {}
+impl Lifecycle for TextInput {}

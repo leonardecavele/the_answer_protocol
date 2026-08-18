@@ -20,17 +20,17 @@ const SPACER_HEIGHT: u16 = 1;
 const DESC_HEIGHT: u16 = 6;
 const FOOTER_HEIGHT: u16 = 2;
 
-pub struct ItemViewPopupComponent {}
+pub struct ItemDetailPopup;
 
-impl ItemViewPopupComponent {
+impl ItemDetailPopup {
     pub fn new() -> Self {
         Self {}
     }
 }
 
-impl Component for ItemViewPopupComponent {
+impl Component for ItemDetailPopup {
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
-        let item_id = match state.game.ui.target_of(OverlayKind::ItemView) {
+        let item_id = match state.game.overlays.target_of(OverlayKind::ItemDetail) {
             Some(id) => id,
             None => return,
         };
@@ -109,21 +109,21 @@ impl Component for ItemViewPopupComponent {
     }
 }
 
-impl Lifecycle for ItemViewPopupComponent {
+impl Lifecycle for ItemDetailPopup {
     fn handle_terminal_event(
         &mut self,
         state: &mut AppState,
         event: &CrosstermEvent,
         _event_sender: &Sender<ApplicationEvent>,
     ) -> bool {
-        if !state.game.ui.is_open(OverlayKind::ItemView) {
+        if !state.game.overlays.is_open(OverlayKind::ItemDetail) {
             return false;
         }
 
         if let CrosstermEvent::Key(key) = event {
             match key.code {
                 KeyCode::Esc | KeyCode::Enter | KeyCode::Char('q') => {
-                    state.game.ui.close_top();
+                    state.game.overlays.close_top();
                 }
                 _ => {}
             }

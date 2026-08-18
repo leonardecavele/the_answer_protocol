@@ -15,12 +15,12 @@ use ratatui::{
 use std::time::Instant;
 use tokio::sync::mpsc::Sender;
 
-pub struct RightPanelComponent {
+pub struct RightPanel {
     animation_start: Instant,
     last_entity: Option<String>,
 }
 
-impl RightPanelComponent {
+impl RightPanel {
     pub fn new() -> Self {
         Self {
             animation_start: Instant::now(),
@@ -33,7 +33,7 @@ impl RightPanelComponent {
         let mut text_fallback: Option<&'static str> =
             Some(" You are lost and have your eyes closed. ");
 
-        if let Some(focused_id) = &state.game.ui.inspected_entity_id {
+        if let Some(focused_id) = &state.game.overlays.inspected_entity {
             text_fallback = Some(" No image available for this NPC. ");
             if let Some(npc) = state.game.manifest.npcs.get(focused_id) {
                 if let (Some(paths), Some(speed)) = (&npc.image_paths, npc.animation_speed_ms) {
@@ -114,7 +114,7 @@ impl RightPanelComponent {
     }
 }
 
-impl Component for RightPanelComponent {
+impl Component for RightPanel {
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
         let (path_to_load, text_fallback) = self.get_path_to_load(state);
 
@@ -155,7 +155,7 @@ impl Component for RightPanelComponent {
             self.render_text(frame, inner_area, text, Color::White);
         }
 
-        if state.game.current_focus == GameFocus::RightPanel {
+        if state.game.focus == GameFocus::RightPanel {
             let focus_text = " [ FOCUS ] ";
             let focus_area = Rect {
                 x: inner_area.x + inner_area.width.saturating_sub(11),
@@ -232,17 +232,17 @@ impl Component for RightPanelComponent {
     }
 }
 
-impl Lifecycle for RightPanelComponent {
+impl Lifecycle for RightPanel {
     fn handle_terminal_event(
         &mut self,
         state: &mut AppState,
         event: &crossterm::event::Event,
         event_sender: &Sender<ApplicationEvent>,
     ) -> bool {
-        if state.game.current_focus == GameFocus::RightPanel {
+        if state.game.focus == GameFocus::RightPanel {
             if let crossterm::event::Event::Key(key) = event {
                 if key.code == crossterm::event::KeyCode::Enter {
-                    state.game.current_focus = GameFocus::NpcList;
+                    state.game.focus = GameFocus::NpcList;
                     return true;
                 }
 

@@ -9,14 +9,14 @@ use ratatui::style::{Color, Modifier, Style};
 use ratatui::widgets::Paragraph;
 use tokio::sync::mpsc::Sender;
 
-pub struct ButtonComponent {
+pub struct Button {
     pub label: String,
     pub is_focused: bool,
     pub is_pressed: bool,
     pub last_area: Option<Rect>,
 }
 
-impl ButtonComponent {
+impl Button {
     pub fn new(label: &str) -> Self {
         Self {
             label: label.to_string(),
@@ -37,7 +37,7 @@ impl ButtonComponent {
     }
 }
 
-impl InteractiveComponent for ButtonComponent {
+impl InteractiveComponent for Button {
     fn render(&mut self, _state: &AppState, frame: &mut Frame, area: Rect) {
         let mut style = Style::default().fg(Color::Gray);
 
@@ -82,4 +82,4 @@ impl InteractiveComponent for ButtonComponent {
     }
 }
 
-impl Lifecycle for ButtonComponent {}
+impl Lifecycle for Button {}

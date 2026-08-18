@@ -17,17 +17,17 @@ use tokio::sync::mpsc;
 const HELP_WIDTH: u16 = 60;
 const HELP_HEIGHT: u16 = 20;
 
-pub struct HelpOverlayComponent;
+pub struct HelpOverlay;
 
-impl HelpOverlayComponent {
+impl HelpOverlay {
     pub fn new() -> Self {
         Self
     }
 }
 
-impl ScrollableComponent for HelpOverlayComponent {
+impl ScrollableComponent for HelpOverlay {
     fn get_area(&self, state: &AppState, max_area: Rect) -> Rect {
-        if !state.game.ui.is_open(OverlayKind::Help) {
+        if !state.game.overlays.is_open(OverlayKind::Help) {
             return Rect::default();
         }
 
@@ -146,7 +146,7 @@ impl ScrollableComponent for HelpOverlayComponent {
     }
 }
 
-impl Lifecycle for HelpOverlayComponent {
+impl Lifecycle for HelpOverlay {
     fn handle_terminal_event(
         &mut self,
         state: &mut AppState,
@@ -156,7 +156,7 @@ impl Lifecycle for HelpOverlayComponent {
         if let CrosstermEvent::Key(key) = event {
             match key.code {
                 KeyCode::Esc | KeyCode::Char('q') => {
-                    state.game.ui.close(OverlayKind::Help);
+                    state.game.overlays.close(OverlayKind::Help);
                     return true;
                 }
                 KeyCode::Char('h') => {
@@ -164,7 +164,7 @@ impl Lifecycle for HelpOverlayComponent {
                         .modifiers
                         .contains(crossterm::event::KeyModifiers::CONTROL)
                     {
-                        state.game.ui.close(OverlayKind::Help);
+                        state.game.overlays.close(OverlayKind::Help);
                         return true;
                     }
                 }

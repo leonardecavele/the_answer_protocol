@@ -15,15 +15,15 @@ use tokio::sync::mpsc;
 const OVERLAY_WIDTH_PERCENTAGE: u16 = 80;
 const OVERLAY_HEIGHT_PERCENTAGE: u16 = 80;
 
-pub struct EventOverlayComponent;
+pub struct TraceOverlay;
 
-impl EventOverlayComponent {
+impl TraceOverlay {
     pub fn new() -> Self {
         Self
     }
 }
 
-impl ScrollableComponent for EventOverlayComponent {
+impl ScrollableComponent for TraceOverlay {
     fn get_area(&self, _state: &AppState, max_area: Rect) -> Rect {
         let overlay_width = max_area.width * OVERLAY_WIDTH_PERCENTAGE / 100;
         let overlay_height = max_area.height * OVERLAY_HEIGHT_PERCENTAGE / 100;
@@ -45,7 +45,7 @@ impl ScrollableComponent for EventOverlayComponent {
     fn get_content<'a>(&self, state: &'a AppState, max_width: usize) -> Vec<Line<'a>> {
         let raw_lines = state
             .ui
-            .event_history
+            .trace_log
             .iter()
             .map(|line| format!("• {}", line))
             .collect::<Vec<_>>();
@@ -54,7 +54,7 @@ impl ScrollableComponent for EventOverlayComponent {
     }
 }
 
-impl Lifecycle for EventOverlayComponent {
+impl Lifecycle for TraceOverlay {
     fn handle_terminal_event(
         &mut self,
         state: &mut AppState,
@@ -63,7 +63,7 @@ impl Lifecycle for EventOverlayComponent {
     ) -> bool {
         if let CrosstermEvent::Key(key) = event {
             if key.code == KeyCode::Esc {
-                state.ui.show_event_overlay = false;
+                state.ui.show_trace_log = false;
                 return true;
             }
         }

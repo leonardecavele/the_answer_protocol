@@ -8,6 +8,7 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::time::{Duration, Instant};
 use uuid::Uuid;
+use crate::states::TraceLog;
 
 pub const NOTIF_DEFAULT_DURATION_MS: u64 = 5000;
 
@@ -168,19 +169,19 @@ impl ImageManager {
 //endregion
 
 pub struct UiState {
-    pub notification: Notifications,
+    pub notifications: Notifications,
     pub image_manager: ImageManager,
-    pub show_event_overlay: bool,
-    pub event_history: Vec<String>,
+    pub show_trace_log: bool,
+    pub trace_log: TraceLog,
 }
 
 impl UiState {
     pub fn new() -> Self {
         Self {
-            notification: Notifications::new(),
+            notifications: Notifications::new(),
             image_manager: ImageManager::new(),
-            show_event_overlay: false,
-            event_history: Vec::new(),
+            show_trace_log: false,
+            trace_log: TraceLog::new(),
         }
     }
 }

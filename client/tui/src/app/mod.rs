@@ -1,24 +1,22 @@
 use crate::data::manifest::Manifest;
 use crate::errors::ApplicationError;
 use crate::events::{ApplicationEvent, EventBroker};
-use crate::network::NetworkManager;
 use crate::network::envelopes::RequestEnvelope;
+use crate::network::NetworkManager;
 use crate::states::app::AppState;
 use crate::states::ui::Notification;
 use crate::ui::components::{Component, Lifecycle};
 use crate::ui::view::ViewManager;
-use api_client::ApiRequest;
 use api_client::commands::StatusCommand;
 use api_client::commands::WhoCommand;
 use api_client::commands::{InventoryCommand, QuestsCommand};
-use ratatui::Terminal;
+use api_client::ApiRequest;
 use ratatui::backend::CrosstermBackend;
+use ratatui::Terminal;
 use std::io;
 use std::sync::Arc;
 
 pub mod handlers;
-
-pub const MAX_EVENT_HISTORY: usize = 100;
 
 pub struct App {
     pub state: AppState,
@@ -38,7 +36,7 @@ impl App {
         if let Some(error) = err {
             state
                 .ui
-                .notification
+                .notifications
                 .push(Notification::error(error).with_duration(10000));
         }
 
@@ -99,22 +97,14 @@ impl App {
         Ok(())
     }
 
-    fn push_event(&mut self, title: &str, text: String) {
+    fn record_trace(&mut self, title: &str, text: String) {
         let time_str = chrono::Local::now().format("%H:%M:%S%.3f").to_string();
-        self.state.ui.event_history.push(format!(
+        self.state.ui.trace_log.push(format!(
             "[{}] [{}] {}",
             time_str,
             title.to_uppercase(),
             text
         ));
-
-        let len = self.state.ui.event_history.len();
-        if len > MAX_EVENT_HISTORY {
-            self.state
-                .ui
-                .event_history
-                .drain(0..(len - MAX_EVENT_HISTORY));
-        }
     }
 
     fn update(&mut self, event: ApplicationEvent) {
@@ -133,27 +123,27 @@ impl App {
     }
 
     fn handle_tick(&mut self) {
-        self.state.ui.notification.remove_expired();
+        self.state.ui.notifications.remove_expired();
         self.view_manager.on_tick(&mut self.state);
     }
 
     fn handle_raw_command(&mut self, command: String) {
         if let Some(request) = ApiRequest::parse(&command) {
-            self.push_event("user input", command);
+            self.record_trace("user input", command);
 
             if let Some(network_manager) = &self.network_manager {
                 let envelope = RequestEnvelope::new(request);
                 network_manager.send_command(envelope);
             }
         } else {
-            self.push_event(
+            self.record_trace(
                 "user input",
                 format!("Unknown or invalid command: {}", command),
             );
 
             self.state
                 .ui
-                .notification
+                .notifications
                 .push(Notification::warning(format!(
                     "Unknown or invalid command: {}",
                     command
@@ -162,7 +152,7 @@ impl App {
     }
 
     fn handle_request(&mut self, request: ApiRequest) {
-        self.push_event("request", format!("{:?}", request));
+        self.record_trace("request", format!("{:?}", request));
 
         if let Some(network_manager) = &self.network_manager {
             let envelope = RequestEnvelope::new(request);

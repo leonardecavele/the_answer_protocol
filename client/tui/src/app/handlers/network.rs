@@ -9,7 +9,7 @@ use crate::ui::views::login::LoginView;
 
 impl App {
     pub(crate) fn handle_network_event(&mut self, event: NetworkEvent) {
-        self.push_event("network", format!("{:?}", event));
+        self.record_trace("network", format!("{:?}", event));
 
         match event {
             NetworkEvent::ConnectionAttemptStarted {
@@ -35,12 +35,12 @@ impl App {
 
                 self.state
                     .ui
-                    .notification
+                    .notifications
                     .remove(NOTIF_ID_CONNECTION_ATTEMPT);
 
                 self.state
                     .ui
-                    .notification
+                    .notifications
                     .push(Notification::success("Connected to the server successfully!"));
 
                 self.state.network.server_ip = server_ip;
@@ -54,10 +54,10 @@ impl App {
                 self.network_manager = None;
                 self.state
                     .ui
-                    .notification
+                    .notifications
                     .remove(NOTIF_ID_CONNECTION_ATTEMPT);
 
-                self.state.ui.notification.push(Notification::error(format!(
+                self.state.ui.notifications.push(Notification::error(format!(
                     "Connection failed: {}",
                     error_message
                 )));
@@ -78,7 +78,7 @@ impl App {
 
                 self.state
                     .ui
-                    .notification
+                    .notifications
                     .push(Notification::error(format!("Connection lost: {}", reason)));
             }
         }

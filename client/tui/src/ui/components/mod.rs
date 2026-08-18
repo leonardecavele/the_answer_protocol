@@ -4,8 +4,8 @@ pub mod widgets;
 pub mod interactive;
 
 use crate::states::app::AppState;
-use ratatui::Frame;
 use ratatui::layout::Rect;
+use ratatui::Frame;
 
 pub mod lifecycle;
 

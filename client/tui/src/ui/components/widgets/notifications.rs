@@ -17,11 +17,11 @@ use tokio::sync::mpsc::Sender;
 pub const MAX_VISIBLE_NOTIFICATIONS: usize = 5;
 pub type NotificationID = String;
 
-pub struct NotificationComponent {
+pub struct NotificationsOverlay {
     pub visible_areas: Vec<(NotificationID, Rect)>,
 }
 
-impl NotificationComponent {
+impl NotificationsOverlay {
     pub fn new() -> Self {
         Self {
             visible_areas: Vec::new(),
@@ -29,16 +29,16 @@ impl NotificationComponent {
     }
 }
 
-impl Component for NotificationComponent {
+impl Component for NotificationsOverlay {
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
         self.visible_areas.clear();
 
-        if state.ui.notification.is_empty() {
+        if state.ui.notifications.is_empty() {
             return;
         }
 
         // We take the last N notifications
-        let notifs_to_draw = state.ui.notification.take(MAX_VISIBLE_NOTIFICATIONS);
+        let notifs_to_draw = state.ui.notifications.take(MAX_VISIBLE_NOTIFICATIONS);
 
         let mut current_y = area.height;
 
@@ -101,7 +101,7 @@ impl Component for NotificationComponent {
     }
 }
 
-impl Lifecycle for NotificationComponent {
+impl Lifecycle for NotificationsOverlay {
     fn handle_terminal_event(
         &mut self,
         state: &mut AppState,
@@ -120,7 +120,7 @@ impl Lifecycle for NotificationComponent {
                     .find(|(_, area)| is_mouse_in_rect(*column, *row, *area))
                 {
                     let id_to_remove = clicked_id.clone();
-                    state.ui.notification.remove(&id_to_remove);
+                    state.ui.notifications.remove(&id_to_remove);
                     return true;
                 }
             }

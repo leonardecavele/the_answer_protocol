@@ -11,15 +11,15 @@ use ratatui::{
     text::{Line, Span},
 };
 
-pub struct HeaderComponent;
+pub struct Header;
 
-impl HeaderComponent {
+impl Header {
     pub fn new() -> Self {
         Self
     }
 }
 
-impl Component for HeaderComponent {
+impl Component for Header {
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
         let room_name = match &state.game.room.name {
             Some(name) => name.as_str(),
@@ -122,4 +122,4 @@ impl Component for HeaderComponent {
     }
 }
 
-impl Lifecycle for HeaderComponent {}
+impl Lifecycle for Header {}

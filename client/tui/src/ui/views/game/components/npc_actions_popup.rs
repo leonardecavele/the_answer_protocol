@@ -19,11 +19,11 @@ use tokio::sync::mpsc;
 
 const POPUP_WIDTH: u16 = 30;
 
-pub struct NpcActionPopup {
+pub struct NpcActionsPopup {
     pub selected_action_index: usize,
 }
 
-impl NpcActionPopup {
+impl NpcActionsPopup {
     pub fn new() -> Self {
         Self {
             selected_action_index: 0,
@@ -42,9 +42,9 @@ impl NpcActionPopup {
     }
 }
 
-impl Component for NpcActionPopup {
+impl Component for NpcActionsPopup {
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
-        let npc_id = match state.game.ui.target_of(OverlayKind::NpcActions) {
+        let npc_id = match state.game.overlays.target_of(OverlayKind::NpcActions) {
             Some(id) => id,
             None => return,
         };
@@ -87,14 +87,14 @@ impl Component for NpcActionPopup {
     }
 }
 
-impl Lifecycle for NpcActionPopup {
+impl Lifecycle for NpcActionsPopup {
     fn handle_terminal_event(
         &mut self,
         state: &mut AppState,
         event: &CrosstermEvent,
         event_sender: &Sender<ApplicationEvent>,
     ) -> bool {
-        let npc_id = match state.game.ui.target_of(OverlayKind::NpcActions) {
+        let npc_id = match state.game.overlays.target_of(OverlayKind::NpcActions) {
             Some(id) => id.to_string(),
             None => return false,
         };
@@ -115,7 +115,7 @@ impl Lifecycle for NpcActionPopup {
                     return true;
                 }
                 KeyCode::Esc => {
-                    state.game.ui.close_top();
+                    state.game.overlays.close_top();
                     self.selected_action_index = 0;
                     return true;
                 }
@@ -126,7 +126,7 @@ impl Lifecycle for NpcActionPopup {
                             let _ = event_sender.try_send(ApplicationEvent::SendRawCommand(cmd));
                         }
                     }
-                    state.game.ui.close_top();
+                    state.game.overlays.close_top();
                     self.selected_action_index = 0;
                     return true;
                 }

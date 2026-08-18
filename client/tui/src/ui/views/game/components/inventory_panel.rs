@@ -16,12 +16,12 @@ use tokio::sync::mpsc::Sender;
 pub const INVENTORY_ITEM_WIDTH: u16 = 20;
 pub const INVENTORY_ITEM_HEIGHT: u16 = 4;
 
-pub struct InventoryComponent {
+pub struct InventoryPanel {
     pub inventory_cols: usize,
     pub inventory_area: Option<Rect>,
 }
 
-impl InventoryComponent {
+impl InventoryPanel {
     pub fn new() -> Self {
         Self {
             inventory_cols: 1,
@@ -30,12 +30,12 @@ impl InventoryComponent {
     }
 }
 
-impl Component for InventoryComponent {
+impl Component for InventoryPanel {
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
         self.inventory_area = Some(area);
 
         let mut inv_block = default_block().title(" Inventory ");
-        if state.game.current_focus == GameFocus::InventoryGrid {
+        if state.game.focus == GameFocus::InventoryGrid {
             inv_block = inv_block.border_style(Style::default().fg(Color::Yellow));
         }
 
@@ -77,7 +77,7 @@ impl Component for InventoryComponent {
 
             let text = format!("{}\n{}", display_name, item_id);
             let mut p_style = Style::default();
-            if state.game.current_focus == GameFocus::InventoryGrid
+            if state.game.focus == GameFocus::InventoryGrid
                 && state.game.player.inventory.selected_index() == idx
             {
                 p_style = p_style.add_modifier(Modifier::REVERSED).fg(Color::Yellow);
@@ -97,14 +97,14 @@ impl Component for InventoryComponent {
     }
 }
 
-impl Lifecycle for InventoryComponent {
+impl Lifecycle for InventoryPanel {
     fn handle_terminal_event(
         &mut self,
         state: &mut AppState,
         event: &crossterm::event::Event,
         _event_sender: &Sender<ApplicationEvent>,
     ) -> bool {
-        if state.game.current_focus == GameFocus::InventoryGrid {
+        if state.game.focus == GameFocus::InventoryGrid {
             if let crossterm::event::Event::Key(key) = event {
                 let inv_count = state.game.player.inventory.len();
                 if inv_count > 0 {
@@ -134,7 +134,7 @@ impl Lifecycle for InventoryComponent {
                         }
                         crossterm::event::KeyCode::Enter => {
                             if let Some(item_id) = state.game.player.inventory.selected().cloned() {
-                                state.game.ui.open(Overlay::ItemActions { item_id });
+                                state.game.overlays.open(Overlay::ItemActions { item_id });
                                 return true;
                             }
                         }

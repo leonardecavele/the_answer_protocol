@@ -21,7 +21,7 @@ impl App {
                 self.handle_api_response(envelope);
             }
             ApiEvent::LogApiRequest(envelope) => {
-                self.push_event(
+                self.record_trace(
                     "api request",
                     format!("{} - {:?}", envelope.id, envelope.request),
                 );
@@ -31,19 +31,19 @@ impl App {
 
     pub(crate) fn handle_api_response(&mut self, envelope: ResponseEnvelope) {
         if let Some(error) = envelope.response.get_error() {
-            self.push_event(
+            self.record_trace(
                 "api response",
                 format!("[ERROR] {} - {}", envelope.id, error),
             );
             self.state
                 .ui
-                .notification
+                .notifications
                 .push(Notification::warning(error.to_string()));
 
             return;
         }
 
-        self.push_event(
+        self.record_trace(
             "api response",
             format!("{} - {:?}", envelope.id, envelope.response),
         );
@@ -92,7 +92,7 @@ impl App {
             }
             ApiResponse::GlobalChat(Ok(_)) => {
                 if let ApiRequest::GlobalChat(cmd) = envelope.original_request {
-                    self.state.game.chat_history.push(ChatMessage {
+                    self.state.game.chat_log.push(ChatMessage {
                         channel: ChatChannel::Global,
                         sender: "You".to_string(),
                         content: cmd.message,
@@ -101,7 +101,7 @@ impl App {
             }
             ApiResponse::PrivateChat(Ok(_)) => {
                 if let ApiRequest::PrivateChat(cmd) = envelope.original_request {
-                    self.state.game.chat_history.push(ChatMessage {
+                    self.state.game.chat_log.push(ChatMessage {
                         channel: ChatChannel::Private(cmd.to.clone()),
                         sender: format!("(You) to {}", cmd.to),
                         content: cmd.message,
@@ -127,7 +127,7 @@ impl App {
                 self.state.game.room.exits = look_res.room.exits;
             }
             ApiResponse::Move(Ok(_move_res)) => {
-                self.state.game.ui.inspected_entity_id = None;
+                self.state.game.overlays.inspected_entity = None;
                 if let ApiRequest::Move(cmd) = envelope.original_request {
                     self.state
                         .game
@@ -165,21 +165,21 @@ impl App {
                     let ends_dialog_only = ends_dialog && text.starts_with(END_OF_DIALOGUE_TAG);
 
                     if ends_dialog_only {
-                        if !self.state.game.ui.is_open(OverlayKind::Dialogue) {
+                        if !self.state.game.overlays.is_open(OverlayKind::Dialogue) {
                             text = "**nothing**".to_string();
                         } else {
-                            self.state.game.ui.close(OverlayKind::Dialogue);
+                            self.state.game.overlays.close(OverlayKind::Dialogue);
                             return;
                         }
                     } else if ends_dialog {
                         text = text.replace(END_OF_DIALOGUE_TAG, "").trim().to_string();
                     }
 
-                    self.state.game.ui.inspected_entity_id = Some(cmd.npc_name.clone());
+                    self.state.game.overlays.inspected_entity = Some(cmd.npc_name.clone());
 
                     let display_name = self.state.game.manifest.get_npc_name(&cmd.npc_name);
 
-                    if !self.state.game.ui.is_open(OverlayKind::Dialogue) {
+                    if !self.state.game.overlays.is_open(OverlayKind::Dialogue) {
                         self.state
                             .game
                             .log_action(format!("You talked to {}.", display_name));
@@ -191,12 +191,12 @@ impl App {
                             .log_action(format!("[{}] says: \"{}\"", display_name, text));
                     }
 
-                    if let Some(dialog) = self.state.game.ui.dialogue_mut() {
+                    if let Some(dialog) = self.state.game.overlays.dialogue_mut() {
                         dialog.add(text, ends_dialog);
                     } else {
                         self.state
                             .game
-                            .ui
+                            .overlays
                             .open(Overlay::Dialogue(DialogueState::new(
                                 cmd.npc_name,
                                 display_name,
@@ -234,7 +234,7 @@ impl App {
             }
             ApiResponse::Attack(Ok(attack_res)) => {
                 if let ApiRequest::Attack(cmd) = envelope.original_request {
-                    self.state.game.ui.inspected_entity_id = Some(cmd.npc_name.clone());
+                    self.state.game.overlays.inspected_entity = Some(cmd.npc_name.clone());
 
                     let display_name = self.state.game.manifest.get_npc_name(&cmd.npc_name);
 
@@ -254,7 +254,7 @@ impl App {
 
                     self.state
                         .game
-                        .ui
+                        .overlays
                         .open(Overlay::Dialogue(DialogueState::new(
                             cmd.npc_name,
                             display_name.clone(),
@@ -269,19 +269,16 @@ impl App {
                 self.state.should_quit = true;
             }
             response => {
-                self.state.ui.event_history.insert(
-                    0,
-                    format!(
-                        "Missing handle response for command: {:?} -- Response: {:?}",
-                        envelope.original_request, response
-                    ),
-                );
+                self.state.ui.trace_log.push(format!(
+                    "Missing handle response for command: {:?} -- Response: {:?}",
+                    envelope.original_request, response
+                ));
             }
         }
     }
 
     pub(crate) fn handle_server_event(&mut self, event: ServerEvent) {
-        self.push_event("server", format!("{:?}", event));
+        self.record_trace("server", format!("{:?}", event));
 
         match event {
             ServerEvent::Connect(name) => {
@@ -318,7 +315,7 @@ impl App {
                 t => {
                     self.state
                         .ui
-                        .notification
+                        .notifications
                         .push(Notification::warning(format!("Unknown spawn event: {}", t)));
                 }
             },
@@ -341,7 +338,7 @@ impl App {
                 t => {
                     self.state
                         .ui
-                        .notification
+                        .notifications
                         .push(Notification::warning(format!(
                             "Unknown despawn event: {}",
                             t
@@ -450,14 +447,14 @@ impl App {
                 match EditorView::new(&fight_data) {
                     Ok(view) => {
                         self.state.game.fight.reset();
-                        self.state.game.ui.close_all();
+                        self.state.game.overlays.close_all();
                         self.state
                             .game
                             .log_action(format!("A fight started against {}.", npc_name));
                         self.view_manager.set_view(Box::new(view));
                     }
                     Err(error) => {
-                        self.state.ui.notification.push(Notification::error(error));
+                        self.state.ui.notifications.push(Notification::error(error));
                     }
                 }
             }
@@ -508,7 +505,7 @@ impl App {
                     Notification::error(message).with_duration(8000)
                 };
 
-                self.state.ui.notification.push(notification);
+                self.state.ui.notifications.push(notification);
             }
             ServerEvent::FightEnd => {
                 self.state.game.fight.reset();
@@ -548,7 +545,7 @@ impl App {
                         .log_action(format!("{} left the room.", name));
                 }
                 RoomEvent::Chat(chat) => {
-                    self.state.game.chat_history.push(ChatMessage {
+                    self.state.game.chat_log.push(ChatMessage {
                         channel: ChatChannel::Room,
                         sender: chat.sender,
                         content: chat.message,
@@ -569,7 +566,7 @@ impl App {
             },
             ServerEvent::Group(group_event) => match group_event {
                 GroupEvent::Invite(leader) => {
-                    self.state.ui.notification.push(Notification::info(format!(
+                    self.state.ui.notifications.push(Notification::info(format!(
                         "You are invited to a group by {}.",
                         leader
                     )));
@@ -595,7 +592,7 @@ impl App {
                     }
                 }
                 GroupEvent::Chat(chat) => {
-                    self.state.game.chat_history.push(ChatMessage {
+                    self.state.game.chat_log.push(ChatMessage {
                         channel: ChatChannel::Group,
                         sender: chat.sender,
                         content: chat.message,
@@ -610,19 +607,19 @@ impl App {
                 }
             },
             ServerEvent::GlobalChat(chat) => {
-                self.state.game.chat_history.push(ChatMessage {
+                self.state.game.chat_log.push(ChatMessage {
                     channel: ChatChannel::Global,
                     sender: chat.sender,
                     content: chat.message,
                 });
             }
             ServerEvent::PrivateChat(chat) => {
-                self.state.game.chat_history.push(ChatMessage {
+                self.state.game.chat_log.push(ChatMessage {
                     channel: ChatChannel::Private(chat.sender.clone()),
                     sender: chat.sender.clone(),
                     content: chat.message,
                 });
-                self.state.ui.notification.push(Notification::info(format!(
+                self.state.ui.notifications.push(Notification::info(format!(
                     "New private message from {}.",
                     chat.sender
                 )));
@@ -633,7 +630,7 @@ impl App {
             ServerEvent::Unknown(raw) => {
                 self.state
                     .ui
-                    .notification
+                    .notifications
                     .push(Notification::warning(format!("Unknown event: {}", raw)));
             }
             ServerEvent::GameServer(game_server_event) => match game_server_event {
@@ -642,7 +639,7 @@ impl App {
                         .game
                         .log_action("Game server online.".to_string());
 
-                    self.state.ui.notification.push(Notification::info(
+                    self.state.ui.notifications.push(Notification::info(
                         "Game server is online. Session restarted.",
                     ));
 
@@ -656,7 +653,7 @@ impl App {
                         .game
                         .log_action("Game server offline.".to_string());
 
-                    self.state.game.ui.close_all();
+                    self.state.game.overlays.close_all();
                     self.state.network.is_connected = false;
                 }
             },

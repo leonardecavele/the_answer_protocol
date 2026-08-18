@@ -17,11 +17,11 @@ pub struct ChatMessage {
     pub content: String,
 }
 
-pub struct ChatState(Vec<ChatMessage>);
+pub struct ChatLog(Vec<ChatMessage>);
 
-impl ChatState {
+impl ChatLog {
     pub fn new() -> Self {
-        ChatState(Vec::new())
+        ChatLog(Vec::new())
     }
 
     pub fn push(&mut self, message: ChatMessage) {
@@ -32,13 +32,13 @@ impl ChatState {
     }
 }
 
-impl Default for ChatState {
+impl Default for ChatLog {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl Deref for ChatState {
+impl Deref for ChatLog {
     type Target = [ChatMessage];
 
     fn deref(&self) -> &Self::Target {
@@ -46,7 +46,7 @@ impl Deref for ChatState {
     }
 }
 
-impl<'a> IntoIterator for &'a ChatState {
+impl<'a> IntoIterator for &'a ChatLog {
     type Item = &'a ChatMessage;
     type IntoIter = std::slice::Iter<'a, ChatMessage>;
 
@@ -55,7 +55,7 @@ impl<'a> IntoIterator for &'a ChatState {
     }
 }
 
-impl FromIterator<ChatMessage> for ChatState {
+impl FromIterator<ChatMessage> for ChatLog {
     fn from_iter<I: IntoIterator<Item = ChatMessage>>(iter: I) -> Self {
         Self(iter.into_iter().collect())
     }
