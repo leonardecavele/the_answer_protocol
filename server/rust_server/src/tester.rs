@@ -13,7 +13,7 @@ use tracing::warn;
 
 const BWRAP: &str = "/usr/bin/bwrap";
 const CLANG: &str = "/usr/bin/clang";
-const TESTS_PATH: &str = "../../assets/tests";
+const TESTS_PATH: &str = "assets/tests";
 
 const MAX_CODE_SIZE: usize = 64 * 1024;
 const MAX_FILE_NAME_SIZE: usize = 80;
