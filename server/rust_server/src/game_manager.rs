@@ -1,7 +1,6 @@
 use crate::combat_instances::CombatInstanceManager;
 use crate::constantes::{
-    CODE_NL_SEP, CODE_SP_SEP, Direction, MAX_TIME_FOR_COMBAT, NPC_DMG, NPC_RESPAWN_TIME,
-    PLAYER_ROOM_SPAWN, TEST_FILES_DIR,
+    CODE_NL_SEP, CODE_SP_SEP, Direction, MAX_DMG_DEALT, MAX_TIME_FOR_COMBAT, MIN_DMG_DEALT, NPC_DMG, NPC_RESPAWN_TIME, PLAYER_ROOM_SPAWN, TEST_FILES_DIR,
 };
 use crate::inventory::Inventory;
 use crate::items::{Item, ItemId};
@@ -470,6 +469,14 @@ impl GameManager {
         }
     }
 
+    pub fn calculate_dmg(&self, npc_combat_start_hp: u32, instance_player_count: u32, npc_hp: u32) -> u32 {
+        let mut dmg = (npc_combat_start_hp / instance_player_count).clamp(MIN_DMG_DEALT, MAX_DMG_DEALT);
+        if dmg * 2 > npc_hp {
+            dmg = npc_hp;
+        }
+        dmg
+    }
+
     pub fn revive_dead_npcs(&mut self) {
         let mut npcs_to_revive = Vec::new();
         for (npc_id, ncp) in self.all_npcs.iter() {
@@ -692,7 +699,7 @@ impl GameManager {
             .combat_instances
             .get_all_players_in_combat(npc_id)
             .iter()
-            .map(|player_id| self.get_player(*player_id).unwrap().get_name().to_owned())
+            .filter_map(|player_id| self.get_player(*player_id).and_then(|player| Some(player.get_name().to_owned())))
             .collect::<Vec<String>>();
         let event = self.generate_event_json(
             &mut players_to_send_event,

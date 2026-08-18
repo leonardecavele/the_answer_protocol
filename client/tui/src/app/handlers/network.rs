@@ -41,7 +41,7 @@ impl App {
                 self.state
                     .ui
                     .notification
-                    .push(Notification::info("Connected to the server successfully!"));
+                    .push(Notification::success("Connected to the server successfully!"));
 
                 self.state.network.server_ip = server_ip;
                 self.state.network.server_port = server_port;
