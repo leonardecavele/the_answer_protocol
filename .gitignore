@@ -3,7 +3,6 @@
 .codex
 *test_rust_server.py
 *saves*
-*tests*
 !server/assets/tests/
 !server/assets/tests/*.c
 *debug*
