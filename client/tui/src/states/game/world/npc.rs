@@ -1,5 +1,5 @@
-use crate::data::manifest::{Manifest, NpcKind};
 use super::Sprite;
+use crate::data::manifest::{Manifest, NpcKind};
 
 pub struct Npc {
     pub id: String,

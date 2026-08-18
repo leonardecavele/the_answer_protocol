@@ -4,7 +4,7 @@ mod state;
 mod world;
 
 pub use interaction::{
-    DialogueState, GameFocus, Overlay, OverlayKind, Overlays, END_OF_DIALOGUE_TAG,
+    DialogueState, END_OF_DIALOGUE_TAG, GameFocus, Overlay, OverlayKind, Overlays,
 };
 pub use session::{
     ChatChannel, ChatMessage, FightState, GroupState, PlayerState, RoomState, ServerState,

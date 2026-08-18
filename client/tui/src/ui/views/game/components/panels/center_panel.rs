@@ -1,13 +1,13 @@
+use super::{ActionHistoryPanel, InventoryPanel};
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
 use crate::states::game::GameFocus;
-use crate::ui::components::scrollable::Scrollable;
 use crate::ui::components::Component;
 use crate::ui::components::Lifecycle;
-use super::{ActionHistoryPanel, InventoryPanel};
+use crate::ui::components::scrollable::Scrollable;
 use ratatui::{
-    layout::{Constraint, Direction, Layout, Rect},
     Frame,
+    layout::{Constraint, Direction, Layout, Rect},
 };
 use tokio::sync::mpsc::Sender;
 

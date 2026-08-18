@@ -38,10 +38,9 @@ impl App {
                     .notifications
                     .remove(NOTIF_ID_CONNECTION_ATTEMPT);
 
-                self.state
-                    .ui
-                    .notifications
-                    .push(Notification::success("Connected to the server successfully!"));
+                self.state.ui.notifications.push(Notification::success(
+                    "Connected to the server successfully!",
+                ));
 
                 self.state.network.server_ip = server_ip;
                 self.state.network.server_port = server_port;
@@ -57,10 +56,13 @@ impl App {
                     .notifications
                     .remove(NOTIF_ID_CONNECTION_ATTEMPT);
 
-                self.state.ui.notifications.push(Notification::error(format!(
-                    "Connection failed: {}",
-                    error_message
-                )));
+                self.state
+                    .ui
+                    .notifications
+                    .push(Notification::error(format!(
+                        "Connection failed: {}",
+                        error_message
+                    )));
             }
             NetworkEvent::ConnectionLost { reason } => {
                 self.network_manager = None;

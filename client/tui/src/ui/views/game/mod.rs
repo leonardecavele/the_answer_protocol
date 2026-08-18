@@ -2,20 +2,20 @@ pub mod components;
 
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
-use crate::ui::components::scrollable::Scrollable;
 use crate::ui::components::Component;
 use crate::ui::components::Lifecycle;
+use crate::ui::components::scrollable::Scrollable;
 
-use crate::states::game::{GameFocus, Overlay, OverlayKind};
-use crate::ui::components::interactive::is_mouse_in_rect;
 use self::components::{
     CenterPanel, ChatOverlay, DialoguePopup, Footer, Header, HelpOverlay, INVENTORY_ITEM_HEIGHT,
     INVENTORY_ITEM_WIDTH, ItemActionsPopup, ItemDetailPopup, LeftPanel, NpcActionsPopup,
     QuestDetailPopup, RightPanel,
 };
+use crate::states::game::{GameFocus, Overlay, OverlayKind};
+use crate::ui::components::interactive::is_mouse_in_rect;
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
-use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::Frame;
+use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use tokio::sync::mpsc;
 
 pub struct GameView {

@@ -147,5 +147,7 @@ impl<T> BoundedLog<T> {
 impl<'a, T> IntoIterator for &'a BoundedLog<T> {
     type Item = &'a T;
     type IntoIter = std::collections::vec_deque::Iter<'a, T>;
-    fn into_iter(self) -> Self::IntoIter { self.items.iter() }
+    fn into_iter(self) -> Self::IntoIter {
+        self.items.iter()
+    }
 }

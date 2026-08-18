@@ -1,8 +1,8 @@
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
 use crate::ui::components::scrollable::Scrollable;
-use crate::ui::components::widgets::trace_overlay::TraceOverlay;
 use crate::ui::components::widgets::notifications::NotificationsOverlay;
+use crate::ui::components::widgets::trace_overlay::TraceOverlay;
 use crate::ui::components::{Component, Lifecycle};
 use crate::ui::views::login::LoginView;
 use crossterm::event::Event as CrosstermEvent;

@@ -1,7 +1,7 @@
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
-use crate::ui::components::scrollable::ScrollableComponent;
 use crate::ui::components::Lifecycle;
+use crate::ui::components::scrollable::ScrollableComponent;
 use crate::ui::theme::overlay_block;
 use crate::ui::utils::wrap_slice_to_lines;
 use crossterm::event::{Event as CrosstermEvent, KeyCode};

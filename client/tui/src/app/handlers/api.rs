@@ -2,7 +2,7 @@ use crate::app::App;
 use crate::events::ApiEvent;
 use crate::network::envelopes::ResponseEnvelope;
 use crate::states::game::{
-    ChatChannel, ChatMessage, DialogueState, Npc, Overlay, OverlayKind, END_OF_DIALOGUE_TAG,
+    ChatChannel, ChatMessage, DialogueState, END_OF_DIALOGUE_TAG, Npc, Overlay, OverlayKind,
 };
 use crate::states::ui::Notification;
 use crate::ui::views::editor::EditorView;

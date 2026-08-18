@@ -1,7 +1,7 @@
 use crate::collections::BoundedLog;
 use crate::events::types::NotificationType;
-use ratatui::layout::Rect;
 use ratatui::Frame;
+use ratatui::layout::Rect;
 use ratatui_image::picker::Picker;
 use ratatui_image::protocol::StatefulProtocol;
 use ratatui_image::{Resize, StatefulImage};

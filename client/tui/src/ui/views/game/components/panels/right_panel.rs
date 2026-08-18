@@ -8,10 +8,10 @@ use crossterm::event::{Event as CrosstermEvent, KeyCode};
 use ratatui::style::Stylize;
 use ratatui::widgets::{Block, BorderType, Borders};
 use ratatui::{
+    Frame,
     layout::{Alignment, Rect},
     style::{Color, Modifier, Style},
     widgets::{Clear, Paragraph},
-    Frame,
 };
 use std::time::Instant;
 use tokio::sync::mpsc::Sender;
@@ -126,7 +126,13 @@ impl RightPanel {
         Some((available_height as f32 * aspect) as u16)
     }
 
-    fn draw_image(&self, state: &AppState, frame: &mut Frame, area: Rect, image_path: &str) -> Rect {
+    fn draw_image(
+        &self,
+        state: &AppState,
+        frame: &mut Frame,
+        area: Rect,
+        image_path: &str,
+    ) -> Rect {
         let image_area = match state.ui.image_manager.get_dimensions(image_path) {
             Some((image_width, image_height)) => {
                 center_area_with_aspect_ratio(area, image_width, image_height)
