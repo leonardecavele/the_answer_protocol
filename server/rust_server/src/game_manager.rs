@@ -248,6 +248,25 @@ impl GameManager {
             }
         }
 
+        let mut seen_quests = std::collections::HashSet::new();
+        save_data.quests.retain(|(quest_id, _)| {
+            if self.get_quest(quest_id).is_none() {
+                warn!(
+                    "Removing invalid quest {} from player {}",
+                    quest_id, save_data.name
+                );
+                false
+            } else if !seen_quests.insert(quest_id.clone()) {
+                warn!(
+                    "Removing duplicate quest {} from player {}",
+                    quest_id, save_data.name
+                );
+                false
+            } else {
+                true
+            }
+        });
+
         let player_id = save_data.id;
         for (quest_id, state) in save_data.quests.iter() {
             let quest_instance = QuestInstance::new(player_id, quest_id.clone(), state.clone());
