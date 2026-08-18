@@ -32,6 +32,10 @@ impl CombatInstanceManager {
         return vec;
     }
 
+    pub fn get_mut_instance_for_npc(&mut self, npc_id: NpcId) -> Option<&mut CombatInstance> {
+        self.instances.get_mut(&npc_id)
+    }
+
     pub fn get_mut_instance_for_player(
         &mut self,
         player_id: PlayerId,
@@ -67,6 +71,7 @@ pub struct CombatInstance {
     npc_combat_start_hp: u32,
     pub combat_start_time: Instant, // Option<bool> because the success is None until the player played
     file_name: String,
+    pub is_evaluating_response: bool,
 }
 
 impl CombatInstance {
@@ -90,6 +95,7 @@ impl CombatInstance {
             npc_combat_start_hp: npc_hp,
             combat_start_time: Instant::now(),
             file_name,
+            is_evaluating_response: false,
         }
     }
 
@@ -107,6 +113,14 @@ impl CombatInstance {
     pub fn get_npc_id(&self) -> NpcId {
         self.npc_id
     }
+
+    pub fn force_finish(&mut self) {
+        for success in self.players_success.values_mut() {
+            if success.is_none() {
+                *success = Some(true);
+            }
+        }
+    }
     pub fn all_players_finished(&self) -> bool {
         self.players_success.values().all(|s| s.is_some())
     }
@@ -121,5 +135,10 @@ impl CombatInstance {
 
     pub fn get_npc_combat_start_hp(&self) -> u32 {
         self.npc_combat_start_hp
+    }
+    pub fn get_all_players(&self) -> Vec<PlayerId> {
+        let mut vec = self.grouped_players.clone();
+        vec.push(self.leader);
+        vec
     }
 }

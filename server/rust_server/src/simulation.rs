@@ -1,3 +1,5 @@
+use tracing::debug;
+
 use crate::constantes::{ITEM_DESPAWN_TIME, LOST_ITEM, LOST_ITEM_SPAWN, TICK_TIME, TickResult};
 use crate::game_manager::GameManager;
 use crate::items::ItemId;
@@ -16,6 +18,7 @@ impl GameManager {
             match self.receive_data_timeout(TICK_TIME - tick_timer.elapsed()) {
                 Ok(msg) => {
                     let command_response = self.handle_message(msg);
+                    debug!("sent response to client: {}", command_response);
                     self.send_msg_to_client(command_response)?;
                 }
                 Err(mpsc::RecvTimeoutError::Timeout) => break,

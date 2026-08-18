@@ -2,4 +2,4 @@ package config
 
 import "time"
 
-const ClientReadTimeout = 5 * time.Minute
+const ClientReadTimeout = 30 * time.Minute
