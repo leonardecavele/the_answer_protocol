@@ -133,7 +133,7 @@ impl GameManager {
             .filter_map(|name| self.get_player_id(name).copied())
             .collect();
 
-        let file_name = "add_one.c".to_string(); // self.get_random_test_file_name();
+        let file_name = self.get_random_test_file_name();
         self.combat_instances.add_instance(
             leader_id,
             npc_id,
@@ -374,7 +374,6 @@ impl GameManager {
                     let npc_hp = self.get_npc_hp(npc_id).unwrap();
                     let dmg = self.calculate_dmg(npc_combat_start_hp, instance_player_count, npc_hp);
 
-                    self.player_attacks_npc(dmg, player_id, npc_id);
                     let players_in_instance = self.get_player_instance_group(player_id).unwrap();
                     let event = GameManager::generate_no_player_event_json(
                         &players_in_instance,
@@ -382,8 +381,8 @@ impl GameManager {
                         object! { "player_name": player.to_string(), "success": true, "damage_dealt": dmg}.dump().as_str(),
                     );
                     self.add_diff_to_tick(event);
+                    self.player_attacks_npc(dmg, player_id, npc_id);
                 } else {
-                    self.npc_attacks_player(NPC_DMG, player_id, npc_id);
                     let players_in_instance = self.get_player_instance_group(player_id).unwrap();
                     let event = GameManager::generate_no_player_event_json(
                         &players_in_instance,
@@ -391,6 +390,7 @@ impl GameManager {
                         object! { "player_name": player.to_string(), "success": false, "damage_dealt": NPC_DMG}.dump().as_str(),
                     );
                     self.add_diff_to_tick(event);
+                    self.npc_attacks_player(NPC_DMG, player_id, npc_id);
                 }
             }
         }

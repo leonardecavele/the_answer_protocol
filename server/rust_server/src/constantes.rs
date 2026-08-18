@@ -4,6 +4,7 @@ use crate::room::RoomId;
 
 pub const TEST_FILES_DIR: &str = "assets/code";
 pub const NPC_DMG: u32 = 100;
+pub const MIN: u64 = 60;
 pub const MIN_DMG_DEALT: u32 = 5;
 pub const MAX_DMG_DEALT: u32 = u32::MAX;
 pub const LOST_ITEM: u8 = 0;
@@ -13,7 +14,7 @@ pub const CODE_SP_SEP: &str = "<SP>";
 pub const LOST_ITEM_SPAWN: &str = "pature";
 pub const LOST_ITEM_SPAWN_ID: RoomId = 2 as RoomId;
 pub const PLAYER_ROOM_SPAWN: &str = "devant_l_ecole";
-pub const MAX_TIME_FOR_COMBAT: Duration = Duration::from_mins(3);
+pub const MAX_TIME_FOR_COMBAT: Duration = Duration::from_secs(3 * MIN + 42);
 pub const NPC_RESPAWN_TIME: Duration = Duration::from_secs(30);
 pub const ITEM_DESPAWN_TIME: Duration = Duration::from_mins(1);
 pub const TICK_TIME_AMPLIFICATION: u64 = 1;
