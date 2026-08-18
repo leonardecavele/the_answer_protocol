@@ -2,12 +2,12 @@ use crate::app::App;
 use crate::events::ApiEvent;
 use crate::network::envelopes::ResponseEnvelope;
 use crate::states::game::{
-    ChatChannel, ChatMessage, DialogueState, Overlay, OverlayKind, END_OF_DIALOGUE_TAG,
+    ChatChannel, ChatMessage, DialogueState, Npc, Overlay, OverlayKind, END_OF_DIALOGUE_TAG,
 };
 use crate::states::ui::Notification;
 use crate::ui::views::editor::EditorView;
 use crate::ui::views::game::GameView;
-use api_client::commands::LookCommand;
+use api_client::commands::{LookCommand, StatusCommand};
 use api_client::events::{GameServerEvent, GroupEvent, RoomEvent, ServerEvent};
 use api_client::{ApiRequest, ApiResponse};
 
@@ -122,7 +122,13 @@ impl App {
                 self.state.game.room.name = Some(look_res.room.name);
                 self.state.game.room.description = Some(look_res.room.description);
                 self.state.game.room.players = look_res.players;
-                self.state.game.room.npcs.set_items(look_res.npcs);
+                self.state.game.room.npcs.set_items(
+                    look_res
+                        .npcs
+                        .into_iter()
+                        .map(|id| Npc::from_manifest(id, &self.state.game.manifest))
+                        .collect(),
+                );
                 self.state.game.room.items.set_items(look_res.items);
                 self.state.game.room.exits = look_res.room.exits;
             }
@@ -177,7 +183,7 @@ impl App {
 
                     self.state.game.overlays.inspected_entity = Some(cmd.npc_name.clone());
 
-                    let display_name = self.state.game.manifest.get_npc_name(&cmd.npc_name);
+                    let display_name = self.state.game.manifest.npc_name(&cmd.npc_name);
 
                     if !self.state.game.overlays.is_open(OverlayKind::Dialogue) {
                         self.state
@@ -236,11 +242,11 @@ impl App {
                 if let ApiRequest::Attack(cmd) = envelope.original_request {
                     self.state.game.overlays.inspected_entity = Some(cmd.npc_name.clone());
 
-                    let display_name = self.state.game.manifest.get_npc_name(&cmd.npc_name);
+                    let npc_name = self.state.game.manifest.npc_name(&cmd.npc_name);
 
                     self.state
                         .game
-                        .log_action(format!("You attacked {}.", display_name));
+                        .log_action(format!("You attacked {}.", npc_name));
 
                     let res = attack_res.combat_result;
 
@@ -249,7 +255,7 @@ impl App {
 
                     let text = format!(
                         "Combat with {}: You dealt {} damage. (Your HP: {} | Target HP: {}) ",
-                        display_name, res.damage, res.attacker_hp, res.target_hp
+                        npc_name, res.damage, res.attacker_hp, res.target_hp
                     );
 
                     self.state
@@ -257,7 +263,7 @@ impl App {
                         .overlays
                         .open(Overlay::Dialogue(DialogueState::new(
                             cmd.npc_name,
-                            display_name.clone(),
+                            npc_name,
                             text.clone(),
                             true,
                         )));
@@ -289,24 +295,16 @@ impl App {
             }
             ServerEvent::Spawn(spawn_data) => match spawn_data.r#type.as_str() {
                 "NPC" => {
-                    let npc_name = self
-                        .state
-                        .game
-                        .manifest
-                        .get_npc_name(spawn_data.id.as_str());
+                    let npc = Npc::from_manifest(spawn_data.id, &self.state.game.manifest);
 
                     self.state
                         .game
-                        .log_action(format!("{} has respawn", npc_name));
+                        .log_action(format!("{} has respawn", npc.name));
 
-                    self.state.game.room.npcs.push(spawn_data.id);
+                    self.state.game.room.npcs.push(npc);
                 }
                 "ITEM" => {
-                    let item_name = self
-                        .state
-                        .game
-                        .manifest
-                        .get_item_name(spawn_data.id.as_str());
+                    let item_name = self.state.game.manifest.item_name(spawn_data.id.as_str());
                     self.state
                         .game
                         .log_action(format!("{} has been catapulted here", item_name));
@@ -321,11 +319,7 @@ impl App {
             },
             ServerEvent::Despawn(spawn_data) => match spawn_data.r#type.as_str() {
                 "ITEM" => {
-                    let item_name = self
-                        .state
-                        .game
-                        .manifest
-                        .get_item_name(spawn_data.id.as_str());
+                    let item_name = self.state.game.manifest.item_name(spawn_data.id.as_str());
                     self.state
                         .game
                         .log_action(format!("{} has despawned", item_name));
@@ -346,11 +340,7 @@ impl App {
                 }
             },
             ServerEvent::Kill(kill_data) => {
-                let npc_name = self
-                    .state
-                    .game
-                    .manifest
-                    .get_npc_name(kill_data.npc_id.as_str());
+                let npc_name = self.state.game.manifest.npc_name(&kill_data.npc_id);
 
                 let message = if kill_data.player
                     == self
@@ -372,7 +362,7 @@ impl App {
                     .game
                     .room
                     .npcs
-                    .retain(|npc_id| npc_id.to_string() != kill_data.npc_id);
+                    .retain(|n| n.id != kill_data.npc_id);
             }
             ServerEvent::Death(death_data) => {
                 let current_player_name = self
@@ -437,12 +427,13 @@ impl App {
 
                 if is_current_player {
                     self.handle_request(ApiRequest::Look(LookCommand));
+                    self.handle_request(ApiRequest::Status(StatusCommand));
                 }
 
                 self.state.game.log_action(message);
             }
             ServerEvent::FightStart(fight_data) => {
-                let npc_name = self.state.game.manifest.get_npc_name(&fight_data.npc_id);
+                let npc_name = self.state.game.manifest.npc_name(&fight_data.npc_id);
 
                 match EditorView::new(&fight_data) {
                     Ok(view) => {
@@ -472,6 +463,7 @@ impl App {
                 let message = match is_current_player {
                     true => {
                         self.state.game.fight.success = Some(fight_status.success);
+                        self.state.game.player.hp -= fight_status.damage_dealt;
                         match fight_status.success {
                             true => {
                                 format!("You dealt {} damage", fight_status.damage_dealt)
