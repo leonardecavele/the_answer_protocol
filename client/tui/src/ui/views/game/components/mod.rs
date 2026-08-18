@@ -1,29 +1,17 @@
-mod action_history_panel;
-mod center_panel;
-mod chat_overlay;
-mod dialogue_popup;
 mod footer;
 mod header;
-mod help_overlay;
-mod inventory_panel;
-mod item_actions_popup;
-mod item_detail_popup;
-mod left_panel;
-mod npc_actions_popup;
-mod quest_detail_popup;
-mod right_panel;
+mod overlays;
+mod panels;
+mod popups;
 
-pub use center_panel::CenterPanel;
-pub use chat_overlay::ChatOverlay;
-pub use dialogue_popup::DialoguePopup;
 pub use footer::Footer;
 pub use header::Header;
-pub use help_overlay::HelpOverlay;
-pub use inventory_panel::{InventoryPanel, INVENTORY_ITEM_HEIGHT, INVENTORY_ITEM_WIDTH};
-pub use item_actions_popup::ItemActionsPopup;
-pub use item_detail_popup::ItemDetailPopup;
-pub use left_panel::LeftPanel;
-pub use npc_actions_popup::NpcActionsPopup;
-pub use quest_detail_popup::QuestDetailPopup;
-pub use right_panel::RightPanel;
-pub use action_history_panel::ActionHistoryPanel;
+pub use overlays::{ChatOverlay, HelpOverlay};
+pub use panels::{
+    ActionHistoryPanel, CenterPanel, INVENTORY_ITEM_HEIGHT, INVENTORY_ITEM_WIDTH, InventoryPanel,
+    LeftPanel, RightPanel,
+};
+pub use popups::{
+    CHAR_DELAY_MS, DialoguePopup, ItemActionsPopup, ItemDetailPopup, NpcActionsPopup,
+    QuestDetailPopup,
+};

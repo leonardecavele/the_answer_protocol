@@ -8,10 +8,10 @@ use crate::ui::components::Lifecycle;
 
 use crate::states::game::{GameFocus, Overlay, OverlayKind};
 use crate::ui::components::interactive::is_mouse_in_rect;
-use crate::ui::views::game::components::{INVENTORY_ITEM_HEIGHT, INVENTORY_ITEM_WIDTH};
-use components::{
-    CenterPanel, ChatOverlay, DialoguePopup, Footer, Header, HelpOverlay, ItemActionsPopup,
-    ItemDetailPopup, LeftPanel, NpcActionsPopup, QuestDetailPopup, RightPanel,
+use self::components::{
+    CenterPanel, ChatOverlay, DialoguePopup, Footer, Header, HelpOverlay, INVENTORY_ITEM_HEIGHT,
+    INVENTORY_ITEM_WIDTH, ItemActionsPopup, ItemDetailPopup, LeftPanel, NpcActionsPopup,
+    QuestDetailPopup, RightPanel,
 };
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
 use ratatui::layout::{Constraint, Direction, Layout, Rect};

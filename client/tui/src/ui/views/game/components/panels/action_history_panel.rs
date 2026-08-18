@@ -34,7 +34,7 @@ impl ScrollableComponent for ActionHistoryPanel {
         let raw_lines = state
             .game
             .action_log
-            .iter()
+            .into_iter()
             .map(|line| format!("• {}", line))
             .collect::<Vec<_>>();
 

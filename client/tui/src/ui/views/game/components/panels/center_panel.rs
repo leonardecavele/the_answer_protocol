@@ -4,7 +4,7 @@ use crate::states::game::GameFocus;
 use crate::ui::components::scrollable::Scrollable;
 use crate::ui::components::Component;
 use crate::ui::components::Lifecycle;
-use crate::ui::views::game::components::{ActionHistoryPanel, InventoryPanel};
+use super::{ActionHistoryPanel, InventoryPanel};
 use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     Frame,

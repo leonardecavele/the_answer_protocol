@@ -1,5 +1,5 @@
 use crate::collections::Step;
-use crate::data::manifest::NpcType;
+use crate::data::manifest::NpcKind;
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
 use crate::states::game::GameFocus;
@@ -70,31 +70,21 @@ impl Component for LeftPanel {
             .npcs
             .iter()
             .enumerate()
-            .map(|(idx, npc_id)| {
-                let (display_name, npc_type) = match state.game.manifest.npcs.get(npc_id.as_str()) {
-                    Some(entry) => (entry.name.clone(), entry.npc_type.clone()),
-                    None => (npc_id.clone(), NpcType::Normal),
-                };
-
-                let color = match npc_type {
-                    NpcType::Enemy => Color::Red,
-                    NpcType::QuestGiver => Color::Yellow,
-                    NpcType::Dialogue => Color::Blue,
-                    NpcType::Normal => Color::White,
+            .map(|(idx, npc)| {
+                let color = match npc.kind {
+                    NpcKind::Enemy => Color::Red,
+                    NpcKind::QuestGiver => Color::Yellow,
+                    NpcKind::Dialogue => Color::Blue,
+                    NpcKind::Normal => Color::White,
                 };
 
                 let mut style = Style::default().fg(color);
 
-                if state.game.room.npcs.is_selected(idx)
-                    && state.game.focus == GameFocus::NpcList
-                {
+                if state.game.room.npcs.is_selected(idx) && state.game.focus == GameFocus::NpcList {
                     style = style.add_modifier(Modifier::REVERSED);
                 }
 
-                ListItem::new(Span::styled(
-                    format!("• {} ({})", display_name, npc_id),
-                    style,
-                ))
+                ListItem::new(Span::styled(format!("• {} ({})", npc.name, npc.id), style))
             })
             .collect();
         let mut npcs_block = default_block().title(" Room NPCs ");
@@ -212,9 +202,11 @@ impl Lifecycle for LeftPanel {
                         return true;
                     }
 
-                    match state.game.room.npcs.selected().cloned() {
-                        Some(npc_id) => {
-                            state.game.overlays.open(NpcActions { npc_id });
+                    match state.game.room.npcs.selected() {
+                        Some(npc) => {
+                            state.game.overlays.open(NpcActions {
+                                npc_id: npc.id.clone(),
+                            });
                             true
                         }
                         None => false,
