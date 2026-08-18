@@ -6,16 +6,16 @@ pub const ASSETS_PATH_MANIFEST: &str = "../assets/manifest.json";
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
-pub enum NpcType {
+pub enum NpcKind {
     Enemy,
     QuestGiver,
     Dialogue,
     Normal,
 }
 
-impl Default for NpcType {
+impl Default for NpcKind {
     fn default() -> Self {
-        NpcType::Normal
+        NpcKind::Normal
     }
 }
 
@@ -23,10 +23,10 @@ impl Default for NpcType {
 pub struct NpcEntry {
     pub name: String,
     #[serde(rename = "type", default)]
-    pub npc_type: NpcType,
+    pub kind: NpcKind,
     pub image_path: Option<String>,
     pub image_paths: Option<Vec<String>>,
-    pub animation_speed_ms: Option<u64>,
+    pub frame_ms: Option<u64>,
     #[serde(default)]
     pub actions: Vec<String>,
 }
@@ -72,14 +72,14 @@ impl Manifest {
         Ok(manifest)
     }
 
-    pub fn get_npc_name(&self, id: &str) -> String {
+    pub fn npc_name(&self, id: &str) -> String {
         self.npcs
             .get(id)
             .map(|n| n.name.clone())
             .unwrap_or_else(|| id.to_string())
     }
 
-    pub fn get_item_name(&self, id: &str) -> String {
+    pub fn item_name(&self, id: &str) -> String {
         self.items
             .get(id)
             .map(|n| n.name.clone())

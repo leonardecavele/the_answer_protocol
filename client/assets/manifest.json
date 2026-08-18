@@ -31,7 +31,7 @@
                 "../assets/pictures/mobs/talk/gagulhon/gagulhon1.png",
                 "../assets/pictures/mobs/talk/gagulhon/gagulhon2.png"
             ],
-            "animation_speed_ms": 500,
+            "frame_ms": 500,
             "actions": ["Talk"]
         },
         "5.ndalailallema": {
@@ -126,7 +126,7 @@
     "rooms": {
         "0.cluster_du_bas": {
             "image_path": "../assets/pictures/rooms/cluster_du_bas.jpg",
-            "direction": "S"
+            "direction": "N"
         },
         "1.pature": {
             "image_path": "../assets/pictures/rooms/pature.jpeg",
@@ -142,7 +142,7 @@
         },
         "4.cluster_du_haut": {
 			"image_path": "../assets/pictures/rooms/cluster_du_haut.jpeg",
-            "direction": "W"
+            "direction": "N"
         },
         "5.afk": {
 			"image_path": "../assets/pictures/rooms/afk.jpg",

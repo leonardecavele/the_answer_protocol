@@ -73,7 +73,7 @@ impl EditorView {
     }
 
     fn header(&self, state: &AppState) -> Paragraph<'static> {
-        let npc_name = state.game.manifest.get_npc_name(&self.npc_id);
+        let npc_name = state.game.manifest.npc_name(&self.npc_id);
         let remaining = self.remaining_seconds();
 
         let timer_color = if remaining == 0 {
