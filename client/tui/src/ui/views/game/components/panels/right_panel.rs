@@ -1,6 +1,6 @@
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
-use crate::states::game::{GameFocus, Sprite};
+use crate::states::game::{Direction, GameFocus, Sprite};
 use crate::ui::components::Component;
 use crate::ui::components::Lifecycle;
 use crate::ui::utils::{center_area_with_aspect_ratio, wrap_str_to_lines};
@@ -24,11 +24,11 @@ const FOCUS_BADGE: &str = " [ FOCUS ] ";
 const MESSAGE_MARGIN_X: u16 = 8;
 const MESSAGE_MARGIN_TOP: u16 = 1;
 
-const EXITS: [(&str, &str, Placement); 4] = [
-    ("NORTH", " [North] ", Placement::Top),
-    ("SOUTH", " [South] ", Placement::Bottom),
-    ("EAST", " [East] ", Placement::Right),
-    ("WEST", " [West] ", Placement::Left),
+const SCREEN_EXITS: [(&str, Placement); 4] = [
+    (" [Top] ", Placement::Top),
+    (" [Right] ", Placement::Right),
+    (" [Down] ", Placement::Bottom),
+    (" [Left] ", Placement::Left),
 ];
 
 enum Content {
@@ -37,6 +37,7 @@ enum Content {
     Message(&'static str),
 }
 
+#[derive(Clone, Copy)]
 enum Placement {
     Top,
     Bottom,
@@ -81,6 +82,13 @@ impl RightPanel {
         Self {
             animation_start: Instant::now(),
             shown_entity: None,
+        }
+    }
+
+    fn room_facing(&self, state: &AppState) -> Direction {
+        match &state.game.room.id {
+            Some(room_id) => Direction::facing_of_room(room_id, &state.game.manifest),
+            None => Direction::default(),
         }
     }
 
@@ -209,15 +217,35 @@ impl RightPanel {
             .fg(Color::Yellow)
             .add_modifier(Modifier::BOLD);
 
-        for (direction, label, placement) in EXITS {
-            if !state.game.room.has_exit(direction) {
-                continue;
-            }
+        let facing = self.room_facing(state);
 
-            let exit_area = placement.area(image_area, label.len() as u16);
+        for direction in Direction::CLOCKWISE {
+            let Some(exit_name) = state.game.room.exits.get(direction.key()) else {
+                continue;
+            };
+
+            let slot = (direction.quarter_turns() + 4 - facing.quarter_turns()) % 4;
+            let (fallback, placement) = SCREEN_EXITS[slot];
+
+            let label = Self::exit_label(exit_name, fallback, image_area.width);
+            let exit_area = placement.area(image_area, label.chars().count() as u16);
 
             frame.render_widget(Clear, exit_area);
             frame.render_widget(Paragraph::new(label).style(style), exit_area);
+        }
+    }
+
+    fn exit_label(exit_name: &str, fallback: &'static str, max_width: u16) -> String {
+        let name = exit_name.trim();
+        if name.is_empty() {
+            return fallback.to_string();
+        }
+
+        let framed = format!(" [{}] ", name);
+        if framed.chars().count() as u16 <= max_width / 2 {
+            framed
+        } else {
+            fallback.to_string()
         }
     }
 }
@@ -238,7 +266,12 @@ impl Component for RightPanel {
             }
         };
 
-        if state.game.focus == GameFocus::RightPanel {
+        if state
+            .game
+            .group
+            .allows_move_by(state.game.player.name.as_deref())
+            && state.game.focus == GameFocus::RightPanel
+        {
             self.draw_focus_badge(frame, area);
             self.draw_exits(state, frame, image_area);
         }
@@ -252,7 +285,12 @@ impl Lifecycle for RightPanel {
         event: &CrosstermEvent,
         event_sender: &Sender<ApplicationEvent>,
     ) -> bool {
-        if state.game.focus != GameFocus::RightPanel {
+        if !state
+            .game
+            .group
+            .allows_move_by(state.game.player.name.as_deref())
+            || state.game.focus != GameFocus::RightPanel
+        {
             return false;
         }
 
@@ -265,21 +303,24 @@ impl Lifecycle for RightPanel {
             return true;
         }
 
-        let direction = match key.code {
-            KeyCode::Up => "NORTH",
-            KeyCode::Down => "SOUTH",
-            KeyCode::Right => "EAST",
-            KeyCode::Left => "WEST",
+        let slot = match key.code {
+            KeyCode::Up => 0,
+            KeyCode::Right => 1,
+            KeyCode::Down => 2,
+            KeyCode::Left => 3,
             _ => return false,
         };
 
-        if !state.game.room.has_exit(direction) {
+        let facing = self.room_facing(state);
+        let direction = Direction::from_quarter_turns(slot + facing.quarter_turns());
+
+        if !state.game.room.has_exit(direction.key()) {
             return false;
         }
 
         let _ = event_sender.try_send(ApplicationEvent::SendRawCommand(format!(
             "MOVE {}",
-            direction
+            direction.key()
         )));
 
         true

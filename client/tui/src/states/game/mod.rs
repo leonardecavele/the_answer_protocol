@@ -10,4 +10,4 @@ pub use session::{
     ChatChannel, ChatMessage, FightState, GroupState, PlayerState, RoomState, ServerState,
 };
 pub use state::GameState;
-pub use world::{Npc, Sprite};
+pub use world::{Direction, Npc, Sprite};
