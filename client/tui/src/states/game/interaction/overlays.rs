@@ -1,4 +1,4 @@
-use crate::states::game::DialogueState;
+use super::DialogueState;
 use std::time::{Duration, Instant};
 
 pub enum Overlay {

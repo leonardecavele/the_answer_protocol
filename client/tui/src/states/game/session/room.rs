@@ -1,5 +1,6 @@
 use crate::collections::SelectableList;
 use std::collections::HashMap;
+use crate::states::game::world::Npc;
 
 pub struct RoomState {
     pub id: Option<String>,
@@ -7,7 +8,7 @@ pub struct RoomState {
     pub description: Option<String>,
     pub exits: HashMap<String, String>,
     pub players: Vec<String>,
-    pub npcs: SelectableList<String>,
+    pub npcs: SelectableList<Npc>,
     pub items: SelectableList<String>,
 }
 
