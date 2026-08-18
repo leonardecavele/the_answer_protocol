@@ -33,7 +33,7 @@ impl RightPanelComponent {
         let mut text_fallback: Option<&'static str> =
             Some(" You are lost and have your eyes closed. ");
 
-        if let Some(focused_id) = &state.game.ui.focused_entity_id {
+        if let Some(focused_id) = &state.game.ui.inspected_entity_id {
             text_fallback = Some(" No image available for this NPC. ");
             if let Some(npc) = state.game.manifest.npcs.get(focused_id) {
                 if let (Some(paths), Some(speed)) = (&npc.image_paths, npc.animation_speed_ms) {
@@ -155,7 +155,7 @@ impl Component for RightPanelComponent {
             self.render_text(frame, inner_area, text, Color::White);
         }
 
-        if state.game.ui.current_focus == GameFocus::RightPanel {
+        if state.game.current_focus == GameFocus::RightPanel {
             let focus_text = " [ FOCUS ] ";
             let focus_area = Rect {
                 x: inner_area.x + inner_area.width.saturating_sub(11),
@@ -239,10 +239,10 @@ impl Lifecycle for RightPanelComponent {
         event: &crossterm::event::Event,
         event_sender: &Sender<ApplicationEvent>,
     ) -> bool {
-        if state.game.ui.current_focus == GameFocus::RightPanel {
+        if state.game.current_focus == GameFocus::RightPanel {
             if let crossterm::event::Event::Key(key) = event {
                 if key.code == crossterm::event::KeyCode::Enter {
-                    state.game.ui.current_focus = GameFocus::NpcList;
+                    state.game.current_focus = GameFocus::NpcList;
                     return true;
                 }
 

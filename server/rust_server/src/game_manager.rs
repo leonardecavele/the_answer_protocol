@@ -720,14 +720,6 @@ impl GameManager {
             .iter()
             .filter_map(|player_id| self.get_player(*player_id).and_then(|player| Some(player.get_name().to_owned())))
             .collect::<Vec<String>>();
-        let event = self.generate_event_json(
-            &mut players_to_send_event,
-            player_name.as_str(),
-            "DEFEND",
-            dealt_damage.to_string().as_str(),
-            false,
-        );
-        self.add_diff_to_tick(event);
 
         if new_player_hp == 0 {
             self.kill_player(player_id);
@@ -919,7 +911,7 @@ impl GameManager {
         instance.is_evaluating_response = true;
         std::thread::spawn(move || {
             let result = test(&file_name_owned, &sent_code_owned);
-            response["success"] = true.into();
+            response["success"] = result.into();
             let _ = sender.send(response.dump());
         });
     }

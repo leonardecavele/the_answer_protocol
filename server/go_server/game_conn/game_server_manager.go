@@ -1,6 +1,7 @@
 package game_conn
 
 import (
+	"fmt"
 	"go_server/config"
 	serverError "go_server/error"
 	"go_server/helper"
@@ -8,6 +9,7 @@ import (
 	"go_server/protocol"
 	"strconv"
 	"sync"
+	"time"
 )
 
 type GameServerManager struct {
@@ -114,7 +116,12 @@ func (manager *GameServerManager) AskQuestion(question QuestionToGameServer) (An
 		return AnswerFromGameServer{}, err
 	}
 
-	return <-answerChan, nil
+	select {
+	case answer := <-answerChan:
+		return answer, nil
+	case <-time.After(5 * time.Second):
+		return AnswerFromGameServer{}, fmt.Errorf("timeout waiting for game server answer")
+	}
 }
 
 func (manager *GameServerManager) HandleGameServer(

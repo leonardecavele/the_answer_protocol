@@ -121,6 +121,8 @@ impl Client {
             ApiRequest::Look(cmd) => Ok(ApiResponse::Look(self.request(cmd).await?)),
             ApiRequest::Move(cmd) => Ok(ApiResponse::Move(self.request(cmd).await?)),
             ApiRequest::Who(cmd) => Ok(ApiResponse::Who(self.request(cmd).await?)),
+            ApiRequest::FightCreate(cmd) => Ok(ApiResponse::FightCreate(self.request(cmd).await?)),
+            ApiRequest::FightAttack(cmd) => Ok(ApiResponse::FightAttack(self.request(cmd).await?)),
             ApiRequest::GlobalChat(cmd) => Ok(ApiResponse::GlobalChat(self.request(cmd).await?)),
             ApiRequest::PrivateChat(cmd) => Ok(ApiResponse::PrivateChat(self.request(cmd).await?)),
             ApiRequest::Take(cmd) => Ok(ApiResponse::Take(self.request(cmd).await?)),

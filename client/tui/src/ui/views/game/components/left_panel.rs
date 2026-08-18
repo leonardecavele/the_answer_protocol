@@ -1,3 +1,4 @@
+use crate::collections::Step;
 use crate::data::manifest::NpcType;
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
@@ -6,7 +7,6 @@ use crate::states::game::Overlay::{ItemActions, NpcActions, QuestView};
 use crate::ui::components::Component;
 use crate::ui::components::Lifecycle;
 use crate::ui::theme::default_block;
-use crate::ui::utils::move_index;
 use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect},
@@ -18,22 +18,16 @@ use tokio::sync::mpsc::Sender;
 
 pub struct LeftPanelComponent {
     pub npcs_area: Option<Rect>,
-    pub selected_npc_index: Option<usize>,
     pub items_area: Option<Rect>,
-    pub selected_item_index: usize,
     pub quests_area: Option<Rect>,
-    pub selected_quest_index: usize,
 }
 
 impl LeftPanelComponent {
     pub fn new() -> Self {
         Self {
             npcs_area: None,
-            selected_npc_index: None,
             items_area: None,
-            selected_item_index: 0,
             quests_area: None,
-            selected_quest_index: 0,
         }
     }
 }
@@ -75,7 +69,8 @@ impl Component for LeftPanelComponent {
             .room
             .npcs
             .iter()
-            .map(|npc_id| {
+            .enumerate()
+            .map(|(idx, npc_id)| {
                 let (display_name, npc_type) = match state.game.manifest.npcs.get(npc_id.as_str()) {
                     Some(entry) => (entry.name.clone(), entry.npc_type.clone()),
                     None => (npc_id.clone(), NpcType::Normal),
@@ -90,15 +85,10 @@ impl Component for LeftPanelComponent {
 
                 let mut style = Style::default().fg(color);
 
-                if let Some(selected_idx) = self.selected_npc_index {
-                    // Find the actual index of the npc_id in the room_npcs list
-                    if let Some(idx) = state.game.room.npcs.iter().position(|n_id| n_id == npc_id) {
-                        if idx == selected_idx {
-                            if state.game.ui.current_focus == GameFocus::NpcList {
-                                style = style.add_modifier(Modifier::REVERSED);
-                            }
-                        }
-                    }
+                if state.game.room.npcs.is_selected(idx)
+                    && state.game.current_focus == GameFocus::NpcList
+                {
+                    style = style.add_modifier(Modifier::REVERSED);
                 }
 
                 ListItem::new(Span::styled(
@@ -108,7 +98,7 @@ impl Component for LeftPanelComponent {
             })
             .collect();
         let mut npcs_block = default_block().title(" Room NPCs ");
-        if state.game.ui.current_focus == GameFocus::NpcList {
+        if state.game.current_focus == GameFocus::NpcList {
             npcs_block = npcs_block.border_style(Style::default().fg(Color::Yellow));
         }
         let npcs_list = List::new(npcs_items).block(npcs_block);
@@ -132,8 +122,8 @@ impl Component for LeftPanelComponent {
                     .unwrap_or_else(|| item_id.clone());
                 let mut style = Style::default().fg(Color::Cyan);
 
-                if self.selected_item_index == idx
-                    && state.game.ui.current_focus == GameFocus::RoomItemsList
+                if state.game.room.items.is_selected(idx)
+                    && state.game.current_focus == GameFocus::RoomItemsList
                 {
                     style = style.add_modifier(Modifier::REVERSED);
                 }
@@ -144,7 +134,7 @@ impl Component for LeftPanelComponent {
             })
             .collect();
         let mut items_block = default_block().title(" Room Items ");
-        if state.game.ui.current_focus == GameFocus::RoomItemsList {
+        if state.game.current_focus == GameFocus::RoomItemsList {
             items_block = items_block.border_style(Style::default().fg(Color::Yellow));
         }
         let items_list = List::new(items).block(items_block);
@@ -173,8 +163,8 @@ impl Component for LeftPanelComponent {
                     Style::default().fg(Color::Yellow)
                 };
 
-                if self.selected_quest_index == idx
-                    && state.game.ui.current_focus == GameFocus::QuestList
+                if state.game.player.quests.is_selected(idx)
+                    && state.game.current_focus == GameFocus::QuestList
                 {
                     style = style.add_modifier(Modifier::REVERSED);
                 }
@@ -186,7 +176,7 @@ impl Component for LeftPanelComponent {
             })
             .collect();
         let mut quests_block = default_block().title(" Quests ");
-        if state.game.ui.current_focus == GameFocus::QuestList {
+        if state.game.current_focus == GameFocus::QuestList {
             quests_block = quests_block.border_style(Style::default().fg(Color::Yellow));
         }
         let quests_list = List::new(quests_items).block(quests_block);
@@ -202,98 +192,76 @@ impl Lifecycle for LeftPanelComponent {
         event: &crossterm::event::Event,
         _event_sender: &Sender<ApplicationEvent>,
     ) -> bool {
-        if state.game.ui.current_focus == GameFocus::NpcList {
-            if let crossterm::event::Event::Key(key) = event {
-                let npc_count = state.game.room.npcs.len();
+        let key = match event {
+            crossterm::event::Event::Key(key) => key,
+            _ => return false,
+        };
 
-                if npc_count > 0 {
-                    match key.code {
-                        crossterm::event::KeyCode::Up => {
-                            let current = self.selected_npc_index.unwrap_or(0);
-                            self.selected_npc_index = Some(move_index(current, npc_count, false));
-                            return true;
-                        }
-                        crossterm::event::KeyCode::Down => {
-                            let current = self.selected_npc_index.unwrap_or(npc_count - 1);
-                            self.selected_npc_index = Some(move_index(current, npc_count, true));
-                            return true;
-                        }
-                        crossterm::event::KeyCode::Enter => {
-                            if !state.game.ui.is_npc_dialogue_available() {
-                                return true;
-                            }
+        match state.game.current_focus {
+            GameFocus::NpcList => match key.code {
+                crossterm::event::KeyCode::Up => {
+                    state.game.room.npcs.move_selection(Step::Previous);
+                    true
+                }
+                crossterm::event::KeyCode::Down => {
+                    state.game.room.npcs.move_selection(Step::Next);
+                    true
+                }
+                crossterm::event::KeyCode::Enter => {
+                    if !state.game.ui.is_npc_dialogue_available() {
+                        return true;
+                    }
 
-                            if let Some(idx) = self.selected_npc_index {
-                                if let Some(npc_id) = state.game.room.npcs.get(idx) {
-                                    state.game.ui.open(NpcActions {
-                                        npc_id: npc_id.to_string(),
-                                    });
-                                    return true;
-                                }
-                            }
+                    match state.game.room.npcs.selected().cloned() {
+                        Some(npc_id) => {
+                            state.game.ui.open(NpcActions { npc_id });
+                            true
                         }
-                        _ => {}
+                        None => false,
                     }
                 }
-            }
-        } else if state.game.ui.current_focus == GameFocus::RoomItemsList {
-            if let crossterm::event::Event::Key(key) = event {
-                let item_count = state.game.room.items.len();
-                if item_count > 0 {
-                    match key.code {
-                        crossterm::event::KeyCode::Up => {
-                            self.selected_item_index =
-                                move_index(self.selected_item_index, item_count, false);
-                            return true;
+                _ => false,
+            },
+            GameFocus::RoomItemsList => match key.code {
+                crossterm::event::KeyCode::Up => {
+                    state.game.room.items.move_selection(Step::Previous);
+                    true
+                }
+                crossterm::event::KeyCode::Down => {
+                    state.game.room.items.move_selection(Step::Next);
+                    true
+                }
+                crossterm::event::KeyCode::Enter => {
+                    match state.game.room.items.selected().cloned() {
+                        Some(item_id) => {
+                            state.game.ui.open(ItemActions { item_id });
+                            true
                         }
-                        crossterm::event::KeyCode::Down => {
-                            self.selected_item_index =
-                                move_index(self.selected_item_index, item_count, true);
-                            return true;
-                        }
-                        crossterm::event::KeyCode::Enter => {
-                            if let Some(item_id) =
-                                state.game.room.items.get(self.selected_item_index)
-                            {
-                                state.game.ui.open(ItemActions {
-                                    item_id: item_id.to_string(),
-                                });
-                                return true;
-                            }
-                        }
-                        _ => {}
+                        None => false,
                     }
                 }
-            }
-        } else if state.game.ui.current_focus == GameFocus::QuestList {
-            if let crossterm::event::Event::Key(key) = event {
-                let quest_count = state.game.player.quests.len();
-                if quest_count > 0 {
-                    match key.code {
-                        crossterm::event::KeyCode::Up => {
-                            self.selected_quest_index =
-                                move_index(self.selected_quest_index, quest_count, false);
-                            return true;
-                        }
-                        crossterm::event::KeyCode::Down => {
-                            self.selected_quest_index =
-                                move_index(self.selected_quest_index, quest_count, true);
-                            return true;
-                        }
-                        crossterm::event::KeyCode::Enter => {
-                            if let Some(quest) =
-                                state.game.player.quests.get(self.selected_quest_index)
-                            {
-                                let quest_id = quest.quest_id.clone();
-                                state.game.ui.open(QuestView { quest_id });
-                                return true;
-                            }
-                        }
-                        _ => {}
-                    }
+                _ => false,
+            },
+            GameFocus::QuestList => match key.code {
+                crossterm::event::KeyCode::Up => {
+                    state.game.player.quests.move_selection(Step::Previous);
+                    true
                 }
-            }
+                crossterm::event::KeyCode::Down => {
+                    state.game.player.quests.move_selection(Step::Next);
+                    true
+                }
+                crossterm::event::KeyCode::Enter => match state.game.player.quests.selected() {
+                    Some(quest) => {
+                        let quest_id = quest.quest_id.clone();
+                        state.game.ui.open(QuestView { quest_id });
+                        true
+                    }
+                    None => false,
+                },
+                _ => false,
+            },
+            _ => false,
         }
-        false
     }
 }

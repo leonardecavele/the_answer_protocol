@@ -1,6 +1,6 @@
 use crate::events::types::NotificationType;
-use ratatui::Frame;
 use ratatui::layout::Rect;
+use ratatui::Frame;
 use ratatui_image::picker::Picker;
 use ratatui_image::protocol::StatefulProtocol;
 use ratatui_image::{Resize, StatefulImage};
@@ -36,6 +36,15 @@ impl Notification {
             None,
             message.into(),
             NotificationType::Warning,
+            NOTIF_DEFAULT_DURATION_MS,
+        )
+    }
+
+    pub fn success(message: impl Into<String>) -> Self {
+        Self::new(
+            None,
+            message.into(),
+            NotificationType::Success,
             NOTIF_DEFAULT_DURATION_MS,
         )
     }
