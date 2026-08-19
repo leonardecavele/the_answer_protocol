@@ -51,7 +51,7 @@ impl Component for InventoryPanel {
         self.inventory_cols = (inv_inner.width / INVENTORY_ITEM_WIDTH) as usize;
         let cols = self.inventory_cols.max(1);
 
-        for (idx, item_id) in state.game.player.inventory.iter().enumerate() {
+        for (idx, item) in state.game.player.inventory.iter().enumerate() {
             let col = idx % cols;
             let row = idx / cols;
 
@@ -69,13 +69,7 @@ impl Component for InventoryPanel {
                 height: INVENTORY_ITEM_HEIGHT.min(inv_inner.bottom().saturating_sub(cell_y)),
             };
 
-            let display_name = if let Some(item) = state.game.manifest.items.get(item_id) {
-                item.name.clone()
-            } else {
-                item_id.clone()
-            };
-
-            let text = format!("{}\n{}", display_name, item_id);
+            let text = format!("{}\n{}", item.name, item.id);
             let mut p_style = Style::default();
             if state.game.focus == GameFocus::InventoryGrid
                 && state.game.player.inventory.selected_index() == idx
@@ -133,8 +127,10 @@ impl Lifecycle for InventoryPanel {
                             return true;
                         }
                         crossterm::event::KeyCode::Enter => {
-                            if let Some(item_id) = state.game.player.inventory.selected().cloned() {
-                                state.game.overlays.open(Overlay::ItemActions { item_id });
+                            if let Some(item) = state.game.player.inventory.selected() {
+                                state.game.overlays.open(Overlay::ItemActions {
+                                    item_id: item.id.clone(),
+                                });
                                 return true;
                             }
                         }

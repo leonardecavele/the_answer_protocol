@@ -1,11 +1,12 @@
 use crate::collections::SelectableList;
+use crate::states::game::world::Item;
 use api_client::commands::QuestData;
 
 pub struct PlayerState {
     pub name: Option<String>,
     pub hp: u32,
     pub max_hp: u32,
-    pub inventory: SelectableList<String>,
+    pub inventory: SelectableList<Item>,
     pub quests: SelectableList<QuestData>,
 }
 
@@ -30,6 +31,15 @@ impl PlayerState {
 
     pub fn is_dead(&self) -> bool {
         self.hp == 0
+    }
+
+    pub fn has_item(&self, id: &str) -> bool {
+        self.inventory.iter().any(|item| item.id == id)
+    }
+
+    pub fn take_item(&mut self, id: &str) -> Option<Item> {
+        let index = self.inventory.iter().position(|item| item.id == id)?;
+        self.inventory.remove(index)
     }
 }
 

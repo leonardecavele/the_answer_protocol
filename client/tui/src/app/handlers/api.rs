@@ -2,7 +2,7 @@ use crate::app::App;
 use crate::events::ApiEvent;
 use crate::network::envelopes::ResponseEnvelope;
 use crate::states::game::{
-    ChatChannel, ChatMessage, DialogueState, END_OF_DIALOGUE_TAG, Npc, Overlay, OverlayKind,
+    ChatChannel, ChatMessage, DialogueState, END_OF_DIALOGUE_TAG, Item, Npc, Overlay, OverlayKind,
 };
 use crate::states::ui::Notification;
 use crate::ui::views::editor::EditorView;
@@ -129,7 +129,13 @@ impl App {
                         .map(|id| Npc::from_manifest(id, &self.state.game.manifest))
                         .collect(),
                 );
-                self.state.game.room.items.set_items(look_res.items);
+                self.state.game.room.items.set_items(
+                    look_res
+                        .items
+                        .into_iter()
+                        .map(|id| Item::from_manifest(id, &self.state.game.manifest))
+                        .collect(),
+                );
                 self.state.game.room.exits = look_res.room.exits;
             }
             ApiResponse::Move(Ok(_move_res)) => {
@@ -142,11 +148,13 @@ impl App {
                 self.handle_request(ApiRequest::Look(LookCommand));
             }
             ApiResponse::Inventory(Ok(inv_res)) => {
-                self.state
-                    .game
-                    .player
-                    .inventory
-                    .set_items(inv_res.inventory);
+                self.state.game.player.inventory.set_items(
+                    inv_res
+                        .inventory
+                        .into_iter()
+                        .map(|id| Item::from_manifest(id, &self.state.game.manifest))
+                        .collect(),
+                );
                 self.state
                     .game
                     .log_action("You checked your inventory.".to_string());
@@ -213,30 +221,20 @@ impl App {
                 }
             }
             ApiResponse::Take(Ok(take_res)) => {
-                self.state
-                    .game
-                    .log_action(format!("You took {}.", take_res.item_identifier));
-                self.state
-                    .game
-                    .room
-                    .items
-                    .retain(|i| i != &take_res.item_identifier);
-                self.state
-                    .game
-                    .player
-                    .inventory
-                    .push(take_res.item_identifier);
+                if let Some(item) = self.state.game.room.take_item(&take_res.item_identifier) {
+                    self.state
+                        .game
+                        .log_action(format!("You took {}.", item.name));
+                    self.state.game.player.inventory.push(item);
+                }
             }
             ApiResponse::Drop(Ok(drop_res)) => {
-                self.state
-                    .game
-                    .log_action(format!("You dropped {}.", drop_res.item_identifier));
-                self.state
-                    .game
-                    .player
-                    .inventory
-                    .retain(|item| !item.eq(&drop_res.item_identifier));
-                self.state.game.room.items.push(drop_res.item_identifier);
+                if let Some(item) = self.state.game.player.take_item(&drop_res.item_identifier) {
+                    self.state
+                        .game
+                        .log_action(format!("You dropped {}.", item.name));
+                    self.state.game.room.items.push(item);
+                }
             }
             ApiResponse::Attack(Ok(attack_res)) => {
                 if let ApiRequest::Attack(cmd) = envelope.original_request {
@@ -304,11 +302,12 @@ impl App {
                     self.state.game.room.npcs.push(npc);
                 }
                 "ITEM" => {
-                    let item_name = self.state.game.manifest.item_name(spawn_data.id.as_str());
+                    let item = Item::from_manifest(spawn_data.id, &self.state.game.manifest);
+
                     self.state
                         .game
-                        .log_action(format!("{} has been catapulted here", item_name));
-                    self.state.game.room.items.push(spawn_data.id);
+                        .log_action(format!("{} has been catapulted here", item.name));
+                    self.state.game.room.items.push(item);
                 }
                 t => {
                     self.state
@@ -319,15 +318,11 @@ impl App {
             },
             ServerEvent::Despawn(spawn_data) => match spawn_data.r#type.as_str() {
                 "ITEM" => {
-                    let item_name = self.state.game.manifest.item_name(spawn_data.id.as_str());
-                    self.state
-                        .game
-                        .log_action(format!("{} has despawned", item_name));
-                    self.state
-                        .game
-                        .room
-                        .items
-                        .retain(|item| item != spawn_data.id.as_str());
+                    if let Some(item) = self.state.game.room.take_item(&spawn_data.id) {
+                        self.state
+                            .game
+                            .log_action(format!("{} has despawned", item.name));
+                    }
                 }
                 t => {
                     self.state
@@ -543,17 +538,20 @@ impl App {
                         content: chat.message,
                     });
                 }
-                RoomEvent::Take(player, item) => {
-                    self.state.game.room.items.retain(|id| id != &item);
-                    self.state
-                        .game
-                        .log_action(format!("{} took {}.", player, item));
+                RoomEvent::Take(player, item_id) => {
+                    if let Some(item) = self.state.game.room.take_item(&item_id) {
+                        self.state
+                            .game
+                            .log_action(format!("{} took {}.", player, item.name));
+                    }
                 }
-                RoomEvent::Drop(player, item) => {
-                    self.state.game.room.items.push(item.clone());
+                RoomEvent::Drop(player, item_id) => {
+                    let item = Item::from_manifest(item_id, &self.state.game.manifest);
+
                     self.state
                         .game
-                        .log_action(format!("{} dropped {}.", player, item));
+                        .log_action(format!("{} dropped {}.", player, item.name));
+                    self.state.game.room.items.push(item);
                 }
             },
             ServerEvent::Group(group_event) => match group_event {

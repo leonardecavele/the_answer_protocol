@@ -4,6 +4,7 @@ use crate::states::game::interaction::{GameFocus, Overlays};
 use crate::states::game::session::{
     ChatMessage, FightState, GroupState, PlayerState, RoomState, ServerState,
 };
+use crate::states::game::{Item, Npc};
 use std::sync::Arc;
 
 pub struct GameState {

@@ -102,14 +102,7 @@ impl Component for LeftPanel {
             .items
             .iter()
             .enumerate()
-            .map(|(idx, item_id)| {
-                let display_name = state
-                    .game
-                    .manifest
-                    .items
-                    .get(item_id)
-                    .map(|i| i.name.clone())
-                    .unwrap_or_else(|| item_id.clone());
+            .map(|(idx, item)| {
                 let mut style = Style::default().fg(Color::Cyan);
 
                 if state.game.room.items.is_selected(idx)
@@ -118,7 +111,7 @@ impl Component for LeftPanel {
                     style = style.add_modifier(Modifier::REVERSED);
                 }
                 ListItem::new(Span::styled(
-                    format!("• {} ({})", display_name, item_id),
+                    format!("• {} ({})", item.name, item.id),
                     style,
                 ))
             })
@@ -223,15 +216,15 @@ impl Lifecycle for LeftPanel {
                     state.game.room.items.move_selection(Step::Next);
                     true
                 }
-                crossterm::event::KeyCode::Enter => {
-                    match state.game.room.items.selected().cloned() {
-                        Some(item_id) => {
-                            state.game.overlays.open(ItemActions { item_id });
-                            true
-                        }
-                        None => false,
+                crossterm::event::KeyCode::Enter => match state.game.room.items.selected() {
+                    Some(item) => {
+                        state.game.overlays.open(ItemActions {
+                            item_id: item.id.clone(),
+                        });
+                        true
                     }
-                }
+                    None => false,
+                },
                 _ => false,
             },
             GameFocus::QuestList => match key.code {

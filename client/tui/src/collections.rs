@@ -92,6 +92,15 @@ impl<T> SelectableList<T> {
     fn clamp_selection(&mut self) {
         self.selected = self.selected.min(self.items.len().saturating_sub(1));
     }
+
+    pub fn remove(&mut self, index: usize) -> Option<T> {
+        if index >= self.items.len() {
+            return None;
+        }
+        let item = self.items.remove(index);
+        self.clamp_selection();
+        Some(item)
+    }
 }
 
 impl<T> Deref for SelectableList<T> {

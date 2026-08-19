@@ -1,5 +1,5 @@
 use crate::collections::SelectableList;
-use crate::states::game::world::Npc;
+use crate::states::game::world::{Item, Npc};
 use std::collections::HashMap;
 
 pub struct RoomState {
@@ -9,7 +9,7 @@ pub struct RoomState {
     pub exits: HashMap<String, String>,
     pub players: Vec<String>,
     pub npcs: SelectableList<Npc>,
-    pub items: SelectableList<String>,
+    pub items: SelectableList<Item>,
 }
 
 impl RoomState {
@@ -37,6 +37,15 @@ impl RoomState {
 
     pub fn has_exit(&self, direction: &str) -> bool {
         self.exits.contains_key(direction)
+    }
+
+    pub fn has_item(&self, id: &str) -> bool {
+        self.items.iter().any(|item| item.id == id)
+    }
+
+    pub fn take_item(&mut self, id: &str) -> Option<Item> {
+        let index = self.items.iter().position(|item| item.id == id)?;
+        self.items.remove(index)
     }
 }
 
