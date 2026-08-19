@@ -50,8 +50,6 @@ pub(super) fn sandboxed_test(code: &str, tests: &str) -> io::Result<bool> {
         return Ok(false);
     }
 
-    // Bubblewrap reports a process killed by signal N as 128 + N. Keeping the
-    // success code below 128 makes it impossible for a crash to pass by chance.
     let success_code = i32::from(random_range(32_u8..=125));
     let success_define = format!("-DSANDBOX_SUCCESS={success_code}");
     write_private_file(&directory.path.join("tests.c"), tests.as_bytes())?;
@@ -108,8 +106,10 @@ pub(super) fn sandboxed_test(code: &str, tests: &str) -> io::Result<bool> {
     Ok(execution_status.code() == Some(success_code))
 }
 
-// The submitted object is linked without libc. This tiny trusted entry point
-// is the only code allowed to issue the final exit syscall.
+// Provides a minimal architecture-specific entry point that calls sandbox_main,
+// then exits the process directly through the Linux syscall using sandbox_main's
+// return value as the exit code. This avoids relying on libc or the standard C
+// runtime and deliberately crashes if the exit syscall unexpectedly returns.
 fn trusted_start_source() -> io::Result<&'static str> {
     #[cfg(target_arch = "x86_64")]
     return Ok(r#"

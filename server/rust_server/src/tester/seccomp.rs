@@ -49,6 +49,7 @@ fn seccomp_instructions() -> io::Result<Vec<BpfInstruction>> {
     const AUDIT_ARCH: u32 = 0xc000_003e;
     #[cfg(target_arch = "aarch64")]
     const AUDIT_ARCH: u32 = 0xc000_00b7;
+
     #[cfg(not(any(target_arch = "x86_64", target_arch = "aarch64")))]
     return Err(io::Error::new(
         io::ErrorKind::Unsupported,
@@ -56,24 +57,31 @@ fn seccomp_instructions() -> io::Result<Vec<BpfInstruction>> {
     ));
 
     let mut instructions = vec![
+        //load the architecture field from seccomp_data
         BpfInstruction {
             code: BpfOpcode::LoadWordAbsolute,
             jump_true: 0,
             jump_false: 0,
             value: 4,
         },
+
+        //check if the syscall comes from the expected architecture
         BpfInstruction {
             code: BpfOpcode::JumpEqual,
             jump_true: 1,
             jump_false: 0,
             value: AUDIT_ARCH,
         },
+
+        //kill the process if the architecture is not supported
         BpfInstruction {
             code: BpfOpcode::Return,
             jump_true: 0,
             jump_false: 0,
             value: BpfResult::KillProcess as u32,
         },
+
+        //load the syscall number from seccomp_data
         BpfInstruction {
             code: BpfOpcode::LoadWordAbsolute,
             jump_true: 0,
@@ -82,6 +90,7 @@ fn seccomp_instructions() -> io::Result<Vec<BpfInstruction>> {
         },
     ];
 
+    //list of syscalls that the sandbox is allowed to execute
     let allowed_syscalls = [
         libc::SYS_write,
         libc::SYS_close,
@@ -92,13 +101,19 @@ fn seccomp_instructions() -> io::Result<Vec<BpfInstruction>> {
         libc::SYS_exit_group,
     ];
 
+    //add a syscall-number check followed by an ALLOW instruction
+    //for every syscall in the whitelist
     for syscall in allowed_syscalls {
+        //if the current syscall matches, continue to the ALLOW instruction
+        //otherwise skip it and test the next syscall
         instructions.push(BpfInstruction {
             code: BpfOpcode::JumpEqual,
             jump_true: 0,
             jump_false: 1,
             value: syscall as u32,
         });
+
+        //allow the syscall when the previous comparison matched
         instructions.push(BpfInstruction {
             code: BpfOpcode::Return,
             jump_true: 0,
@@ -107,11 +122,14 @@ fn seccomp_instructions() -> io::Result<Vec<BpfInstruction>> {
         });
     }
 
+    //kill the process if none of the allowed syscall checks matched
     instructions.push(BpfInstruction {
         code: BpfOpcode::Return,
         jump_true: 0,
         jump_false: 0,
         value: BpfResult::KillProcess as u32,
     });
+
+    //return the complete BPF program
     Ok(instructions)
 }
