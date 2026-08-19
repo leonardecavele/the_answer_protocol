@@ -71,7 +71,7 @@ impl Component for ItemActionsPopup {
             .iter()
             .enumerate()
             .map(|(i, act)| {
-                let mut style = Style::default().fg(Color::White);
+                let mut style = Style::default().fg(Color::Reset);
                 if i == self.selected_action_index {
                     style = style.add_modifier(Modifier::REVERSED);
                 }

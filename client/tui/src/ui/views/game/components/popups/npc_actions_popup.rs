@@ -59,7 +59,7 @@ impl Component for NpcActionsPopup {
             .iter()
             .enumerate()
             .map(|(i, action)| {
-                let mut style = Style::default().fg(Color::White);
+                let mut style = Style::default().fg(Color::Reset);
                 if i == self.selected_action_index {
                     style = style.add_modifier(Modifier::REVERSED);
                 }

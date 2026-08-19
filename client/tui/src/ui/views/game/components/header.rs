@@ -38,7 +38,7 @@ impl Component for Header {
         ]);
 
         let hp_color = if state.game.player.max_hp == 0 {
-            Color::White
+            Color::Reset
         } else {
             let percentage =
                 (state.game.player.hp as f32 / state.game.player.max_hp as f32) * 100.0;

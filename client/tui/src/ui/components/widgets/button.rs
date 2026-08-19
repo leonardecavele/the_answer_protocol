@@ -1,7 +1,7 @@
 use crate::states::app::AppState;
 use crate::ui::components::Lifecycle;
 use crate::ui::components::interactive::InteractiveComponent;
-use crate::ui::theme::default_block;
+use crate::ui::theme::{default_block, dim_style};
 use crossterm::event::{Event as CrosstermEvent, KeyCode, KeyEvent};
 use ratatui::Frame;
 use ratatui::layout::{Alignment, Rect};
@@ -39,11 +39,13 @@ impl Button {
 
 impl InteractiveComponent for Button {
     fn render(&mut self, _state: &AppState, frame: &mut Frame, area: Rect) {
-        let mut style = Style::default().fg(Color::Gray);
-
-        if self.is_focused {
-            style = style.fg(Color::Green).add_modifier(Modifier::BOLD);
-        }
+        let style = if self.is_focused {
+            Style::default()
+                .fg(Color::Green)
+                .add_modifier(Modifier::BOLD)
+        } else {
+            dim_style()
+        };
 
         let block = default_block().style(style);
 

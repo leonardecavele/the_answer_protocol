@@ -2,7 +2,7 @@ use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
 use crate::ui::components::Lifecycle;
 use crate::ui::components::interactive::InteractiveComponent;
-use crate::ui::theme::default_block;
+use crate::ui::theme::{default_block, dim_style};
 use crossterm::event::{Event as CrosstermEvent, KeyCode, KeyEvent};
 use ratatui::Frame;
 use ratatui::layout::Rect;
@@ -28,15 +28,15 @@ impl TextInput {
 
 impl InteractiveComponent for TextInput {
     fn render(&mut self, _state: &AppState, frame: &mut Frame, area: Rect) {
-        let text_color = if self.is_focused {
-            Color::Cyan
+        let text_style = if self.is_focused {
+            Style::default().fg(Color::Cyan)
         } else {
-            Color::Gray
+            dim_style()
         };
 
         let block = default_block()
             .title(format!(" {} ", self.label.as_str()))
-            .style(Style::default().fg(text_color));
+            .style(text_style);
 
         let display_text = if self.is_focused {
             format!("{}█", self.value)

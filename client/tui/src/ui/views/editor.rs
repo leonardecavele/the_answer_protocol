@@ -2,7 +2,7 @@ use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
 use crate::ui::components::Component;
 use crate::ui::components::Lifecycle;
-use crate::ui::theme::default_block;
+use crate::ui::theme::{default_block, dim_style};
 use api_client::ApiRequest;
 use api_client::commands::FightAttackCommand;
 use api_client::events::FightStartData;
@@ -12,7 +12,7 @@ use ratatui::Frame;
 use ratatui::layout::{Alignment, Constraint, Direction, Layout, Position, Rect};
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::Span;
-use ratatui::widgets::Paragraph;
+use ratatui::widgets::{Block, Paragraph};
 use ratatui_code_editor::editor::Editor;
 use ratatui_code_editor::theme::vesper;
 use std::time::Instant;
@@ -22,6 +22,7 @@ use tokio::sync::mpsc;
 // TODO: ajouter une barre de vie + image du mob
 
 const EDITOR_LANGUAGE: &str = "c";
+const EDITOR_BG: Color = Color::Rgb(0x16, 0x16, 0x16);
 const HEADER_HEIGHT: u16 = 3;
 const FOOTER_HEIGHT: u16 = 3;
 
@@ -98,23 +99,23 @@ impl EditorView {
     }
 
     fn footer(&self, state: &AppState) -> Paragraph<'static> {
-        let (text, color) = match (&state.game.fight.success, state.game.fight.submitted) {
+        let (text, style) = match (&state.game.fight.success, state.game.fight.submitted) {
             (Some(true), _) => (
                 "Your code succeeded. Waiting for the other players...",
-                Color::Green,
+                Style::default().fg(Color::Green),
             ),
             (Some(false), _) => (
                 "Your code failed. Waiting for the other players...",
-                Color::Red,
+                Style::default().fg(Color::Red),
             ),
             (None, true) => (
                 "Code submitted. Waiting for the other players...",
-                Color::DarkGray,
+                dim_style(),
             ),
-            (None, false) => ("Press Ctrl+S to submit your code", Color::DarkGray),
+            (None, false) => ("Press Ctrl+S to submit your code", dim_style()),
         };
 
-        Paragraph::new(Span::styled(text, Style::default().fg(color)))
+        Paragraph::new(Span::styled(text, style))
             .alignment(Alignment::Center)
             .block(default_block())
     }
@@ -135,6 +136,10 @@ impl Component for EditorView {
         frame.render_widget(self.footer(state), chunks[2]);
 
         self.editor_area = chunks[1];
+        frame.render_widget(
+            Block::default().style(Style::default().bg(EDITOR_BG)),
+            self.editor_area,
+        );
         frame.render_widget(&self.editor, self.editor_area);
 
         if !state.game.fight.submitted {

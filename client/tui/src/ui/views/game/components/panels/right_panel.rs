@@ -261,7 +261,7 @@ impl Component for RightPanel {
             }
             Content::Image(image_path) => self.draw_image(state, frame, area, &image_path),
             Content::Message(text) => {
-                self.draw_message(frame, area, text, Color::White);
+                self.draw_message(frame, area, text, Color::Reset);
                 area
             }
         };

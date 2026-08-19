@@ -75,7 +75,7 @@ impl Component for LeftPanel {
                     NpcKind::Enemy => Color::Red,
                     NpcKind::QuestGiver => Color::Yellow,
                     NpcKind::Dialogue => Color::Blue,
-                    NpcKind::Normal => Color::White,
+                    NpcKind::Normal => Color::Reset,
                 };
 
                 let mut style = Style::default().fg(color);

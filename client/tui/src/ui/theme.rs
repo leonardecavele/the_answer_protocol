@@ -1,18 +1,21 @@
 use ratatui::{
     layout::Alignment,
-    style::{Color, Style},
+    style::{Color, Modifier, Style},
     text::Line,
     widgets::{Block, BorderType, Borders, Paragraph},
 };
 
-pub const BORDER_COLOR: Color = Color::Gray;
 pub const OVERLAY_BORDER_COLOR: Color = Color::Magenta;
 pub const FOCUS_BORDER_COLOR: Color = Color::Yellow;
+
+pub fn dim_style() -> Style {
+    Style::default().add_modifier(Modifier::DIM)
+}
 
 pub fn default_block<'a>() -> Block<'a> {
     Block::default()
         .borders(Borders::ALL)
-        .border_style(Style::default().fg(BORDER_COLOR))
+        .border_style(dim_style())
 }
 
 pub fn overlay_block<'a>() -> Block<'a> {
@@ -41,7 +44,7 @@ pub fn popup_block<'a>(title: impl Into<Line<'a>>) -> Block<'a> {
 pub fn close_hint<'a>() -> Paragraph<'a> {
     Paragraph::new(" Press ESC or ENTER to close ")
         .alignment(Alignment::Center)
-        .style(Style::default().fg(Color::DarkGray))
+        .style(dim_style())
 }
 
 pub fn help_hint<'a>() -> Line<'a> {
