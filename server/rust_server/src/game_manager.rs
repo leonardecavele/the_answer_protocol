@@ -1,6 +1,6 @@
 use crate::combat_instances::CombatInstanceManager;
 use crate::constantes::{
-    CODE_NL_SEP, CODE_SP_SEP, Direction, MAX_DMG_DEALT, MAX_TIME_FOR_COMBAT, MIN_DMG_DEALT, NPC_DMG, NPC_RESPAWN_TIME, PLAYER_ROOM_SPAWN, TEST_FILES_DIR,
+    CODE_NL_SEP, CODE_SP_SEP, Direction, MAX_DMG_DEALT, MAX_TIME_FOR_COMBAT, MIN_DMG_DEALT, NPC_MAX_DMG, NPC_MIN_DMG, NPC_RESPAWN_TIME, PLAYER_ROOM_SPAWN, TEST_FILES_DIR,
 };
 use crate::inventory::Inventory;
 use crate::items::{Item, ItemId};
@@ -15,7 +15,6 @@ use json::{JsonValue, object};
 use std::collections::HashMap;
 use std::io::Write;
 use std::net::TcpStream;
-use std::path::Path;
 use std::sync::mpsc;
 use std::time::Instant;
 use tracing::warn;
@@ -384,6 +383,23 @@ impl GameManager {
         return self.all_items.contains_key(&item_id);
     }
 
+    pub fn generate_npc_dmg(&self) -> u32 {
+        let min = NPC_MIN_DMG;
+        let max = NPC_MAX_DMG;
+        min + rand::random::<u32>() % (max - min + 1)
+    }
+
+    pub fn uppercase_first_letter(&self, string: &mut String) {
+        let Some(first) = string.chars().next() else {
+            return;
+        };
+    
+        let len = first.len_utf8();
+        let uppercase = first.to_uppercase().collect::<String>();
+    
+        string.replace_range(..len, &uppercase);
+    }
+
     pub fn room_exists(&self, room_name: &str) -> bool {
         self.all_rooms
             .values()
@@ -484,7 +500,7 @@ impl GameManager {
             }
         }
         for (player_id, npc_id) in players_to_punish {
-            self.npc_attacks_player(NPC_DMG, player_id, npc_id);
+            self.npc_attacks_player(self.generate_npc_dmg(), player_id, npc_id);
         }
     }
 
@@ -714,7 +730,7 @@ impl GameManager {
 
         //does nothing if no the player is not in a combat instance
         self.set_success_for_player(player_id, false);
-        let mut players_to_send_event = self
+        let players_to_send_event = self
             .combat_instances
             .get_all_players_in_combat(npc_id)
             .iter()

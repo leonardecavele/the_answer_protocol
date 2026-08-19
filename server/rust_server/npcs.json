@@ -164,7 +164,7 @@
         ]
       ],
       "quests": [],
-      "spawns": "devant_l_ecole"
+      "spawns": "devant_l'ecole"
     },
     {
       "name": "ndalailallema",
@@ -316,7 +316,7 @@
       "max_hp": null,
       "dialogs": [["... *aura*"]],
       "quests": [],
-      "spawns": "devant_l_ecole"
+      "spawns": "devant_l'ecole"
     },
     {
       "name": "ldecavel",

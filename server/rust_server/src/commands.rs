@@ -1,6 +1,6 @@
 use crate::constantes::{
     BASE_COMMAND_RESPONSE, CODE_NL_SEP, CODE_SP_SEP, ErrorCode, LOST_ITEM, LOST_ITEM_SPAWN,
-    MAX_DMG_DEALT, MAX_TIME_FOR_COMBAT, MIN_DMG_DEALT, NPC_DMG, NPC_MOB, TEST_FILES_DIR,
+    MAX_TIME_FOR_COMBAT, NPC_MOB, TEST_FILES_DIR,
 };
 use crate::game_manager::GameManager;
 use crate::items::{Item, ItemId};
@@ -129,13 +129,11 @@ impl GameManager {
             let player_id = match self.get_player_id(player) {
                 Some(id) => *id,
                 None => {
-                    return generate_json(leader, command_name, ErrorCode::PlayerNotFound, "").dump();
+                    return generate_json(leader, command_name, ErrorCode::PlayerNotFound, "")
+                        .dump();
                 }
             };
-            if let Some(_instance) = self
-                .combat_instances
-                .get_instance_for_player(player_id)
-            {
+            if let Some(_instance) = self.combat_instances.get_instance_for_player(player_id) {
                 return generate_json(leader, command_name, ErrorCode::PlayerAlreadyInCombat, "")
                     .dump();
             }
@@ -323,13 +321,11 @@ impl GameManager {
                     Some(id) => *id,
                     None => {
                         warn!("Leader not found: {}", leader);
-                        return generate_json(leader, command_name, ErrorCode::PlayerNotFound, "").dump();
+                        return generate_json(leader, command_name, ErrorCode::PlayerNotFound, "")
+                            .dump();
                     }
                 };
-                if let Some(_instance) = self
-                    .combat_instances
-                    .get_instance_for_player(leader_id)
-                {
+                if let Some(_instance) = self.combat_instances.get_instance_for_player(leader_id) {
                     return generate_json(
                         leader,
                         command_name,
@@ -371,7 +367,13 @@ impl GameManager {
             Some(p) => p.get_current_room(),
             None => {
                 warn!("Player not found: {}", player_name);
-                return Err(generate_json(player_name, command_name, ErrorCode::PlayerNotFound, "").dump());
+                return Err(generate_json(
+                    player_name,
+                    command_name,
+                    ErrorCode::PlayerNotFound,
+                    "",
+                )
+                .dump());
             }
         };
         let npc_wrapped = self.parse_npc(target_npc, player_room.to_owned());
@@ -417,9 +419,17 @@ impl GameManager {
             if let Some(player_id) = self.get_player_id(player).copied() {
                 let player_success = json["success"].as_bool().unwrap_or(false);
                 if player_success {
-                    let instance_player_count =
-                        self.get_nb_players_in_player_instance(player_id).unwrap_or_else(|| { warn!("instance not found for player_id: {}", player_id); 1 });
-                    let npc_combat_start_hp = self.get_npc_combat_start_hp(npc_id).unwrap_or_else(|| { warn!("npc combat start hp not found for npc: {}", npc_id); 0 });
+                    let instance_player_count = self
+                        .get_nb_players_in_player_instance(player_id)
+                        .unwrap_or_else(|| {
+                            warn!("instance not found for player_id: {}", player_id);
+                            1
+                        });
+                    let npc_combat_start_hp =
+                        self.get_npc_combat_start_hp(npc_id).unwrap_or_else(|| {
+                            warn!("npc combat start hp not found for npc: {}", npc_id);
+                            0
+                        });
                     let npc_hp = self.get_npc_hp(npc_id).unwrap_or_else(|| {
                         warn!(
                             "npc {} has no hp and yet he is in a combat instance!",
@@ -447,17 +457,23 @@ impl GameManager {
                     self.add_diff_to_tick(event);
                     self.player_attacks_npc(dmg, player_id, npc_id);
                 } else {
-                    let players_in_instance = self.get_player_instance_group(player_id).unwrap_or_else(|| {
-                        warn!("get_player_instance_group returned None for player_id: {}", player_id);
-                        vec![]
-                    });
+                    let players_in_instance = self
+                        .get_player_instance_group(player_id)
+                        .unwrap_or_else(|| {
+                            warn!(
+                                "get_player_instance_group returned None for player_id: {}",
+                                player_id
+                            );
+                            vec![]
+                        });
+                    let npc_dmg = self.generate_npc_dmg();
                     let event = GameManager::generate_no_player_event_json(
                         &players_in_instance,
                         "FIGHT RESULT",
-                        object! { "player_name": player.to_string(), "success": false, "damage_dealt": NPC_DMG}.dump().as_str(),
+                        object! { "player_name": player.to_string(), "success": false, "damage_dealt": npc_dmg}.dump().as_str(),
                     );
                     self.add_diff_to_tick(event);
-                    self.npc_attacks_player(NPC_DMG, player_id, npc_id);
+                    self.npc_attacks_player(npc_dmg, player_id, npc_id);
                 }
             }
         }
@@ -541,21 +557,35 @@ impl GameManager {
                         Some(p) => p,
                         None => {
                             warn!("Player not found: {}", player_name);
-                            return generate_json(player_name, command_name, ErrorCode::PlayerNotFound, "").dump();
+                            return generate_json(
+                                player_name,
+                                command_name,
+                                ErrorCode::PlayerNotFound,
+                                "",
+                            )
+                            .dump();
                         }
                     };
                     let room = match self.get_room_by_name(player.get_current_room()) {
                         Some(r) => r,
                         None => {
                             warn!("Room not found: {}", player.get_current_room());
-                            return generate_json(player_name, command_name, ErrorCode::NoExit, "").dump();
+                            return generate_json(player_name, command_name, ErrorCode::NoExit, "")
+                                .dump();
                         }
                     };
                     (
                         room.get_id(),
                         room.get_name(),
                         room.get_description(),
-                        room.get_exits(),
+                        room.get_exits()
+                            .iter()
+                            .map(|(dir, name)| {
+                                let mut name = name.replace("_", " ");
+                                self.uppercase_first_letter(&mut name);
+                                (dir.clone(), name)
+                            })
+                            .collect::<std::collections::HashMap<_, _>>(),
                         self.get_all_players_at_room(player.get_current_room()),
                         self.convert_items_to_string(room.get_inventory()),
                     )
@@ -617,7 +647,7 @@ impl GameManager {
                         .get_instance_for_player(player_id)
                         .unwrap()
                         .get_npc_id();
-                    self.npc_attacks_player(NPC_DMG, player_id, npc_id);
+                    self.npc_attacks_player(self.generate_npc_dmg(), player_id, npc_id);
                 }
 
                 self.disconnect_player(player_name.to_owned());
@@ -659,7 +689,13 @@ impl GameManager {
                         Some(p) => p,
                         None => {
                             warn!("Player not found: {}", player_name);
-                            return generate_json(player_name, command_name, ErrorCode::PlayerNotFound, "").dump();
+                            return generate_json(
+                                player_name,
+                                command_name,
+                                ErrorCode::PlayerNotFound,
+                                "",
+                            )
+                            .dump();
                         }
                     };
                     player.talk_with(&npc_unwrap)
@@ -679,7 +715,13 @@ impl GameManager {
                         Some(p) => p,
                         None => {
                             warn!("Player not found: {}", player_name);
-                            return generate_json(player_name, command_name, ErrorCode::PlayerNotFound, "").dump();
+                            return generate_json(
+                                player_name,
+                                command_name,
+                                ErrorCode::PlayerNotFound,
+                                "",
+                            )
+                            .dump();
                         }
                     };
                     (player.get_id(), player.get_current_room().to_owned())
@@ -731,7 +773,13 @@ impl GameManager {
                     Some(p) => p,
                     None => {
                         warn!("Player not found: {}", player_name);
-                        return generate_json(player_name, command_name, ErrorCode::PlayerNotFound, "").dump();
+                        return generate_json(
+                            player_name,
+                            command_name,
+                            ErrorCode::PlayerNotFound,
+                            "",
+                        )
+                        .dump();
                     }
                 };
                 let player_id = player.get_id();
@@ -794,7 +842,13 @@ impl GameManager {
                         Some(id) => *id,
                         None => {
                             warn!("Player not found: {}", player_name);
-                            return generate_json(player_name, command_name, ErrorCode::PlayerNotFound, "").dump();
+                            return generate_json(
+                                player_name,
+                                command_name,
+                                ErrorCode::PlayerNotFound,
+                                "",
+                            )
+                            .dump();
                         }
                     };
                     if let Some(instance) = self.combat_instances.get_instance_for_player(player_id)
@@ -833,7 +887,13 @@ impl GameManager {
                     Some(id) => *id,
                     None => {
                         warn!("Player not found: {}", player_name);
-                        return generate_json(player_name, command_name, ErrorCode::PlayerNotFound, "").dump();
+                        return generate_json(
+                            player_name,
+                            command_name,
+                            ErrorCode::PlayerNotFound,
+                            "",
+                        )
+                        .dump();
                     }
                 };
 
@@ -849,8 +909,15 @@ impl GameManager {
                         )
                         .dump();
                     }
-                    let npc_combat_start_hp = self.get_npc_combat_start_hp(npc_id).unwrap_or_else(|| { warn!("npc combat start hp not found for npc: {}", npc_id); 0 });
-                    let npc_hp = self.get_npc_hp(npc_id).unwrap_or_else(|| { warn!("npc hp not found for npc: {}", npc_id); 0 });
+                    let npc_combat_start_hp =
+                        self.get_npc_combat_start_hp(npc_id).unwrap_or_else(|| {
+                            warn!("npc combat start hp not found for npc: {}", npc_id);
+                            0
+                        });
+                    let npc_hp = self.get_npc_hp(npc_id).unwrap_or_else(|| {
+                        warn!("npc hp not found for npc: {}", npc_id);
+                        0
+                    });
                     let dmg =
                         self.calculate_dmg(npc_combat_start_hp, instance_player_count, npc_hp);
                     let combat_result = self.player_attacks_npc(dmg, player_id, npc_id);
@@ -915,12 +982,18 @@ impl GameManager {
 
                 if let Some(mut quests) = npc_unwrap.get_quests().cloned() {
                     let player_id = match self.get_player_id(player_name) {
-                    Some(id) => *id,
-                    None => {
-                        warn!("Player not found: {}", player_name);
-                        return generate_json(player_name, command_name, ErrorCode::PlayerNotFound, "").dump();
-                    }
-                };
+                        Some(id) => *id,
+                        None => {
+                            warn!("Player not found: {}", player_name);
+                            return generate_json(
+                                player_name,
+                                command_name,
+                                ErrorCode::PlayerNotFound,
+                                "",
+                            )
+                            .dump();
+                        }
+                    };
                     quests.retain(|quest| !self.player_has_quest(player_id, quest.clone()));
                     if quests.is_empty() {
                         return generate_json(
@@ -956,12 +1029,18 @@ impl GameManager {
                         }
 
                         let player_id = match self.get_player_id(player_name) {
-                    Some(id) => *id,
-                    None => {
-                        warn!("Player not found: {}", player_name);
-                        return generate_json(player_name, command_name, ErrorCode::PlayerNotFound, "").dump();
-                    }
-                };
+                            Some(id) => *id,
+                            None => {
+                                warn!("Player not found: {}", player_name);
+                                return generate_json(
+                                    player_name,
+                                    command_name,
+                                    ErrorCode::PlayerNotFound,
+                                    "",
+                                )
+                                .dump();
+                            }
+                        };
                         let quest_instance = crate::quests::QuestInstance::new(
                             player_id,
                             quest_id.clone(),
@@ -986,7 +1065,13 @@ impl GameManager {
                     Some(id) => *id,
                     None => {
                         warn!("Player not found: {}", player_name);
-                        return generate_json(player_name, command_name, ErrorCode::PlayerNotFound, "").dump();
+                        return generate_json(
+                            player_name,
+                            command_name,
+                            ErrorCode::PlayerNotFound,
+                            "",
+                        )
+                        .dump();
                     }
                 };
 
