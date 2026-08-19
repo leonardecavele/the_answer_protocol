@@ -63,6 +63,7 @@ pub enum ErrorCode {
     PlayerNotInCombat,
     FileNotFound,
     NoContent,
+    RoomNotFound,
 }
 
 impl ErrorCode {
@@ -90,6 +91,7 @@ impl ErrorCode {
             Self::PlayerAlreadyInCombat => 410,
             Self::PlayerNotInCombat => 411,
             Self::FileNotFound => 412,
+            Self::RoomNotFound => 413,
             Self::ConnectionFailed => 900,
             Self::SendFailed => 901,
             Self::InvalidGroupCommand => 997,

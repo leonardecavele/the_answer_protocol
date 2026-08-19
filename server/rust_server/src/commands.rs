@@ -545,7 +545,7 @@ impl GameManager {
             }
             "LOOK" => {
                 let (
-                    player_room_id,
+                    player_room_protocol_representation,
                     player_room_name,
                     player_room_description,
                     player_room_exits,
@@ -569,37 +569,33 @@ impl GameManager {
                         Some(r) => r,
                         None => {
                             warn!("Room not found: {}", player.get_current_room());
-                            return generate_json(player_name, command_name, ErrorCode::NoExit, "")
+                            return generate_json(player_name, command_name, ErrorCode::RoomNotFound, "")
                                 .dump();
                         }
                     };
                     (
-                        room.get_id(),
-                        room.get_name(),
+                        room.get_protocol_representation(),
+                        &self.format_room_name(room.get_name()),
                         room.get_description(),
                         room.get_exits()
                             .iter()
-                            .map(|(dir, name)| {
-                                let mut name = name.replace("_", " ");
-                                self.uppercase_first_letter(&mut name);
-                                (dir.clone(), name)
-                            })
+                            .map(|(dir, name)|(dir, self.format_room_name(name)))
                             .collect::<std::collections::HashMap<_, _>>(),
                         self.get_all_players_at_room(player.get_current_room()),
                         self.convert_items_to_string(room.get_inventory()),
                     )
                 };
-
+                
                 let room = object! {
                     "room": {
-                        "id": Room::protocol_representation(player_room_id, player_room_name.to_owned()),
-                        "name": player_room_name,
+                        "id": player_room_protocol_representation,
+                        "name": player_room_name.as_str(),
                         "description": player_room_description,
                         "exits": JsonValue::from(player_room_exits.clone())
                     },
                     "players": JsonValue::from(room_players),
                     "items": JsonValue::from(room_items_str),
-                    "npcs": JsonValue::from(self.get_npcs_in_room_as_protocol_representations(player_room_name))
+                    "npcs": JsonValue::from(self.get_npcs_in_room_as_protocol_representations(&player_room_name))
                 };
                 generate_json(
                     player_name,
