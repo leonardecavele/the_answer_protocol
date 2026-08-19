@@ -248,6 +248,25 @@ impl GameManager {
             }
         }
 
+        let mut seen_quests = std::collections::HashSet::new();
+        save_data.quests.retain(|(quest_id, _)| {
+            if self.get_quest(quest_id).is_none() {
+                warn!(
+                    "Removing invalid quest {} from player {}",
+                    quest_id, save_data.name
+                );
+                false
+            } else if !seen_quests.insert(quest_id.clone()) {
+                warn!(
+                    "Removing duplicate quest {} from player {}",
+                    quest_id, save_data.name
+                );
+                false
+            } else {
+                true
+            }
+        });
+
         let player_id = save_data.id;
         for (quest_id, state) in save_data.quests.iter() {
             let quest_instance = QuestInstance::new(player_id, quest_id.clone(), state.clone());
@@ -455,7 +474,7 @@ impl GameManager {
         let mut players_to_punish: Vec<(PlayerId, NpcId)> = Vec::new();
         for (npc_id, instance) in self.combat_instances.instances.iter() {
             if instance.combat_start_time.elapsed() > MAX_TIME_FOR_COMBAT
-                && !instance.is_evaluating_response
+                && instance.evaluating_players_count == 0
             {
                 for (player_id, success) in instance.players_success.iter() {
                     if success.is_none() {
@@ -889,7 +908,9 @@ impl GameManager {
             .combat_instances
             .get_mut_instance_for_npc(npc_id)
             .unwrap();
-        instance.is_evaluating_response = true;
+        instance.evaluating_players_count += 1;
+
+        debug!("started tester thread for player {}", player);
         std::thread::spawn(move || {
             let result = test(&file_name_owned, &sent_code_owned);
             response["success"] = result.into();
