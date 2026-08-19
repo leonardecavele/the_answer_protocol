@@ -14,6 +14,12 @@ const CHAT_HEIGHT_PERCENTAGE: u16 = 80;
 
 pub struct ChatOverlay;
 
+impl Default for ChatOverlay {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ChatOverlay {
     pub fn new() -> Self {
         Self

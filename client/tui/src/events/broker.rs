@@ -18,6 +18,12 @@ pub struct EventBroker {
     background_task: JoinHandle<()>,
 }
 
+impl Default for EventBroker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl EventBroker {
     pub fn new() -> Self {
         let (sender, receiver) = mpsc::channel(MAX_EVENTS_BUS);

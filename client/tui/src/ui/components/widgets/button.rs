@@ -74,12 +74,11 @@ impl InteractiveComponent for Button {
             return EventFlow::Ignored;
         }
 
-        if let CrosstermEvent::Key(KeyEvent { code, .. }) = event {
-            if *code == KeyCode::Enter {
+        if let CrosstermEvent::Key(KeyEvent { code, .. }) = event
+            && *code == KeyCode::Enter {
                 self.is_pressed = true;
                 return EventFlow::Consumed;
             }
-        }
 
         EventFlow::Ignored
     }

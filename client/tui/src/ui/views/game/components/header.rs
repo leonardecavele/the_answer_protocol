@@ -13,6 +13,12 @@ use ratatui::{
 
 pub struct Header;
 
+impl Default for Header {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Header {
     pub fn new() -> Self {
         Self
@@ -79,8 +85,8 @@ impl Component for Header {
             .title(title_line.alignment(Alignment::Left))
             .title(stats_line.alignment(Alignment::Right));
 
-        if let Some(group_id) = &state.game.group.id {
-            if let Some(leader_name) = &state.game.group.leader {
+        if let Some(group_id) = &state.game.group.id
+            && let Some(leader_name) = &state.game.group.leader {
                 let display_leader = if Some(leader_name) == state.game.player.name.as_ref() {
                     "[You]"
                 } else {
@@ -106,7 +112,6 @@ impl Component for Header {
 
                 block = block.title_bottom(group_line.alignment(Alignment::Right));
             }
-        }
 
         let description = match &state.game.room.description {
             Some(desc) => desc.as_str(),

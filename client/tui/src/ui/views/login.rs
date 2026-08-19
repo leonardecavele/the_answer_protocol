@@ -140,19 +140,18 @@ impl Lifecycle for LoginView {
                     return EventFlow::Consumed;
                 }
 
-                if *code == KeyCode::Enter {
-                    if self.current_focus != LoginFocus::ConnectButton {
+                if *code == KeyCode::Enter
+                    && self.current_focus != LoginFocus::ConnectButton {
                         self.current_focus = LoginFocus::ConnectButton;
                         self.update_focus();
                         return EventFlow::Consumed;
                     }
-                }
             }
             CrosstermEvent::Mouse(MouseEvent {
                 kind, column, row, ..
-            }) => {
+            })
                 // Mouse navigation (Left click)
-                if *kind == MouseEventKind::Down(crossterm::event::MouseButton::Left) {
+                if *kind == MouseEventKind::Down(crossterm::event::MouseButton::Left) => {
                     if self.name_input.is_mouse_over(*column, *row) {
                         self.current_focus = LoginFocus::PlayerName;
                         self.update_focus();
@@ -172,7 +171,6 @@ impl Lifecycle for LoginView {
                         self.connect_button.inner.is_pressed = true;
                     }
                 }
-            }
             _ => {}
         }
 

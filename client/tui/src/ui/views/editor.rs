@@ -52,8 +52,8 @@ impl EditorView {
         Ok(Self {
             editor,
             npc_id: fight_data.npc_id.clone(),
-            npc_hp: fight_data.npc_hp.clone(),
-            npc_max_hp: fight_data.npc_max_hp.clone(),
+            npc_hp: fight_data.npc_hp,
+            npc_max_hp: fight_data.npc_max_hp,
             time: fight_data.time,
             nl_sep: fight_data.nl_sep.clone(),
             sp_sep: fight_data.sp_sep.clone(),
@@ -143,11 +143,10 @@ impl Component for EditorView {
         );
         frame.render_widget(&self.editor, self.editor_area);
 
-        if !state.game.fight.submitted {
-            if let Some((x, y)) = self.editor.get_visible_cursor(&self.editor_area) {
+        if !state.game.fight.submitted
+            && let Some((x, y)) = self.editor.get_visible_cursor(&self.editor_area) {
                 frame.set_cursor_position(Position::new(x, y));
             }
-        }
     }
 }
 

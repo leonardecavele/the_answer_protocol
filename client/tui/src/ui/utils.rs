@@ -2,7 +2,7 @@ use ratatui::layout::Rect;
 use ratatui::text::Line;
 
 /// Wrap text efficiently to match the exact visual lines it will take on screen.
-pub fn wrap_str_to_lines<'a, 'b>(text: &'a str, max_width: usize) -> Vec<Line<'b>> {
+pub fn wrap_str_to_lines<'b>(text: &str, max_width: usize) -> Vec<Line<'b>> {
     let wrapped = textwrap::wrap(text, max_width);
     wrapped
         .into_iter()

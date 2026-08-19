@@ -1,5 +1,7 @@
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Default)]
 pub enum GameFocus {
+    #[default]
     Input,
     RightPanel,
     NpcList,
@@ -9,8 +11,3 @@ pub enum GameFocus {
     ActionHistory,
 }
 
-impl Default for GameFocus {
-    fn default() -> Self {
-        GameFocus::Input
-    }
-}

@@ -23,6 +23,12 @@ pub struct LeftPanel {
     pub quests_area: Option<Rect>,
 }
 
+impl Default for LeftPanel {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl LeftPanel {
     pub fn new() -> Self {
         Self {

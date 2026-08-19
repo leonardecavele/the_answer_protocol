@@ -19,6 +19,12 @@ pub struct CenterPanel {
     pub inventory_area: Option<Rect>,
 }
 
+impl Default for CenterPanel {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CenterPanel {
     pub fn new() -> Self {
         Self {
@@ -52,24 +58,22 @@ impl Lifecycle for CenterPanel {
         event: &crossterm::event::Event,
         event_sender: &Sender<ApplicationEvent>,
     ) -> EventFlow {
-        if state.game.focus == GameFocus::ActionHistory {
-            if self
+        if state.game.focus == GameFocus::ActionHistory
+            && self
                 .action_history
                 .handle_terminal_event(state, event, event_sender)
                 .is_consumed()
             {
                 return EventFlow::Consumed;
             }
-        }
-        if state.game.focus == GameFocus::InventoryGrid {
-            if self
+        if state.game.focus == GameFocus::InventoryGrid
+            && self
                 .inventory
                 .handle_terminal_event(state, event, event_sender)
                 .is_consumed()
             {
                 return EventFlow::Consumed;
             }
-        }
         EventFlow::Ignored
     }
 }

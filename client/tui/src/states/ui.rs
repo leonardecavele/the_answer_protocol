@@ -84,6 +84,12 @@ pub struct Notifications {
     notifications: Vec<Notification>,
 }
 
+impl Default for Notifications {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Notifications {
     pub fn new() -> Self {
         Self {
@@ -120,12 +126,18 @@ pub struct ImageManager {
     cache: RefCell<HashMap<String, Option<(StatefulProtocol, u32, u32)>>>,
 }
 
+impl Default for ImageManager {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ImageManager {
     pub fn new() -> Self {
         let picker = Picker::halfblocks();
 
         Self {
-            picker: picker,
+            picker,
             cache: RefCell::new(HashMap::new()),
         }
     }
@@ -173,6 +185,12 @@ pub struct UiState {
     pub image_manager: ImageManager,
     pub show_trace_log: bool,
     pub trace_log: BoundedLog<String>,
+}
+
+impl Default for UiState {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl UiState {

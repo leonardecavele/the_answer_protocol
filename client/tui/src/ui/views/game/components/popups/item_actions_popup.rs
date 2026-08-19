@@ -24,6 +24,12 @@ pub struct ItemActionsPopup {
     pub selected_action_index: usize,
 }
 
+impl Default for ItemActionsPopup {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ItemActionsPopup {
     pub fn new() -> Self {
         Self {

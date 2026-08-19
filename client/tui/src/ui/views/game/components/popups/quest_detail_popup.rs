@@ -23,6 +23,12 @@ const FOOTER_HEIGHT: u16 = 2;
 
 pub struct QuestDetailPopup;
 
+impl Default for QuestDetailPopup {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl QuestDetailPopup {
     pub fn new() -> Self {
         Self

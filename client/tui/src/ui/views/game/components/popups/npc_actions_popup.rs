@@ -24,6 +24,12 @@ pub struct NpcActionsPopup {
     pub selected_action_index: usize,
 }
 
+impl Default for NpcActionsPopup {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl NpcActionsPopup {
     pub fn new() -> Self {
         Self {
@@ -112,12 +118,11 @@ impl Lifecycle for NpcActionsPopup {
                     return EventFlow::Consumed;
                 }
                 KeyCode::Enter => {
-                    if let Some(action) = actions.get(self.selected_action_index) {
-                        if action != "CANCEL" {
+                    if let Some(action) = actions.get(self.selected_action_index)
+                        && action != "CANCEL" {
                             let cmd = format!("{} {}", action.to_uppercase(), npc_id);
                             let _ = event_sender.try_send(ApplicationEvent::SendRawCommand(cmd));
                         }
-                    }
                     state.game.overlays.close_top();
                     self.selected_action_index = 0;
                     return EventFlow::Consumed;

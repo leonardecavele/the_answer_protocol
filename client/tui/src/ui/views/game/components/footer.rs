@@ -13,6 +13,12 @@ pub struct Footer {
     pub input: Interactive<TextInput>,
 }
 
+impl Default for Footer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Footer {
     pub fn new() -> Self {
         let mut input = Interactive::new(TextInput::new("Command"));
@@ -35,8 +41,8 @@ impl Lifecycle for Footer {
         event: &CrosstermEvent,
         event_sender: &tokio::sync::mpsc::Sender<ApplicationEvent>,
     ) -> EventFlow {
-        if state.game.focus == GameFocus::Input {
-            if let CrosstermEvent::Key(KeyEvent {
+        if state.game.focus == GameFocus::Input
+            && let CrosstermEvent::Key(KeyEvent {
                 code: KeyCode::Enter,
                 ..
             }) = event
@@ -50,7 +56,6 @@ impl Lifecycle for Footer {
                 }
                 return EventFlow::Consumed;
             }
-        }
 
         if state.game.focus == GameFocus::Input {
             self.input.handle_terminal_event(state, event, event_sender)

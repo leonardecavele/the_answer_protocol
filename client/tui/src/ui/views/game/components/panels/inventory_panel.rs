@@ -22,6 +22,12 @@ pub struct InventoryPanel {
     pub inventory_area: Option<Rect>,
 }
 
+impl Default for InventoryPanel {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl InventoryPanel {
     pub fn new() -> Self {
         Self {
@@ -96,8 +102,8 @@ impl Lifecycle for InventoryPanel {
         event: &crossterm::event::Event,
         _event_sender: &Sender<ApplicationEvent>,
     ) -> EventFlow {
-        if state.game.focus == GameFocus::InventoryGrid {
-            if let crossterm::event::Event::Key(key) = event {
+        if state.game.focus == GameFocus::InventoryGrid
+            && let crossterm::event::Event::Key(key) = event {
                 let inv_count = state.game.player.inventory.len();
                 if inv_count > 0 {
                     let cols = self.inventory_cols.max(1);
@@ -136,7 +142,6 @@ impl Lifecycle for InventoryPanel {
                     }
                 }
             }
-        }
         EventFlow::Ignored
     }
 }

@@ -20,6 +20,12 @@ const HELP_HEIGHT: u16 = 20;
 
 pub struct HelpOverlay;
 
+impl Default for HelpOverlay {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl HelpOverlay {
     pub fn new() -> Self {
         Self
@@ -160,15 +166,14 @@ impl Lifecycle for HelpOverlay {
                     state.game.overlays.close(OverlayKind::Help);
                     return EventFlow::Consumed;
                 }
-                KeyCode::Char('h') => {
+                KeyCode::Char('h')
                     if key
                         .modifiers
                         .contains(crossterm::event::KeyModifiers::CONTROL)
-                    {
+                    => {
                         state.game.overlays.close(OverlayKind::Help);
                         return EventFlow::Consumed;
                     }
-                }
                 _ => {}
             }
         }

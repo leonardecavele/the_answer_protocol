@@ -18,6 +18,12 @@ const OVERLAY_HEIGHT_PERCENTAGE: u16 = 80;
 
 pub struct TraceOverlay;
 
+impl Default for TraceOverlay {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl TraceOverlay {
     pub fn new() -> Self {
         Self
@@ -62,12 +68,11 @@ impl Lifecycle for TraceOverlay {
         event: &CrosstermEvent,
         _sender: &Sender<ApplicationEvent>,
     ) -> EventFlow {
-        if let CrosstermEvent::Key(key) = event {
-            if key.code == KeyCode::Esc {
+        if let CrosstermEvent::Key(key) = event
+            && key.code == KeyCode::Esc {
                 state.ui.show_trace_log = false;
                 return EventFlow::Consumed;
             }
-        }
 
         EventFlow::Ignored
     }

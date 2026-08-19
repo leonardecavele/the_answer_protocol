@@ -9,6 +9,12 @@ use ratatui::widgets::Block;
 
 pub struct ActionHistoryPanel;
 
+impl Default for ActionHistoryPanel {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ActionHistoryPanel {
     pub fn new() -> Self {
         Self

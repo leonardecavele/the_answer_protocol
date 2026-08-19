@@ -22,6 +22,12 @@ pub struct NotificationsOverlay {
     pub visible_areas: Vec<(NotificationID, Rect)>,
 }
 
+impl Default for NotificationsOverlay {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl NotificationsOverlay {
     pub fn new() -> Self {
         Self {
@@ -75,11 +81,7 @@ impl Component for NotificationsOverlay {
                 .block(block)
                 .alignment(Alignment::Left);
 
-            let x = if area.width > width {
-                area.width - width
-            } else {
-                0
-            };
+            let x = area.width.saturating_sub(width);
 
             if current_y < height {
                 break;
@@ -112,8 +114,7 @@ impl Lifecycle for NotificationsOverlay {
         if let CrosstermEvent::Mouse(MouseEvent {
             kind, column, row, ..
         }) = event
-        {
-            if *kind == MouseEventKind::Down(MouseButton::Left) {
+            && *kind == MouseEventKind::Down(MouseButton::Left) {
                 // Find which notification was clicked
                 if let Some((clicked_id, _)) = self
                     .visible_areas
@@ -125,7 +126,6 @@ impl Lifecycle for NotificationsOverlay {
                     return EventFlow::Consumed;
                 }
             }
-        }
 
         EventFlow::Ignored
     }

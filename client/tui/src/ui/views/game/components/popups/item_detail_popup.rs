@@ -23,6 +23,12 @@ const FOOTER_HEIGHT: u16 = 2;
 
 pub struct ItemDetailPopup;
 
+impl Default for ItemDetailPopup {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ItemDetailPopup {
     pub fn new() -> Self {
         Self {}

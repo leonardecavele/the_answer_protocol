@@ -78,6 +78,12 @@ pub struct RightPanel {
     shown_entity: Option<String>,
 }
 
+impl Default for RightPanel {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl RightPanel {
     pub fn new() -> Self {
         Self {
