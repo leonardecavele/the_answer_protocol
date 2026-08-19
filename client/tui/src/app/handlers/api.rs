@@ -657,7 +657,6 @@ impl App {
 
                     self.state.network.is_connected = true;
 
-                    self.handle_request(ApiRequest::Look(LookCommand));
                     self.load_state_from_server();
                 }
                 GameServerEvent::Disconnected => {

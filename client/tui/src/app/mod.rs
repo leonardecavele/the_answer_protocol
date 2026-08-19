@@ -8,9 +8,9 @@ use crate::states::ui::Notification;
 use crate::ui::components::{Component, Lifecycle};
 use crate::ui::view::ViewManager;
 use api_client::ApiRequest;
-use api_client::commands::StatusCommand;
 use api_client::commands::WhoCommand;
 use api_client::commands::{InventoryCommand, QuestsCommand};
+use api_client::commands::{LookCommand, StatusCommand};
 use ratatui::Terminal;
 use ratatui::backend::CrosstermBackend;
 use std::io;
@@ -165,5 +165,6 @@ impl App {
         self.handle_request(ApiRequest::Status(StatusCommand));
         self.handle_request(ApiRequest::Inventory(InventoryCommand));
         self.handle_request(ApiRequest::Quests(QuestsCommand));
+        self.handle_request(ApiRequest::Look(LookCommand));
     }
 }
