@@ -233,7 +233,7 @@ impl GameManager {
         }
 
         if !self.room_exists(&save_data.current_room) {
-            return None;
+            save_data.current_room = PLAYER_ROOM_SPAWN.to_string();
         }
 
         // Filter out nonexistent items from player's inventory
