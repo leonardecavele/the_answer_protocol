@@ -1,6 +1,7 @@
 use crate::combat_instances::CombatInstanceManager;
 use crate::constantes::{
-    CODE_NL_SEP, CODE_SP_SEP, Direction, MAX_DMG_DEALT, MAX_TIME_FOR_COMBAT, MIN_DMG_DEALT, NPC_MAX_DMG, NPC_MIN_DMG, NPC_RESPAWN_TIME, PLAYER_ROOM_SPAWN, TEST_FILES_DIR,
+    CODE_NL_SEP, CODE_SP_SEP, Direction, MAX_DMG_DEALT, MAX_TIME_FOR_COMBAT, MIN_DMG_DEALT,
+    NPC_MAX_DMG, NPC_MIN_DMG, NPC_RESPAWN_TIME, PLAYER_ROOM_SPAWN, TEST_FILES_DIR,
 };
 use crate::inventory::Inventory;
 use crate::items::{Item, ItemId};
@@ -393,10 +394,10 @@ impl GameManager {
         let Some(first) = string.chars().next() else {
             return;
         };
-    
+
         let len = first.len_utf8();
         let uppercase = first.to_uppercase().collect::<String>();
-    
+
         string.replace_range(..len, &uppercase);
     }
 
@@ -504,8 +505,14 @@ impl GameManager {
         }
     }
 
-    pub fn calculate_dmg(&self, npc_combat_start_hp: u32, instance_player_count: u32, npc_hp: u32) -> u32 {
-        let mut dmg = (npc_combat_start_hp / instance_player_count).clamp(MIN_DMG_DEALT, MAX_DMG_DEALT);
+    pub fn calculate_dmg(
+        &self,
+        npc_combat_start_hp: u32,
+        instance_player_count: u32,
+        npc_hp: u32,
+    ) -> u32 {
+        let mut dmg =
+            (npc_combat_start_hp / instance_player_count).clamp(MIN_DMG_DEALT, MAX_DMG_DEALT);
         if dmg * 2 > npc_hp {
             dmg = npc_hp;
         }
@@ -734,7 +741,10 @@ impl GameManager {
             .combat_instances
             .get_all_players_in_combat(npc_id)
             .iter()
-            .filter_map(|player_id| self.get_player(*player_id).and_then(|player| Some(player.get_name().to_owned())))
+            .filter_map(|player_id| {
+                self.get_player(*player_id)
+                    .and_then(|player| Some(player.get_name().to_owned()))
+            })
             .collect::<Vec<String>>();
 
         if new_player_hp == 0 {

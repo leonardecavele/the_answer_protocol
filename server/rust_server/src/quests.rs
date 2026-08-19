@@ -69,9 +69,7 @@ impl Quest {
     }
 
     pub fn get_json_loots(&self) -> JsonValue {
-        let vec: Vec<JsonValue> = self.loots.iter().map(|loot| {
-            loot.to_json()
-        }).collect();
+        let vec: Vec<JsonValue> = self.loots.iter().map(|loot| loot.to_json()).collect();
         JsonValue::Array(vec)
     }
 

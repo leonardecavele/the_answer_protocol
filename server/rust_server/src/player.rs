@@ -1,13 +1,13 @@
 use crate::constantes::{
-    PLAYER_ROOM_SPAWN, NO_MORE_MESSAGES, PLAYER_STARTING_HP, PLAYER_STARTING_MAX_HP,
+    NO_MORE_MESSAGES, PLAYER_ROOM_SPAWN, PLAYER_STARTING_HP, PLAYER_STARTING_MAX_HP,
 };
 use crate::inventory::Inventory;
 use crate::items::ItemId;
 use crate::npc::Npc;
 use crate::room::RoomName;
 use crate::save::Save;
-use std::collections::{HashMap, HashSet};
 use rand::RngExt;
+use std::collections::{HashMap, HashSet};
 
 pub type PlayerId = u32;
 pub type PlayerCount = u32;
@@ -41,7 +41,7 @@ impl Player {
         self.current_room = PLAYER_ROOM_SPAWN.to_owned();
         self.dialogs_index.clear();
     }
-    
+
     pub fn from_save(save: Save) -> Self {
         Self {
             name: save.name,
@@ -99,14 +99,15 @@ impl Player {
             _ => return NO_MORE_MESSAGES.to_owned(),
         };
 
-        let (dialog_list_index, current_line_index) = self.dialogs_index
+        let (dialog_list_index, current_line_index) = self
+            .dialogs_index
             .get(&npc.get_name())
             .copied()
             .unwrap_or_else(|| {
                 let mut rng = rand::rng();
                 let random_index = rng.random_range(0..dialogs.len());
                 (random_index, 0)
-            // change dialog vec if we are at end of dialogue
+                // change dialog vec if we are at end of dialogue
             });
 
         if dialog_list_index >= dialogs.len() {
@@ -121,7 +122,8 @@ impl Player {
         }
 
         let message = &current_dialog_list[current_line_index];
-        self.dialogs_index.insert(npc.get_name(), (dialog_list_index, current_line_index + 1));
+        self.dialogs_index
+            .insert(npc.get_name(), (dialog_list_index, current_line_index + 1));
 
         message.to_owned()
     }

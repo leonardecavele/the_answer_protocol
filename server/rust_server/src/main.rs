@@ -58,13 +58,19 @@ fn main() -> std::io::Result<()> {
     let reader_stream = writer_stream.try_clone()?;
 
     let (mpsc_sender, mpsc_receiver) = mpsc::channel();
-    
+
     // Channel for the code tester thread to send results back
     let (tester_sender, tester_receiver) = mpsc::channel();
 
     // channel to make the two threads communicate
     start_reader_thread(reader_stream, mpsc_sender);
-    let mut game_manager = GameManager::new(mpsc_receiver, tester_receiver, tester_sender, writer_stream, parser);
+    let mut game_manager = GameManager::new(
+        mpsc_receiver,
+        tester_receiver,
+        tester_sender,
+        writer_stream,
+        parser,
+    );
 
     let running = Arc::new(AtomicBool::new(true));
     let cloned_running = running.clone();
