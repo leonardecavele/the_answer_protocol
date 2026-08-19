@@ -390,6 +390,12 @@ impl GameManager {
         min + rand::random::<u32>() % (max - min + 1)
     }
 
+    pub fn format_room_name(&self, name: &str) -> String {
+        let mut name_formatted = name.replace("_", " ");
+        self.uppercase_first_letter(&mut name_formatted);
+        name_formatted
+    }
+
     pub fn uppercase_first_letter(&self, string: &mut String) {
         let Some(first) = string.chars().next() else {
             return;
@@ -523,9 +529,10 @@ impl GameManager {
         let mut npcs_to_revive = Vec::new();
         for (npc_id, ncp) in self.all_npcs.iter() {
             if let Some(death) = ncp.get_death()
-                && death.elapsed() > NPC_RESPAWN_TIME {
-                    npcs_to_revive.push(*npc_id);
-                }
+                && death.elapsed() > NPC_RESPAWN_TIME
+            {
+                npcs_to_revive.push(*npc_id);
+            }
         }
 
         for npc_id in npcs_to_revive {
@@ -694,9 +701,10 @@ impl GameManager {
     pub fn check_action_already_taken(&self, player_id: PlayerId, _npc_id: NpcId) -> bool {
         if let Some(instance) = self.combat_instances.get_instance_for_player(player_id)
             && let Some(_player) = instance.get_player_success(player_id)
-                && let Some(_success) = _player {
-                    return true;
-                }
+            && let Some(_success) = _player
+        {
+            return true;
+        }
         false
     }
     pub fn npc_attacks_player(
@@ -739,7 +747,8 @@ impl GameManager {
             .get_all_players_in_combat(npc_id)
             .iter()
             .filter_map(|player_id| {
-                self.get_player(*player_id).map(|player| player.get_name().to_owned())
+                self.get_player(*player_id)
+                    .map(|player| player.get_name().to_owned())
             })
             .collect::<Vec<String>>();
 
@@ -845,9 +854,10 @@ impl GameManager {
                         Ok(entry) => {
                             let path = entry.path();
                             if path.is_file()
-                                && let Some(name) = path.file_name() {
-                                    all_files.push(name.to_str().unwrap().to_owned());
-                                }
+                                && let Some(name) = path.file_name()
+                            {
+                                all_files.push(name.to_str().unwrap().to_owned());
+                            }
                         }
                         Err(e) => {
                             warn!("error {}", e);
