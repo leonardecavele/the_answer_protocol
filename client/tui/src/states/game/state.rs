@@ -45,4 +45,16 @@ impl GameState {
         let time_str = chrono::Local::now().format("%H:%M:%S").to_string();
         self.action_log.push(format!("[{}] {}", time_str, text));
     }
+
+    pub fn find_npc(&self, id: &str) -> Option<&Npc> {
+        self.room.npcs.iter().find(|npc| npc.id == id)
+    }
+
+    pub fn find_item(&self, id: &str) -> Option<&Item> {
+        self.room
+            .items
+            .iter()
+            .find(|item| item.id == id)
+            .or_else(|| self.player.inventory.iter().find(|item| item.id == id))
+    }
 }

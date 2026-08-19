@@ -1,7 +1,7 @@
 use crate::collections::{Step, move_index};
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
-use crate::states::game::OverlayKind;
+use crate::states::game::{Npc, OverlayKind};
 use crate::ui::components::Component;
 use crate::ui::components::Lifecycle;
 use crate::ui::theme::overlay_block;
@@ -30,13 +30,8 @@ impl NpcActionsPopup {
         }
     }
 
-    fn get_available_actions(&self, state: &AppState, npc_id: &str) -> Vec<String> {
-        let mut actions = Vec::new();
-        if let Some(npc) = state.game.manifest.npcs.get(npc_id) {
-            for action in &npc.actions {
-                actions.push(action.to_uppercase());
-            }
-        }
+    fn actions_of(npc: &Npc) -> Vec<String> {
+        let mut actions: Vec<String> = npc.actions.iter().map(|a| a.to_uppercase()).collect();
         actions.push("CANCEL".to_string());
         actions
     }
@@ -49,19 +44,14 @@ impl Component for NpcActionsPopup {
             None => return,
         };
 
-        let actions = self.get_available_actions(state, npc_id);
+        let Some(npc) = state.game.find_npc(npc_id) else {
+            return;
+        };
+
+        let actions = Self::actions_of(npc);
+        let title = format!(" {} ", npc.name);
 
         let popup_area = centered_rect(area, POPUP_WIDTH, actions.len() as u16 + 2);
-
-        let display_name = state
-            .game
-            .manifest
-            .npcs
-            .get(npc_id)
-            .map(|n| n.name.clone())
-            .unwrap_or_else(|| npc_id.to_string());
-
-        let title = format!(" {} ", display_name);
 
         frame.render_widget(Clear, popup_area);
 
@@ -100,7 +90,12 @@ impl Lifecycle for NpcActionsPopup {
         };
 
         if let CrosstermEvent::Key(key) = event {
-            let actions = self.get_available_actions(state, &npc_id);
+            let Some(actions) = state.game.find_npc(&npc_id).map(Self::actions_of) else {
+                state.game.overlays.close(OverlayKind::NpcActions);
+                self.selected_action_index = 0;
+                return true;
+            };
+
             let count = actions.len();
 
             match key.code {

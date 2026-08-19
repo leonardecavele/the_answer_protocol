@@ -11,6 +11,7 @@ use ratatui::{
     style::{Color, Style},
     widgets::{Clear, Paragraph},
 };
+use std::time::Duration;
 use tokio::sync::mpsc::Sender;
 
 const POPUP_WIDTH_PERCENT: u16 = 60;
@@ -35,17 +36,9 @@ impl Component for ItemDetailPopup {
             None => return,
         };
 
-        let manifest_item = state.game.manifest.items.get(item_id);
-
-        let display_name = manifest_item
-            .map(|i| i.name.clone())
-            .unwrap_or_else(|| item_id.to_string());
-
-        let description = manifest_item
-            .map(|i| i.description.clone())
-            .unwrap_or_else(|| "No description available.".to_string());
-
-        let image_path = manifest_item.and_then(|i| i.image_path.clone());
+        let Some(item) = state.game.find_item(item_id) else {
+            return;
+        };
 
         let popup_area = centered_rect(
             area,
@@ -56,7 +49,7 @@ impl Component for ItemDetailPopup {
         frame.render_widget(Clear, popup_area);
 
         let block = overlay_block()
-            .title(format!(" {} ", display_name))
+            .title(format!(" {} ", item.name))
             .style(Style::default().fg(Color::Yellow));
 
         let inner_area = block.inner(popup_area);
@@ -76,29 +69,34 @@ impl Component for ItemDetailPopup {
         let desc_area = chunks[2];
         let footer_area = chunks[3];
 
-        if let Some(path) = image_path {
-            if let Some((img_width, img_height)) = state.ui.image_manager.get_dimensions(&path) {
-                actual_image_area =
-                    center_area_with_aspect_ratio(actual_image_area, img_width, img_height);
-            }
+        match &item.sprite.frame_at(Duration::ZERO) {
+            Some(image_path) => {
+                if let Some((img_width, img_height)) =
+                    state.ui.image_manager.get_dimensions(image_path)
+                {
+                    actual_image_area =
+                        center_area_with_aspect_ratio(actual_image_area, img_width, img_height);
+                }
 
-            state.ui.image_manager.render(
-                frame,
-                actual_image_area,
-                &path,
-                ratatui_image::Resize::Fit(None),
-            );
-        } else {
-            let mut centered_fallback_area = actual_image_area;
-            if centered_fallback_area.height > 1 {
-                centered_fallback_area.y += centered_fallback_area.height / 2;
-                centered_fallback_area.height = 1;
+                state.ui.image_manager.render(
+                    frame,
+                    actual_image_area,
+                    image_path,
+                    ratatui_image::Resize::Fit(None),
+                );
             }
-            let p = Paragraph::new(" No image available. ").alignment(Alignment::Center);
-            frame.render_widget(p, centered_fallback_area);
+            None => {
+                let mut centered_fallback_area = actual_image_area;
+                if centered_fallback_area.height > 1 {
+                    centered_fallback_area.y += centered_fallback_area.height / 2;
+                    centered_fallback_area.height = 1;
+                }
+                let p = Paragraph::new(" No image available. ").alignment(Alignment::Center);
+                frame.render_widget(p, centered_fallback_area);
+            }
         }
 
-        let desc_lines = wrap_str_to_lines(&description, desc_area.width as usize);
+        let desc_lines = wrap_str_to_lines(&item.description, desc_area.width as usize);
         let desc_paragraph = Paragraph::new(desc_lines).alignment(Alignment::Center);
         frame.render_widget(desc_paragraph, desc_area);
 
