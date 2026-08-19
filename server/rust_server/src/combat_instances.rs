@@ -2,6 +2,7 @@ use crate::npc::NpcId;
 use crate::player::PlayerId;
 use std::collections::HashMap;
 use std::time::Instant;
+use tracing::warn;
 
 pub struct CombatInstanceManager {
     pub instances: HashMap<NpcId, CombatInstance>,
@@ -26,7 +27,12 @@ impl CombatInstanceManager {
 
     pub fn get_all_players_in_combat(&self, npc_id: NpcId) -> Vec<PlayerId> {
         let mut vec = Vec::new();
-        let instance = self.instances.get(&npc_id).unwrap();
+        let instance_wrap = self.instances.get(&npc_id);
+        if instance_wrap.is_none() {
+            warn!("No combat instance found for npc_id: {}", npc_id);
+            return vec;
+        }
+        let instance = instance_wrap.unwrap();
         vec.extend(instance.get_grouped_players());
         vec.push(instance.leader);
         return vec;
@@ -71,7 +77,7 @@ pub struct CombatInstance {
     npc_combat_start_hp: u32,
     pub combat_start_time: Instant, // Option<bool> because the success is None until the player played
     file_name: String,
-    pub is_evaluating_response: bool,
+    pub evaluating_players_count: u32,
 }
 
 impl CombatInstance {
@@ -95,7 +101,7 @@ impl CombatInstance {
             npc_combat_start_hp: npc_hp,
             combat_start_time: Instant::now(),
             file_name,
-            is_evaluating_response: false,
+            evaluating_players_count: 0,
         }
     }
 

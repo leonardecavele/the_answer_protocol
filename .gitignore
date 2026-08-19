@@ -6,6 +6,7 @@
 !server/assets/tests/
 !server/assets/tests/*.c
 *debug*
+*.py
 .zed
 .vscode
 *:Zone.Identifier
