@@ -74,7 +74,7 @@ impl Parser {
                     ));
                 }
             }
-            for (_dir, dest) in room.get_exits() {
+            for dest in room.get_exits().values() {
                 if !valid_room_names.contains(dest) {
                     return Err(format!(
                         "Room {} ({}) has an exit to invalid room name '{}'",

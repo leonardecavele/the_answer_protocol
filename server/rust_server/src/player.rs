@@ -73,7 +73,7 @@ impl Player {
     }
 
     pub fn get_items(&self) -> &HashSet<ItemId> {
-        &self.inventory.get_items()
+        self.inventory.get_items()
     }
     pub fn add_item(&mut self, item_id: ItemId) {
         self.inventory.add_item(item_id);

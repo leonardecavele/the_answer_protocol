@@ -25,7 +25,7 @@ impl GameManager {
                 Err(mpsc::RecvTimeoutError::Disconnected) => return Ok(TickResult::Exit),
             };
         }
-        return Ok(TickResult::TickEnd);
+        Ok(TickResult::TickEnd)
     }
 
     pub fn update_game_state(&mut self) -> std::io::Result<()> {
@@ -35,10 +35,7 @@ impl GameManager {
         for quest_instance in self.quest_instances.iter_mut() {
             let _state = quest_instance.get_state();
 
-            match quest_instance.get_quest_name().as_str() {
-                "Tunnel" => {}
-                _ => {}
-            }
+            if quest_instance.get_quest_name().as_str() == "Tunnel" {}
         }
 
         let current_time = Instant::now();
@@ -47,9 +44,9 @@ impl GameManager {
 
         for room in self.all_rooms.values() {
             for item_id in room.get_inventory().get_items() {
-                if let Some(item) = self.all_items.get(item_id) {
-                    if let Some(dropped_time) = item.get_dropped_at() {
-                        if current_time.duration_since(dropped_time) >= ITEM_DESPAWN_TIME {
+                if let Some(item) = self.all_items.get(item_id)
+                    && let Some(dropped_time) = item.get_dropped_at()
+                        && current_time.duration_since(dropped_time) >= ITEM_DESPAWN_TIME {
                             let no_despawn_room = item.get_remove_despawn_in_room();
                             if no_despawn_room.is_none()
                                 || no_despawn_room.unwrap() != room.get_id()
@@ -62,8 +59,6 @@ impl GameManager {
                                 ));
                             }
                         }
-                    }
-                }
             }
         }
         for (room_name, item_id, is_lost_item, item_rep) in actions {

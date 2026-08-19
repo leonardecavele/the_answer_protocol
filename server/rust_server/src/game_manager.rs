@@ -66,11 +66,11 @@ impl GameManager {
         };
 
         manager.restore_server_state();
-        return manager;
+        manager
     }
 
     pub fn get_players(&self) -> &HashMap<PlayerId, Player> {
-        return &self.players;
+        &self.players
     }
 
     fn save_player(&mut self, player_id: PlayerId) {
@@ -117,7 +117,7 @@ impl GameManager {
         self.players_by_name.get(player_name)
     }
     pub fn get_players_by_names(&self) -> &HashMap<String, PlayerId> {
-        return &self.players_by_name;
+        &self.players_by_name
     }
 
     pub fn get_player_from_name(&self, player_name: &str) -> Option<&Player> {
@@ -203,11 +203,11 @@ impl GameManager {
     }
 
     pub fn get_all_items(&mut self) -> &mut HashMap<ItemId, Item> {
-        return &mut self.all_items;
+        &mut self.all_items
     }
 
     pub fn get_all_rooms(&mut self) -> &mut HashMap<RoomId, Room> {
-        return &mut self.all_rooms;
+        &mut self.all_rooms
     }
 
     pub fn get_quest(&self, id: &Questid) -> Option<&Quest> {
@@ -215,7 +215,7 @@ impl GameManager {
     }
 
     pub fn get_all_quests(&mut self) -> &mut HashMap<Questid, Quest> {
-        return &mut self.all_quests;
+        &mut self.all_quests
     }
 
     fn try_restore_player_save(&mut self, name: &str) -> Option<Player> {
@@ -273,7 +273,7 @@ impl GameManager {
             self.quest_instances.push(quest_instance);
         }
 
-        return Some(Player::from_save(save_data));
+        Some(Player::from_save(save_data))
     }
 
     fn add_player_to_game(&mut self, player: Player) {
@@ -313,7 +313,7 @@ impl GameManager {
     }
 
     pub fn get_nb_players(&self) -> usize {
-        return self.players.len();
+        self.players.len()
     }
 
     pub fn get_item_name(&self, item_id: &ItemId) -> String {
@@ -339,7 +339,7 @@ impl GameManager {
             .map(|item_id| format!("{}.{}", item_id, self.get_item_name(item_id)))
             .collect();
 
-        return format!("{:?}", items);
+        format!("{:?}", items)
     }
 
     pub fn get_room_by_name(&self, room_name: &str) -> Option<&Room> {
@@ -377,11 +377,11 @@ impl GameManager {
         &mut self,
         duration: std::time::Duration,
     ) -> Result<String, std::sync::mpsc::RecvTimeoutError> {
-        return self.mpsc_receiver.recv_timeout(duration);
+        self.mpsc_receiver.recv_timeout(duration)
     }
 
     pub fn item_exists(&self, item_id: ItemId) -> bool {
-        return self.all_items.contains_key(&item_id);
+        self.all_items.contains_key(&item_id)
     }
 
     pub fn generate_npc_dmg(&self) -> u32 {
@@ -466,12 +466,12 @@ impl GameManager {
                 players.push(player.get_name().to_owned());
             }
         }
-        return players;
+        players
     }
 
     pub fn npc_is_in_room(&self, npc_id: NpcId, room_name: &str) -> bool {
         self.get_npc(npc_id)
-            .map_or(false, |npc| npc.get_spawn_room() == room_name)
+            .is_some_and(|npc| npc.get_spawn_room() == room_name)
     }
 
     pub fn move_player_to_room(&mut self, player_name: &str, room_name: &str) {
@@ -522,11 +522,10 @@ impl GameManager {
     pub fn revive_dead_npcs(&mut self) {
         let mut npcs_to_revive = Vec::new();
         for (npc_id, ncp) in self.all_npcs.iter() {
-            if let Some(death) = ncp.get_death() {
-                if death.elapsed() > NPC_RESPAWN_TIME {
+            if let Some(death) = ncp.get_death()
+                && death.elapsed() > NPC_RESPAWN_TIME {
                     npcs_to_revive.push(*npc_id);
                 }
-            }
         }
 
         for npc_id in npcs_to_revive {
@@ -564,7 +563,7 @@ impl GameManager {
         self.all_npcs
             .iter()
             .find(|(_, npc)| npc.get_spawn_room() == room_needed && npc.get_name() == npc_rep)
-            .map(|(npc_id, npc)| (npc_id.clone(), npc.get_name().clone()))
+            .map(|(npc_id, npc)| (*npc_id, npc.get_name().clone()))
     }
 
     pub fn parse_item(&self, item_rep: &str, room_needed: RoomName) -> Option<(ItemId, String)> {
@@ -580,7 +579,7 @@ impl GameManager {
         room_items
             .iter()
             .find(|item_id| self.get_item_name(item_id) == item_rep)
-            .map(|item_id| (item_id.clone(), self.get_item_name(item_id)))
+            .map(|item_id| (*item_id, self.get_item_name(item_id)))
     }
 
     pub fn convert_items_to_string(&self, inventory: &Inventory) -> Vec<String> {
@@ -693,13 +692,11 @@ impl GameManager {
     }
 
     pub fn check_action_already_taken(&self, player_id: PlayerId, _npc_id: NpcId) -> bool {
-        if let Some(instance) = self.combat_instances.get_instance_for_player(player_id) {
-            if let Some(_player) = instance.get_player_success(player_id) {
-                if let Some(_success) = _player {
+        if let Some(instance) = self.combat_instances.get_instance_for_player(player_id)
+            && let Some(_player) = instance.get_player_success(player_id)
+                && let Some(_success) = _player {
                     return true;
                 }
-            }
-        }
         false
     }
     pub fn npc_attacks_player(
@@ -718,7 +715,7 @@ impl GameManager {
         let npc_hp = npc.get_hp().unwrap();
         let mut dealt_damage = damage;
         let player = self.get_mut_player(player_id).unwrap();
-        let player_name = player.get_name().to_owned();
+        let _player_name = player.get_name().to_owned();
         let player_hp = player.get_hp();
         let new_player_hp = if player_hp > damage {
             player_hp - damage
@@ -737,23 +734,22 @@ impl GameManager {
 
         //does nothing if no the player is not in a combat instance
         self.set_success_for_player(player_id, false);
-        let players_to_send_event = self
+        let _players_to_send_event = self
             .combat_instances
             .get_all_players_in_combat(npc_id)
             .iter()
             .filter_map(|player_id| {
-                self.get_player(*player_id)
-                    .and_then(|player| Some(player.get_name().to_owned()))
+                self.get_player(*player_id).map(|player| player.get_name().to_owned())
             })
             .collect::<Vec<String>>();
 
         if new_player_hp == 0 {
             self.kill_player(player_id);
         }
-        return format!(
+        format!(
             "{{\"attacker_hp\":{}, \"target_hp\":{}, \"damage\":{}, \"status\":\"{}\"}}",
             npc_hp, new_player_hp, dealt_damage, status
-        );
+        )
     }
 
     pub fn get_player_success(&self, player_id: PlayerId) -> Option<Option<bool>> {
@@ -818,10 +814,10 @@ impl GameManager {
             );
             self.add_diff_to_tick(event);
         }
-        return format!(
+        format!(
             "{{\"attacker_hp\":{}, \"target_hp\":{}, \"damage\":{}, \"status\":\"{}\"}}",
             player_hp, new_npc_hp, dealt_damage, status
-        );
+        )
     }
 
     pub fn player_has_quest(&self, player_id: PlayerId, quest_id: Questid) -> bool {
@@ -833,7 +829,7 @@ impl GameManager {
     }
 
     pub fn player_has_item(&self, player_id: PlayerId, item_id: ItemId) -> bool {
-        return self.get_player(player_id).unwrap().has_item(item_id);
+        self.get_player(player_id).unwrap().has_item(item_id)
     }
 
     pub fn get_mut_item(&mut self, item_id: ItemId) -> &mut Item {
@@ -848,11 +844,10 @@ impl GameManager {
                     match entry {
                         Ok(entry) => {
                             let path = entry.path();
-                            if path.is_file() {
-                                if let Some(name) = path.file_name() {
+                            if path.is_file()
+                                && let Some(name) = path.file_name() {
                                     all_files.push(name.to_str().unwrap().to_owned());
                                 }
-                            }
                         }
                         Err(e) => {
                             warn!("error {}", e);

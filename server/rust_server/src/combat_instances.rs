@@ -8,6 +8,12 @@ pub struct CombatInstanceManager {
     pub instances: HashMap<NpcId, CombatInstance>,
 }
 
+impl Default for CombatInstanceManager {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CombatInstanceManager {
     pub fn new() -> Self {
         Self {
@@ -35,7 +41,7 @@ impl CombatInstanceManager {
         let instance = instance_wrap.unwrap();
         vec.extend(instance.get_grouped_players());
         vec.push(instance.leader);
-        return vec;
+        vec
     }
 
     pub fn get_mut_instance_for_npc(&mut self, npc_id: NpcId) -> Option<&mut CombatInstance> {

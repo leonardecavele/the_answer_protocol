@@ -7,6 +7,12 @@ pub struct Inventory {
     items: HashSet<ItemId>,
 }
 
+impl Default for Inventory {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Inventory {
     pub fn new() -> Self {
         Self {
@@ -15,7 +21,7 @@ impl Inventory {
     }
 
     pub fn contains_item(&self, item_id: ItemId) -> bool {
-        return self.items.contains(&item_id);
+        self.items.contains(&item_id)
     }
 
     pub fn add_item(&mut self, item_id: ItemId) {
