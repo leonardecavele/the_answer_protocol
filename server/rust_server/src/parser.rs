@@ -74,7 +74,7 @@ impl Parser {
                     ));
                 }
             }
-            for (_dir, dest) in room.get_exits() {
+            for dest in room.get_exits().values() {
                 if !valid_room_names.contains(dest) {
                     return Err(format!(
                         "Room {} ({}) has an exit to invalid room name '{}'",
@@ -226,7 +226,10 @@ impl Parser {
                     for (dir, dest) in room["exits"].entries() {
                         let dir_lower = dir.to_lowercase();
                         if !["north", "east", "south", "west"].contains(&dir_lower.as_str()) {
-                            return Err(format!("invalid exit direction '{}' in room {}", dir, room_id));
+                            return Err(format!(
+                                "invalid exit direction '{}' in room {}",
+                                dir, room_id
+                            ));
                         }
                         if let Some(dest_str) = dest.as_str() {
                             exits.insert(dir.to_uppercase(), dest_str.to_string());

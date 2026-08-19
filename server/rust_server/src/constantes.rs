@@ -4,7 +4,8 @@ use crate::room::RoomId;
 
 pub const TEST_FILES_DIR: &str = "assets/code";
 
-pub const NPC_DMG: u32 = 50;
+pub const NPC_MAX_DMG: u32 = 50;
+pub const NPC_MIN_DMG: u32 = 25;
 pub const MINUTE: u64 = 60;
 pub const MIN_DMG_DEALT: u32 = 5;
 pub const MAX_DMG_DEALT: u32 = u32::MAX;
