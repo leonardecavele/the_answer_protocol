@@ -4,6 +4,7 @@ use crate::states::app::AppState;
 use crate::ui::components::Component;
 use crate::ui::components::Lifecycle;
 use crate::ui::components::interactive::is_mouse_in_rect;
+use crate::ui::components::lifecycle::EventFlow;
 use crate::ui::theme::default_block;
 use crate::ui::utils::wrap_str_to_lines;
 use crossterm::event::{Event as CrosstermEvent, MouseButton, MouseEvent, MouseEventKind};
@@ -107,7 +108,7 @@ impl Lifecycle for NotificationsOverlay {
         state: &mut AppState,
         event: &CrosstermEvent,
         _event_sender: &Sender<ApplicationEvent>,
-    ) -> bool {
+    ) -> EventFlow {
         if let CrosstermEvent::Mouse(MouseEvent {
             kind, column, row, ..
         }) = event
@@ -121,10 +122,11 @@ impl Lifecycle for NotificationsOverlay {
                 {
                     let id_to_remove = clicked_id.clone();
                     state.ui.notifications.remove(&id_to_remove);
-                    return true;
+                    return EventFlow::Consumed;
                 }
             }
         }
-        false
+
+        EventFlow::Ignored
     }
 }

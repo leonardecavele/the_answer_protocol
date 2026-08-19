@@ -1,6 +1,7 @@
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
 use crate::states::game::OverlayKind;
+use crate::ui::components::lifecycle::EventFlow;
 use crate::ui::components::{Component, Lifecycle};
 use crate::ui::theme::{close_hint, popup_block};
 use crate::ui::utils::{centered_rect_percent, wrap_str_to_lines};
@@ -111,20 +112,21 @@ impl Lifecycle for QuestDetailPopup {
         state: &mut AppState,
         event: &CrosstermEvent,
         _event_sender: &Sender<ApplicationEvent>,
-    ) -> bool {
+    ) -> EventFlow {
         if !state.game.overlays.is_open(OverlayKind::QuestDetail) {
-            return false;
+            return EventFlow::Ignored;
         }
 
-        if let CrosstermEvent::Key(key) = event {
-            match key.code {
-                KeyCode::Esc | KeyCode::Enter | KeyCode::Char('q') => {
-                    state.game.overlays.close_top();
-                }
-                _ => {}
+        let CrosstermEvent::Key(key) = event else {
+            return EventFlow::Ignored;
+        };
+
+        match key.code {
+            KeyCode::Esc | KeyCode::Enter | KeyCode::Char('q') => {
+                state.game.overlays.close_top();
+                EventFlow::Consumed
             }
+            _ => EventFlow::Ignored,
         }
-
-        true
     }
 }

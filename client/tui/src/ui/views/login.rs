@@ -4,6 +4,7 @@ use crate::states::ui::Notification;
 use crate::ui::components::Component;
 use crate::ui::components::Lifecycle;
 use crate::ui::components::interactive::Interactive;
+use crate::ui::components::lifecycle::EventFlow;
 use crate::ui::components::widgets::button::Button;
 use crate::ui::components::widgets::text_input::TextInput;
 use crossterm::event::{Event as CrosstermEvent, KeyCode, KeyEvent, MouseEvent, MouseEventKind};
@@ -126,24 +127,24 @@ impl Lifecycle for LoginView {
         state: &mut AppState,
         event: &CrosstermEvent,
         event_sender: &Sender<ApplicationEvent>,
-    ) -> bool {
+    ) -> EventFlow {
         match event {
             CrosstermEvent::Key(KeyEvent { code, .. }) => {
                 // Keyboard navigation
                 if *code == KeyCode::Tab || *code == KeyCode::Down {
                     self.cycle_focus_forward();
-                    return true;
+                    return EventFlow::Consumed;
                 }
                 if *code == KeyCode::BackTab || *code == KeyCode::Up {
                     self.cycle_focus_backward();
-                    return true;
+                    return EventFlow::Consumed;
                 }
 
                 if *code == KeyCode::Enter {
                     if self.current_focus != LoginFocus::ConnectButton {
                         self.current_focus = LoginFocus::ConnectButton;
                         self.update_focus();
-                        return true;
+                        return EventFlow::Consumed;
                     }
                 }
             }
@@ -155,15 +156,15 @@ impl Lifecycle for LoginView {
                     if self.name_input.is_mouse_over(*column, *row) {
                         self.current_focus = LoginFocus::PlayerName;
                         self.update_focus();
-                        return true;
+                        return EventFlow::Consumed;
                     } else if self.ip_input.is_mouse_over(*column, *row) {
                         self.current_focus = LoginFocus::ServerIp;
                         self.update_focus();
-                        return true;
+                        return EventFlow::Consumed;
                     } else if self.port_input.is_mouse_over(*column, *row) {
                         self.current_focus = LoginFocus::ServerPort;
                         self.update_focus();
-                        return true;
+                        return EventFlow::Consumed;
                     } else if self.connect_button.is_mouse_over(*column, *row) {
                         self.current_focus = LoginFocus::ConnectButton;
                         self.update_focus();
@@ -178,18 +179,18 @@ impl Lifecycle for LoginView {
         match self.current_focus {
             LoginFocus::PlayerName => {
                 self.name_input
-                    .handle_terminal_event(state, event, event_sender);
+                    .handle_terminal_event(state, event, event_sender)
             }
-            LoginFocus::ServerIp => {
-                self.ip_input
-                    .handle_terminal_event(state, event, event_sender);
-            }
+            LoginFocus::ServerIp => self
+                .ip_input
+                .handle_terminal_event(state, event, event_sender),
             LoginFocus::ServerPort => {
                 self.port_input
-                    .handle_terminal_event(state, event, event_sender);
+                    .handle_terminal_event(state, event, event_sender)
             }
             LoginFocus::ConnectButton => {
-                self.connect_button
+                let flow = self
+                    .connect_button
                     .handle_terminal_event(state, event, event_sender);
 
                 if self.connect_button.inner.take_pressed() {
@@ -217,8 +218,9 @@ impl Lifecycle for LoginView {
                         ));
                     }
                 }
+
+                flow
             }
         }
-        true
     }
 }

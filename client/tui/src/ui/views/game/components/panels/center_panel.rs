@@ -4,6 +4,7 @@ use crate::states::app::AppState;
 use crate::states::game::GameFocus;
 use crate::ui::components::Component;
 use crate::ui::components::Lifecycle;
+use crate::ui::components::lifecycle::EventFlow;
 use crate::ui::components::scrollable::Scrollable;
 use ratatui::{
     Frame,
@@ -50,23 +51,25 @@ impl Lifecycle for CenterPanel {
         state: &mut AppState,
         event: &crossterm::event::Event,
         event_sender: &Sender<ApplicationEvent>,
-    ) -> bool {
+    ) -> EventFlow {
         if state.game.focus == GameFocus::ActionHistory {
             if self
                 .action_history
                 .handle_terminal_event(state, event, event_sender)
+                .is_consumed()
             {
-                return true;
+                return EventFlow::Consumed;
             }
         }
         if state.game.focus == GameFocus::InventoryGrid {
             if self
                 .inventory
                 .handle_terminal_event(state, event, event_sender)
+                .is_consumed()
             {
-                return true;
+                return EventFlow::Consumed;
             }
         }
-        false
+        EventFlow::Ignored
     }
 }

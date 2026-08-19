@@ -4,6 +4,7 @@ use crate::states::app::AppState;
 use crate::states::game::{Npc, OverlayKind};
 use crate::ui::components::Component;
 use crate::ui::components::Lifecycle;
+use crate::ui::components::lifecycle::EventFlow;
 use crate::ui::theme::popup_block;
 use crate::ui::utils::centered_rect;
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
@@ -79,17 +80,17 @@ impl Lifecycle for NpcActionsPopup {
         state: &mut AppState,
         event: &CrosstermEvent,
         event_sender: &Sender<ApplicationEvent>,
-    ) -> bool {
+    ) -> EventFlow {
         let npc_id = match state.game.overlays.target_of(OverlayKind::NpcActions) {
             Some(id) => id.to_string(),
-            None => return false,
+            None => return EventFlow::Ignored,
         };
 
         if let CrosstermEvent::Key(key) = event {
             let Some(actions) = state.game.find_npc(&npc_id).map(Self::actions_of) else {
                 state.game.overlays.close(OverlayKind::NpcActions);
                 self.selected_action_index = 0;
-                return true;
+                return EventFlow::Consumed;
             };
 
             let count = actions.len();
@@ -98,17 +99,17 @@ impl Lifecycle for NpcActionsPopup {
                 KeyCode::Up => {
                     self.selected_action_index =
                         move_index(self.selected_action_index, count, Step::Previous);
-                    return true;
+                    return EventFlow::Consumed;
                 }
                 KeyCode::Down => {
                     self.selected_action_index =
                         move_index(self.selected_action_index, count, Step::Next);
-                    return true;
+                    return EventFlow::Consumed;
                 }
                 KeyCode::Esc => {
                     state.game.overlays.close_top();
                     self.selected_action_index = 0;
-                    return true;
+                    return EventFlow::Consumed;
                 }
                 KeyCode::Enter => {
                     if let Some(action) = actions.get(self.selected_action_index) {
@@ -119,13 +120,14 @@ impl Lifecycle for NpcActionsPopup {
                     }
                     state.game.overlays.close_top();
                     self.selected_action_index = 0;
-                    return true;
+                    return EventFlow::Consumed;
                 }
                 _ => {
-                    return true;
+                    return EventFlow::Ignored;
                 }
             }
         }
-        true
+
+        EventFlow::Ignored
     }
 }

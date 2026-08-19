@@ -2,6 +2,7 @@ use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
 use crate::ui::components::Component;
 use crate::ui::components::Lifecycle;
+use crate::ui::components::lifecycle::EventFlow;
 use crossterm::event::{Event as CrosstermEvent, KeyCode, MouseEventKind};
 use mpsc::Sender;
 use ratatui::Frame;
@@ -69,7 +70,7 @@ impl<T: ScrollableComponent> Lifecycle for Scrollable<T> {
         state: &mut AppState,
         event: &CrosstermEvent,
         sender: &Sender<ApplicationEvent>,
-    ) -> bool {
+    ) -> EventFlow {
         if let CrosstermEvent::Key(key) = event {
             match key.code {
                 KeyCode::Up => {
@@ -77,22 +78,22 @@ impl<T: ScrollableComponent> Lifecycle for Scrollable<T> {
                         .scroll_offset
                         .saturating_add(1)
                         .min(self.last_max_scroll);
-                    return true;
+                    return EventFlow::Consumed;
                 }
                 KeyCode::Down => {
                     self.scroll_offset = self.scroll_offset.saturating_sub(1);
-                    return true;
+                    return EventFlow::Consumed;
                 }
                 KeyCode::PageUp => {
                     self.scroll_offset = self
                         .scroll_offset
                         .saturating_add(10)
                         .min(self.last_max_scroll);
-                    return true;
+                    return EventFlow::Consumed;
                 }
                 KeyCode::PageDown => {
                     self.scroll_offset = self.scroll_offset.saturating_sub(10);
-                    return true;
+                    return EventFlow::Consumed;
                 }
                 _ => {}
             }
@@ -102,10 +103,10 @@ impl<T: ScrollableComponent> Lifecycle for Scrollable<T> {
                     .scroll_offset
                     .saturating_add(1)
                     .min(self.last_max_scroll);
-                return true;
+                return EventFlow::Consumed;
             } else if mouse.kind == MouseEventKind::ScrollDown {
                 self.scroll_offset = self.scroll_offset.saturating_sub(1);
-                return true;
+                return EventFlow::Consumed;
             }
         }
 

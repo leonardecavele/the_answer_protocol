@@ -4,6 +4,7 @@ use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
 use crate::ui::components::Component;
 use crate::ui::components::Lifecycle;
+use crate::ui::components::lifecycle::EventFlow;
 use crate::ui::components::scrollable::Scrollable;
 
 use self::components::{
@@ -125,9 +126,9 @@ impl Lifecycle for GameView {
         state: &mut AppState,
         event: &CrosstermEvent,
         event_sender: &mpsc::Sender<ApplicationEvent>,
-    ) -> bool {
+    ) -> EventFlow {
         if let Some(kind) = state.game.overlays.top_kind() {
-            let handled = match kind {
+            let flow = match kind {
                 OverlayKind::Help => self.help.handle_terminal_event(state, event, event_sender),
                 OverlayKind::Chat => self.chat.handle_terminal_event(state, event, event_sender),
                 OverlayKind::NpcActions => {
@@ -152,8 +153,8 @@ impl Lifecycle for GameView {
                 }
             };
 
-            if handled || kind.is_modal() {
-                return true;
+            if flow.is_consumed() || kind.is_modal() {
+                return EventFlow::Consumed;
             }
         }
 
@@ -164,14 +165,14 @@ impl Lifecycle for GameView {
                     .contains(crossterm::event::KeyModifiers::CONTROL)
             {
                 state.game.overlays.toggle(Overlay::Help);
-                return true;
+                return EventFlow::Consumed;
             }
         }
 
         if let CrosstermEvent::Key(key) = event {
             if key.code == KeyCode::F(1) {
                 state.game.overlays.toggle(Overlay::Chat);
-                return true;
+                return EventFlow::Consumed;
             }
             if key.code == KeyCode::Tab {
                 state.game.focus = match state.game.focus {
@@ -183,7 +184,7 @@ impl Lifecycle for GameView {
                     GameFocus::InventoryGrid => GameFocus::RightPanel,
                     GameFocus::RightPanel => GameFocus::Input,
                 };
-                return true;
+                return EventFlow::Consumed;
             }
             if key.code == KeyCode::BackTab {
                 state.game.focus = match state.game.focus {
@@ -195,7 +196,7 @@ impl Lifecycle for GameView {
                     GameFocus::RoomItemsList => GameFocus::NpcList,
                     GameFocus::NpcList => GameFocus::Input,
                 };
-                return true;
+                return EventFlow::Consumed;
             }
         }
 
@@ -274,33 +275,38 @@ impl Lifecycle for GameView {
         if self
             .footer
             .handle_terminal_event(state, event, event_sender)
+            .is_consumed()
         {
-            return true;
+            return EventFlow::Consumed;
         }
         if self
             .header
             .handle_terminal_event(state, event, event_sender)
+            .is_consumed()
         {
-            return true;
+            return EventFlow::Consumed;
         }
         if self
             .left_panel
             .handle_terminal_event(state, event, event_sender)
+            .is_consumed()
         {
-            return true;
+            return EventFlow::Consumed;
         }
         if self
             .center_panel
             .handle_terminal_event(state, event, event_sender)
+            .is_consumed()
         {
-            return true;
+            return EventFlow::Consumed;
         }
         if self
             .right_panel
             .handle_terminal_event(state, event, event_sender)
+            .is_consumed()
         {
-            return true;
+            return EventFlow::Consumed;
         }
-        false
+        EventFlow::Ignored
     }
 }

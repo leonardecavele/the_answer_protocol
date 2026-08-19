@@ -2,6 +2,7 @@ use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
 use crate::states::game::OverlayKind;
 use crate::ui::components::Lifecycle;
+use crate::ui::components::lifecycle::EventFlow;
 use crate::ui::components::scrollable::ScrollableComponent;
 use crate::ui::theme::{overlay_block, popup_block};
 use crate::ui::utils::wrap_str_to_lines;
@@ -91,32 +92,34 @@ impl Lifecycle for DialoguePopup {
         state: &mut AppState,
         event: &CrosstermEvent,
         sender: &Sender<ApplicationEvent>,
-    ) -> bool {
-        if let Some(dialog) = state.game.overlays.dialogue().cloned() {
-            if let CrosstermEvent::Key(key) = event {
-                if key.code == KeyCode::Enter {
-                    if dialog.visible_chars < dialog.full_text.chars().count() {
-                        if let Some(d) = state.game.overlays.dialogue_mut() {
-                            d.visible_chars = d.full_text.chars().count();
-                        }
-                    } else {
-                        if dialog.ends_dialog {
-                            state.game.overlays.close(OverlayKind::Dialogue);
-                        } else {
-                            let request = ApiRequest::Talk(TalkCommand {
-                                npc_name: dialog.npc_id.clone(),
-                            });
+    ) -> EventFlow {
+        let Some(dialog) = state.game.overlays.dialogue().cloned() else {
+            return EventFlow::Ignored;
+        };
 
-                            let _ = sender.try_send(ApplicationEvent::SendRequest(request));
-                        }
-                    }
-                    return true;
-                }
-            }
+        let CrosstermEvent::Key(key) = event else {
+            return EventFlow::Ignored;
+        };
 
-            return true;
+        if key.code != KeyCode::Enter {
+            return EventFlow::Ignored;
         }
-        false
+
+        if dialog.visible_chars < dialog.full_text.chars().count() {
+            if let Some(d) = state.game.overlays.dialogue_mut() {
+                d.visible_chars = d.full_text.chars().count();
+            }
+        } else if dialog.ends_dialog {
+            state.game.overlays.close(OverlayKind::Dialogue);
+        } else {
+            let request = ApiRequest::Talk(TalkCommand {
+                npc_name: dialog.npc_id.clone(),
+            });
+
+            let _ = sender.try_send(ApplicationEvent::SendRequest(request));
+        }
+
+        EventFlow::Consumed
     }
 
     fn on_tick(&mut self, state: &mut AppState) {

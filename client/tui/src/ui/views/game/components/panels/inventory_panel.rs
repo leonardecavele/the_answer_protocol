@@ -3,6 +3,7 @@ use crate::states::app::AppState;
 use crate::states::game::{GameFocus, Overlay};
 use crate::ui::components::Component;
 use crate::ui::components::Lifecycle;
+use crate::ui::components::lifecycle::EventFlow;
 use crate::ui::theme::panel_block;
 use ratatui::layout::Alignment;
 use ratatui::widgets::Paragraph;
@@ -94,7 +95,7 @@ impl Lifecycle for InventoryPanel {
         state: &mut AppState,
         event: &crossterm::event::Event,
         _event_sender: &Sender<ApplicationEvent>,
-    ) -> bool {
+    ) -> EventFlow {
         if state.game.focus == GameFocus::InventoryGrid {
             if let crossterm::event::Event::Key(key) = event {
                 let inv_count = state.game.player.inventory.len();
@@ -107,28 +108,28 @@ impl Lifecycle for InventoryPanel {
                             if current >= cols {
                                 state.game.player.inventory.select_index(current - cols);
                             }
-                            return true;
+                            return EventFlow::Consumed;
                         }
                         crossterm::event::KeyCode::Down => {
                             state.game.player.inventory.select_index(current + cols);
-                            return true;
+                            return EventFlow::Consumed;
                         }
                         crossterm::event::KeyCode::Left => {
                             if current > 0 {
                                 state.game.player.inventory.select_index(current - 1);
                             }
-                            return true;
+                            return EventFlow::Consumed;
                         }
                         crossterm::event::KeyCode::Right => {
                             state.game.player.inventory.select_index(current + 1);
-                            return true;
+                            return EventFlow::Consumed;
                         }
                         crossterm::event::KeyCode::Enter => {
                             if let Some(item) = state.game.player.inventory.selected() {
                                 state.game.overlays.open(Overlay::ItemActions {
                                     item_id: item.id.clone(),
                                 });
-                                return true;
+                                return EventFlow::Consumed;
                             }
                         }
                         _ => {}
@@ -136,6 +137,6 @@ impl Lifecycle for InventoryPanel {
                 }
             }
         }
-        false
+        EventFlow::Ignored
     }
 }

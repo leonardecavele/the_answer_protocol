@@ -7,6 +7,7 @@ use ratatui::layout::Rect;
 use tokio::sync::mpsc;
 
 use crate::ui::components::Lifecycle;
+use crate::ui::components::lifecycle::EventFlow;
 
 pub trait InteractiveComponent: Lifecycle {
     fn render(&mut self, state: &AppState, frame: &mut Frame, area: Rect);
@@ -17,8 +18,8 @@ pub trait InteractiveComponent: Lifecycle {
         _event: &CrosstermEvent,
         _sender: &mpsc::Sender<ApplicationEvent>,
         _is_hovered: bool,
-    ) -> bool {
-        false
+    ) -> EventFlow {
+        EventFlow::Ignored
     }
 }
 
@@ -50,7 +51,7 @@ impl<T: InteractiveComponent> Lifecycle for Interactive<T> {
         state: &mut AppState,
         event: &CrosstermEvent,
         sender: &mpsc::Sender<ApplicationEvent>,
-    ) -> bool {
+    ) -> EventFlow {
         let is_hovered = match event {
             CrosstermEvent::Mouse(MouseEvent { column, row, .. }) => {
                 self.is_mouse_over(*column, *row)
@@ -60,8 +61,9 @@ impl<T: InteractiveComponent> Lifecycle for Interactive<T> {
         if self
             .inner
             .handle_interactive_event(state, event, sender, is_hovered)
+            .is_consumed()
         {
-            return true;
+            return EventFlow::Consumed;
         }
         self.inner.handle_terminal_event(state, event, sender)
     }

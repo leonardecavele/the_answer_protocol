@@ -4,6 +4,7 @@ use crate::states::game::GameFocus;
 use crate::ui::components::Component;
 use crate::ui::components::Lifecycle;
 use crate::ui::components::interactive::Interactive;
+use crate::ui::components::lifecycle::EventFlow;
 use crate::ui::components::widgets::text_input::TextInput;
 use crossterm::event::{Event as CrosstermEvent, KeyCode, KeyEvent};
 use ratatui::{Frame, layout::Rect};
@@ -33,7 +34,7 @@ impl Lifecycle for Footer {
         state: &mut AppState,
         event: &CrosstermEvent,
         event_sender: &tokio::sync::mpsc::Sender<ApplicationEvent>,
-    ) -> bool {
+    ) -> EventFlow {
         if state.game.focus == GameFocus::Input {
             if let CrosstermEvent::Key(KeyEvent {
                 code: KeyCode::Enter,
@@ -47,14 +48,14 @@ impl Lifecycle for Footer {
                 } else {
                     state.game.focus = GameFocus::RightPanel;
                 }
-                return true;
+                return EventFlow::Consumed;
             }
         }
 
         if state.game.focus == GameFocus::Input {
             self.input.handle_terminal_event(state, event, event_sender)
         } else {
-            false
+            EventFlow::Ignored
         }
     }
 }

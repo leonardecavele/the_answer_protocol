@@ -1,6 +1,7 @@
 use crate::states::app::AppState;
 use crate::ui::components::Lifecycle;
 use crate::ui::components::interactive::InteractiveComponent;
+use crate::ui::components::lifecycle::EventFlow;
 use crate::ui::theme::{default_block, dim_style};
 use crossterm::event::{Event as CrosstermEvent, KeyCode, KeyEvent};
 use ratatui::Frame;
@@ -68,19 +69,19 @@ impl InteractiveComponent for Button {
         event: &CrosstermEvent,
         _event_sender: &Sender<crate::events::ApplicationEvent>,
         _is_hovered: bool,
-    ) -> bool {
+    ) -> EventFlow {
         if !self.is_focused {
-            return false;
+            return EventFlow::Ignored;
         }
 
         if let CrosstermEvent::Key(KeyEvent { code, .. }) = event {
             if *code == KeyCode::Enter {
                 self.is_pressed = true;
-                return true;
+                return EventFlow::Consumed;
             }
         }
 
-        false
+        EventFlow::Ignored
     }
 }
 

@@ -1,6 +1,7 @@
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
 use crate::ui::components::Lifecycle;
+use crate::ui::components::lifecycle::EventFlow;
 use crate::ui::components::scrollable::ScrollableComponent;
 use crate::ui::theme::overlay_block;
 use crate::ui::utils::wrap_slice_to_lines;
@@ -60,13 +61,14 @@ impl Lifecycle for TraceOverlay {
         state: &mut AppState,
         event: &CrosstermEvent,
         _sender: &Sender<ApplicationEvent>,
-    ) -> bool {
+    ) -> EventFlow {
         if let CrosstermEvent::Key(key) = event {
             if key.code == KeyCode::Esc {
                 state.ui.show_trace_log = false;
-                return true;
+                return EventFlow::Consumed;
             }
         }
-        true
+
+        EventFlow::Ignored
     }
 }

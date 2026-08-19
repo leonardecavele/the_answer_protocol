@@ -2,6 +2,7 @@ use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
 use crate::states::game::OverlayKind;
 use crate::ui::components::Lifecycle;
+use crate::ui::components::lifecycle::EventFlow;
 use crate::ui::components::scrollable::ScrollableComponent;
 use crate::ui::theme::overlay_block;
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
@@ -152,12 +153,12 @@ impl Lifecycle for HelpOverlay {
         state: &mut AppState,
         event: &CrosstermEvent,
         _sender: &Sender<ApplicationEvent>,
-    ) -> bool {
+    ) -> EventFlow {
         if let CrosstermEvent::Key(key) = event {
             match key.code {
                 KeyCode::Esc | KeyCode::Char('q') => {
                     state.game.overlays.close(OverlayKind::Help);
-                    return true;
+                    return EventFlow::Consumed;
                 }
                 KeyCode::Char('h') => {
                     if key
@@ -165,12 +166,12 @@ impl Lifecycle for HelpOverlay {
                         .contains(crossterm::event::KeyModifiers::CONTROL)
                     {
                         state.game.overlays.close(OverlayKind::Help);
-                        return true;
+                        return EventFlow::Consumed;
                     }
                 }
                 _ => {}
             }
         }
-        false
+        EventFlow::Ignored
     }
 }

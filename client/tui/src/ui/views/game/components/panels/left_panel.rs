@@ -6,6 +6,7 @@ use crate::states::game::GameFocus;
 use crate::states::game::Overlay::{ItemActions, NpcActions, QuestDetail};
 use crate::ui::components::Component;
 use crate::ui::components::Lifecycle;
+use crate::ui::components::lifecycle::EventFlow;
 use crate::ui::theme::{default_block, panel_block};
 use ratatui::{
     Frame,
@@ -165,25 +166,25 @@ impl Lifecycle for LeftPanel {
         state: &mut AppState,
         event: &crossterm::event::Event,
         _event_sender: &Sender<ApplicationEvent>,
-    ) -> bool {
+    ) -> EventFlow {
         let key = match event {
             crossterm::event::Event::Key(key) => key,
-            _ => return false,
+            _ => return EventFlow::Ignored,
         };
 
         match state.game.focus {
             GameFocus::NpcList => match key.code {
                 crossterm::event::KeyCode::Up => {
                     state.game.room.npcs.move_selection(Step::Previous);
-                    true
+                    EventFlow::Consumed
                 }
                 crossterm::event::KeyCode::Down => {
                     state.game.room.npcs.move_selection(Step::Next);
-                    true
+                    EventFlow::Consumed
                 }
                 crossterm::event::KeyCode::Enter => {
                     if !state.game.overlays.dialogue_cooldown_elapsed() {
-                        return true;
+                        return EventFlow::Consumed;
                     }
 
                     match state.game.room.npcs.selected() {
@@ -191,53 +192,53 @@ impl Lifecycle for LeftPanel {
                             state.game.overlays.open(NpcActions {
                                 npc_id: npc.id.clone(),
                             });
-                            true
+                            EventFlow::Consumed
                         }
-                        None => false,
+                        None => EventFlow::Ignored,
                     }
                 }
-                _ => false,
+                _ => EventFlow::Ignored,
             },
             GameFocus::RoomItemsList => match key.code {
                 crossterm::event::KeyCode::Up => {
                     state.game.room.items.move_selection(Step::Previous);
-                    true
+                    EventFlow::Consumed
                 }
                 crossterm::event::KeyCode::Down => {
                     state.game.room.items.move_selection(Step::Next);
-                    true
+                    EventFlow::Consumed
                 }
                 crossterm::event::KeyCode::Enter => match state.game.room.items.selected() {
                     Some(item) => {
                         state.game.overlays.open(ItemActions {
                             item_id: item.id.clone(),
                         });
-                        true
+                        EventFlow::Consumed
                     }
-                    None => false,
+                    None => EventFlow::Ignored,
                 },
-                _ => false,
+                _ => EventFlow::Ignored,
             },
             GameFocus::QuestList => match key.code {
                 crossterm::event::KeyCode::Up => {
                     state.game.player.quests.move_selection(Step::Previous);
-                    true
+                    EventFlow::Consumed
                 }
                 crossterm::event::KeyCode::Down => {
                     state.game.player.quests.move_selection(Step::Next);
-                    true
+                    EventFlow::Consumed
                 }
                 crossterm::event::KeyCode::Enter => match state.game.player.quests.selected() {
                     Some(quest) => {
                         let quest_id = quest.quest_id.clone();
                         state.game.overlays.open(QuestDetail { quest_id });
-                        true
+                        EventFlow::Consumed
                     }
-                    None => false,
+                    None => EventFlow::Ignored,
                 },
-                _ => false,
+                _ => EventFlow::Ignored,
             },
-            _ => false,
+            _ => EventFlow::Ignored,
         }
     }
 }

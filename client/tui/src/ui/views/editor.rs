@@ -2,6 +2,7 @@ use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
 use crate::ui::components::Component;
 use crate::ui::components::Lifecycle;
+use crate::ui::components::lifecycle::EventFlow;
 use crate::ui::theme::{default_block, dim_style};
 use api_client::ApiRequest;
 use api_client::commands::FightAttackCommand;
@@ -156,25 +157,28 @@ impl Lifecycle for EditorView {
         state: &mut AppState,
         event: &CrosstermEvent,
         event_sender: &Sender<ApplicationEvent>,
-    ) -> bool {
+    ) -> EventFlow {
         if state.game.fight.submitted {
-            return true;
+            return EventFlow::Ignored;
         }
 
-        if let CrosstermEvent::Key(key) = event {
-            if key.code == KeyCode::Char('s') && key.modifiers.contains(KeyModifiers::CONTROL) {
-                let request = ApiRequest::FightAttack(FightAttackCommand {
-                    code: self.serialize_code(),
-                });
+        let CrosstermEvent::Key(key) = event else {
+            return EventFlow::Ignored;
+        };
 
-                let _ = event_sender.try_send(ApplicationEvent::SendRequest(request));
-                state.game.fight.submitted = true;
-                return true;
-            }
+        if key.code == KeyCode::Char('s') && key.modifiers.contains(KeyModifiers::CONTROL) {
+            let request = ApiRequest::FightAttack(FightAttackCommand {
+                code: self.serialize_code(),
+            });
 
-            let _ = self.editor.input(*key, &self.editor_area);
+            let _ = event_sender.try_send(ApplicationEvent::SendRequest(request));
+            state.game.fight.submitted = true;
+
+            return EventFlow::Consumed;
         }
 
-        true
+        let _ = self.editor.input(*key, &self.editor_area);
+
+        EventFlow::Consumed
     }
 }

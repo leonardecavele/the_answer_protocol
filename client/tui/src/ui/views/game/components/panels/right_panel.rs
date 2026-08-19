@@ -3,6 +3,7 @@ use crate::states::app::AppState;
 use crate::states::game::{Direction, GameFocus, Sprite};
 use crate::ui::components::Component;
 use crate::ui::components::Lifecycle;
+use crate::ui::components::lifecycle::EventFlow;
 use crate::ui::utils::{center_area_with_aspect_ratio, wrap_str_to_lines};
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
 use ratatui::style::Stylize;
@@ -284,23 +285,23 @@ impl Lifecycle for RightPanel {
         state: &mut AppState,
         event: &CrosstermEvent,
         event_sender: &Sender<ApplicationEvent>,
-    ) -> bool {
+    ) -> EventFlow {
         if !state
             .game
             .group
             .allows_move_by(state.game.player.name.as_deref())
             || state.game.focus != GameFocus::RightPanel
         {
-            return false;
+            return EventFlow::Ignored;
         }
 
         let CrosstermEvent::Key(key) = event else {
-            return false;
+            return EventFlow::Ignored;
         };
 
         if key.code == KeyCode::Enter {
             state.game.focus = GameFocus::NpcList;
-            return true;
+            return EventFlow::Consumed;
         }
 
         let slot = match key.code {
@@ -308,14 +309,14 @@ impl Lifecycle for RightPanel {
             KeyCode::Right => 1,
             KeyCode::Down => 2,
             KeyCode::Left => 3,
-            _ => return false,
+            _ => return EventFlow::Ignored,
         };
 
         let facing = self.room_facing(state);
         let direction = Direction::from_quarter_turns(slot + facing.quarter_turns());
 
         if !state.game.room.has_exit(direction.key()) {
-            return false;
+            return EventFlow::Ignored;
         }
 
         let _ = event_sender.try_send(ApplicationEvent::SendRawCommand(format!(
@@ -323,6 +324,6 @@ impl Lifecycle for RightPanel {
             direction.key()
         )));
 
-        true
+        EventFlow::Consumed
     }
 }

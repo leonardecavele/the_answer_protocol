@@ -1,5 +1,6 @@
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
+use crate::ui::components::lifecycle::EventFlow;
 use crate::ui::components::scrollable::Scrollable;
 use crate::ui::components::widgets::notifications::NotificationsOverlay;
 use crate::ui::components::widgets::trace_overlay::TraceOverlay;
@@ -48,28 +49,21 @@ impl Lifecycle for ViewManager {
         state: &mut AppState,
         event: &CrosstermEvent,
         sender: &Sender<ApplicationEvent>,
-    ) -> bool {
+    ) -> EventFlow {
         if state.ui.show_trace_log {
-            if self
+            let _ = self
                 .event_overlay
-                .handle_terminal_event(state, &event, sender)
-            {
-                return true;
-            }
+                .handle_terminal_event(state, event, sender);
+
+            return EventFlow::Consumed;
         }
 
         if self
             .notification_overlay
-            .handle_terminal_event(state, &event, sender)
+            .handle_terminal_event(state, event, sender)
+            .is_consumed()
         {
-            return true;
-        }
-
-        if self
-            .active_view
-            .handle_terminal_event(state, &event, sender)
-        {
-            return true;
+            return EventFlow::Consumed;
         }
 
         self.active_view.handle_terminal_event(state, event, sender)
