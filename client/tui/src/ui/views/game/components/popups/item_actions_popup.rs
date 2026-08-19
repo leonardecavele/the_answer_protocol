@@ -4,7 +4,7 @@ use crate::states::app::AppState;
 use crate::states::game::{Overlay, OverlayKind};
 use crate::ui::components::Component;
 use crate::ui::components::Lifecycle;
-use crate::ui::theme::overlay_block;
+use crate::ui::theme::popup_block;
 use crate::ui::utils::centered_rect;
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
 use mpsc::Sender;
@@ -79,11 +79,7 @@ impl Component for ItemActionsPopup {
             })
             .collect();
 
-        let list = List::new(items).block(
-            overlay_block()
-                .title(title)
-                .style(Style::default().fg(Color::Yellow)),
-        );
+        let list = List::new(items).block(popup_block(title));
 
         frame.render_widget(list, popup_area);
     }

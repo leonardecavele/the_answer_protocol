@@ -3,7 +3,7 @@ use crate::states::app::AppState;
 use crate::states::game::{GameFocus, Overlay};
 use crate::ui::components::Component;
 use crate::ui::components::Lifecycle;
-use crate::ui::theme::default_block;
+use crate::ui::theme::panel_block;
 use ratatui::layout::Alignment;
 use ratatui::widgets::Paragraph;
 use ratatui::{
@@ -34,10 +34,7 @@ impl Component for InventoryPanel {
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
         self.inventory_area = Some(area);
 
-        let mut inv_block = default_block().title(" Inventory ");
-        if state.game.focus == GameFocus::InventoryGrid {
-            inv_block = inv_block.border_style(Style::default().fg(Color::Yellow));
-        }
+        let inv_block = panel_block(" Inventory ", state.game.focus == GameFocus::InventoryGrid);
 
         let inv_inner = inv_block.inner(area);
         frame.render_widget(inv_block, area);

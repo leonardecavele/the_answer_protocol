@@ -2,13 +2,12 @@ use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
 use crate::states::game::OverlayKind;
 use crate::ui::components::{Component, Lifecycle};
-use crate::ui::theme::overlay_block;
-use crate::ui::utils::{center_area_with_aspect_ratio, centered_rect, wrap_str_to_lines};
+use crate::ui::theme::{close_hint, popup_block};
+use crate::ui::utils::{center_area_with_aspect_ratio, centered_rect_percent, wrap_str_to_lines};
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
 use ratatui::{
     Frame,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
-    style::{Color, Style},
     widgets::{Clear, Paragraph},
 };
 use std::time::Duration;
@@ -40,17 +39,11 @@ impl Component for ItemDetailPopup {
             return;
         };
 
-        let popup_area = centered_rect(
-            area,
-            (area.width * POPUP_WIDTH_PERCENT) / 100,
-            (area.height * POPUP_HEIGHT_PERCENT) / 100,
-        );
+        let popup_area = centered_rect_percent(area, POPUP_WIDTH_PERCENT, POPUP_HEIGHT_PERCENT);
 
         frame.render_widget(Clear, popup_area);
 
-        let block = overlay_block()
-            .title(format!(" {} ", item.name))
-            .style(Style::default().fg(Color::Yellow));
+        let block = popup_block(format!(" {} ", item.name));
 
         let inner_area = block.inner(popup_area);
         frame.render_widget(block, popup_area);
@@ -100,10 +93,7 @@ impl Component for ItemDetailPopup {
         let desc_paragraph = Paragraph::new(desc_lines).alignment(Alignment::Center);
         frame.render_widget(desc_paragraph, desc_area);
 
-        let footer_paragraph = Paragraph::new(" Press ESC or ENTER to close ")
-            .alignment(Alignment::Center)
-            .style(Style::default().fg(Color::DarkGray));
-        frame.render_widget(footer_paragraph, footer_area);
+        frame.render_widget(close_hint(), footer_area);
     }
 }
 

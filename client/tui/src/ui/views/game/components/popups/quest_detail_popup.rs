@@ -2,14 +2,14 @@ use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
 use crate::states::game::OverlayKind;
 use crate::ui::components::{Component, Lifecycle};
-use crate::ui::theme::overlay_block;
-use crate::ui::utils::{centered_rect, wrap_str_to_lines};
+use crate::ui::theme::{close_hint, popup_block};
+use crate::ui::utils::{centered_rect_percent, wrap_str_to_lines};
 use api_client::commands::QuestData;
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
 use ratatui::widgets::Padding;
 use ratatui::{
     Frame,
-    layout::{Alignment, Constraint, Direction, Layout, Rect},
+    layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Line, Span},
     widgets::{Clear, Paragraph},
@@ -84,18 +84,11 @@ impl Component for QuestDetailPopup {
             None => return,
         };
 
-        let popup_area = centered_rect(
-            area,
-            (area.width * POPUP_WIDTH_PERCENT) / 100,
-            (area.height * POPUP_HEIGHT_PERCENT) / 100,
-        );
+        let popup_area = centered_rect_percent(area, POPUP_WIDTH_PERCENT, POPUP_HEIGHT_PERCENT);
 
         frame.render_widget(Clear, popup_area);
 
-        let block = overlay_block()
-            .title(format!(" {} ", quest.quest_id))
-            .padding(Padding::uniform(1))
-            .style(Style::default().fg(Color::Yellow));
+        let block = popup_block(format!(" {} ", quest.quest_id)).padding(Padding::uniform(1));
 
         let inner_area = block.inner(popup_area);
         frame.render_widget(block, popup_area);
@@ -108,10 +101,7 @@ impl Component for QuestDetailPopup {
         let body = self.body(quest, chunks[0].width as usize);
         frame.render_widget(Paragraph::new(body), chunks[0]);
 
-        let footer = Paragraph::new(" Press ESC or ENTER to close ")
-            .alignment(Alignment::Center)
-            .style(Style::default().fg(Color::DarkGray));
-        frame.render_widget(footer, chunks[1]);
+        frame.render_widget(close_hint(), chunks[1]);
     }
 }
 

@@ -3,7 +3,7 @@ use crate::states::app::AppState;
 use crate::states::game::OverlayKind;
 use crate::ui::components::Lifecycle;
 use crate::ui::components::scrollable::ScrollableComponent;
-use crate::ui::theme::overlay_block;
+use crate::ui::theme::{overlay_block, popup_block};
 use crate::ui::utils::wrap_str_to_lines;
 use api_client::ApiRequest;
 use api_client::commands::TalkCommand;
@@ -11,7 +11,6 @@ use crossterm::event::{Event as CrosstermEvent, KeyCode};
 use mpsc::Sender;
 use ratatui::{
     layout::Rect,
-    style::{Color, Style},
     text::Line,
     widgets::{Block, Padding},
 };
@@ -55,10 +54,7 @@ impl ScrollableComponent for DialoguePopup {
 
     fn get_block<'a>(&self, state: &AppState) -> Block<'a> {
         if let Some(dialog) = state.game.overlays.dialogue() {
-            overlay_block()
-                .title(format!(" {} ", dialog.npc_name))
-                .style(Style::default().fg(Color::Yellow))
-                .padding(Padding::uniform(1))
+            popup_block(format!(" {} ", dialog.npc_name)).padding(Padding::uniform(1))
         } else {
             overlay_block()
         }

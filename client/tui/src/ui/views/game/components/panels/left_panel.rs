@@ -6,7 +6,7 @@ use crate::states::game::GameFocus;
 use crate::states::game::Overlay::{ItemActions, NpcActions, QuestDetail};
 use crate::ui::components::Component;
 use crate::ui::components::Lifecycle;
-use crate::ui::theme::default_block;
+use crate::ui::theme::{default_block, panel_block};
 use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect},
@@ -87,10 +87,7 @@ impl Component for LeftPanel {
                 ListItem::new(Span::styled(format!("• {} ({})", npc.name, npc.id), style))
             })
             .collect();
-        let mut npcs_block = default_block().title(" Room NPCs ");
-        if state.game.focus == GameFocus::NpcList {
-            npcs_block = npcs_block.border_style(Style::default().fg(Color::Yellow));
-        }
+        let npcs_block = panel_block(" Room NPCs ", state.game.focus == GameFocus::NpcList);
         let npcs_list = List::new(npcs_items).block(npcs_block);
         frame.render_widget(npcs_list, chunks[1]);
         self.npcs_area = Some(chunks[1]);
@@ -116,10 +113,7 @@ impl Component for LeftPanel {
                 ))
             })
             .collect();
-        let mut items_block = default_block().title(" Room Items ");
-        if state.game.focus == GameFocus::RoomItemsList {
-            items_block = items_block.border_style(Style::default().fg(Color::Yellow));
-        }
+        let items_block = panel_block(" Room Items ", state.game.focus == GameFocus::RoomItemsList);
         let items_list = List::new(items).block(items_block);
         frame.render_widget(items_list, chunks[2]);
         self.items_area = Some(chunks[2]);
@@ -158,10 +152,7 @@ impl Component for LeftPanel {
                 ))
             })
             .collect();
-        let mut quests_block = default_block().title(" Quests ");
-        if state.game.focus == GameFocus::QuestList {
-            quests_block = quests_block.border_style(Style::default().fg(Color::Yellow));
-        }
+        let quests_block = panel_block(" Quests ", state.game.focus == GameFocus::QuestList);
         let quests_list = List::new(quests_items).block(quests_block);
         frame.render_widget(quests_list, chunks[3]);
         self.quests_area = Some(chunks[3]);

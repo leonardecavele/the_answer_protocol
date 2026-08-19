@@ -32,6 +32,15 @@ pub fn centered_rect(outer_area: Rect, width: u16, height: u16) -> Rect {
     }
 }
 
+/// Helper to compute a centered sub-area sized as a percentage of `outer_area`.
+pub fn centered_rect_percent(outer_area: Rect, width_percent: u16, height_percent: u16) -> Rect {
+    centered_rect(
+        outer_area,
+        outer_area.width * width_percent / 100,
+        outer_area.height * height_percent / 100,
+    )
+}
+
 /// Helper to compute the centered sub-area that respects the image's original aspect ratio.
 pub fn center_area_with_aspect_ratio(outer_area: Rect, img_width: u32, img_height: u32) -> Rect {
     let mut centered_area = outer_area;
