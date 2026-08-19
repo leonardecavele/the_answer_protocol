@@ -221,20 +221,42 @@ impl App {
                 }
             }
             ApiResponse::Take(Ok(take_res)) => {
-                if let Some(item) = self.state.game.room.take_item(&take_res.item_identifier) {
-                    self.state
-                        .game
-                        .log_action(format!("You took {}.", item.name));
-                    self.state.game.player.inventory.push(item);
-                }
+                let id = take_res.item_identifier;
+
+                let item = match self.state.game.room.take_item(&id) {
+                    Some(item) => item,
+                    None => {
+                        self.record_trace(
+                            "desync",
+                            format!("took {} which was not in the room", id),
+                        );
+                        Item::from_manifest(id, &self.state.game.manifest)
+                    }
+                };
+
+                self.state
+                    .game
+                    .log_action(format!("You took {}.", item.name));
+                self.state.game.player.inventory.push(item);
             }
             ApiResponse::Drop(Ok(drop_res)) => {
-                if let Some(item) = self.state.game.player.take_item(&drop_res.item_identifier) {
-                    self.state
-                        .game
-                        .log_action(format!("You dropped {}.", item.name));
-                    self.state.game.room.items.push(item);
-                }
+                let id = drop_res.item_identifier;
+
+                let item = match self.state.game.player.take_item(&id) {
+                    Some(item) => item,
+                    None => {
+                        self.record_trace(
+                            "desync",
+                            format!("dropped {} which was not in the player inventory", id),
+                        );
+                        Item::from_manifest(id, &self.state.game.manifest)
+                    }
+                };
+
+                self.state
+                    .game
+                    .log_action(format!("You dropped {}.", item.name));
+                self.state.game.room.items.push(item);
             }
             ApiResponse::Attack(Ok(attack_res)) => {
                 if let ApiRequest::Attack(cmd) = envelope.original_request {
