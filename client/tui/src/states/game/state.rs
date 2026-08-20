@@ -2,7 +2,7 @@ use crate::collections::BoundedLog;
 use crate::data::manifest::Manifest;
 use crate::states::game::interaction::{GameFocus, Overlays};
 use crate::states::game::session::{
-    ChatMessage, FightState, GroupState, PlayerState, RoomState, ServerState,
+    ChatMessage, FightPhase, GroupState, PlayerState, RoomState, ServerState,
 };
 use crate::states::game::{Item, Npc};
 use std::sync::Arc;
@@ -13,7 +13,7 @@ pub struct GameState {
     pub room: RoomState,
     pub server: ServerState,
     pub overlays: Overlays,
-    pub fight: FightState,
+    pub fight: FightPhase,
     pub manifest: Arc<Manifest>,
 
     pub chat_log: BoundedLog<ChatMessage>,
@@ -33,7 +33,7 @@ impl GameState {
             room: RoomState::new(),
             server: ServerState::new(),
             overlays: Overlays::new(),
-            fight: FightState::new(),
+            fight: FightPhase::default(),
             manifest,
             chat_log: BoundedLog::with_max_capacity(200),
             action_log: BoundedLog::with_max_capacity(50),

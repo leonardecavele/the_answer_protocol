@@ -55,8 +55,8 @@ impl ScrollableComponent for ChatOverlay {
 
             let full_text = match (&msg.channel, &msg.sender) {
                 (ChatChannel::Private(other), ChatSender::Me) => {
-                    let is_me =
-                        Some(other.to_uppercase().as_str()) == state.game.player.name.as_deref();
+                    let is_me = state.game.player.is_me(other.as_str());
+
                     if is_me {
                         format!("{} (You only): {}", prefix, msg.content)
                     } else {

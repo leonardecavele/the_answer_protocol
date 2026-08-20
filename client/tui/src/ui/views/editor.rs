@@ -1,5 +1,6 @@
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
+use crate::states::game::FightPhase;
 use crate::ui::components::Component;
 use crate::ui::components::Lifecycle;
 use crate::ui::components::lifecycle::EventFlow;
@@ -18,7 +19,6 @@ use ratatui_code_editor::editor::Editor;
 use ratatui_code_editor::theme::vesper;
 use std::time::Instant;
 use tokio::sync::mpsc;
-
 // TODO: ajouter un timeout si l'event FightEnd n'est jamais envoye (timeout: time + 10s)
 // TODO: ajouter une barre de vie + image du mob
 
@@ -100,20 +100,20 @@ impl EditorView {
     }
 
     fn footer(&self, state: &AppState) -> Paragraph<'static> {
-        let (text, style) = match (&state.game.fight.success, state.game.fight.submitted) {
-            (Some(true), _) => (
-                "Your code succeeded. Waiting for the other players...",
-                Style::default().fg(Color::Green),
-            ),
-            (Some(false), _) => (
-                "Your code failed. Waiting for the other players...",
-                Style::default().fg(Color::Red),
-            ),
-            (None, true) => (
+        let (text, style) = match state.game.fight {
+            FightPhase::Editing => ("Press Ctrl+S to submit your code", dim_style()),
+            FightPhase::AwaitingResult => (
                 "Code submitted. Waiting for the other players...",
                 dim_style(),
             ),
-            (None, false) => ("Press Ctrl+S to submit your code", dim_style()),
+            FightPhase::Resolved { success: false } => (
+                "Your code failed. Waiting for the other players...",
+                Style::default().fg(Color::Red),
+            ),
+            FightPhase::Resolved { success: true } => (
+                "Your code succeeded. Waiting for the other players...",
+                Style::default().fg(Color::Green),
+            ),
         };
 
         Paragraph::new(Span::styled(text, style))
@@ -143,7 +143,7 @@ impl Component for EditorView {
         );
         frame.render_widget(&self.editor, self.editor_area);
 
-        if !state.game.fight.submitted
+        if state.game.fight == FightPhase::Editing
             && let Some((x, y)) = self.editor.get_visible_cursor(&self.editor_area)
         {
             frame.set_cursor_position(Position::new(x, y));
@@ -158,7 +158,7 @@ impl Lifecycle for EditorView {
         event: &CrosstermEvent,
         event_sender: &Sender<ApplicationEvent>,
     ) -> EventFlow {
-        if state.game.fight.submitted {
+        if state.game.fight != FightPhase::Editing {
             return EventFlow::Ignored;
         }
 
@@ -172,7 +172,7 @@ impl Lifecycle for EditorView {
             });
 
             let _ = event_sender.try_send(ApplicationEvent::SendRequest(request));
-            state.game.fight.submitted = true;
+            state.game.fight.submit();
 
             return EventFlow::Consumed;
         }

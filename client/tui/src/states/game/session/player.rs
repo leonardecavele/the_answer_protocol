@@ -21,6 +21,12 @@ impl PlayerState {
         }
     }
 
+    pub fn is_me(&self, player_name: &str) -> bool {
+        self.name
+            .as_deref()
+            .is_some_and(|name| name.eq_ignore_ascii_case(player_name))
+    }
+
     pub fn heal(&mut self, amount: u32) {
         self.hp = (self.hp + amount).min(self.max_hp);
     }

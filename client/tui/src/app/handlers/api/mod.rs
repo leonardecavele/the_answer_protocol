@@ -1,4 +1,5 @@
 mod chat;
+mod combat;
 
 use crate::app::App;
 use crate::events::ApiEvent;
@@ -7,8 +8,6 @@ use crate::states::game::{
     ChatChannel, DialogueState, END_OF_DIALOGUE_TAG, Item, Npc, Overlay, OverlayKind,
 };
 use crate::states::ui::Notification;
-use crate::ui::views::editor::EditorView;
-use crate::ui::views::game::GameView;
 use api_client::commands::{LookCommand, StatusCommand};
 use api_client::events::{GameServerEvent, GroupEvent, RoomEvent, ServerEvent};
 use api_client::{ApiRequest, ApiResponse};
@@ -351,29 +350,7 @@ impl App {
                 }
             },
             ServerEvent::Kill(kill_data) => {
-                let npc_name = self.state.game.manifest.npc_name(&kill_data.npc_id);
-
-                let message = if kill_data.player
-                    == self
-                        .state
-                        .game
-                        .player
-                        .name
-                        .clone()
-                        .unwrap_or("".to_string())
-                {
-                    format!("You have defeated {}", npc_name)
-                } else {
-                    format!("{} has been defeated by {}", npc_name, kill_data.player)
-                };
-
-                self.state.game.log_action(message);
-
-                self.state
-                    .game
-                    .room
-                    .npcs
-                    .retain(|n| n.id != kill_data.npc_id);
+                self.on_kill(kill_data);
             }
             ServerEvent::Death(death_data) => {
                 let current_player_name = self
@@ -444,76 +421,13 @@ impl App {
                 self.state.game.log_action(message);
             }
             ServerEvent::FightStart(fight_data) => {
-                let npc_name = self.state.game.manifest.npc_name(&fight_data.npc_id);
-
-                match EditorView::new(&fight_data) {
-                    Ok(view) => {
-                        self.state.game.fight.reset();
-                        self.state.game.overlays.close_all();
-                        self.state
-                            .game
-                            .log_action(format!("A fight started against {}.", npc_name));
-                        self.view_manager.set_view(Box::new(view));
-                    }
-                    Err(error) => {
-                        self.state.ui.notifications.push(Notification::error(error));
-                    }
-                }
+                self.on_fight_start(fight_data);
             }
-            ServerEvent::FightResult(fight_status) => {
-                let current_player_name = self
-                    .state
-                    .game
-                    .player
-                    .name
-                    .clone()
-                    .unwrap_or("unknown".to_string());
-
-                let is_current_player = current_player_name == fight_status.player_name;
-
-                let message = match is_current_player {
-                    true => {
-                        self.state.game.fight.success = Some(fight_status.success);
-                        self.state.game.player.hp -= fight_status.damage_dealt;
-                        match fight_status.success {
-                            true => {
-                                format!("You dealt {} damage", fight_status.damage_dealt)
-                            }
-                            false => {
-                                format!("You receive {} damage", fight_status.damage_dealt)
-                            }
-                        }
-                    }
-                    false => match fight_status.success {
-                        true => {
-                            format!(
-                                "{} dealt {} damage",
-                                fight_status.player_name, fight_status.damage_dealt
-                            )
-                        }
-                        false => {
-                            format!(
-                                "{} receive {} damage",
-                                fight_status.player_name, fight_status.damage_dealt
-                            )
-                        }
-                    },
-                };
-
-                self.state.game.log_action(message.clone());
-
-                let notification = if fight_status.success {
-                    Notification::success(message).with_duration(8000)
-                } else {
-                    Notification::error(message).with_duration(8000)
-                };
-
-                self.state.ui.notifications.push(notification);
+            ServerEvent::FightResult(fight_result) => {
+                self.on_fight_result(fight_result);
             }
             ServerEvent::FightEnd => {
-                self.state.game.fight.reset();
-                self.state.game.log_action("The fight ended.".to_string());
-                self.view_manager.set_view(Box::new(GameView::new()));
+                self.on_fight_end();
             }
             ServerEvent::Quit(name) => {
                 self.state.game.server.online_players_count = self

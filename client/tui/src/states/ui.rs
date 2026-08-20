@@ -51,7 +51,12 @@ impl Notification {
     }
 
     pub fn error(message: impl Into<String>) -> Self {
-        Self::new(None, message.into(), NotificationType::Error, 0)
+        Self::new(
+            None,
+            message.into(),
+            NotificationType::Error,
+            NOTIF_DEFAULT_DURATION_MS,
+        )
     }
 
     pub fn with_id(mut self, id: impl Into<String>) -> Self {
@@ -61,6 +66,7 @@ impl Notification {
 
     pub fn with_duration(mut self, ms: u64) -> Self {
         self.expires_at = Instant::now() + Duration::from_millis(ms);
+        self.duration = ms;
         self
     }
 
