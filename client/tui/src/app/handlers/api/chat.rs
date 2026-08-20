@@ -1,19 +1,19 @@
 use crate::app::App;
-use crate::states::game::{ChatChannel, ChatMessage};
+use crate::states::game::{ChatChannel, ChatMessage, ChatSender};
 use crate::states::ui::Notification;
 
 impl App {
     pub(crate) fn on_global_chat_sent(&mut self, message: String) {
         self.state.game.chat_log.push(ChatMessage {
             channel: ChatChannel::Global,
-            sender: "You".to_string(),
+            sender: ChatSender::Me,
             content: message,
         });
     }
 
     pub(crate) fn on_private_chat_sent(&mut self, to: String, message: String) {
         self.state.game.chat_log.push(ChatMessage {
-            sender: format!("(You) to {}", to),
+            sender: ChatSender::Me,
             channel: ChatChannel::Private(to),
             content: message,
         });
@@ -25,6 +25,10 @@ impl App {
         sender: String,
         content: String,
     ) {
+        if self.state.game.player.name.as_deref() == Some(sender.as_str()) {
+            return;
+        }
+
         if let ChatChannel::Private(_) = channel {
             self.state.ui.notifications.push(Notification::info(format!(
                 "New private message from {}.",
@@ -34,7 +38,7 @@ impl App {
 
         self.state.game.chat_log.push(ChatMessage {
             channel,
-            sender,
+            sender: ChatSender::Other(sender),
             content,
         });
     }

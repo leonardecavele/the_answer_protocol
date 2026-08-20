@@ -1,5 +1,5 @@
 use crate::states::app::AppState;
-use crate::states::game::ChatChannel;
+use crate::states::game::{ChatChannel, ChatSender};
 use crate::ui::components::Lifecycle;
 use crate::ui::components::scrollable::ScrollableComponent;
 use crate::ui::theme::overlay_block;
@@ -47,13 +47,26 @@ impl ScrollableComponent for ChatOverlay {
 
         for msg in &state.game.chat_log {
             let (prefix, _) = match &msg.channel {
-                ChatChannel::Global => ("[GLOBAL] ", Color::Yellow),
-                ChatChannel::Group => ("[GROUP] ", Color::LightGreen),
-                ChatChannel::Room => ("[ROOM] ", Color::LightCyan),
-                ChatChannel::Private(_) => ("[PRIVATE] ", Color::LightMagenta),
+                ChatChannel::Global => ("[GLOBAL]", Color::Yellow),
+                ChatChannel::Group => ("[GROUP]", Color::LightGreen),
+                ChatChannel::Room => ("[ROOM]", Color::LightCyan),
+                ChatChannel::Private(_) => ("[PRIVATE]", Color::LightMagenta),
             };
 
-            let full_text = format!("{}{}: {}", prefix, msg.sender, msg.content);
+            let full_text = match (&msg.channel, &msg.sender) {
+                (ChatChannel::Private(other), ChatSender::Me) => {
+                    let is_me =
+                        Some(other.to_uppercase().as_str()) == state.game.player.name.as_deref();
+                    if is_me {
+                        format!("{} (You only): {}", prefix, msg.content)
+                    } else {
+                        format!("{} (You) to {}: {}", prefix, other, msg.content)
+                    }
+                }
+                (_, ChatSender::Me) => format!("{} (You): {}", prefix, msg.content),
+                (_, ChatSender::Other(from)) => format!("{} ({}): {}", prefix, from, msg.content),
+            };
+
             visual_lines.extend(wrap_str_to_lines(&full_text, max_width));
         }
 

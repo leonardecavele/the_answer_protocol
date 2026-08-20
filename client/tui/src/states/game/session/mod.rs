@@ -5,7 +5,7 @@ mod player;
 mod room;
 mod server;
 
-pub use chat::{ChatChannel, ChatMessage};
+pub use chat::{ChatChannel, ChatMessage, ChatSender};
 pub use fight::FightState;
 pub use group::GroupState;
 pub use player::PlayerState;
