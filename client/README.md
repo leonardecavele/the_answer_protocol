@@ -17,6 +17,21 @@ stateDiagram-v2
     AUTHENTICATED --> TERMINATED: QUIT / socket closed / error
 ```
 
+```mermaid
+flowchart TD
+    TICK["EventBroker<br/>tick toutes les 33 ms"] --> CH
+    TERM["EventBroker<br/>crossterm EventStream"] --> CH
+    NET["NetworkManager<br/>réponses API + événements serveur"] --> CH
+
+    CH[["mpsc channel · ApplicationEvent · cap 100"]] --> NEXT["App::run<br/>next_event await"]
+
+    NEXT --> UPDATE["App::update"]
+    UPDATE --> DRAIN{"try_next_event<br/>file vide ?"}
+    DRAIN -- "non : on vide la file" --> UPDATE
+    DRAIN -- "oui" --> RENDER["App::render<br/>terminal.draw"]
+    RENDER --> NEXT
+```
+
 ### As C Code
 
 ```c
