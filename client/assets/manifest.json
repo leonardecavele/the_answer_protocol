@@ -160,6 +160,5 @@
 			"image_path": "../assets/pictures/rooms/foyer.jpeg",
             "direction": "E"
         }
-    },
-    "quests": {}
+    }
 }
