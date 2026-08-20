@@ -166,13 +166,13 @@ impl Lifecycle for GameView {
 
         if let CrosstermEvent::Key(key) = event
             && key.code == KeyCode::Char('h')
-                && key
-                    .modifiers
-                    .contains(crossterm::event::KeyModifiers::CONTROL)
-            {
-                state.game.overlays.toggle(Overlay::Help);
-                return EventFlow::Consumed;
-            }
+            && key
+                .modifiers
+                .contains(crossterm::event::KeyModifiers::CONTROL)
+        {
+            state.game.overlays.toggle(Overlay::Help);
+            return EventFlow::Consumed;
+        }
 
         if let CrosstermEvent::Key(key) = event {
             if key.code == KeyCode::F(1) {
@@ -208,66 +208,73 @@ impl Lifecycle for GameView {
         if let CrosstermEvent::Mouse(mouse) = event
             && mouse.kind
                 == crossterm::event::MouseEventKind::Down(crossterm::event::MouseButton::Left)
+        {
+            if let Some(area) = self.left_panel.npcs_area
+                && is_mouse_in_rect(mouse.column, mouse.row, area)
             {
-                if let Some(area) = self.left_panel.npcs_area
-                    && is_mouse_in_rect(mouse.column, mouse.row, area) {
-                        state.game.focus = GameFocus::NpcList;
+                state.game.focus = GameFocus::NpcList;
 
-                        let y = mouse.row.saturating_sub(area.y);
-                        if y > 0 {
-                            state.game.room.npcs.select_index((y - 1) as usize);
-                        }
-                    }
-
-                if let Some(area) = self.left_panel.items_area
-                    && is_mouse_in_rect(mouse.column, mouse.row, area) {
-                        state.game.focus = GameFocus::RoomItemsList;
-
-                        let y = mouse.row.saturating_sub(area.y);
-                        if y > 0 {
-                            state.game.room.items.select_index((y - 1) as usize);
-                        }
-                    }
-
-                if let Some(area) = self.left_panel.quests_area
-                    && is_mouse_in_rect(mouse.column, mouse.row, area) {
-                        state.game.focus = GameFocus::QuestList;
-
-                        let y = mouse.row.saturating_sub(area.y);
-                        if y > 0 {
-                            state.game.player.quests.select_index((y - 1) as usize);
-                        }
-                    }
-
-                if let Some(area) = self.center_panel.history_area
-                    && is_mouse_in_rect(mouse.column, mouse.row, area) {
-                        state.game.focus = GameFocus::ActionHistory;
-                    }
-
-                if let Some(area) = self.center_panel.inventory_area
-                    && is_mouse_in_rect(mouse.column, mouse.row, area) {
-                        state.game.focus = GameFocus::InventoryGrid;
-
-                        let rel_x = mouse.column.saturating_sub(area.x);
-                        let rel_y = mouse.row.saturating_sub(area.y);
-                        if rel_x > 0 && rel_y > 0 {
-                            let col = (rel_x - 1) as usize / INVENTORY_ITEM_WIDTH as usize;
-                            let row = (rel_y - 1) as usize / INVENTORY_ITEM_HEIGHT as usize;
-                            let cols = self.center_panel.inventory.inventory_cols.max(1);
-                            let idx = row * cols + col;
-                            state.game.player.inventory.select_index(idx);
-                        }
-                    }
-
-                if let Some(area) = self.right_panel_area
-                    && is_mouse_in_rect(mouse.column, mouse.row, area) {
-                        state.game.focus = GameFocus::RightPanel;
-                    }
-                if let Some(area) = self.footer_area
-                    && is_mouse_in_rect(mouse.column, mouse.row, area) {
-                        state.game.focus = GameFocus::Input;
-                    }
+                let y = mouse.row.saturating_sub(area.y);
+                if y > 0 {
+                    state.game.room.npcs.select_index((y - 1) as usize);
+                }
             }
+
+            if let Some(area) = self.left_panel.items_area
+                && is_mouse_in_rect(mouse.column, mouse.row, area)
+            {
+                state.game.focus = GameFocus::RoomItemsList;
+
+                let y = mouse.row.saturating_sub(area.y);
+                if y > 0 {
+                    state.game.room.items.select_index((y - 1) as usize);
+                }
+            }
+
+            if let Some(area) = self.left_panel.quests_area
+                && is_mouse_in_rect(mouse.column, mouse.row, area)
+            {
+                state.game.focus = GameFocus::QuestList;
+
+                let y = mouse.row.saturating_sub(area.y);
+                if y > 0 {
+                    state.game.player.quests.select_index((y - 1) as usize);
+                }
+            }
+
+            if let Some(area) = self.center_panel.history_area
+                && is_mouse_in_rect(mouse.column, mouse.row, area)
+            {
+                state.game.focus = GameFocus::ActionHistory;
+            }
+
+            if let Some(area) = self.center_panel.inventory_area
+                && is_mouse_in_rect(mouse.column, mouse.row, area)
+            {
+                state.game.focus = GameFocus::InventoryGrid;
+
+                let rel_x = mouse.column.saturating_sub(area.x);
+                let rel_y = mouse.row.saturating_sub(area.y);
+                if rel_x > 0 && rel_y > 0 {
+                    let col = (rel_x - 1) as usize / INVENTORY_ITEM_WIDTH as usize;
+                    let row = (rel_y - 1) as usize / INVENTORY_ITEM_HEIGHT as usize;
+                    let cols = self.center_panel.inventory.inventory_cols.max(1);
+                    let idx = row * cols + col;
+                    state.game.player.inventory.select_index(idx);
+                }
+            }
+
+            if let Some(area) = self.right_panel_area
+                && is_mouse_in_rect(mouse.column, mouse.row, area)
+            {
+                state.game.focus = GameFocus::RightPanel;
+            }
+            if let Some(area) = self.footer_area
+                && is_mouse_in_rect(mouse.column, mouse.row, area)
+            {
+                state.game.focus = GameFocus::Input;
+            }
+        }
 
         if self
             .footer

@@ -1,8 +1,10 @@
+mod chat;
+
 use crate::app::App;
 use crate::events::ApiEvent;
 use crate::network::envelopes::ResponseEnvelope;
 use crate::states::game::{
-    ChatChannel, ChatMessage, DialogueState, END_OF_DIALOGUE_TAG, Item, Npc, Overlay, OverlayKind,
+    ChatChannel, DialogueState, END_OF_DIALOGUE_TAG, Item, Npc, Overlay, OverlayKind,
 };
 use crate::states::ui::Notification;
 use crate::ui::views::editor::EditorView;
@@ -92,20 +94,12 @@ impl App {
             }
             ApiResponse::GlobalChat(Ok(_)) => {
                 if let ApiRequest::GlobalChat(cmd) = envelope.original_request {
-                    self.state.game.chat_log.push(ChatMessage {
-                        channel: ChatChannel::Global,
-                        sender: "You".to_string(),
-                        content: cmd.message,
-                    });
+                    self.on_global_chat_sent(cmd.message);
                 }
             }
             ApiResponse::PrivateChat(Ok(_)) => {
                 if let ApiRequest::PrivateChat(cmd) = envelope.original_request {
-                    self.state.game.chat_log.push(ChatMessage {
-                        channel: ChatChannel::Private(cmd.to.clone()),
-                        sender: format!("(You) to {}", cmd.to),
-                        content: cmd.message,
-                    });
+                    self.on_private_chat_sent(cmd.to, cmd.message);
                 }
             }
             ApiResponse::Look(Ok(mut look_res)) => {
@@ -554,11 +548,7 @@ impl App {
                         .log_action(format!("{} left the room.", name));
                 }
                 RoomEvent::Chat(chat) => {
-                    self.state.game.chat_log.push(ChatMessage {
-                        channel: ChatChannel::Room,
-                        sender: chat.sender,
-                        content: chat.message,
-                    });
+                    self.on_chat_received(ChatChannel::Room, chat.sender, chat.message);
                 }
                 RoomEvent::Take(player, item_id) => {
                     if let Some(item) = self.state.game.room.take_item(&item_id) {
@@ -604,11 +594,7 @@ impl App {
                     }
                 }
                 GroupEvent::Chat(chat) => {
-                    self.state.game.chat_log.push(ChatMessage {
-                        channel: ChatChannel::Group,
-                        sender: chat.sender,
-                        content: chat.message,
-                    });
+                    self.on_chat_received(ChatChannel::Group, chat.sender, chat.message);
                 }
                 GroupEvent::Move(direction) => {
                     self.state
@@ -619,22 +605,11 @@ impl App {
                 }
             },
             ServerEvent::GlobalChat(chat) => {
-                self.state.game.chat_log.push(ChatMessage {
-                    channel: ChatChannel::Global,
-                    sender: chat.sender,
-                    content: chat.message,
-                });
+                self.on_chat_received(ChatChannel::Global, chat.sender, chat.message);
             }
             ServerEvent::PrivateChat(chat) => {
-                self.state.game.chat_log.push(ChatMessage {
-                    channel: ChatChannel::Private(chat.sender.clone()),
-                    sender: chat.sender.clone(),
-                    content: chat.message,
-                });
-                self.state.ui.notifications.push(Notification::info(format!(
-                    "New private message from {}.",
-                    chat.sender
-                )));
+                let channel = ChatChannel::Private(chat.sender.clone());
+                self.on_chat_received(channel, chat.sender, chat.message);
             }
             ServerEvent::Stats(count) => {
                 self.state.game.server.online_players_count = count;

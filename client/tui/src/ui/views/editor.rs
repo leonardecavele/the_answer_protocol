@@ -144,9 +144,10 @@ impl Component for EditorView {
         frame.render_widget(&self.editor, self.editor_area);
 
         if !state.game.fight.submitted
-            && let Some((x, y)) = self.editor.get_visible_cursor(&self.editor_area) {
-                frame.set_cursor_position(Position::new(x, y));
-            }
+            && let Some((x, y)) = self.editor.get_visible_cursor(&self.editor_area)
+        {
+            frame.set_cursor_position(Position::new(x, y));
+        }
     }
 }
 

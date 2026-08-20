@@ -114,18 +114,19 @@ impl Lifecycle for NotificationsOverlay {
         if let CrosstermEvent::Mouse(MouseEvent {
             kind, column, row, ..
         }) = event
-            && *kind == MouseEventKind::Down(MouseButton::Left) {
-                // Find which notification was clicked
-                if let Some((clicked_id, _)) = self
-                    .visible_areas
-                    .iter()
-                    .find(|(_, area)| is_mouse_in_rect(*column, *row, *area))
-                {
-                    let id_to_remove = clicked_id.clone();
-                    state.ui.notifications.remove(&id_to_remove);
-                    return EventFlow::Consumed;
-                }
+            && *kind == MouseEventKind::Down(MouseButton::Left)
+        {
+            // Find which notification was clicked
+            if let Some((clicked_id, _)) = self
+                .visible_areas
+                .iter()
+                .find(|(_, area)| is_mouse_in_rect(*column, *row, *area))
+            {
+                let id_to_remove = clicked_id.clone();
+                state.ui.notifications.remove(&id_to_remove);
+                return EventFlow::Consumed;
             }
+        }
 
         EventFlow::Ignored
     }

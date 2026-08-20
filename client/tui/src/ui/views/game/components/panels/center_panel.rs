@@ -63,17 +63,17 @@ impl Lifecycle for CenterPanel {
                 .action_history
                 .handle_terminal_event(state, event, event_sender)
                 .is_consumed()
-            {
-                return EventFlow::Consumed;
-            }
+        {
+            return EventFlow::Consumed;
+        }
         if state.game.focus == GameFocus::InventoryGrid
             && self
                 .inventory
                 .handle_terminal_event(state, event, event_sender)
                 .is_consumed()
-            {
-                return EventFlow::Consumed;
-            }
+        {
+            return EventFlow::Consumed;
+        }
         EventFlow::Ignored
     }
 }

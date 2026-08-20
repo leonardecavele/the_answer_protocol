@@ -69,10 +69,11 @@ impl Lifecycle for TraceOverlay {
         _sender: &Sender<ApplicationEvent>,
     ) -> EventFlow {
         if let CrosstermEvent::Key(key) = event
-            && key.code == KeyCode::Esc {
-                state.ui.show_trace_log = false;
-                return EventFlow::Consumed;
-            }
+            && key.code == KeyCode::Esc
+        {
+            state.ui.show_trace_log = false;
+            return EventFlow::Consumed;
+        }
 
         EventFlow::Ignored
     }

@@ -86,32 +86,33 @@ impl Component for Header {
             .title(stats_line.alignment(Alignment::Right));
 
         if let Some(group_id) = &state.game.group.id
-            && let Some(leader_name) = &state.game.group.leader {
-                let display_leader = if Some(leader_name) == state.game.player.name.as_ref() {
-                    "[You]"
-                } else {
-                    leader_name.as_str()
-                };
+            && let Some(leader_name) = &state.game.group.leader
+        {
+            let display_leader = if Some(leader_name) == state.game.player.name.as_ref() {
+                "[You]"
+            } else {
+                leader_name.as_str()
+            };
 
-                let short_id = if group_id.len() > 8 {
-                    format!("{}...", &group_id[..8])
-                } else {
-                    group_id.clone()
-                };
+            let short_id = if group_id.len() > 8 {
+                format!("{}...", &group_id[..8])
+            } else {
+                group_id.clone()
+            };
 
-                let group_line = Line::from(vec![
-                    Span::raw(format!(" Group: {} | Leader: ", short_id)),
-                    Span::styled(
-                        display_leader,
-                        Style::default()
-                            .fg(Color::Yellow)
-                            .add_modifier(Modifier::BOLD),
-                    ),
-                    Span::raw(" "),
-                ]);
+            let group_line = Line::from(vec![
+                Span::raw(format!(" Group: {} | Leader: ", short_id)),
+                Span::styled(
+                    display_leader,
+                    Style::default()
+                        .fg(Color::Yellow)
+                        .add_modifier(Modifier::BOLD),
+                ),
+                Span::raw(" "),
+            ]);
 
-                block = block.title_bottom(group_line.alignment(Alignment::Right));
-            }
+            block = block.title_bottom(group_line.alignment(Alignment::Right));
+        }
 
         let description = match &state.game.room.description {
             Some(desc) => desc.as_str(),

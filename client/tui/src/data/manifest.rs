@@ -15,7 +15,6 @@ pub enum NpcKind {
     Normal,
 }
 
-
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct NpcEntry {
     pub name: String,

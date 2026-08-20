@@ -169,11 +169,11 @@ impl Lifecycle for HelpOverlay {
                 KeyCode::Char('h')
                     if key
                         .modifiers
-                        .contains(crossterm::event::KeyModifiers::CONTROL)
-                    => {
-                        state.game.overlays.close(OverlayKind::Help);
-                        return EventFlow::Consumed;
-                    }
+                        .contains(crossterm::event::KeyModifiers::CONTROL) =>
+                {
+                    state.game.overlays.close(OverlayKind::Help);
+                    return EventFlow::Consumed;
+                }
                 _ => {}
             }
         }

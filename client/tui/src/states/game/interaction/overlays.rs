@@ -134,9 +134,10 @@ impl Overlays {
 
     pub fn dialogue_cooldown_elapsed(&self) -> bool {
         if let Some(time) = self.dialogue_closed_at
-            && time.elapsed() < Duration::from_millis(300) {
-                return false;
-            }
+            && time.elapsed() < Duration::from_millis(300)
+        {
+            return false;
+        }
         true
     }
 

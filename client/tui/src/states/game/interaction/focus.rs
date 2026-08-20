@@ -1,5 +1,4 @@
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[derive(Default)]
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub enum GameFocus {
     #[default]
     Input,
@@ -10,4 +9,3 @@ pub enum GameFocus {
     InventoryGrid,
     ActionHistory,
 }
-

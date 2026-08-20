@@ -119,10 +119,11 @@ impl Lifecycle for NpcActionsPopup {
                 }
                 KeyCode::Enter => {
                     if let Some(action) = actions.get(self.selected_action_index)
-                        && action != "CANCEL" {
-                            let cmd = format!("{} {}", action.to_uppercase(), npc_id);
-                            let _ = event_sender.try_send(ApplicationEvent::SendRawCommand(cmd));
-                        }
+                        && action != "CANCEL"
+                    {
+                        let cmd = format!("{} {}", action.to_uppercase(), npc_id);
+                        let _ = event_sender.try_send(ApplicationEvent::SendRawCommand(cmd));
+                    }
                     state.game.overlays.close_top();
                     self.selected_action_index = 0;
                     return EventFlow::Consumed;

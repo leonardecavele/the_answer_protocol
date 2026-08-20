@@ -131,9 +131,10 @@ impl Lifecycle for DialoguePopup {
     fn on_tick(&mut self, state: &mut AppState) {
         if let Some(dialog) = state.game.overlays.dialogue_mut()
             && dialog.visible_chars < dialog.full_text.chars().count()
-                && dialog.last_tick.elapsed().as_millis() > CHAR_DELAY_MS {
-                    dialog.visible_chars += 1;
-                    dialog.last_tick = Instant::now();
-                }
+            && dialog.last_tick.elapsed().as_millis() > CHAR_DELAY_MS
+        {
+            dialog.visible_chars += 1;
+            dialog.last_tick = Instant::now();
+        }
     }
 }

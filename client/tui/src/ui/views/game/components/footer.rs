@@ -46,16 +46,16 @@ impl Lifecycle for Footer {
                 code: KeyCode::Enter,
                 ..
             }) = event
-            {
-                let command = self.input.inner.value.trim().to_string();
-                if !command.is_empty() {
-                    self.input.inner.value.clear();
-                    let _ = event_sender.try_send(ApplicationEvent::SendRawCommand(command));
-                } else {
-                    state.game.focus = GameFocus::RightPanel;
-                }
-                return EventFlow::Consumed;
+        {
+            let command = self.input.inner.value.trim().to_string();
+            if !command.is_empty() {
+                self.input.inner.value.clear();
+                let _ = event_sender.try_send(ApplicationEvent::SendRawCommand(command));
+            } else {
+                state.game.focus = GameFocus::RightPanel;
             }
+            return EventFlow::Consumed;
+        }
 
         if state.game.focus == GameFocus::Input {
             self.input.handle_terminal_event(state, event, event_sender)
