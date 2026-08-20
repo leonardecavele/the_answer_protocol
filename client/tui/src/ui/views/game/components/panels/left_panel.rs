@@ -7,7 +7,7 @@ use crate::states::game::Overlay::{ItemActions, NpcActions, QuestDetail};
 use crate::ui::components::Component;
 use crate::ui::components::Lifecycle;
 use crate::ui::components::lifecycle::EventFlow;
-use crate::ui::theme::{default_block, panel_block};
+use crate::ui::theme::{default_block, panel_block, quest_status};
 use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect},
@@ -133,19 +133,9 @@ impl Component for LeftPanel {
             .iter()
             .enumerate()
             .map(|(idx, q)| {
-                let desc = state
-                    .game
-                    .manifest
-                    .quests
-                    .get(&q.quest_id)
-                    .map(|c| c.description.clone())
-                    .unwrap_or_else(|| q.quest_id.clone());
-                let is_done = q.status.eq_ignore_ascii_case("completed");
-                let mut style = if is_done {
-                    Style::default().fg(Color::Green)
-                } else {
-                    Style::default().fg(Color::Yellow)
-                };
+                let (label, color) = quest_status(&q.status);
+
+                let mut style = Style::default().fg(color);
 
                 if state.game.player.quests.is_selected(idx)
                     && state.game.focus == GameFocus::QuestList
@@ -153,10 +143,7 @@ impl Component for LeftPanel {
                     style = style.add_modifier(Modifier::REVERSED);
                 }
 
-                ListItem::new(Span::styled(
-                    format!("[{}] {}", q.status.to_uppercase(), desc),
-                    style,
-                ))
+                ListItem::new(Span::styled(format!("[{}] {}", label, q.name), style))
             })
             .collect();
         let quests_block = panel_block(" Quests ", state.game.focus == GameFocus::QuestList);
@@ -236,8 +223,8 @@ impl Lifecycle for LeftPanel {
                 }
                 crossterm::event::KeyCode::Enter => match state.game.player.quests.selected() {
                     Some(quest) => {
-                        let quest_id = quest.quest_id.clone();
-                        state.game.overlays.open(QuestDetail { quest_id });
+                        let name = quest.name.clone();
+                        state.game.overlays.open(QuestDetail { name });
                         EventFlow::Consumed
                     }
                     None => EventFlow::Ignored,

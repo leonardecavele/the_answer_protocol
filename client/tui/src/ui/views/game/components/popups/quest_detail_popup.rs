@@ -3,7 +3,7 @@ use crate::states::app::AppState;
 use crate::states::game::OverlayKind;
 use crate::ui::components::lifecycle::EventFlow;
 use crate::ui::components::{Component, Lifecycle};
-use crate::ui::theme::{close_hint, popup_block};
+use crate::ui::theme::{close_hint, popup_block, quest_status};
 use crate::ui::utils::{centered_rect_percent, wrap_str_to_lines};
 use api_client::commands::QuestData;
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
@@ -35,15 +35,12 @@ impl QuestDetailPopup {
     }
 
     fn body(&self, quest: &QuestData, max_width: usize) -> Vec<Line<'static>> {
-        let is_done = quest.status.eq_ignore_ascii_case("completed");
-        let status_color = if is_done { Color::Green } else { Color::Yellow };
+        let (label, color) = quest_status(&quest.status);
 
         let mut lines = vec![
             Line::from(Span::styled(
-                format!("Status: {}", quest.status.to_lowercase()),
-                Style::default()
-                    .fg(status_color)
-                    .add_modifier(Modifier::BOLD),
+                format!("Status: {}", label),
+                Style::default().fg(color).add_modifier(Modifier::BOLD),
             )),
             Line::from(""),
         ];
@@ -75,8 +72,8 @@ impl QuestDetailPopup {
 
 impl Component for QuestDetailPopup {
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
-        let quest_id = match state.game.overlays.target_of(OverlayKind::QuestDetail) {
-            Some(id) => id,
+        let quest_name = match state.game.overlays.target_of(OverlayKind::QuestDetail) {
+            Some(name) => name,
             None => return,
         };
 
@@ -85,7 +82,7 @@ impl Component for QuestDetailPopup {
             .player
             .quests
             .iter()
-            .find(|q| q.quest_id == quest_id)
+            .find(|q| q.name == quest_name)
         {
             Some(quest) => quest,
             None => return,
@@ -95,7 +92,7 @@ impl Component for QuestDetailPopup {
 
         frame.render_widget(Clear, popup_area);
 
-        let block = popup_block(format!(" {} ", quest.quest_id)).padding(Padding::uniform(1));
+        let block = popup_block(format!(" {} ", quest.name)).padding(Padding::uniform(1));
 
         let inner_area = block.inner(popup_area);
         frame.render_widget(block, popup_area);

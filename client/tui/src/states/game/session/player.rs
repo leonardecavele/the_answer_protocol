@@ -27,8 +27,9 @@ impl PlayerState {
             .is_some_and(|name| name.eq_ignore_ascii_case(player_name))
     }
 
-    pub fn heal(&mut self, amount: u32) {
-        self.hp = (self.hp + amount).min(self.max_hp);
+    pub fn set_vitals(&mut self, hp: u32, max_hp: u32) {
+        self.max_hp = max_hp;
+        self.hp = hp.min(max_hp);
     }
 
     pub fn take_damage(&mut self, amount: u32) {

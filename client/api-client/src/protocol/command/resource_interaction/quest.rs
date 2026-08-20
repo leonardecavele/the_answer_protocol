@@ -1,7 +1,34 @@
 use crate::error::CommandError;
 use crate::protocol::command::Command;
 use crate::protocol::response::ServerResponse;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
+use tracing::warn;
+
+#[derive(Debug, PartialEq, Eq, Clone, Serialize)]
+pub enum QuestStatus {
+    InProgress,
+    Completed,
+}
+
+impl<'de> Deserialize<'de> for QuestStatus {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let value = String::deserialize(deserializer)?.replace(" ", "");
+
+        let status = if value.eq_ignore_ascii_case("inprogress") {
+            QuestStatus::InProgress
+        } else if value.eq_ignore_ascii_case("completed") {
+            QuestStatus::Completed
+        } else {
+            warn!("Unknown quest status: {}", value);
+            QuestStatus::InProgress
+        };
+
+        Ok(status)
+    }
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QuestReward {
@@ -12,10 +39,16 @@ pub struct QuestReward {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QuestData {
-    pub quest_id: String,
+    pub name: String,
     pub description: String,
     pub reward: Vec<QuestReward>,
-    pub status: String,
+    pub status: QuestStatus,
+}
+
+impl QuestData {
+    pub fn is_completed(&self) -> bool {
+        self.status == QuestStatus::Completed
+    }
 }
 
 // =============================

@@ -1,3 +1,4 @@
+use api_client::commands::QuestStatus;
 use ratatui::{
     layout::Alignment,
     style::{Color, Modifier, Style},
@@ -10,6 +11,13 @@ pub const FOCUS_BORDER_COLOR: Color = Color::Yellow;
 
 pub fn dim_style() -> Style {
     Style::default().add_modifier(Modifier::DIM)
+}
+
+pub fn quest_status(status: &QuestStatus) -> (&'static str, Color) {
+    match status {
+        QuestStatus::InProgress => ("in progress", Color::Yellow),
+        QuestStatus::Completed => ("completed", Color::Green),
+    }
 }
 
 pub fn default_block<'a>() -> Block<'a> {

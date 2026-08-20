@@ -30,8 +30,8 @@ pub mod commands {
         FightCreateCommand, FightCreateResponse,
     };
     pub use crate::protocol::command::core::look::{LookCommand, LookResponse, LookRoom};
-    pub use crate::protocol::command::core::quit::{QuitCommand, QuitResponse};
     pub use crate::protocol::command::core::r#move::{MoveCommand, MoveResponse};
+    pub use crate::protocol::command::core::quit::{QuitCommand, QuitResponse};
     pub use crate::protocol::command::core::who::{WhoCommand, WhoResponse};
     pub use crate::protocol::command::group::create::{GroupCreateCommand, GroupCreateResponse};
     pub use crate::protocol::command::group::invite::{GroupInviteCommand, GroupInviteResponse};
@@ -45,7 +45,8 @@ pub mod commands {
         InventoryCommand, InventoryResponse,
     };
     pub use crate::protocol::command::resource_interaction::quest::{
-        QuestCommand, QuestData, QuestResponse, QuestReward, QuestsCommand, QuestsResponse,
+        QuestCommand, QuestData, QuestResponse, QuestReward, QuestStatus, QuestsCommand,
+        QuestsResponse,
     };
     pub use crate::protocol::command::resource_interaction::status::{
         PlayerStatus, StatusCommand, StatusResponse,

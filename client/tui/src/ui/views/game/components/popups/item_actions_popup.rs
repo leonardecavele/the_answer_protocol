@@ -58,19 +58,15 @@ impl Component for ItemActionsPopup {
             None => return,
         };
 
+        let Some(item) = state.game.find_item(item_id) else {
+            return;
+        };
+
         let actions = self.get_actions(state, item_id);
 
         let popup_area = centered_rect(area, POPUP_WIDTH, actions.len() as u16 + 2);
 
-        let display_name = state
-            .game
-            .manifest
-            .items
-            .get(item_id)
-            .map(|n| n.name.clone())
-            .unwrap_or_else(|| item_id.to_string());
-
-        let title = format!(" {} ", display_name);
+        let title = format!(" {} ", item.name);
 
         frame.render_widget(Clear, popup_area);
 

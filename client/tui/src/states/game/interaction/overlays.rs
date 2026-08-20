@@ -7,7 +7,7 @@ pub enum Overlay {
     NpcActions { npc_id: String },
     ItemActions { item_id: String },
     ItemDetail { item_id: String },
-    QuestDetail { quest_id: String },
+    QuestDetail { name: String },
     Dialogue(DialogueState),
 }
 
@@ -113,7 +113,7 @@ impl Overlays {
                 Overlay::ItemActions { item_id } | Overlay::ItemDetail { item_id } => {
                     Some(item_id.as_str())
                 }
-                Overlay::QuestDetail { quest_id } => Some(quest_id.as_str()),
+                Overlay::QuestDetail { name } => Some(name.as_str()),
                 _ => None,
             })
     }

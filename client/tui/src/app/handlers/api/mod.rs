@@ -1,5 +1,6 @@
 mod chat;
 mod combat;
+mod player;
 
 use crate::app::App;
 use crate::events::ApiEvent;
@@ -62,11 +63,7 @@ impl App {
             ApiResponse::FightCreate(Ok(_)) => {}
             ApiResponse::FightAttack(Ok(_)) => {}
             ApiResponse::Status(Ok(status_res)) => {
-                self.state.game.player.hp = status_res.player_status.hp;
-                self.state.game.player.max_hp = status_res.player_status.max_hp;
-                self.state
-                    .game
-                    .log_action("You checked your state.".to_string());
+                self.on_status(status_res);
             }
             ApiResponse::GroupCreate(Ok(res)) => {
                 self.state.game.group.id = Some(res.group_id.clone());
@@ -140,30 +137,14 @@ impl App {
                 }
                 self.handle_request(ApiRequest::Look(LookCommand));
             }
-            ApiResponse::Inventory(Ok(inv_res)) => {
-                self.state.game.player.inventory.set_items(
-                    inv_res
-                        .inventory
-                        .into_iter()
-                        .map(|id| Item::from_manifest(id, &self.state.game.manifest))
-                        .collect(),
-                );
-                self.state
-                    .game
-                    .log_action("You checked your inventory.".to_string());
+            ApiResponse::Inventory(Ok(inventory_res)) => {
+                self.on_inventory(inventory_res);
             }
             ApiResponse::Quests(Ok(quests_res)) => {
-                self.state
-                    .game
-                    .player
-                    .quests
-                    .set_items(quests_res.quest_list);
-                self.state
-                    .game
-                    .log_action("You checked your quests.".to_string());
+                self.on_quests(quests_res);
             }
             ApiResponse::Quest(Ok(quest_res)) => {
-                self.state.game.player.quests.push(quest_res.quest_data);
+                self.on_quest(quest_res);
             }
             ApiResponse::Talk(Ok(talk_res)) => {
                 if let ApiRequest::Talk(cmd) = envelope.original_request {
@@ -214,42 +195,10 @@ impl App {
                 }
             }
             ApiResponse::Take(Ok(take_res)) => {
-                let id = take_res.item_identifier;
-
-                let item = match self.state.game.room.take_item(&id) {
-                    Some(item) => item,
-                    None => {
-                        self.record_trace(
-                            "desync",
-                            format!("took {} which was not in the room", id),
-                        );
-                        Item::from_manifest(id, &self.state.game.manifest)
-                    }
-                };
-
-                self.state
-                    .game
-                    .log_action(format!("You took {}.", item.name));
-                self.state.game.player.inventory.push(item);
+                self.on_take_item(take_res);
             }
             ApiResponse::Drop(Ok(drop_res)) => {
-                let id = drop_res.item_identifier;
-
-                let item = match self.state.game.player.take_item(&id) {
-                    Some(item) => item,
-                    None => {
-                        self.record_trace(
-                            "desync",
-                            format!("dropped {} which was not in the player inventory", id),
-                        );
-                        Item::from_manifest(id, &self.state.game.manifest)
-                    }
-                };
-
-                self.state
-                    .game
-                    .log_action(format!("You dropped {}.", item.name));
-                self.state.game.room.items.push(item);
+                self.on_drop_item(drop_res);
             }
             ApiResponse::Attack(Ok(attack_res)) => {
                 if let ApiRequest::Attack(cmd) = envelope.original_request {
