@@ -6,6 +6,7 @@ import (
 	"errors"
 	"go_server/config"
 	serverError "go_server/error"
+	"go_server/helper"
 	"go_server/logger"
 	"go_server/protocol"
 	"io"
@@ -93,7 +94,7 @@ func (gameServer *GameServer) Read(
 
 	reader := bufio.NewReader(conn)
 	for {
-		message, err := reader.ReadString('\n')
+		message, err := helper.ReadStringWithLimit(reader, '\n', config.ReadStringMaxSize)
 		if err != nil {
 			select {
 			case <-quit:

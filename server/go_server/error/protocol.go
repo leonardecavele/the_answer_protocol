@@ -4,6 +4,7 @@ const (
 	NoError = 0
 
 	NameInUseError = 201
+	NoContentError = 204
 	NoExitError    = 301
 
 	AlreadyConnectedError = 400
@@ -29,15 +30,24 @@ const (
 	GroupNotFoundError      = 404
 	NoSuchGroupError        = 404
 
-	NpcNotHostileError    = 405
-	NoQuestAvailableError = 406
-	NotInSameRoomError    = 407
+	PlayerNotFoundError        = 405
+	NpcNotHostileError         = 405
+	NoQuestAvailableError      = 406
+	NpcNotInRoomError          = 407
+	NotInSameRoomError         = 407
+	NpcInCombatError           = 408
+	ActionAlreadyTakenError    = 409
+	PlayerAlreadyInCombatError = 410
+	PlayerNotInCombatError     = 411
+	FileNotFoundError          = 412
+	RoomNotFoundError          = 413
 
 	ConnectionFailedError  = 900
 	SendFailedError        = 901
 	GameServerTimeoutError = 902
 
-	InvalidQuestionError = 998
-	InvalidCommandError  = 999
-	UnknownError         = 999
+	InvalidGroupCommandError = 997
+	InvalidQuestionError     = 998
+	InvalidCommandError      = 999
+	UnknownError             = 999
 )

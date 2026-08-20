@@ -6,6 +6,7 @@ import (
 	"go_server/client_conn/tap_commands"
 	"go_server/config"
 	"go_server/game_conn"
+	"go_server/helper"
 	"go_server/logger"
 	"go_server/protocol"
 	"go_server/session"
@@ -93,7 +94,7 @@ func HandleClient(client *session.Client, gameServerManager *game_conn.GameServe
 			return
 		}
 
-		str, err := reader.ReadString('\n')
+		str, err := helper.ReadStringWithLimit(reader, '\n', config.ReadStringMaxSize)
 		if err != nil {
 			if !errors.Is(err, io.EOF) {
 				logger.AppLogger.Error("%s Read error: %v\n", client.Id, err)

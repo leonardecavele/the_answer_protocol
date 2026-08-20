@@ -24,7 +24,7 @@ func (room *Room) SetUsername(client *Client, username string) string {
 	room.mutex.Lock()
 	defer room.mutex.Unlock()
 
-	if client.State == AUTHENTICATED {
+	if client.IsAuthenticated() {
 		return protocol.ResponseAlreadyConnected
 	}
 
@@ -35,8 +35,7 @@ func (room *Room) SetUsername(client *Client, username string) string {
 	if _, ok := room.clients[username]; ok {
 		return protocol.ResponseUsernameAlreadyUsed
 	}
-	client.Username = username
-	client.State = AUTHENTICATED
+	client.authenticate(username)
 	room.clients[username] = client
 
 	return ""
@@ -44,7 +43,7 @@ func (room *Room) SetUsername(client *Client, username string) string {
 
 func (room *Room) DeleteUsername(client *Client) {
 	room.mutex.Lock()
-	if client.State == AUTHENTICATED {
+	if client.IsAuthenticated() {
 		delete(room.clients, client.Username)
 	}
 	room.mutex.Unlock()

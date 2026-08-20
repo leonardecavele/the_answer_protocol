@@ -11,3 +11,4 @@
 .vscode
 *:Zone.Identifier
 *.log
+*_test.go
