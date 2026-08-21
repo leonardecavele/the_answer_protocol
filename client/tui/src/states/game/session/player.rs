@@ -21,6 +21,10 @@ impl PlayerState {
         }
     }
 
+    pub fn set_name(&mut self, name: String) {
+        self.name = Some(name.to_uppercase());
+    }
+
     pub fn is_me(&self, player_name: &str) -> bool {
         self.name
             .as_deref()

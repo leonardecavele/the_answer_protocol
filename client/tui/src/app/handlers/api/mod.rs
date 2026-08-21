@@ -1,14 +1,15 @@
 mod chat;
 mod combat;
+mod group;
 mod player;
 mod room;
+mod server;
 
 use crate::app::App;
 use crate::events::ApiEvent;
 use crate::network::envelopes::ResponseEnvelope;
 use crate::states::game::{ChatChannel, DialogueState, END_OF_DIALOGUE_TAG, Overlay, OverlayKind};
 use crate::states::ui::Notification;
-use api_client::commands::LookCommand;
 use api_client::events::{GameServerEvent, GroupEvent, RoomEvent, ServerEvent};
 use api_client::{ApiRequest, ApiResponse};
 
@@ -51,13 +52,10 @@ impl App {
 
         match envelope.response {
             ApiResponse::Connect(Ok(connect_res)) => {
-                self.state.game.player.name = Some(connect_res.player_name);
+                self.on_connected(connect_res);
             }
             ApiResponse::Who(Ok(who_res)) => {
-                self.state.game.server.online_players_count = who_res.player_count;
-                self.state
-                    .game
-                    .log_action("You checked who is here.".to_string());
+                self.on_who(who_res);
             }
             ApiResponse::FightCreate(Ok(_)) => {}
             ApiResponse::FightAttack(Ok(_)) => {}
@@ -65,27 +63,15 @@ impl App {
                 self.on_status(status_res);
             }
             ApiResponse::GroupCreate(Ok(res)) => {
-                self.state.game.group.id = Some(res.group_id.clone());
-                self.state.game.group.leader = self.state.game.player.name.clone();
-                self.state
-                    .game
-                    .log_action(format!("You created group {}.", res.group_id));
+                self.on_group_created(res);
             }
             ApiResponse::GroupJoin(Ok(res)) => {
                 if let ApiRequest::GroupJoin(cmd) = envelope.original_request {
-                    self.state.game.group.id = Some(res.group_id);
-                    self.state.game.group.leader = Some(cmd.leader_name.to_uppercase());
-                    self.state
-                        .game
-                        .log_action(format!("You joined the group of {}.", cmd.leader_name));
+                    self.on_group_joined(res, cmd.leader_name);
                 }
             }
             ApiResponse::GroupLeave(Ok(_res)) => {
-                self.state.game.group.id = None;
-                self.state.game.group.leader = None;
-                self.state
-                    .game
-                    .log_action("You left the group.".to_string());
+                self.on_group_left();
             }
             ApiResponse::GlobalChat(Ok(_)) => {
                 if let ApiRequest::GlobalChat(cmd) = envelope.original_request {
@@ -218,10 +204,7 @@ impl App {
 
         match event {
             ServerEvent::Connect(name) => {
-                self.state.game.server.online_players_count += 1;
-                self.state
-                    .game
-                    .log_action(format!("{} joined the server.", name));
+                self.on_player_joined_server(name);
             }
             ServerEvent::Spawn(spawn_data) => match spawn_data.r#type.as_str() {
                 "NPC" => {
@@ -267,22 +250,7 @@ impl App {
                 self.on_fight_end();
             }
             ServerEvent::Quit(name) => {
-                self.state.game.server.online_players_count = self
-                    .state
-                    .game
-                    .server
-                    .online_players_count
-                    .saturating_sub(1);
-                if let Some(room) = &mut self.state.game.room {
-                    room.player_left(&name);
-                }
-                if self.state.game.group.leader.as_ref() == Some(&name) {
-                    self.state.game.group.id = None;
-                    self.state.game.group.leader = None;
-                }
-                self.state
-                    .game
-                    .log_action(format!("{} disconnected.", name));
+                self.on_player_quit_server(name);
             }
             ServerEvent::Room(room_event) => match room_event {
                 RoomEvent::PresenceEnter(name) => {
@@ -303,40 +271,19 @@ impl App {
             },
             ServerEvent::Group(group_event) => match group_event {
                 GroupEvent::Invite(leader) => {
-                    self.state.ui.notifications.push(Notification::info(format!(
-                        "You are invited to a group by {}.",
-                        leader
-                    )));
+                    self.on_group_invited_by(leader);
                 }
                 GroupEvent::Join(user) => {
-                    self.state
-                        .game
-                        .log_action(format!("{} joined the group.", user));
+                    self.on_group_member_joined(user);
                 }
                 GroupEvent::Leave(user) => {
-                    if self.state.game.group.leader.as_ref() == Some(&user.to_uppercase()) {
-                        self.state.game.group.id = None;
-                        self.state.game.group.leader = None;
-
-                        self.state.game.log_action(format!(
-                            "Leader {} left. The group has been disbanded.",
-                            user
-                        ));
-                    } else {
-                        self.state
-                            .game
-                            .log_action(format!("{} left the group.", user));
-                    }
+                    self.on_group_member_left(user);
                 }
                 GroupEvent::Chat(chat) => {
                     self.on_chat_received(ChatChannel::Group, chat.sender, chat.message);
                 }
                 GroupEvent::Move(direction) => {
-                    self.state
-                        .game
-                        .log_action(format!("Group moved to {}.", direction));
-
-                    self.handle_request(ApiRequest::Look(LookCommand));
+                    self.on_group_moved(direction);
                 }
             },
             ServerEvent::GlobalChat(chat) => {
@@ -347,35 +294,17 @@ impl App {
                 self.on_chat_received(channel, chat.sender, chat.message);
             }
             ServerEvent::Stats(count) => {
-                self.state.game.server.online_players_count = count;
+                self.on_stats(count);
             }
             ServerEvent::Unknown(raw) => {
-                self.state
-                    .ui
-                    .notifications
-                    .push(Notification::warning(format!("Unknown event: {}", raw)));
+                self.on_unknown_event(raw);
             }
             ServerEvent::GameServer(game_server_event) => match game_server_event {
                 GameServerEvent::Connected => {
-                    self.state
-                        .game
-                        .log_action("Game server online.".to_string());
-
-                    self.state.ui.notifications.push(Notification::info(
-                        "Game server is online. Session restarted.",
-                    ));
-
-                    self.state.network.is_connected = true;
-
-                    self.load_state_from_server();
+                    self.on_game_server_connected();
                 }
                 GameServerEvent::Disconnected => {
-                    self.state
-                        .game
-                        .log_action("Game server offline.".to_string());
-
-                    self.state.game.overlays.close_all();
-                    self.state.network.is_connected = false;
+                    self.on_game_server_disconnected();
                 }
             },
         }
