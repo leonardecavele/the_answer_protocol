@@ -5,25 +5,25 @@ use api_client::commands::{LookCommand, LookResponse, StatusCommand};
 use api_client::events::{DeathData, SpawnData};
 
 impl App {
-    pub(crate) fn on_look(&mut self, look: LookResponse) {
+    pub(crate) fn on_look(&mut self, response: LookResponse) {
         let manifest = &self.state.game.manifest;
         let self_name = self.state.game.player.name.as_deref();
 
-        let mut players = look.players;
+        let mut players = response.players;
         players.retain(|player| Some(player.as_str()) != self_name);
 
         let room = Room {
-            id: look.room.id,
-            name: look.room.name,
-            description: look.room.description,
-            exits: look.room.exits.into(),
+            id: response.room.id,
+            name: response.room.name,
+            description: response.room.description,
+            exits: response.room.exits.into(),
             players,
-            npcs: look
+            npcs: response
                 .npcs
                 .into_iter()
                 .map(|id| Npc::from_manifest(id, manifest))
                 .collect(),
-            items: look
+            items: response
                 .items
                 .into_iter()
                 .map(|id| Item::from_manifest(id, manifest))
@@ -44,8 +44,8 @@ impl App {
         self.handle_request(ApiRequest::Look(LookCommand));
     }
 
-    pub(crate) fn on_npc_spawned(&mut self, spawn_data: SpawnData) {
-        let npc = Npc::from_manifest(spawn_data.id, &self.state.game.manifest);
+    pub(crate) fn on_npc_spawned(&mut self, spawn: SpawnData) {
+        let npc = Npc::from_manifest(spawn.id, &self.state.game.manifest);
 
         let Some(room) = &mut self.state.game.room else {
             return;
@@ -57,8 +57,8 @@ impl App {
         self.state.game.log_action(format!("{} has respawn", name));
     }
 
-    pub(crate) fn on_item_spawned(&mut self, spawn_data: SpawnData) {
-        let item = Item::from_manifest(spawn_data.id, &self.state.game.manifest);
+    pub(crate) fn on_item_spawned(&mut self, spawn: SpawnData) {
+        let item = Item::from_manifest(spawn.id, &self.state.game.manifest);
 
         let Some(room) = &mut self.state.game.room else {
             return;
@@ -72,12 +72,12 @@ impl App {
             .log_action(format!("{} has been catapulted here", name));
     }
 
-    pub(crate) fn on_item_despawned(&mut self, spawn_data: SpawnData) {
+    pub(crate) fn on_item_despawned(&mut self, spawn: SpawnData) {
         let Some(room) = &mut self.state.game.room else {
             return;
         };
 
-        let Some(item) = room.take_item(&spawn_data.id) else {
+        let Some(item) = room.take_item(&spawn.id) else {
             return;
         };
 
@@ -137,34 +137,34 @@ impl App {
             .log_action(format!("{} dropped {}.", player, name));
     }
 
-    pub(crate) fn on_death(&mut self, death_data: DeathData) {
-        let is_me = self.state.game.player.is_me(&death_data.player_name);
+    pub(crate) fn on_death(&mut self, death: DeathData) {
+        let is_me = self.state.game.player.is_me(&death.player_name);
         let respawn_here = self
             .state
             .game
             .room
             .as_ref()
-            .is_some_and(|room| room.name == death_data.respawn_room_id);
+            .is_some_and(|room| room.name == death.respawn_room_id);
 
         if !is_me && let Some(room) = &mut self.state.game.room {
             if respawn_here {
-                room.player_entered(death_data.player_name.clone());
+                room.player_entered(death.player_name.clone());
             } else {
-                room.player_left(&death_data.player_name);
+                room.player_left(&death.player_name);
             }
         }
 
         let message = match (is_me, respawn_here) {
             (true, true) => "You died and respawned here".to_string(),
             (true, false) => {
-                format!("You died and respawned in {}", death_data.respawn_room_id)
+                format!("You died and respawned in {}", death.respawn_room_id)
             }
             (false, true) => {
-                format!("{} died and respawned here", death_data.player_name)
+                format!("{} died and respawned here", death.player_name)
             }
             (false, false) => format!(
                 "{} died and respawned in {}",
-                death_data.player_name, death_data.respawn_room_id
+                death.player_name, death.respawn_room_id
             ),
         };
 

@@ -51,26 +51,26 @@ impl App {
         );
 
         match envelope.response {
-            ApiResponse::Connect(Ok(connect_res)) => {
-                self.on_connected(connect_res);
+            ApiResponse::Connect(Ok(response)) => {
+                self.on_connected(response);
             }
-            ApiResponse::Who(Ok(who_res)) => {
-                self.on_who(who_res);
+            ApiResponse::Who(Ok(response)) => {
+                self.on_who(response);
             }
             ApiResponse::FightCreate(Ok(_)) => {}
             ApiResponse::FightAttack(Ok(_)) => {}
-            ApiResponse::Status(Ok(status_res)) => {
-                self.on_status(status_res);
+            ApiResponse::Status(Ok(response)) => {
+                self.on_status(response);
             }
-            ApiResponse::GroupCreate(Ok(res)) => {
-                self.on_group_created(res);
+            ApiResponse::GroupCreate(Ok(response)) => {
+                self.on_group_created(response);
             }
-            ApiResponse::GroupJoin(Ok(res)) => {
+            ApiResponse::GroupJoin(Ok(response)) => {
                 if let ApiRequest::GroupJoin(cmd) = envelope.original_request {
-                    self.on_group_joined(res, cmd.leader_name);
+                    self.on_group_joined(response, cmd.leader_name);
                 }
             }
-            ApiResponse::GroupLeave(Ok(_res)) => {
+            ApiResponse::GroupLeave(Ok(_)) => {
                 self.on_group_left();
             }
             ApiResponse::GlobalChat(Ok(_)) => {
@@ -83,26 +83,26 @@ impl App {
                     self.on_private_chat_sent(cmd.to, cmd.message);
                 }
             }
-            ApiResponse::Look(Ok(look_res)) => {
-                self.on_look(look_res);
+            ApiResponse::Look(Ok(response)) => {
+                self.on_look(response);
             }
-            ApiResponse::Move(Ok(_move_res)) => {
+            ApiResponse::Move(Ok(_)) => {
                 if let ApiRequest::Move(cmd) = envelope.original_request {
                     self.on_moved(cmd.direction);
                 }
             }
-            ApiResponse::Inventory(Ok(inventory_res)) => {
-                self.on_inventory(inventory_res);
+            ApiResponse::Inventory(Ok(response)) => {
+                self.on_inventory(response);
             }
-            ApiResponse::Quests(Ok(quests_res)) => {
-                self.on_quests(quests_res);
+            ApiResponse::Quests(Ok(response)) => {
+                self.on_quests(response);
             }
-            ApiResponse::Quest(Ok(quest_res)) => {
-                self.on_quest(quest_res);
+            ApiResponse::Quest(Ok(response)) => {
+                self.on_quest(response);
             }
-            ApiResponse::Talk(Ok(talk_res)) => {
+            ApiResponse::Talk(Ok(response)) => {
                 if let ApiRequest::Talk(cmd) = envelope.original_request {
-                    let mut text = talk_res.dialogue;
+                    let mut text = response.dialogue;
                     let ends_dialog = text.contains(END_OF_DIALOGUE_TAG);
                     let ends_dialog_only = ends_dialog && text.starts_with(END_OF_DIALOGUE_TAG);
 
@@ -148,13 +148,13 @@ impl App {
                     }
                 }
             }
-            ApiResponse::Take(Ok(take_res)) => {
-                self.on_take_item(take_res);
+            ApiResponse::Take(Ok(response)) => {
+                self.on_take_item(response);
             }
-            ApiResponse::Drop(Ok(drop_res)) => {
-                self.on_drop_item(drop_res);
+            ApiResponse::Drop(Ok(response)) => {
+                self.on_drop_item(response);
             }
-            ApiResponse::Attack(Ok(attack_res)) => {
+            ApiResponse::Attack(Ok(response)) => {
                 if let ApiRequest::Attack(cmd) = envelope.original_request {
                     self.state.game.overlays.inspected_entity = Some(cmd.npc_name.clone());
 
@@ -164,7 +164,7 @@ impl App {
                         .game
                         .log_action(format!("You attacked {}.", npc_name));
 
-                    let res = attack_res.combat_result;
+                    let res = response.combat_result;
 
                     // Update HP manually from attack result
                     self.state.game.player.hp = res.attacker_hp;

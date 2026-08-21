@@ -5,27 +5,27 @@ use crate::ui::views::game::GameView;
 use api_client::events::{FightResultData, FightStartData, KillData};
 
 impl App {
-    pub(crate) fn on_kill(&mut self, kill_data: KillData) {
-        let npc_name = self.state.game.manifest.npc_name(&kill_data.npc_id);
-        let is_me = self.state.game.player.is_me(&kill_data.player);
+    pub(crate) fn on_kill(&mut self, kill: KillData) {
+        let npc_name = self.state.game.manifest.npc_name(&kill.npc_id);
+        let is_me = self.state.game.player.is_me(&kill.player);
 
         let message = if is_me {
             format!("You have defeated {}", npc_name)
         } else {
-            format!("{} has been defeated by {}", npc_name, kill_data.player)
+            format!("{} has been defeated by {}", npc_name, kill.player)
         };
 
         self.state.game.log_action(message);
 
         if let Some(room) = &mut self.state.game.room {
-            room.remove_npc(&kill_data.npc_id);
+            room.remove_npc(&kill.npc_id);
         }
     }
 
-    pub(crate) fn on_fight_start(&mut self, fight_data: FightStartData) {
-        let npc_name = self.state.game.manifest.npc_name(&fight_data.npc_id);
+    pub(crate) fn on_fight_start(&mut self, fight_start: FightStartData) {
+        let npc_name = self.state.game.manifest.npc_name(&fight_start.npc_id);
 
-        match EditorView::new(&fight_data) {
+        match EditorView::new(&fight_start) {
             Ok(view) => {
                 self.state.game.fight.reset();
                 self.state.game.overlays.close_all();

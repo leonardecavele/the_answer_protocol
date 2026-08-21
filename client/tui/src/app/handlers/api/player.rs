@@ -5,20 +5,20 @@ use api_client::commands::{
 };
 
 impl App {
-    pub(crate) fn on_status(&mut self, status_res: StatusResponse) {
+    pub(crate) fn on_status(&mut self, response: StatusResponse) {
         self.state
             .game
             .player
-            .set_vitals(status_res.player_status.hp, status_res.player_status.max_hp);
+            .set_vitals(response.player_status.hp, response.player_status.max_hp);
 
         self.state
             .game
             .log_action("You checked your state.".to_string());
     }
 
-    pub(crate) fn on_inventory(&mut self, inventory_res: InventoryResponse) {
+    pub(crate) fn on_inventory(&mut self, response: InventoryResponse) {
         self.state.game.player.inventory.set_items(
-            inventory_res
+            response
                 .inventory
                 .into_iter()
                 .map(|id| Item::from_manifest(id, &self.state.game.manifest))
@@ -30,24 +30,20 @@ impl App {
             .log_action("You checked your inventory.".to_string());
     }
 
-    pub(crate) fn on_quests(&mut self, quests_res: QuestsResponse) {
-        self.state
-            .game
-            .player
-            .quests
-            .set_items(quests_res.quest_list);
+    pub(crate) fn on_quests(&mut self, response: QuestsResponse) {
+        self.state.game.player.quests.set_items(response.quest_list);
 
         self.state
             .game
             .log_action("You checked your quests.".to_string());
     }
 
-    pub(crate) fn on_quest(&mut self, quest_res: QuestResponse) {
-        self.state.game.player.quests.push(quest_res.quest_data);
+    pub(crate) fn on_quest(&mut self, response: QuestResponse) {
+        self.state.game.player.quests.push(response.quest_data);
     }
 
-    pub(crate) fn on_take_item(&mut self, take_res: TakeResponse) {
-        let id = take_res.item_identifier;
+    pub(crate) fn on_take_item(&mut self, response: TakeResponse) {
+        let id = response.item_identifier;
 
         let taken = self
             .state
@@ -70,8 +66,8 @@ impl App {
         self.state.game.player.inventory.push(item);
     }
 
-    pub(crate) fn on_drop_item(&mut self, drop_res: DropResponse) {
-        let id = drop_res.item_identifier;
+    pub(crate) fn on_drop_item(&mut self, response: DropResponse) {
+        let id = response.item_identifier;
 
         let item = match self.state.game.player.take_item(&id) {
             Some(item) => item,
