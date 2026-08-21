@@ -1,8 +1,11 @@
 use crate::combat_instances::CombatInstanceManager;
+use crate::commands::generate_json;
 use crate::constantes::{
     CODE_NL_SEP, CODE_SP_SEP, Direction, MAX_DMG_DEALT, MAX_TIME_FOR_COMBAT, MIN_DMG_DEALT,
     NPC_MAX_DMG, NPC_MIN_DMG, NPC_RESPAWN_TIME, PLAYER_ROOM_SPAWN, TEST_FILES_DIR,
 };
+
+use crate::constantes::ErrorCode;
 use crate::inventory::Inventory;
 use crate::items::{Item, ItemId};
 use crate::npc::{Npc, NpcId};
@@ -573,17 +576,25 @@ impl GameManager {
             .map(|(npc_id, npc)| (*npc_id, npc.get_name().clone()))
     }
 
-    pub fn parse_item(&self, item_rep: &str, room_needed: RoomName) -> Option<(ItemId, String)> {
+    pub fn parse_item(&self, item_rep: &str, room: &Room) -> Option<(ItemId, String)> {
         if let Some(item) = Item::parse_item(item_rep) {
             return Some(item);
         }
-        let room_items = self
-            .get_room_by_name(room_needed.as_str())
-            .unwrap()
+            room
             .get_inventory()
             .get_items()
-            .clone();
-        room_items
+            .iter()
+            .find(|item_id| self.get_item_name(item_id) == item_rep)
+            .map(|item_id| (*item_id, self.get_item_name(item_id)))
+    }
+
+    pub fn parse_item_from_player(&self, item_rep: &str, player: &Player) -> Option<(ItemId, String)> {
+        if let Some(item) = Item::parse_item(item_rep) {
+            return Some(item);
+        }
+        player
+            .get_inventory()
+            .get_items()
             .iter()
             .find(|item_id| self.get_item_name(item_id) == item_rep)
             .map(|item_id| (*item_id, self.get_item_name(item_id)))
@@ -609,6 +620,14 @@ impl GameManager {
         }
     }
 
+    pub fn check_player_is_in_instance(&self, player_name: &str, player_id: PlayerId, command: &str) -> Option<JsonValue> {
+        if self.combat_instances.player_is_in_instance(player_id){
+            Some(generate_json(player_name, command, ErrorCode::PlayerAlreadyInCombat, ""))
+        }
+        else{
+            None
+        }
+    }
     pub fn get_player_status_as_string(&self, player_name: &str) -> String {
         let player = self.get_player_from_name(player_name).unwrap();
         let hp = player.get_hp();
@@ -616,7 +635,7 @@ impl GameManager {
         let percentage_hp = hp as f64 / max_hp as f64 * 100.0;
         let status = if percentage_hp >= 80.0 {
             "healthy"
-        } else if percentage_hp >= 50.0 {
+        } else if percentage_hp >= 30.0 {
             "normal"
         } else {
             "critical"
@@ -819,8 +838,7 @@ impl GameManager {
                 &player_name,
                 "KILL",
                 npc_repr.as_str(),
-                false,
-            );
+                false,            );
             self.add_diff_to_tick(event);
         }
         format!(
@@ -828,6 +846,7 @@ impl GameManager {
             player_hp, new_npc_hp, dealt_damage, status
         )
     }
+
 
     pub fn player_has_quest(&self, player_id: PlayerId, quest_id: Questid) -> bool {
         self.quest_instances.iter().any(|quest_instance| {
