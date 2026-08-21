@@ -22,7 +22,6 @@ impl Loot {
 
 #[derive(Clone)]
 pub struct Quest {
-    id: Questid,
     name: String,
     description: String,
     loots: Vec<Loot>,
@@ -31,7 +30,6 @@ pub struct Quest {
 impl Quest {
     pub fn new(json: &JsonValue) -> Option<Self> {
         let name = json["name"].as_str()?;
-        let id = json["id"].as_str().unwrap_or(name).to_string();
         let description = json["description"].as_str()?;
 
         let mut loots = Vec::new();
@@ -49,15 +47,10 @@ impl Quest {
         }
 
         Some(Self {
-            id,
             name: name.to_string(),
             description: description.to_string(),
             loots,
         })
-    }
-
-    pub fn get_id(&self) -> &Questid {
-        &self.id
     }
 
     pub fn get_name(&self) -> &str {

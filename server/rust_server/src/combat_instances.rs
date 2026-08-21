@@ -25,6 +25,9 @@ impl CombatInstanceManager {
         self.instances.get(&npc_id)
     }
 
+    pub fn player_is_in_instance(&self, player_id: PlayerId) -> bool {
+        self.get_instance_for_player(player_id).is_some()
+    }
     pub fn get_instance_for_player(&self, player_id: PlayerId) -> Option<&CombatInstance> {
         self.instances.values().find(|instance| {
             instance.grouped_players.contains(&player_id) || instance.leader == player_id

@@ -11,7 +11,7 @@ use json::{JsonValue, object};
 use rand::RngExt;
 use tracing::{debug, error, info, warn};
 
-fn generate_json(player: &str, command: &str, error_code: ErrorCode, data: &str) -> JsonValue {
+pub fn generate_json(player: &str, command: &str, error_code: ErrorCode, data: &str) -> JsonValue {
     object! {
         "player": player,
         "command": command,
@@ -312,27 +312,21 @@ impl GameManager {
             .map(|x| x.as_str().unwrap_or("").to_owned())
             .collect::<Vec<String>>();
         let command_name = json_object["command"].as_str().unwrap_or("");
+        let leader_id = match self.get_player_id(leader) {
+            Some(id) => *id,
+            None => {
+                warn!("Leader not found: {}", leader);
+                return generate_json(leader, command_name, ErrorCode::PlayerNotFound, "")
+                    .dump();
+            }
+        };
+        if let Some(already_in_instance) = self.check_player_is_in_instance(leader, leader_id, command_name){
+            return already_in_instance.dump();
+        }
         let data = json_object["data"].as_str().unwrap_or("");
 
         match command_name {
             "MOVE" => {
-                let leader_id = match self.get_player_id(leader) {
-                    Some(id) => *id,
-                    None => {
-                        warn!("Leader not found: {}", leader);
-                        return generate_json(leader, command_name, ErrorCode::PlayerNotFound, "")
-                            .dump();
-                    }
-                };
-                if let Some(_instance) = self.combat_instances.get_instance_for_player(leader_id) {
-                    return generate_json(
-                        leader,
-                        command_name,
-                        ErrorCode::PlayerAlreadyInCombat,
-                        "",
-                    )
-                    .dump();
-                }
                 self.group_command_move(leader.to_owned(), command_name, grouped_players, data)
             }
             "FIGHT_CREATE" => {
@@ -504,7 +498,14 @@ impl GameManager {
         }
 
         let player_name = json_object["player"].as_str().unwrap_or("");
-
+        let player_id = match self.get_player_id(player_name) {
+            Some(id) => *id,
+            None => {
+                warn!("Player not found: {}", player_name);
+                return generate_json(player_name, "", ErrorCode::PlayerNotFound, "").dump();
+            }
+        };
+        
         let command_name = json_object["command"].as_str().unwrap_or("");
         let data = json_object["data"].as_str().unwrap_or("");
 
@@ -512,7 +513,11 @@ impl GameManager {
             "received command {} from player {} with args <{}>",
             command_name, player_name, data
         );
-
+        if !(command_name == "CONNECT" || command_name == "QUIT" || command_name == "FIGHT_ATTACK") {
+            if let Some(already_in_instance) = self.check_player_is_in_instance(player_name, player_id, command_name){
+                return already_in_instance.dump();
+            }
+        }
         match command_name {
             "CONNECT" => {
                 // if player_name in self.get_players_by_names().keys(){
@@ -610,15 +615,8 @@ impl GameManager {
             "MOVE" => self.group_command_move(player_name.to_owned(), command_name, vec![], data),
 
             "QUIT" => {
-                let player_id = match self.get_player_id(player_name) {
-                    Some(id) => *id,
-                    None => {
-                        warn!("Player not found: {}", player_name);
-                        return BASE_COMMAND_RESPONSE.to_owned();
-                    }
-                };
                 let room = LOST_ITEM_SPAWN;
-                // this part is for the lost item, who drops when quitting
+                // this part is for the lost item, that drops when quitting
                 if self.player_has_item(player_id, LOST_ITEM as ItemId) {
                     let mut players = self.get_all_players_at_room(room);
                     let lost_item_name = self.get_item_name(&(LOST_ITEM as ItemId));
@@ -670,14 +668,11 @@ impl GameManager {
                 }
 
                 let npc_unwrap = npc.unwrap().clone();
-                if npc_unwrap.get_name() != npc_name {
+                if npc_unwrap.get_name() != npc_name || !self.npc_is_in_room(npc_id, player_room) {
                     return generate_json(player_name, command_name, ErrorCode::NpcNotFound, "")
                         .dump();
                 }
-                if !self.npc_is_in_room(npc_id, player_room) {
-                    return generate_json(player_name, command_name, ErrorCode::NpcNotInRoom, "")
-                        .dump();
-                }
+
 
                 let dialog = {
                     let player = match self.get_mut_player_from_name(player_name) {
@@ -721,32 +716,32 @@ impl GameManager {
                     };
                     (player.get_id(), player.get_current_room().to_owned())
                 };
+                let Some(room) = self.get_room_by_name(player_room.as_str()) else {
+                        warn!("Room not found: {}", player_room);
+                        return generate_json(player_name, command_name, ErrorCode::RoomNotFound, "")
+                            .dump();
+                    };
                 let item = data;
+                let room_name = room.get_name().to_owned();
                 let parsed_item: Option<(ItemId, String)> =
-                    self.parse_item(item, player_room.to_owned());
+                    self.parse_item(item, &room);
                 if parsed_item.is_none() {
                     return generate_json(player_name, command_name, ErrorCode::ItemNotFound, "")
                         .dump();
                 }
                 let (item_id, item_name) = parsed_item.unwrap();
 
-                let room_name: String = {
-                    let room: &Room = self.get_room_by_name(player_room.as_str()).unwrap();
-                    if !self.item_exists_with_name(item_id, item_name.as_str())
-                        || !room.contains_item(item_id)
-                    {
-                        return generate_json(
-                            player_name,
-                            command_name,
-                            ErrorCode::ItemNotFound,
-                            "",
-                        )
-                        .dump();
-                    }
-                    room.get_name().to_owned()
-                };
+                if !self.item_exists_with_name(item_id, item_name.as_str()) || !room.contains_item(item_id){
+                    return generate_json(
+                        player_name,
+                        command_name,
+                        ErrorCode::ItemNotFound,
+                        "",
+                    )
+                    .dump();
+                }
 
-                self.remove_item_from_room(&room_name, item_id);
+                self.remove_item_from_room(room_name.as_str(), item_id);
                 self.add_item_to_player(player_id, item_id);
                 self.reset_dropped_at_for_item(item_id);
 
@@ -777,11 +772,12 @@ impl GameManager {
                         .dump();
                     }
                 };
+
                 let player_id = player.get_id();
                 let item = data;
                 let room_name = player.get_current_room().to_owned();
                 let item_tuple: Option<(ItemId, String)> =
-                    self.parse_item(item, room_name.to_owned());
+                    self.parse_item_from_player(item, &player);
                 if item_tuple.is_none() {
                     return generate_json(player_name, command_name, ErrorCode::ItemNotFound, "")
                         .dump();
@@ -946,11 +942,17 @@ impl GameManager {
             }
             "QUEST" => {
                 let target_npc = data;
-                let player_room = {
-                    self.get_player_from_name(player_name)
-                        .unwrap()
-                        .get_current_room()
+                let Some(player) = self.get_player_from_name(player_name) else {
+                    return generate_json(
+                                player_name,
+                                command_name,
+                                ErrorCode::PlayerNotFound,
+                                "",
+                            )
+                            .dump();
                 };
+                let player_room = player.get_current_room();
+                // if player
                 let parsed_repr: Option<(NpcId, String)> =
                     self.parse_npc(target_npc, player_room.to_owned());
                 if parsed_repr.is_none() {
@@ -988,6 +990,7 @@ impl GameManager {
                             .dump();
                         }
                     };
+
                     quests.retain(|quest| !self.player_has_quest(player_id, quest.clone()));
                     if quests.is_empty() {
                         return generate_json(
@@ -1006,7 +1009,7 @@ impl GameManager {
                             let reward = quest.get_json_loots();
 
                             quest_json_str = json::object! {
-                                "quest_id" => quest.get_id().clone(),
+                                "name" => quest.get_name().to_string(),
                                 "description" => quest.get_description(),
                                 "reward" => reward,
                                 "status" => QuestState::InProgress.to_str()
@@ -1076,7 +1079,7 @@ impl GameManager {
                         let quest = self.get_quest(&q.get_quest_name());
                         if let Some(quest) = quest {
                             Some(json::object! {
-                            "quest_id" => quest.get_id().clone(),
+                            "name" => quest.get_name().to_string(),
                             "description" => quest.get_description(),
                             "reward" => quest.get_json_loots(),
                             "status" => q.get_state().to_str() })

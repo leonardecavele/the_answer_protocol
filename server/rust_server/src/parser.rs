@@ -122,10 +122,10 @@ impl Parser {
         if parsed["quests"].is_array() {
             for item in parsed["quests"].members() {
                 if let Some(quest) = Quest::new(item) {
-                    if quests.contains_key(quest.get_id()) {
-                        return Err(format!("duplicate quest: {}", quest.get_id()));
+                    if quests.contains_key(quest.get_name()) {
+                        return Err(format!("duplicate quest: {}", quest.get_name()));
                     }
-                    quests.insert(quest.get_id().clone(), quest);
+                    quests.insert(quest.get_name().to_string(), quest);
                 } else {
                     return Err(format!("invalid quest: {}", item));
                 }
