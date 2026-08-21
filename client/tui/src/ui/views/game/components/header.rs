@@ -27,8 +27,10 @@ impl Header {
 
 impl Component for Header {
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
-        let room_name = match &state.game.room.name {
-            Some(name) => name.as_str(),
+        let room = state.game.room.as_ref();
+
+        let room_name = match room {
+            Some(room) => room.name.as_str(),
             None => "Cluster 6 (the backrooms)",
         };
 
@@ -114,8 +116,8 @@ impl Component for Header {
             block = block.title_bottom(group_line.alignment(Alignment::Right));
         }
 
-        let description = match &state.game.room.description {
-            Some(desc) => desc.as_str(),
+        let description = match room {
+            Some(room) => room.description.as_str(),
             None => "",
         };
 

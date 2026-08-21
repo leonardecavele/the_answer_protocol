@@ -215,8 +215,10 @@ impl Lifecycle for GameView {
                 state.game.focus = GameFocus::NpcList;
 
                 let y = mouse.row.saturating_sub(area.y);
-                if y > 0 {
-                    state.game.room.npcs.select_index((y - 1) as usize);
+                if y > 0
+                    && let Some(room) = &mut state.game.room
+                {
+                    room.npcs.select_index((y - 1) as usize);
                 }
             }
 
@@ -226,8 +228,10 @@ impl Lifecycle for GameView {
                 state.game.focus = GameFocus::RoomItemsList;
 
                 let y = mouse.row.saturating_sub(area.y);
-                if y > 0 {
-                    state.game.room.items.select_index((y - 1) as usize);
+                if y > 0
+                    && let Some(room) = &mut state.game.room
+                {
+                    room.items.select_index((y - 1) as usize);
                 }
             }
 

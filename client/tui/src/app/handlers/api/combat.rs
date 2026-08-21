@@ -17,11 +17,9 @@ impl App {
 
         self.state.game.log_action(message);
 
-        self.state
-            .game
-            .room
-            .npcs
-            .retain(|n| n.id != kill_data.npc_id);
+        if let Some(room) = &mut self.state.game.room {
+            room.remove_npc(&kill_data.npc_id);
+        }
     }
 
     pub(crate) fn on_fight_start(&mut self, fight_data: FightStartData) {

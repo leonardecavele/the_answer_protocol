@@ -39,7 +39,13 @@ impl ItemActionsPopup {
 
     fn get_actions(&self, state: &AppState, item_id: &str) -> Vec<String> {
         let mut actions = Vec::new();
-        if state.game.room.has_item(item_id) {
+        let in_room = state
+            .game
+            .room
+            .as_ref()
+            .is_some_and(|room| room.has_item(item_id));
+
+        if in_room {
             actions.push("TAKE".to_string());
         }
         if state.game.player.has_item(item_id) {

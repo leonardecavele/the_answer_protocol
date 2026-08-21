@@ -2,7 +2,7 @@ use crate::collections::BoundedLog;
 use crate::data::manifest::Manifest;
 use crate::states::game::interaction::{GameFocus, Overlays};
 use crate::states::game::session::{
-    ChatMessage, FightPhase, GroupState, PlayerState, RoomState, ServerState,
+    ChatMessage, FightPhase, GroupState, PlayerState, Room, ServerState,
 };
 use crate::states::game::{Item, Npc};
 use std::sync::Arc;
@@ -10,7 +10,7 @@ use std::sync::Arc;
 pub struct GameState {
     pub player: PlayerState,
     pub group: GroupState,
-    pub room: RoomState,
+    pub room: Option<Room>,
     pub server: ServerState,
     pub overlays: Overlays,
     pub fight: FightPhase,
@@ -30,7 +30,7 @@ impl GameState {
         Self {
             player: PlayerState::new(),
             group: GroupState::new(),
-            room: RoomState::new(),
+            room: None,
             server: ServerState::new(),
             overlays: Overlays::new(),
             fight: FightPhase::default(),
@@ -47,14 +47,13 @@ impl GameState {
     }
 
     pub fn find_npc(&self, id: &str) -> Option<&Npc> {
-        self.room.npcs.iter().find(|npc| npc.id == id)
+        self.room.as_ref()?.npcs.iter().find(|npc| npc.id == id)
     }
 
     pub fn find_item(&self, id: &str) -> Option<&Item> {
         self.room
-            .items
-            .iter()
-            .find(|item| item.id == id)
+            .as_ref()
+            .and_then(|room| room.items.iter().find(|item| item.id == id))
             .or_else(|| self.player.inventory.iter().find(|item| item.id == id))
     }
 }

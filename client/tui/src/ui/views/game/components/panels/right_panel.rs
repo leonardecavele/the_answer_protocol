@@ -93,8 +93,8 @@ impl RightPanel {
     }
 
     fn room_facing(&self, state: &AppState) -> Direction {
-        match &state.game.room.id {
-            Some(room_id) => Direction::facing_of_room(room_id, &state.game.manifest),
+        match &state.game.room {
+            Some(room) => Direction::facing_of_room(&room.id, &state.game.manifest),
             None => Direction::default(),
         }
     }
@@ -113,8 +113,8 @@ impl RightPanel {
             return Content::Image(image_path.to_string());
         }
 
-        match &state.game.room.id {
-            Some(room_id) => match Sprite::of_room(room_id, manifest).frame_at(elapsed) {
+        match &state.game.room {
+            Some(room) => match Sprite::of_room(&room.id, manifest).frame_at(elapsed) {
                 Some(image_path) => Content::Image(image_path.to_string()),
                 None => Content::Message(NO_ROOM_IMAGE),
             },
@@ -226,11 +226,11 @@ impl RightPanel {
 
         let facing = self.room_facing(state);
 
-        for direction in Direction::CLOCKWISE {
-            let Some(exit_name) = state.game.room.exits.get(direction.key()) else {
-                continue;
-            };
+        let Some(room) = &state.game.room else {
+            return;
+        };
 
+        for (direction, exit_name) in room.exits.iter() {
             let slot = (direction.quarter_turns() + 4 - facing.quarter_turns()) % 4;
             let (fallback, placement) = SCREEN_EXITS[slot];
 
@@ -321,7 +321,13 @@ impl Lifecycle for RightPanel {
         let facing = self.room_facing(state);
         let direction = Direction::from_quarter_turns(slot + facing.quarter_turns());
 
-        if !state.game.room.has_exit(direction.key()) {
+        let has_exit = state
+            .game
+            .room
+            .as_ref()
+            .is_some_and(|room| room.has_exit(direction));
+
+        if !has_exit {
             return EventFlow::Ignored;
         }
 

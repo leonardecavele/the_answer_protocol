@@ -7,7 +7,7 @@ pub use interaction::{
     DialogueState, END_OF_DIALOGUE_TAG, GameFocus, Overlay, OverlayKind, Overlays,
 };
 pub use session::{
-    ChatChannel, ChatMessage, ChatSender, FightPhase, GroupState, PlayerState, RoomState,
+    ChatChannel, ChatMessage, ChatSender, Exits, FightPhase, GroupState, PlayerState, Room,
     ServerState,
 };
 pub use state::GameState;

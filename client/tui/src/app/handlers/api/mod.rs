@@ -1,15 +1,14 @@
 mod chat;
 mod combat;
 mod player;
+mod room;
 
 use crate::app::App;
 use crate::events::ApiEvent;
 use crate::network::envelopes::ResponseEnvelope;
-use crate::states::game::{
-    ChatChannel, DialogueState, END_OF_DIALOGUE_TAG, Item, Npc, Overlay, OverlayKind,
-};
+use crate::states::game::{ChatChannel, DialogueState, END_OF_DIALOGUE_TAG, Overlay, OverlayKind};
 use crate::states::ui::Notification;
-use api_client::commands::{LookCommand, StatusCommand};
+use api_client::commands::LookCommand;
 use api_client::events::{GameServerEvent, GroupEvent, RoomEvent, ServerEvent};
 use api_client::{ApiRequest, ApiResponse};
 
@@ -98,44 +97,13 @@ impl App {
                     self.on_private_chat_sent(cmd.to, cmd.message);
                 }
             }
-            ApiResponse::Look(Ok(mut look_res)) => {
-                self.state
-                    .game
-                    .log_action(format!("You looked at {}.", look_res.room.name));
-
-                let player_name = self.state.game.player.name.as_ref();
-                look_res.players.retain(|p| {
-                    !p.eq_ignore_ascii_case(player_name.unwrap_or(&"unknown".to_string()).as_str())
-                });
-
-                self.state.game.room.id = Some(look_res.room.id);
-                self.state.game.room.name = Some(look_res.room.name);
-                self.state.game.room.description = Some(look_res.room.description);
-                self.state.game.room.players = look_res.players;
-                self.state.game.room.npcs.set_items(
-                    look_res
-                        .npcs
-                        .into_iter()
-                        .map(|id| Npc::from_manifest(id, &self.state.game.manifest))
-                        .collect(),
-                );
-                self.state.game.room.items.set_items(
-                    look_res
-                        .items
-                        .into_iter()
-                        .map(|id| Item::from_manifest(id, &self.state.game.manifest))
-                        .collect(),
-                );
-                self.state.game.room.exits = look_res.room.exits;
+            ApiResponse::Look(Ok(look_res)) => {
+                self.on_look(look_res);
             }
             ApiResponse::Move(Ok(_move_res)) => {
-                self.state.game.overlays.inspected_entity = None;
                 if let ApiRequest::Move(cmd) = envelope.original_request {
-                    self.state
-                        .game
-                        .log_action(format!("You moved {}.", cmd.direction));
+                    self.on_moved(cmd.direction);
                 }
-                self.handle_request(ApiRequest::Look(LookCommand));
             }
             ApiResponse::Inventory(Ok(inventory_res)) => {
                 self.on_inventory(inventory_res);
@@ -257,21 +225,10 @@ impl App {
             }
             ServerEvent::Spawn(spawn_data) => match spawn_data.r#type.as_str() {
                 "NPC" => {
-                    let npc = Npc::from_manifest(spawn_data.id, &self.state.game.manifest);
-
-                    self.state
-                        .game
-                        .log_action(format!("{} has respawn", npc.name));
-
-                    self.state.game.room.npcs.push(npc);
+                    self.on_npc_spawned(spawn_data);
                 }
                 "ITEM" => {
-                    let item = Item::from_manifest(spawn_data.id, &self.state.game.manifest);
-
-                    self.state
-                        .game
-                        .log_action(format!("{} has been catapulted here", item.name));
-                    self.state.game.room.items.push(item);
+                    self.on_item_spawned(spawn_data);
                 }
                 t => {
                     self.state
@@ -282,11 +239,7 @@ impl App {
             },
             ServerEvent::Despawn(spawn_data) => match spawn_data.r#type.as_str() {
                 "ITEM" => {
-                    if let Some(item) = self.state.game.room.take_item(&spawn_data.id) {
-                        self.state
-                            .game
-                            .log_action(format!("{} has despawned", item.name));
-                    }
+                    self.on_item_despawned(spawn_data);
                 }
                 t => {
                     self.state
@@ -302,72 +255,7 @@ impl App {
                 self.on_kill(kill_data);
             }
             ServerEvent::Death(death_data) => {
-                let current_player_name = self
-                    .state
-                    .game
-                    .player
-                    .name
-                    .clone()
-                    .unwrap_or("unknown".to_string());
-                let current_room_id = self
-                    .state
-                    .game
-                    .room
-                    .name
-                    .clone()
-                    .unwrap_or("unknown".to_string());
-
-                let is_current_player = current_player_name == death_data.player_name;
-                let respawn_room_is_current = current_room_id == death_data.respawn_room_id;
-
-                let message = match (is_current_player, respawn_room_is_current) {
-                    (true, true) => "You died and respawned here".to_string(),
-                    (true, false) => {
-                        format!("You died and respawned in {}", death_data.respawn_room_id)
-                    }
-                    (false, true) => {
-                        if !self
-                            .state
-                            .game
-                            .room
-                            .players
-                            .contains(&death_data.player_name)
-                        {
-                            self.state
-                                .game
-                                .room
-                                .players
-                                .push(death_data.player_name.clone());
-                        }
-                        format!("{} died and respawned here", death_data.player_name)
-                    }
-                    (false, false) => {
-                        if self
-                            .state
-                            .game
-                            .room
-                            .players
-                            .contains(&death_data.player_name)
-                        {
-                            self.state
-                                .game
-                                .room
-                                .players
-                                .retain(|p| p != &death_data.player_name);
-                        }
-                        format!(
-                            "{} died and respawned in {}",
-                            death_data.player_name, death_data.respawn_room_id
-                        )
-                    }
-                };
-
-                if is_current_player {
-                    self.handle_request(ApiRequest::Look(LookCommand));
-                    self.handle_request(ApiRequest::Status(StatusCommand));
-                }
-
-                self.state.game.log_action(message);
+                self.on_death(death_data);
             }
             ServerEvent::FightStart(fight_data) => {
                 self.on_fight_start(fight_data);
@@ -385,7 +273,9 @@ impl App {
                     .server
                     .online_players_count
                     .saturating_sub(1);
-                self.state.game.room.players.retain(|p| p != &name);
+                if let Some(room) = &mut self.state.game.room {
+                    room.player_left(&name);
+                }
                 if self.state.game.group.leader.as_ref() == Some(&name) {
                     self.state.game.group.id = None;
                     self.state.game.group.leader = None;
@@ -396,37 +286,19 @@ impl App {
             }
             ServerEvent::Room(room_event) => match room_event {
                 RoomEvent::PresenceEnter(name) => {
-                    if !self.state.game.room.players.contains(&name) {
-                        self.state.game.room.players.push(name.clone());
-                    }
-
-                    self.state
-                        .game
-                        .log_action(format!("{} entered the room.", name));
+                    self.on_player_entered(name);
                 }
                 RoomEvent::PresenceLeave(name) => {
-                    self.state.game.room.players.retain(|p| p != &name);
-                    self.state
-                        .game
-                        .log_action(format!("{} left the room.", name));
+                    self.on_player_left(name);
                 }
                 RoomEvent::Chat(chat) => {
                     self.on_chat_received(ChatChannel::Room, chat.sender, chat.message);
                 }
                 RoomEvent::Take(player, item_id) => {
-                    if let Some(item) = self.state.game.room.take_item(&item_id) {
-                        self.state
-                            .game
-                            .log_action(format!("{} took {}.", player, item.name));
-                    }
+                    self.on_item_taken_by(player, item_id);
                 }
                 RoomEvent::Drop(player, item_id) => {
-                    let item = Item::from_manifest(item_id, &self.state.game.manifest);
-
-                    self.state
-                        .game
-                        .log_action(format!("{} dropped {}.", player, item.name));
-                    self.state.game.room.items.push(item);
+                    self.on_item_dropped_by(player, item_id);
                 }
             },
             ServerEvent::Group(group_event) => match group_event {

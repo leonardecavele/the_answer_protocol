@@ -53,10 +53,12 @@ impl Component for LeftPanel {
             ])
             .split(area);
 
+        let Some(room) = &state.game.room else {
+            return;
+        };
+
         // 1. Room Players
-        let players_items: Vec<ListItem> = state
-            .game
-            .room
+        let players_items: Vec<ListItem> = room
             .players
             .iter()
             .map(|name| {
@@ -71,9 +73,7 @@ impl Component for LeftPanel {
         frame.render_widget(players_list, chunks[0]);
 
         // 2. Room NPCs
-        let npcs_items: Vec<ListItem> = state
-            .game
-            .room
+        let npcs_items: Vec<ListItem> = room
             .npcs
             .iter()
             .enumerate()
@@ -87,7 +87,7 @@ impl Component for LeftPanel {
 
                 let mut style = Style::default().fg(color);
 
-                if state.game.room.npcs.is_selected(idx) && state.game.focus == GameFocus::NpcList {
+                if room.npcs.is_selected(idx) && state.game.focus == GameFocus::NpcList {
                     style = style.add_modifier(Modifier::REVERSED);
                 }
 
@@ -100,18 +100,14 @@ impl Component for LeftPanel {
         self.npcs_area = Some(chunks[1]);
 
         // 3. Room Items
-        let items: Vec<ListItem> = state
-            .game
-            .room
+        let items: Vec<ListItem> = room
             .items
             .iter()
             .enumerate()
             .map(|(idx, item)| {
                 let mut style = Style::default().fg(Color::Cyan);
 
-                if state.game.room.items.is_selected(idx)
-                    && state.game.focus == GameFocus::RoomItemsList
-                {
+                if room.items.is_selected(idx) && state.game.focus == GameFocus::RoomItemsList {
                     style = style.add_modifier(Modifier::REVERSED);
                 }
                 ListItem::new(Span::styled(
@@ -168,11 +164,15 @@ impl Lifecycle for LeftPanel {
         match state.game.focus {
             GameFocus::NpcList => match key.code {
                 crossterm::event::KeyCode::Up => {
-                    state.game.room.npcs.move_selection(Step::Previous);
+                    if let Some(room) = &mut state.game.room {
+                        room.npcs.move_selection(Step::Previous);
+                    }
                     EventFlow::Consumed
                 }
                 crossterm::event::KeyCode::Down => {
-                    state.game.room.npcs.move_selection(Step::Next);
+                    if let Some(room) = &mut state.game.room {
+                        room.npcs.move_selection(Step::Next);
+                    }
                     EventFlow::Consumed
                 }
                 crossterm::event::KeyCode::Enter => {
@@ -180,11 +180,16 @@ impl Lifecycle for LeftPanel {
                         return EventFlow::Consumed;
                     }
 
-                    match state.game.room.npcs.selected() {
-                        Some(npc) => {
-                            state.game.overlays.open(NpcActions {
-                                npc_id: npc.id.clone(),
-                            });
+                    let selected = state
+                        .game
+                        .room
+                        .as_ref()
+                        .and_then(|room| room.npcs.selected())
+                        .map(|npc| npc.id.clone());
+
+                    match selected {
+                        Some(npc_id) => {
+                            state.game.overlays.open(NpcActions { npc_id });
                             EventFlow::Consumed
                         }
                         None => EventFlow::Ignored,
@@ -194,22 +199,33 @@ impl Lifecycle for LeftPanel {
             },
             GameFocus::RoomItemsList => match key.code {
                 crossterm::event::KeyCode::Up => {
-                    state.game.room.items.move_selection(Step::Previous);
+                    if let Some(room) = &mut state.game.room {
+                        room.items.move_selection(Step::Previous);
+                    }
                     EventFlow::Consumed
                 }
                 crossterm::event::KeyCode::Down => {
-                    state.game.room.items.move_selection(Step::Next);
+                    if let Some(room) = &mut state.game.room {
+                        room.items.move_selection(Step::Next);
+                    }
                     EventFlow::Consumed
                 }
-                crossterm::event::KeyCode::Enter => match state.game.room.items.selected() {
-                    Some(item) => {
-                        state.game.overlays.open(ItemActions {
-                            item_id: item.id.clone(),
-                        });
-                        EventFlow::Consumed
+                crossterm::event::KeyCode::Enter => {
+                    let selected = state
+                        .game
+                        .room
+                        .as_ref()
+                        .and_then(|room| room.items.selected())
+                        .map(|item| item.id.clone());
+
+                    match selected {
+                        Some(item_id) => {
+                            state.game.overlays.open(ItemActions { item_id });
+                            EventFlow::Consumed
+                        }
+                        None => EventFlow::Ignored,
                     }
-                    None => EventFlow::Ignored,
-                },
+                }
                 _ => EventFlow::Ignored,
             },
             GameFocus::QuestList => match key.code {

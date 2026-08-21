@@ -49,7 +49,14 @@ impl App {
     pub(crate) fn on_take_item(&mut self, take_res: TakeResponse) {
         let id = take_res.item_identifier;
 
-        let item = match self.state.game.room.take_item(&id) {
+        let taken = self
+            .state
+            .game
+            .room
+            .as_mut()
+            .and_then(|room| room.take_item(&id));
+
+        let item = match taken {
             Some(item) => item,
             None => {
                 self.record_trace("desync", format!("took {} which was not in the room", id));
@@ -80,6 +87,9 @@ impl App {
         self.state
             .game
             .log_action(format!("You dropped {}.", item.name));
-        self.state.game.room.items.push(item);
+
+        if let Some(room) = &mut self.state.game.room {
+            room.spawn_item(item);
+        }
     }
 }
