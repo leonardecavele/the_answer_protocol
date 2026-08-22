@@ -7,13 +7,8 @@ use crate::ui::utils::wrap_slice_to_lines;
 use ratatui::text::Line;
 use ratatui::widgets::Block;
 
+#[derive(Default)]
 pub struct ActionHistoryPanel;
-
-impl Default for ActionHistoryPanel {
-    fn default() -> Self {
-        Self::new()
-    }
-}
 
 impl ActionHistoryPanel {
     pub fn new() -> Self {
@@ -24,6 +19,10 @@ impl ActionHistoryPanel {
 impl Lifecycle for ActionHistoryPanel {}
 
 impl ScrollableComponent for ActionHistoryPanel {
+    fn is_scrollable(&self, state: &AppState) -> bool {
+        state.game.focus == GameFocus::ActionHistory
+    }
+
     fn get_block<'a>(&self, state: &AppState) -> Block<'a> {
         panel_block(
             " Action History ",

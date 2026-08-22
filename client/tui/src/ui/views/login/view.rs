@@ -1,9 +1,9 @@
 use crate::collections::Step;
 use crate::events::{ApplicationEvent, NetworkEvent};
 use crate::states::app::AppState;
-use crate::states::ui::Notification;
-use crate::ui::components::Component;
+use crate::states::notification::Notification;
 use crate::ui::components::Lifecycle;
+use crate::ui::components::component::Component;
 use crate::ui::components::interactive::Interactive;
 use crate::ui::components::lifecycle::EventFlow;
 use crate::ui::components::widgets::button::Button;
@@ -147,7 +147,6 @@ impl Lifecycle for LoginView {
                         return EventFlow::Consumed;
                     } else if self.connect_button.is_mouse_over(*column, *row) {
                         self.set_focus(LoginFocus::ConnectButton);
-                        // Simulate a button press directly if clicked
                         self.connect_button.inner.is_pressed = true;
                     }
                 }
@@ -185,7 +184,7 @@ impl Lifecycle for LoginView {
                         state.ui.notifications.push(
                             Notification::info("Connecting...")
                                 .with_id(crate::network::manager::NOTIF_ID_CONNECTION_ATTEMPT)
-                                .with_duration(60000),
+                                .with_ms(60_000),
                         );
                         let _ = event_sender.try_send(ApplicationEvent::Network(
                             NetworkEvent::ConnectionAttemptStarted {

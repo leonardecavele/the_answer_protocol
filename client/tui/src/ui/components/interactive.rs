@@ -1,6 +1,6 @@
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
-use crate::ui::components::Component;
+use crate::ui::components::component::Component;
 use crossterm::event::{Event as CrosstermEvent, MouseEvent};
 use ratatui::Frame;
 use ratatui::layout::Rect;

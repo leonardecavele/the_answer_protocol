@@ -1,5 +1,5 @@
 use crate::app::App;
-use crate::states::ui::Notification;
+use crate::states::notification::Notification;
 use crate::ui::views::game::GameView;
 use api_client::commands::{ConnectResponse, WhoResponse};
 

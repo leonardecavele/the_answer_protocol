@@ -1,9 +1,9 @@
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
-use crate::ui::components::Component;
 use crate::ui::components::Lifecycle;
+use crate::ui::components::component::Component;
 use crate::ui::components::lifecycle::EventFlow;
-use crate::ui::components::scrollable::Scrollable;
+use crate::ui::components::scrollable::{Scrollable, ScrollableHit};
 
 use crate::states::game::{GameFocus, Overlay, OverlayKind};
 use crate::ui::views::game::components::{
@@ -105,14 +105,6 @@ impl GameView {
         }
 
         if self
-            .header
-            .handle_terminal_event(state, event, sender)
-            .is_consumed()
-        {
-            return EventFlow::Consumed;
-        }
-
-        if self
             .left_panel
             .handle_terminal_event(state, event, sender)
             .is_consumed()
@@ -203,6 +195,13 @@ impl GameView {
                     }
                     LeftPanelHit::None => {}
                 }
+            }
+
+            match self.action_history.hit(mouse.column, mouse.row) {
+                ScrollableHit::Box => {
+                    state.game.focus = GameFocus::ActionHistory;
+                }
+                ScrollableHit::None => {}
             }
 
             match self.inventory.hit(mouse.column, mouse.row) {

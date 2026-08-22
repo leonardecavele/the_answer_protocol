@@ -1,8 +1,8 @@
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
 use crate::states::game::{GameFocus, Overlay};
-use crate::ui::components::Component;
 use crate::ui::components::Lifecycle;
+use crate::ui::components::component::Component;
 use crate::ui::components::interactive::is_mouse_in_rect;
 use crate::ui::components::lifecycle::EventFlow;
 use crate::ui::theme::panel_block;

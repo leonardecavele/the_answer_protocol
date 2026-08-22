@@ -1,5 +1,5 @@
 use crate::collections::BoundedLog;
-use crate::events::types::NotificationType;
+use crate::states::notification::Notifications;
 use ratatui::Frame;
 use ratatui::layout::Rect;
 use ratatui_image::picker::Picker;
@@ -7,123 +7,6 @@ use ratatui_image::protocol::StatefulProtocol;
 use ratatui_image::{Resize, StatefulImage};
 use std::cell::RefCell;
 use std::collections::HashMap;
-use std::time::{Duration, Instant};
-use uuid::Uuid;
-
-pub const NOTIF_DEFAULT_DURATION_MS: u64 = 5000;
-
-//region Notifications
-// TODO: Changer l'emplacement des notifications
-pub struct Notification {
-    pub id: String,
-    pub message: String,
-    pub notification_type: NotificationType,
-    pub expires_at: Instant,
-    pub duration: u64,
-}
-
-impl Notification {
-    pub fn info(message: impl Into<String>) -> Self {
-        Self::new(
-            None,
-            message.into(),
-            NotificationType::Information,
-            NOTIF_DEFAULT_DURATION_MS,
-        )
-    }
-
-    pub fn warning(message: impl Into<String>) -> Self {
-        Self::new(
-            None,
-            message.into(),
-            NotificationType::Warning,
-            NOTIF_DEFAULT_DURATION_MS,
-        )
-    }
-
-    pub fn success(message: impl Into<String>) -> Self {
-        Self::new(
-            None,
-            message.into(),
-            NotificationType::Success,
-            NOTIF_DEFAULT_DURATION_MS,
-        )
-    }
-
-    pub fn error(message: impl Into<String>) -> Self {
-        Self::new(
-            None,
-            message.into(),
-            NotificationType::Error,
-            NOTIF_DEFAULT_DURATION_MS,
-        )
-    }
-
-    pub fn with_id(mut self, id: impl Into<String>) -> Self {
-        self.id = id.into();
-        self
-    }
-
-    pub fn with_duration(mut self, ms: u64) -> Self {
-        self.expires_at = Instant::now() + Duration::from_millis(ms);
-        self.duration = ms;
-        self
-    }
-
-    pub fn new(
-        id_opt: Option<String>,
-        message: String,
-        notif_type: NotificationType,
-        duration_ms: u64,
-    ) -> Self {
-        Self {
-            id: id_opt.unwrap_or_else(|| Uuid::new_v4().to_string()),
-            message,
-            notification_type: notif_type,
-            expires_at: Instant::now() + Duration::from_millis(duration_ms),
-            duration: duration_ms,
-        }
-    }
-}
-
-pub struct Notifications {
-    notifications: Vec<Notification>,
-}
-
-impl Default for Notifications {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl Notifications {
-    pub fn new() -> Self {
-        Self {
-            notifications: Vec::new(),
-        }
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.notifications.is_empty()
-    }
-
-    pub fn take(&self, n: usize) -> Vec<&Notification> {
-        self.notifications.iter().rev().take(n).collect::<Vec<_>>()
-    }
-
-    pub fn push(&mut self, notification: Notification) {
-        self.notifications.push(notification);
-    }
-
-    pub fn remove(&mut self, target_id: &str) {
-        self.notifications.retain(|n| n.id != target_id);
-    }
-
-    pub fn remove_expired(&mut self) {
-        self.notifications
-            .retain(|n| Instant::now() < n.expires_at || n.duration == 0);
-    }
-}
 //endregion
 
 //region ImageManager
@@ -202,7 +85,7 @@ impl Default for UiState {
 impl UiState {
     pub fn new() -> Self {
         Self {
-            notifications: Notifications::new(),
+            notifications: Notifications::default(),
             image_manager: ImageManager::new(),
             show_trace_log: false,
             trace_log: BoundedLog::with_max_capacity(100),

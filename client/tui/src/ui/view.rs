@@ -1,10 +1,11 @@
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
+use crate::ui::components::Lifecycle;
+use crate::ui::components::component::Component;
 use crate::ui::components::lifecycle::EventFlow;
+use crate::ui::components::overlays::notifications::NotificationsOverlay;
+use crate::ui::components::overlays::trace_overlay::TraceOverlay;
 use crate::ui::components::scrollable::Scrollable;
-use crate::ui::components::widgets::notifications::NotificationsOverlay;
-use crate::ui::components::widgets::trace_overlay::TraceOverlay;
-use crate::ui::components::{Component, Lifecycle};
 use crate::ui::views::login::LoginView;
 use crossterm::event::Event as CrosstermEvent;
 use ratatui::Frame;

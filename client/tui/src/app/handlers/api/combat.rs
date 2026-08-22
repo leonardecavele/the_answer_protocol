@@ -1,6 +1,6 @@
 use crate::app::App;
 use crate::states::game::DialogueState;
-use crate::states::ui::Notification;
+use crate::states::notification::Notification;
 use crate::ui::views::editor::EditorView;
 use crate::ui::views::game::GameView;
 use api_client::commands::AttackResponse;
@@ -77,10 +77,7 @@ impl App {
 
         self.state.game.log_action(message);
 
-        self.state
-            .ui
-            .notifications
-            .push(notification.with_duration(3000));
+        self.state.ui.notifications.push(notification.with_ms(3000));
     }
 
     pub(crate) fn on_fight_end(&mut self) {

@@ -10,7 +10,7 @@ use crate::app::App;
 use crate::events::ApiEvent;
 use crate::network::envelopes::ResponseEnvelope;
 use crate::states::game::ChatChannel;
-use crate::states::ui::Notification;
+use crate::states::notification::Notification;
 use api_client::events::{GameServerEvent, GroupEvent, RoomEvent, ServerEvent};
 use api_client::{ApiRequest, ApiResponse};
 

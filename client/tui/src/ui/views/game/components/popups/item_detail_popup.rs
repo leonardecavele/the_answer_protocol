@@ -1,8 +1,9 @@
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
 use crate::states::game::OverlayKind;
+use crate::ui::components::Lifecycle;
+use crate::ui::components::component::Component;
 use crate::ui::components::lifecycle::EventFlow;
-use crate::ui::components::{Component, Lifecycle};
 use crate::ui::theme::{close_hint, popup_block};
 use crate::ui::utils::{center_area_with_aspect_ratio, centered_rect_percent, wrap_str_to_lines};
 use crossterm::event::{Event as CrosstermEvent, KeyCode};

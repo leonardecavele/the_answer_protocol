@@ -1,8 +1,9 @@
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
 use crate::states::game::OverlayKind;
+use crate::ui::components::Lifecycle;
+use crate::ui::components::component::Component;
 use crate::ui::components::lifecycle::EventFlow;
-use crate::ui::components::{Component, Lifecycle};
 use crate::ui::theme::{close_hint, popup_block, quest_status};
 use crate::ui::utils::{centered_rect_percent, wrap_str_to_lines};
 use api_client::commands::QuestData;

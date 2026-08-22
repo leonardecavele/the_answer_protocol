@@ -1,6 +1,6 @@
 use crate::app::App;
 use crate::states::game::{ChatChannel, ChatMessage, ChatSender};
-use crate::states::ui::Notification;
+use crate::states::notification::Notification;
 
 impl App {
     pub(crate) fn on_global_chat_sent(&mut self, message: String) {

@@ -4,8 +4,9 @@ use crate::events::{ApplicationEvent, EventBroker};
 use crate::network::NetworkManager;
 use crate::network::envelopes::RequestEnvelope;
 use crate::states::app::AppState;
-use crate::states::ui::Notification;
-use crate::ui::components::{Component, Lifecycle};
+use crate::states::notification::Notification;
+use crate::ui::components::Lifecycle;
+use crate::ui::components::component::Component;
 use crate::ui::view::ViewManager;
 use api_client::ApiRequest;
 use api_client::commands::WhoCommand;
@@ -37,7 +38,7 @@ impl App {
             state
                 .ui
                 .notifications
-                .push(Notification::error(error).with_duration(10000));
+                .push(Notification::error(error).with_ms(10000));
         }
 
         Self {
@@ -123,7 +124,7 @@ impl App {
     }
 
     fn handle_tick(&mut self) {
-        self.state.ui.notifications.remove_expired();
+        self.state.ui.notifications.retain_active();
         self.view_manager.on_tick(&mut self.state);
     }
 

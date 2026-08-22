@@ -1,7 +1,8 @@
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
-use crate::ui::components::Component;
 use crate::ui::components::Lifecycle;
+use crate::ui::components::component::Component;
+use crate::ui::components::interactive::is_mouse_in_rect;
 use crate::ui::components::lifecycle::EventFlow;
 use crossterm::event::{Event as CrosstermEvent, KeyCode, MouseEventKind};
 use mpsc::Sender;
@@ -11,7 +12,16 @@ use ratatui::text::Line;
 use ratatui::widgets::{Block, Clear, Paragraph};
 use tokio::sync::mpsc;
 
+pub enum ScrollableHit {
+    Box,
+    None,
+}
+
 pub trait ScrollableComponent: Lifecycle {
+    fn is_scrollable(&self, _state: &AppState) -> bool {
+        true
+    }
+
     fn get_area(&self, _state: &AppState, max_area: Rect) -> Rect {
         max_area
     }
@@ -26,6 +36,7 @@ pub struct Scrollable<T: ScrollableComponent> {
     pub inner: T,
     pub scroll_offset: u16,
     pub last_max_scroll: u16,
+    area: Option<Rect>,
 }
 
 impl<T: ScrollableComponent> Scrollable<T> {
@@ -34,13 +45,26 @@ impl<T: ScrollableComponent> Scrollable<T> {
             inner,
             scroll_offset: 0,
             last_max_scroll: 0,
+            area: None,
         }
+    }
+
+    pub fn hit(&self, column: u16, row: u16) -> ScrollableHit {
+        if let Some(area) = self.area
+            && is_mouse_in_rect(column, row, area)
+        {
+            return ScrollableHit::Box;
+        }
+
+        ScrollableHit::None
     }
 }
 
 impl<T: ScrollableComponent> Component for Scrollable<T> {
     fn draw(&mut self, state: &AppState, frame: &mut Frame, max_area: Rect) {
         let final_area = self.inner.get_area(state, max_area);
+        self.area = Some(final_area);
+
         let block = self.inner.get_block(state);
 
         let inner_area = block.inner(final_area);
@@ -72,6 +96,10 @@ impl<T: ScrollableComponent> Lifecycle for Scrollable<T> {
         event: &CrosstermEvent,
         sender: &Sender<ApplicationEvent>,
     ) -> EventFlow {
+        if !self.inner.is_scrollable(state) {
+            return EventFlow::Ignored;
+        }
+
         if let CrosstermEvent::Key(key) = event {
             match key.code {
                 KeyCode::Up => {

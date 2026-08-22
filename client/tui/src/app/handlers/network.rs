@@ -3,7 +3,7 @@ use crate::events::NetworkEvent;
 use crate::network::NetworkManager;
 use crate::network::manager::NOTIF_ID_CONNECTION_ATTEMPT;
 use crate::states::app::AppState;
-use crate::states::ui::Notification;
+use crate::states::notification::Notification;
 use crate::ui::views::game::GameView;
 use crate::ui::views::login::LoginView;
 
