@@ -18,7 +18,7 @@ use ratatui::{
 use std::time::Instant;
 use tokio::sync::mpsc;
 
-pub const CHAR_DELAY_MS: u128 = 2;
+const CHAR_DELAY_MS: u128 = 2;
 const MAX_HEIGHT_PERCENTAGE: u16 = 40;
 
 pub struct DialoguePopup {

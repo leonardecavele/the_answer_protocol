@@ -1,5 +1,3 @@
-pub mod components;
-
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
 use crate::ui::components::Component;
@@ -7,13 +5,13 @@ use crate::ui::components::Lifecycle;
 use crate::ui::components::lifecycle::EventFlow;
 use crate::ui::components::scrollable::Scrollable;
 
-use self::components::{
+use crate::states::game::{GameFocus, Overlay, OverlayKind};
+use crate::ui::components::interactive::is_mouse_in_rect;
+use crate::ui::views::game::components::{
     CenterPanel, ChatOverlay, DialoguePopup, Footer, Header, HelpOverlay, INVENTORY_ITEM_HEIGHT,
     INVENTORY_ITEM_WIDTH, ItemActionsPopup, ItemDetailPopup, LeftPanel, NpcActionsPopup,
     QuestDetailPopup, RightPanel,
 };
-use crate::states::game::{GameFocus, Overlay, OverlayKind};
-use crate::ui::components::interactive::is_mouse_in_rect;
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
 use ratatui::Frame;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
@@ -84,10 +82,11 @@ impl Component for GameView {
             right_width_constraint = Constraint::Length(final_width);
         }
 
+        let has_left_panel = state.network.is_connected && state.game.room.is_some();
         let horizontal_chunks = Layout::default()
             .direction(Direction::Horizontal)
             .constraints([
-                Constraint::Percentage(20),
+                Constraint::Percentage(if has_left_panel { 20 } else { 0 }),
                 Constraint::Min(1),
                 right_width_constraint,
             ])
@@ -178,27 +177,11 @@ impl Lifecycle for GameView {
                 return EventFlow::Consumed;
             }
             if key.code == KeyCode::Tab {
-                state.game.focus = match state.game.focus {
-                    GameFocus::Input => GameFocus::NpcList,
-                    GameFocus::NpcList => GameFocus::RoomItemsList,
-                    GameFocus::RoomItemsList => GameFocus::QuestList,
-                    GameFocus::QuestList => GameFocus::ActionHistory,
-                    GameFocus::ActionHistory => GameFocus::InventoryGrid,
-                    GameFocus::InventoryGrid => GameFocus::RightPanel,
-                    GameFocus::RightPanel => GameFocus::Input,
-                };
+                state.game.focus.next();
                 return EventFlow::Consumed;
             }
             if key.code == KeyCode::BackTab {
-                state.game.focus = match state.game.focus {
-                    GameFocus::Input => GameFocus::RightPanel,
-                    GameFocus::RightPanel => GameFocus::InventoryGrid,
-                    GameFocus::InventoryGrid => GameFocus::ActionHistory,
-                    GameFocus::ActionHistory => GameFocus::QuestList,
-                    GameFocus::QuestList => GameFocus::RoomItemsList,
-                    GameFocus::RoomItemsList => GameFocus::NpcList,
-                    GameFocus::NpcList => GameFocus::Input,
-                };
+                state.game.focus.prev();
                 return EventFlow::Consumed;
             }
         }

@@ -7,11 +7,7 @@ mod popups;
 pub use footer::Footer;
 pub use header::Header;
 pub use overlays::{ChatOverlay, HelpOverlay};
-pub use panels::{
-    ActionHistoryPanel, CenterPanel, INVENTORY_ITEM_HEIGHT, INVENTORY_ITEM_WIDTH, InventoryPanel,
-    LeftPanel, RightPanel,
-};
+pub use panels::{CenterPanel, INVENTORY_ITEM_HEIGHT, INVENTORY_ITEM_WIDTH, LeftPanel, RightPanel};
 pub use popups::{
-    CHAR_DELAY_MS, DialoguePopup, ItemActionsPopup, ItemDetailPopup, NpcActionsPopup,
-    QuestDetailPopup,
+    DialoguePopup, ItemActionsPopup, ItemDetailPopup, NpcActionsPopup, QuestDetailPopup,
 };
