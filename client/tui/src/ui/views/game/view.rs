@@ -59,101 +59,30 @@ impl GameView {
             footer_area: None,
         }
     }
-}
 
-impl Component for GameView {
-    fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
-        let vertical_chunks = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints([
-                Constraint::Length(5),
-                Constraint::Min(1),
-                Constraint::Length(3),
-            ])
-            .split(area);
-
-        let available_height = vertical_chunks[1].height;
-        let mut right_width_constraint = Constraint::Percentage(40);
-
-        if let Some(desired_width) = self.right_panel.get_desired_width(state, available_height) {
-            let max_width = (area.width * 40) / 100;
-            let min_width = (area.width * 20) / 100;
-            let final_width = desired_width.clamp(min_width, max_width);
-            right_width_constraint = Constraint::Length(final_width);
-        }
-
-        let has_left_panel = state.network.is_connected && state.game.room.is_some();
-        let horizontal_chunks = Layout::default()
-            .direction(Direction::Horizontal)
-            .constraints([
-                Constraint::Percentage(if has_left_panel { 20 } else { 0 }),
-                Constraint::Min(1),
-                right_width_constraint,
-            ])
-            .split(vertical_chunks[1]);
-
-        self.header.draw(state, frame, vertical_chunks[0]);
-        self.left_panel.draw(state, frame, horizontal_chunks[0]);
-        self.center_panel.draw(state, frame, horizontal_chunks[1]);
-        self.right_panel.draw(state, frame, horizontal_chunks[2]);
-        self.footer.draw(state, frame, vertical_chunks[2]);
-
-        self.right_panel_area = Some(horizontal_chunks[2]);
-        self.footer_area = Some(vertical_chunks[2]);
-
-        let center_area = horizontal_chunks[1];
-        let overlay_kinds: Vec<OverlayKind> =
-            state.game.overlays.iter().map(Overlay::kind).collect();
-
-        for kind in overlay_kinds {
-            match kind {
-                OverlayKind::Help => self.help.draw(state, frame, area),
-                OverlayKind::Chat => self.chat.draw(state, frame, center_area),
-                OverlayKind::NpcActions => self.npc_actions.draw(state, frame, area),
-                OverlayKind::ItemActions => self.item_actions.draw(state, frame, area),
-                OverlayKind::ItemDetail => self.item_detail.draw(state, frame, area),
-                OverlayKind::QuestDetail => self.quest_detail.draw(state, frame, area),
-                OverlayKind::Dialogue => self.dialogue.draw(state, frame, area),
-            }
-        }
-    }
-}
-
-impl Lifecycle for GameView {
-    fn on_tick(&mut self, state: &mut AppState) {
-        self.dialogue.on_tick(state);
-    }
-
-    fn handle_terminal_event(
+    fn dispatch_overlay(
         &mut self,
         state: &mut AppState,
         event: &CrosstermEvent,
-        event_sender: &mpsc::Sender<ApplicationEvent>,
+        sender: &mpsc::Sender<ApplicationEvent>,
     ) -> EventFlow {
         if let Some(kind) = state.game.overlays.top_kind() {
             let flow = match kind {
-                OverlayKind::Help => self.help.handle_terminal_event(state, event, event_sender),
-                OverlayKind::Chat => self.chat.handle_terminal_event(state, event, event_sender),
+                OverlayKind::Help => self.help.handle_terminal_event(state, event, sender),
+                OverlayKind::Chat => self.chat.handle_terminal_event(state, event, sender),
                 OverlayKind::NpcActions => {
-                    self.npc_actions
-                        .handle_terminal_event(state, event, event_sender)
+                    self.npc_actions.handle_terminal_event(state, event, sender)
                 }
-                OverlayKind::ItemActions => {
-                    self.item_actions
-                        .handle_terminal_event(state, event, event_sender)
-                }
+                OverlayKind::ItemActions => self
+                    .item_actions
+                    .handle_terminal_event(state, event, sender),
                 OverlayKind::ItemDetail => {
-                    self.item_detail
-                        .handle_terminal_event(state, event, event_sender)
+                    self.item_detail.handle_terminal_event(state, event, sender)
                 }
-                OverlayKind::QuestDetail => {
-                    self.quest_detail
-                        .handle_terminal_event(state, event, event_sender)
-                }
-                OverlayKind::Dialogue => {
-                    self.dialogue
-                        .handle_terminal_event(state, event, event_sender)
-                }
+                OverlayKind::QuestDetail => self
+                    .quest_detail
+                    .handle_terminal_event(state, event, sender),
+                OverlayKind::Dialogue => self.dialogue.handle_terminal_event(state, event, sender),
             };
 
             if flow.is_consumed() || kind.is_modal() {
@@ -161,21 +90,80 @@ impl Lifecycle for GameView {
             }
         }
 
-        if let CrosstermEvent::Key(key) = event
-            && key.code == KeyCode::Char('h')
-            && key
-                .modifiers
-                .contains(crossterm::event::KeyModifiers::CONTROL)
+        EventFlow::Ignored
+    }
+
+    fn dispatch_children(
+        &mut self,
+        state: &mut AppState,
+        event: &CrosstermEvent,
+        sender: &mpsc::Sender<ApplicationEvent>,
+    ) -> EventFlow {
+        if self
+            .footer
+            .handle_terminal_event(state, event, sender)
+            .is_consumed()
         {
-            state.game.overlays.toggle(Overlay::Help);
             return EventFlow::Consumed;
         }
 
+        if self
+            .header
+            .handle_terminal_event(state, event, sender)
+            .is_consumed()
+        {
+            return EventFlow::Consumed;
+        }
+
+        if self
+            .left_panel
+            .handle_terminal_event(state, event, sender)
+            .is_consumed()
+        {
+            return EventFlow::Consumed;
+        }
+
+        if self
+            .center_panel
+            .handle_terminal_event(state, event, sender)
+            .is_consumed()
+        {
+            return EventFlow::Consumed;
+        }
+
+        if self
+            .right_panel
+            .handle_terminal_event(state, event, sender)
+            .is_consumed()
+        {
+            return EventFlow::Consumed;
+        }
+
+        EventFlow::Ignored
+    }
+
+    fn handle_overlay_keys(state: &mut AppState, event: &CrosstermEvent) -> EventFlow {
         if let CrosstermEvent::Key(key) = event {
+            if key.code == KeyCode::Char('h')
+                && key
+                    .modifiers
+                    .contains(crossterm::event::KeyModifiers::CONTROL)
+            {
+                state.game.overlays.toggle(Overlay::Help);
+                return EventFlow::Consumed;
+            }
+
             if key.code == KeyCode::F(1) {
                 state.game.overlays.toggle(Overlay::Chat);
                 return EventFlow::Consumed;
             }
+        }
+
+        EventFlow::Ignored
+    }
+
+    fn handle_focus_keys(state: &mut AppState, event: &CrosstermEvent) -> EventFlow {
+        if let CrosstermEvent::Key(key) = event {
             if key.code == KeyCode::Tab {
                 state.game.focus.next();
                 return EventFlow::Consumed;
@@ -186,6 +174,10 @@ impl Lifecycle for GameView {
             }
         }
 
+        EventFlow::Ignored
+    }
+
+    fn update_focus_from_mouse(&mut self, state: &mut AppState, event: &CrosstermEvent) {
         if let CrosstermEvent::Mouse(mouse) = event
             && mouse.kind
                 == crossterm::event::MouseEventKind::Down(crossterm::event::MouseButton::Left)
@@ -260,42 +252,91 @@ impl Lifecycle for GameView {
                 state.game.focus = GameFocus::Input;
             }
         }
+    }
+}
 
-        if self
-            .footer
-            .handle_terminal_event(state, event, event_sender)
-            .is_consumed()
-        {
+impl Component for GameView {
+    fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
+        let vertical_chunks = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([
+                Constraint::Length(5),
+                Constraint::Min(1),
+                Constraint::Length(3),
+            ])
+            .split(area);
+
+        let available_height = vertical_chunks[1].height;
+        let mut right_width_constraint = Constraint::Percentage(40);
+
+        if let Some(desired_width) = self.right_panel.get_desired_width(state, available_height) {
+            let max_width = (area.width * 40) / 100;
+            let min_width = (area.width * 20) / 100;
+            let final_width = desired_width.clamp(min_width, max_width);
+            right_width_constraint = Constraint::Length(final_width);
+        }
+
+        let has_left_panel = state.network.is_connected && state.game.room.is_some();
+        let horizontal_chunks = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints([
+                Constraint::Percentage(if has_left_panel { 20 } else { 0 }),
+                Constraint::Min(1),
+                right_width_constraint,
+            ])
+            .split(vertical_chunks[1]);
+
+        self.header.draw(state, frame, vertical_chunks[0]);
+        self.left_panel.draw(state, frame, horizontal_chunks[0]);
+        self.center_panel.draw(state, frame, horizontal_chunks[1]);
+        self.right_panel.draw(state, frame, horizontal_chunks[2]);
+        self.footer.draw(state, frame, vertical_chunks[2]);
+
+        self.right_panel_area = Some(horizontal_chunks[2]);
+        self.footer_area = Some(vertical_chunks[2]);
+
+        let center_area = horizontal_chunks[1];
+        let overlay_kinds: Vec<OverlayKind> =
+            state.game.overlays.iter().map(Overlay::kind).collect();
+
+        for kind in overlay_kinds {
+            match kind {
+                OverlayKind::Help => self.help.draw(state, frame, area),
+                OverlayKind::Chat => self.chat.draw(state, frame, center_area),
+                OverlayKind::NpcActions => self.npc_actions.draw(state, frame, area),
+                OverlayKind::ItemActions => self.item_actions.draw(state, frame, area),
+                OverlayKind::ItemDetail => self.item_detail.draw(state, frame, area),
+                OverlayKind::QuestDetail => self.quest_detail.draw(state, frame, area),
+                OverlayKind::Dialogue => self.dialogue.draw(state, frame, area),
+            }
+        }
+    }
+}
+
+impl Lifecycle for GameView {
+    fn on_tick(&mut self, state: &mut AppState) {
+        self.dialogue.on_tick(state);
+    }
+
+    fn handle_terminal_event(
+        &mut self,
+        state: &mut AppState,
+        event: &CrosstermEvent,
+        sender: &mpsc::Sender<ApplicationEvent>,
+    ) -> EventFlow {
+        if self.dispatch_overlay(state, event, sender).is_consumed() {
             return EventFlow::Consumed;
         }
-        if self
-            .header
-            .handle_terminal_event(state, event, event_sender)
-            .is_consumed()
-        {
+
+        if Self::handle_overlay_keys(state, event).is_consumed() {
             return EventFlow::Consumed;
         }
-        if self
-            .left_panel
-            .handle_terminal_event(state, event, event_sender)
-            .is_consumed()
-        {
+
+        if Self::handle_focus_keys(state, event).is_consumed() {
             return EventFlow::Consumed;
         }
-        if self
-            .center_panel
-            .handle_terminal_event(state, event, event_sender)
-            .is_consumed()
-        {
-            return EventFlow::Consumed;
-        }
-        if self
-            .right_panel
-            .handle_terminal_event(state, event, event_sender)
-            .is_consumed()
-        {
-            return EventFlow::Consumed;
-        }
-        EventFlow::Ignored
+
+        self.update_focus_from_mouse(state, event);
+        self.dispatch_children(state, event, sender)
     }
 }

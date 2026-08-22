@@ -23,7 +23,6 @@ pub struct GameState {
 }
 
 // TODO: fermer le dialogue popup si le chef de groupe change de room
-// TODO: si le game server est offline, il faut revenir sur la GameView
 
 impl GameState {
     pub fn new(manifest: Arc<Manifest>) -> Self {
