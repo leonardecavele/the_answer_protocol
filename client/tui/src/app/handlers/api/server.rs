@@ -1,5 +1,6 @@
 use crate::app::App;
 use crate::states::ui::Notification;
+use crate::ui::views::game::GameView;
 use api_client::commands::{ConnectResponse, WhoResponse};
 
 impl App {
@@ -84,6 +85,10 @@ impl App {
         self.state
             .game
             .log_action("Game server offline.".to_string());
+
+        if self.state.network.is_connected {
+            self.view_manager.set_view(Box::new(GameView::new()));
+        }
 
         self.state.game.overlays.close_all();
         self.state.network.is_connected = false;

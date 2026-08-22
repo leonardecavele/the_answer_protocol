@@ -1,5 +1,6 @@
 use crate::events::{ApplicationEvent, NetworkEvent};
 use crate::states::app::AppState;
+use crate::states::login::LoginFocus;
 use crate::states::ui::Notification;
 use crate::ui::components::Component;
 use crate::ui::components::Lifecycle;
@@ -13,16 +14,8 @@ use ratatui::Frame;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use tokio::sync::mpsc;
 
-#[derive(PartialEq)]
-pub enum LoginFocus {
-    PlayerName,
-    ServerIp,
-    ServerPort,
-    ConnectButton,
-}
-
 pub struct LoginView {
-    pub current_focus: LoginFocus,
+    pub focus: LoginFocus,
     pub name_input: Interactive<TextInput>,
     pub ip_input: Interactive<TextInput>,
     pub port_input: Interactive<TextInput>,
@@ -32,13 +25,13 @@ pub struct LoginView {
 impl LoginView {
     pub fn new(ip: String, port: String) -> Self {
         let mut view = Self {
-            current_focus: LoginFocus::PlayerName,
+            focus: LoginFocus::default(),
             name_input: Interactive::new(TextInput::new("Player Name")),
             ip_input: Interactive::new(TextInput::new("Server IP")),
             port_input: Interactive::new(TextInput::new("Server Port")),
             connect_button: Interactive::new(Button::new("Connect")),
         };
-        // Set initial value for defaults
+
         view.ip_input.inner.value = ip;
         view.port_input.inner.value = port;
 
@@ -47,14 +40,14 @@ impl LoginView {
     }
 
     fn update_focus(&mut self) {
-        self.name_input.inner.is_focused = self.current_focus == LoginFocus::PlayerName;
-        self.ip_input.inner.is_focused = self.current_focus == LoginFocus::ServerIp;
-        self.port_input.inner.is_focused = self.current_focus == LoginFocus::ServerPort;
-        self.connect_button.inner.is_focused = self.current_focus == LoginFocus::ConnectButton;
+        self.name_input.inner.is_focused = self.focus == LoginFocus::PlayerName;
+        self.ip_input.inner.is_focused = self.focus == LoginFocus::ServerIp;
+        self.port_input.inner.is_focused = self.focus == LoginFocus::ServerPort;
+        self.connect_button.inner.is_focused = self.focus == LoginFocus::ConnectButton;
     }
 
     fn cycle_focus_forward(&mut self) {
-        self.current_focus = match self.current_focus {
+        self.focus = match self.focus {
             LoginFocus::PlayerName => LoginFocus::ServerIp,
             LoginFocus::ServerIp => LoginFocus::ServerPort,
             LoginFocus::ServerPort => LoginFocus::ConnectButton,
@@ -64,7 +57,7 @@ impl LoginView {
     }
 
     fn cycle_focus_backward(&mut self) {
-        self.current_focus = match self.current_focus {
+        self.focus = match self.focus {
             LoginFocus::PlayerName => LoginFocus::ConnectButton,
             LoginFocus::ServerIp => LoginFocus::PlayerName,
             LoginFocus::ServerPort => LoginFocus::ServerIp,
@@ -132,17 +125,19 @@ impl Lifecycle for LoginView {
             CrosstermEvent::Key(KeyEvent { code, .. }) => {
                 // Keyboard navigation
                 if *code == KeyCode::Tab || *code == KeyCode::Down {
-                    self.cycle_focus_forward();
+                    self.focus.next();
+                    self.update_focus();
                     return EventFlow::Consumed;
                 }
                 if *code == KeyCode::BackTab || *code == KeyCode::Up {
-                    self.cycle_focus_backward();
+                    self.focus.prev();
+                    self.update_focus();
                     return EventFlow::Consumed;
                 }
 
                 if *code == KeyCode::Enter
-                    && self.current_focus != LoginFocus::ConnectButton {
-                        self.current_focus = LoginFocus::ConnectButton;
+                    && self.focus != LoginFocus::ConnectButton {
+                        self.focus = LoginFocus::ConnectButton;
                         self.update_focus();
                         return EventFlow::Consumed;
                     }
@@ -153,19 +148,19 @@ impl Lifecycle for LoginView {
                 // Mouse navigation (Left click)
                 if *kind == MouseEventKind::Down(crossterm::event::MouseButton::Left) => {
                     if self.name_input.is_mouse_over(*column, *row) {
-                        self.current_focus = LoginFocus::PlayerName;
+                        self.focus = LoginFocus::PlayerName;
                         self.update_focus();
                         return EventFlow::Consumed;
                     } else if self.ip_input.is_mouse_over(*column, *row) {
-                        self.current_focus = LoginFocus::ServerIp;
+                        self.focus = LoginFocus::ServerIp;
                         self.update_focus();
                         return EventFlow::Consumed;
                     } else if self.port_input.is_mouse_over(*column, *row) {
-                        self.current_focus = LoginFocus::ServerPort;
+                        self.focus = LoginFocus::ServerPort;
                         self.update_focus();
                         return EventFlow::Consumed;
                     } else if self.connect_button.is_mouse_over(*column, *row) {
-                        self.current_focus = LoginFocus::ConnectButton;
+                        self.focus = LoginFocus::ConnectButton;
                         self.update_focus();
                         // Simulate a button press directly if clicked
                         self.connect_button.inner.is_pressed = true;
@@ -174,7 +169,7 @@ impl Lifecycle for LoginView {
             _ => {}
         }
 
-        match self.current_focus {
+        match self.focus {
             LoginFocus::PlayerName => {
                 self.name_input
                     .handle_terminal_event(state, event, event_sender)
