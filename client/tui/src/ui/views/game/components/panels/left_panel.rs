@@ -6,6 +6,7 @@ use crate::states::game::GameFocus;
 use crate::states::game::Overlay::{ItemActions, NpcActions, QuestDetail};
 use crate::ui::components::Component;
 use crate::ui::components::Lifecycle;
+use crate::ui::components::interactive::is_mouse_in_rect;
 use crate::ui::components::lifecycle::EventFlow;
 use crate::ui::theme::{default_block, panel_block, quest_status};
 use ratatui::{
@@ -17,16 +18,18 @@ use ratatui::{
 };
 use tokio::sync::mpsc::Sender;
 
-pub struct LeftPanel {
-    pub npcs_area: Option<Rect>,
-    pub items_area: Option<Rect>,
-    pub quests_area: Option<Rect>,
+pub enum LeftPanelHit {
+    Npc(usize),
+    Item(usize),
+    Quest(usize),
+    None,
 }
 
-impl Default for LeftPanel {
-    fn default() -> Self {
-        Self::new()
-    }
+#[derive(Default)]
+pub struct LeftPanel {
+    npcs_area: Option<Rect>,
+    items_area: Option<Rect>,
+    quests_area: Option<Rect>,
 }
 
 impl LeftPanel {
@@ -36,6 +39,28 @@ impl LeftPanel {
             items_area: None,
             quests_area: None,
         }
+    }
+
+    pub fn hit(&self, column: u16, row: u16) -> LeftPanelHit {
+        if let Some(area) = self.npcs_area
+            && is_mouse_in_rect(column, row, area)
+        {
+            return LeftPanelHit::Npc(row.saturating_sub(area.y).saturating_sub(1) as usize);
+        }
+
+        if let Some(area) = self.items_area
+            && is_mouse_in_rect(column, row, area)
+        {
+            return LeftPanelHit::Item(row.saturating_sub(area.y).saturating_sub(1) as usize);
+        }
+
+        if let Some(area) = self.quests_area
+            && is_mouse_in_rect(column, row, area)
+        {
+            return LeftPanelHit::Quest(row.saturating_sub(area.y).saturating_sub(1) as usize);
+        }
+
+        LeftPanelHit::None
     }
 }
 

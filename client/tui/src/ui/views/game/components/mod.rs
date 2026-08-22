@@ -4,10 +4,13 @@ mod overlays;
 mod panels;
 mod popups;
 
-pub use footer::Footer;
+pub use footer::{Footer, FooterHit};
 pub use header::Header;
 pub use overlays::{ChatOverlay, HelpOverlay};
-pub use panels::{CenterPanel, INVENTORY_ITEM_HEIGHT, INVENTORY_ITEM_WIDTH, LeftPanel, RightPanel};
+pub use panels::{
+    ActionHistoryPanel, InventoryPanel, InventoryPanelHit, LeftPanel, LeftPanelHit, RightPanel,
+    RightPanelHit,
+};
 pub use popups::{
     DialoguePopup, ItemActionsPopup, ItemDetailPopup, NpcActionsPopup, QuestDetailPopup,
 };

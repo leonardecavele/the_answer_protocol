@@ -21,6 +21,7 @@ pub trait ScrollableComponent: Lifecycle {
     fn get_content<'a>(&self, state: &'a AppState, max_width: usize) -> Vec<Line<'a>>;
 }
 
+#[derive(Default)]
 pub struct Scrollable<T: ScrollableComponent> {
     pub inner: T,
     pub scroll_offset: u16,

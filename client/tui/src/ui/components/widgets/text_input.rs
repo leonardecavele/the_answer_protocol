@@ -11,6 +11,7 @@ use ratatui::style::{Color, Style};
 use ratatui::widgets::Paragraph;
 use tokio::sync::mpsc::Sender;
 
+#[derive(Default)]
 pub struct TextInput {
     pub label: String,
     pub value: String,

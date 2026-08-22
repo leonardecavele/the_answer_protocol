@@ -3,32 +3,44 @@ use crate::states::app::AppState;
 use crate::states::game::GameFocus;
 use crate::ui::components::Component;
 use crate::ui::components::Lifecycle;
-use crate::ui::components::interactive::Interactive;
+use crate::ui::components::interactive::{Interactive, is_mouse_in_rect};
 use crate::ui::components::lifecycle::EventFlow;
 use crate::ui::components::widgets::text_input::TextInput;
 use crossterm::event::{Event as CrosstermEvent, KeyCode, KeyEvent};
 use ratatui::{Frame, layout::Rect};
 
-pub struct Footer {
-    pub input: Interactive<TextInput>,
+pub enum FooterHit {
+    CommandInput,
+    None,
 }
 
-impl Default for Footer {
-    fn default() -> Self {
-        Self::new()
-    }
+#[derive(Default)]
+pub struct Footer {
+    pub input: Interactive<TextInput>,
+    area: Option<Rect>,
 }
 
 impl Footer {
     pub fn new() -> Self {
         let mut input = Interactive::new(TextInput::new("Command"));
         input.inner.is_focused = true;
-        Self { input }
+        Self { input, area: None }
+    }
+
+    pub fn hit(&self, column: u16, row: u16) -> FooterHit {
+        if let Some(area) = self.area
+            && is_mouse_in_rect(column, row, area)
+        {
+            return FooterHit::CommandInput;
+        }
+
+        FooterHit::None
     }
 }
 
 impl Component for Footer {
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
+        self.area = Some(area);
         self.input.inner.is_focused = state.game.focus == GameFocus::Input;
         self.input.draw(state, frame, area);
     }

@@ -23,6 +23,7 @@ pub trait InteractiveComponent: Lifecycle {
     }
 }
 
+#[derive(Default)]
 pub struct Interactive<T: InteractiveComponent> {
     pub inner: T,
     pub last_area: Option<Rect>,

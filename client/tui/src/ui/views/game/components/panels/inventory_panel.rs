@@ -3,6 +3,7 @@ use crate::states::app::AppState;
 use crate::states::game::{GameFocus, Overlay};
 use crate::ui::components::Component;
 use crate::ui::components::Lifecycle;
+use crate::ui::components::interactive::is_mouse_in_rect;
 use crate::ui::components::lifecycle::EventFlow;
 use crate::ui::theme::panel_block;
 use ratatui::layout::Alignment;
@@ -14,32 +15,52 @@ use ratatui::{
 };
 use tokio::sync::mpsc::Sender;
 
-pub const INVENTORY_ITEM_WIDTH: u16 = 20;
-pub const INVENTORY_ITEM_HEIGHT: u16 = 4;
+const INVENTORY_ITEM_WIDTH: u16 = 20;
+const INVENTORY_ITEM_HEIGHT: u16 = 4;
 
-pub struct InventoryPanel {
-    pub inventory_cols: usize,
-    pub inventory_area: Option<Rect>,
+pub enum InventoryPanelHit {
+    Item(Option<usize>),
+    None,
 }
 
-impl Default for InventoryPanel {
-    fn default() -> Self {
-        Self::new()
-    }
+#[derive(Default)]
+pub struct InventoryPanel {
+    cols: usize,
+    area: Option<Rect>,
 }
 
 impl InventoryPanel {
     pub fn new() -> Self {
         Self {
-            inventory_cols: 1,
-            inventory_area: None,
+            cols: 1,
+            area: None,
         }
+    }
+
+    pub fn hit(&self, column: u16, row: u16) -> InventoryPanelHit {
+        if let Some(area) = self.area
+            && is_mouse_in_rect(column, row, area)
+        {
+            let rel_x = column.saturating_sub(area.x);
+            let rel_y = row.saturating_sub(area.y);
+            if rel_x > 0 && rel_y > 0 {
+                let col = (rel_x - 1) as usize / INVENTORY_ITEM_WIDTH as usize;
+                let row = (rel_y - 1) as usize / INVENTORY_ITEM_HEIGHT as usize;
+                let cols = self.cols.max(1);
+                let index = row * cols + col;
+                return InventoryPanelHit::Item(Some(index));
+            }
+
+            return InventoryPanelHit::Item(None);
+        }
+
+        InventoryPanelHit::None
     }
 }
 
 impl Component for InventoryPanel {
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
-        self.inventory_area = Some(area);
+        self.area = Some(area);
 
         let inv_block = panel_block(" Inventory ", state.game.focus == GameFocus::InventoryGrid);
 
@@ -52,8 +73,8 @@ impl Component for InventoryPanel {
             return;
         }
 
-        self.inventory_cols = (inv_inner.width / INVENTORY_ITEM_WIDTH) as usize;
-        let cols = self.inventory_cols.max(1);
+        self.cols = (inv_inner.width / INVENTORY_ITEM_WIDTH) as usize;
+        let cols = self.cols.max(1);
 
         for (idx, item) in state.game.player.inventory.iter().enumerate() {
             let col = idx % cols;
@@ -107,7 +128,7 @@ impl Lifecycle for InventoryPanel {
         {
             let inv_count = state.game.player.inventory.len();
             if inv_count > 0 {
-                let cols = self.inventory_cols.max(1);
+                let cols = self.cols.max(1);
                 let current = state.game.player.inventory.selected_index();
 
                 match key.code {

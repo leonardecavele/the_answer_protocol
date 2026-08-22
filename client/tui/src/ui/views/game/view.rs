@@ -6,11 +6,10 @@ use crate::ui::components::lifecycle::EventFlow;
 use crate::ui::components::scrollable::Scrollable;
 
 use crate::states::game::{GameFocus, Overlay, OverlayKind};
-use crate::ui::components::interactive::is_mouse_in_rect;
 use crate::ui::views::game::components::{
-    CenterPanel, ChatOverlay, DialoguePopup, Footer, Header, HelpOverlay, INVENTORY_ITEM_HEIGHT,
-    INVENTORY_ITEM_WIDTH, ItemActionsPopup, ItemDetailPopup, LeftPanel, NpcActionsPopup,
-    QuestDetailPopup, RightPanel,
+    ActionHistoryPanel, ChatOverlay, DialoguePopup, Footer, FooterHit, Header, HelpOverlay,
+    InventoryPanel, InventoryPanelHit, ItemActionsPopup, ItemDetailPopup, LeftPanel, LeftPanelHit,
+    NpcActionsPopup, QuestDetailPopup, RightPanel, RightPanelHit,
 };
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
 use ratatui::Frame;
@@ -21,7 +20,8 @@ pub struct GameView {
     header: Header,
     footer: Footer,
     left_panel: LeftPanel,
-    center_panel: CenterPanel,
+    action_history: Scrollable<ActionHistoryPanel>,
+    inventory: InventoryPanel,
     right_panel: RightPanel,
     chat: Scrollable<ChatOverlay>,
     npc_actions: NpcActionsPopup,
@@ -30,8 +30,6 @@ pub struct GameView {
     quest_detail: QuestDetailPopup,
     dialogue: Scrollable<DialoguePopup>,
     help: Scrollable<HelpOverlay>,
-    right_panel_area: Option<Rect>,
-    footer_area: Option<Rect>,
 }
 
 impl Default for GameView {
@@ -46,7 +44,8 @@ impl GameView {
             header: Header::new(),
             footer: Footer::new(),
             left_panel: LeftPanel::new(),
-            center_panel: CenterPanel::new(),
+            action_history: Scrollable::new(ActionHistoryPanel::new()),
+            inventory: InventoryPanel::new(),
             right_panel: RightPanel::new(),
             chat: Scrollable::new(ChatOverlay::new()),
             npc_actions: NpcActionsPopup::new(),
@@ -55,8 +54,6 @@ impl GameView {
             quest_detail: QuestDetailPopup::new(),
             dialogue: Scrollable::new(DialoguePopup::new()),
             help: Scrollable::new(HelpOverlay::new()),
-            right_panel_area: None,
-            footer_area: None,
         }
     }
 
@@ -124,7 +121,15 @@ impl GameView {
         }
 
         if self
-            .center_panel
+            .action_history
+            .handle_terminal_event(state, event, sender)
+            .is_consumed()
+        {
+            return EventFlow::Consumed;
+        }
+
+        if self
+            .inventory
             .handle_terminal_event(state, event, sender)
             .is_consumed()
         {
@@ -182,74 +187,47 @@ impl GameView {
             && mouse.kind
                 == crossterm::event::MouseEventKind::Down(crossterm::event::MouseButton::Left)
         {
-            if let Some(area) = self.left_panel.npcs_area
-                && is_mouse_in_rect(mouse.column, mouse.row, area)
-            {
-                state.game.focus = GameFocus::NpcList;
-
-                let y = mouse.row.saturating_sub(area.y);
-                if y > 0
-                    && let Some(room) = &mut state.game.room
-                {
-                    room.npcs.select_index((y - 1) as usize);
+            if let Some(room) = state.game.room.as_mut() {
+                match self.left_panel.hit(mouse.column, mouse.row) {
+                    LeftPanelHit::Npc(index) => {
+                        state.game.focus = GameFocus::NpcList;
+                        room.npcs.select_index(index)
+                    }
+                    LeftPanelHit::Item(index) => {
+                        state.game.focus = GameFocus::RoomItemsList;
+                        room.items.select_index(index)
+                    }
+                    LeftPanelHit::Quest(index) => {
+                        state.game.focus = GameFocus::QuestList;
+                        state.game.player.quests.select_index(index)
+                    }
+                    LeftPanelHit::None => {}
                 }
             }
 
-            if let Some(area) = self.left_panel.items_area
-                && is_mouse_in_rect(mouse.column, mouse.row, area)
-            {
-                state.game.focus = GameFocus::RoomItemsList;
+            match self.inventory.hit(mouse.column, mouse.row) {
+                InventoryPanelHit::Item(index_opt) => {
+                    state.game.focus = GameFocus::InventoryGrid;
 
-                let y = mouse.row.saturating_sub(area.y);
-                if y > 0
-                    && let Some(room) = &mut state.game.room
-                {
-                    room.items.select_index((y - 1) as usize);
+                    if let Some(index) = index_opt {
+                        state.game.player.inventory.select_index(index);
+                    }
                 }
+                InventoryPanelHit::None => {}
             }
 
-            if let Some(area) = self.left_panel.quests_area
-                && is_mouse_in_rect(mouse.column, mouse.row, area)
-            {
-                state.game.focus = GameFocus::QuestList;
-
-                let y = mouse.row.saturating_sub(area.y);
-                if y > 0 {
-                    state.game.player.quests.select_index((y - 1) as usize);
+            match self.right_panel.hit(mouse.column, mouse.row) {
+                RightPanelHit::Image => {
+                    state.game.focus = GameFocus::RightPanel;
                 }
+                RightPanelHit::None => {}
             }
 
-            if let Some(area) = self.center_panel.history_area
-                && is_mouse_in_rect(mouse.column, mouse.row, area)
-            {
-                state.game.focus = GameFocus::ActionHistory;
-            }
-
-            if let Some(area) = self.center_panel.inventory_area
-                && is_mouse_in_rect(mouse.column, mouse.row, area)
-            {
-                state.game.focus = GameFocus::InventoryGrid;
-
-                let rel_x = mouse.column.saturating_sub(area.x);
-                let rel_y = mouse.row.saturating_sub(area.y);
-                if rel_x > 0 && rel_y > 0 {
-                    let col = (rel_x - 1) as usize / INVENTORY_ITEM_WIDTH as usize;
-                    let row = (rel_y - 1) as usize / INVENTORY_ITEM_HEIGHT as usize;
-                    let cols = self.center_panel.inventory.inventory_cols.max(1);
-                    let idx = row * cols + col;
-                    state.game.player.inventory.select_index(idx);
+            match self.footer.hit(mouse.column, mouse.row) {
+                FooterHit::CommandInput => {
+                    state.game.focus = GameFocus::Input;
                 }
-            }
-
-            if let Some(area) = self.right_panel_area
-                && is_mouse_in_rect(mouse.column, mouse.row, area)
-            {
-                state.game.focus = GameFocus::RightPanel;
-            }
-            if let Some(area) = self.footer_area
-                && is_mouse_in_rect(mouse.column, mouse.row, area)
-            {
-                state.game.focus = GameFocus::Input;
+                FooterHit::None => {}
             }
         }
     }
@@ -288,12 +266,18 @@ impl Component for GameView {
 
         self.header.draw(state, frame, vertical_chunks[0]);
         self.left_panel.draw(state, frame, horizontal_chunks[0]);
-        self.center_panel.draw(state, frame, horizontal_chunks[1]);
+
+        let center_vertical_chunks = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([Constraint::Percentage(70), Constraint::Percentage(30)])
+            .split(horizontal_chunks[1]);
+
+        self.action_history
+            .draw(state, frame, center_vertical_chunks[0]);
+        self.inventory.draw(state, frame, center_vertical_chunks[1]);
+
         self.right_panel.draw(state, frame, horizontal_chunks[2]);
         self.footer.draw(state, frame, vertical_chunks[2]);
-
-        self.right_panel_area = Some(horizontal_chunks[2]);
-        self.footer_area = Some(vertical_chunks[2]);
 
         let center_area = horizontal_chunks[1];
         let overlay_kinds: Vec<OverlayKind> =

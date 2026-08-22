@@ -3,6 +3,7 @@ use crate::states::app::AppState;
 use crate::states::game::{Direction, GameFocus, Sprite};
 use crate::ui::components::Component;
 use crate::ui::components::Lifecycle;
+use crate::ui::components::interactive::is_mouse_in_rect;
 use crate::ui::components::lifecycle::EventFlow;
 use crate::ui::utils::{center_area_with_aspect_ratio, wrap_str_to_lines};
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
@@ -73,9 +74,15 @@ impl Placement {
     }
 }
 
+pub enum RightPanelHit {
+    Image,
+    None,
+}
+
 pub struct RightPanel {
     animation_start: Instant,
     shown_npc: Option<String>,
+    area: Option<Rect>,
 }
 
 impl Default for RightPanel {
@@ -89,7 +96,18 @@ impl RightPanel {
         Self {
             animation_start: Instant::now(),
             shown_npc: None,
+            area: None,
         }
+    }
+
+    pub fn hit(&self, column: u16, row: u16) -> RightPanelHit {
+        if let Some(area) = self.area
+            && is_mouse_in_rect(column, row, area)
+        {
+            return RightPanelHit::Image;
+        }
+
+        RightPanelHit::None
     }
 
     fn room_facing(&self, state: &AppState) -> Direction {
@@ -259,6 +277,7 @@ impl RightPanel {
 
 impl Component for RightPanel {
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
+        self.area = Some(area);
         self.sync_animation(state);
 
         let image_area = match self.content(state) {
