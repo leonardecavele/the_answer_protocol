@@ -75,7 +75,7 @@ impl Placement {
 
 pub struct RightPanel {
     animation_start: Instant,
-    shown_entity: Option<String>,
+    shown_npc: Option<String>,
 }
 
 impl Default for RightPanel {
@@ -88,7 +88,7 @@ impl RightPanel {
     pub fn new() -> Self {
         Self {
             animation_start: Instant::now(),
-            shown_entity: None,
+            shown_npc: None,
         }
     }
 
@@ -107,8 +107,8 @@ impl RightPanel {
         let elapsed = self.animation_start.elapsed();
         let manifest = &state.game.manifest;
 
-        if let Some(id) = &state.game.overlays.inspected_entity
-            && let Some(image_path) = Sprite::of_entity(id, manifest).frame_at(elapsed)
+        if let Some(id) = &state.game.overlays.inspected_npc
+            && let Some(image_path) = Sprite::of_npc(id, manifest).frame_at(elapsed)
         {
             return Content::Image(image_path.to_string());
         }
@@ -123,9 +123,9 @@ impl RightPanel {
     }
 
     fn sync_animation(&mut self, state: &AppState) {
-        let current = state.game.overlays.inspected_entity.as_deref();
-        if self.shown_entity.as_deref() != current {
-            self.shown_entity = current.map(str::to_owned);
+        let current = state.game.overlays.inspected_npc.as_deref();
+        if self.shown_npc.as_deref() != current {
+            self.shown_npc = current.map(str::to_owned);
             self.animation_start = Instant::now();
         }
     }

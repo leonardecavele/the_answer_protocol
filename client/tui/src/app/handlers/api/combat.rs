@@ -1,7 +1,9 @@
 use crate::app::App;
+use crate::states::game::DialogueState;
 use crate::states::ui::Notification;
 use crate::ui::views::editor::EditorView;
 use crate::ui::views::game::GameView;
+use api_client::commands::AttackResponse;
 use api_client::events::{FightResultData, FightStartData, KillData};
 
 impl App {
@@ -85,5 +87,31 @@ impl App {
         self.state.game.fight.reset();
         self.state.game.log_action("The fight ended.".to_string());
         self.view_manager.set_view(Box::new(GameView::new()));
+    }
+
+    pub(crate) fn on_attacked(&mut self, response: AttackResponse, npc_id: String) {
+        let npc_name = self.state.game.manifest.npc_name(&npc_id);
+        let combat = response.combat_result;
+
+        self.state.game.overlays.inspected_npc = Some(npc_id.clone());
+        self.state.game.player.set_hp(combat.attacker_hp);
+
+        self.state
+            .game
+            .log_action(format!("You attacked {}.", npc_name));
+
+        let text = format!(
+            "Combat with {}: You dealt {} damage. (Your HP: {} | Target HP: {}) ",
+            npc_name, combat.damage, combat.attacker_hp, combat.target_hp
+        );
+
+        self.state.game.overlays.open_dialogue(DialogueState::new(
+            npc_id,
+            npc_name,
+            text.clone(),
+            true,
+        ));
+
+        self.state.game.log_action(text);
     }
 }

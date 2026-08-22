@@ -1,5 +1,6 @@
 mod chat;
 mod combat;
+mod dialogue;
 mod group;
 mod player;
 mod room;
@@ -8,7 +9,7 @@ mod server;
 use crate::app::App;
 use crate::events::ApiEvent;
 use crate::network::envelopes::ResponseEnvelope;
-use crate::states::game::{ChatChannel, DialogueState, END_OF_DIALOGUE_TAG, Overlay, OverlayKind};
+use crate::states::game::ChatChannel;
 use crate::states::ui::Notification;
 use api_client::events::{GameServerEvent, GroupEvent, RoomEvent, ServerEvent};
 use api_client::{ApiRequest, ApiResponse};
@@ -102,50 +103,7 @@ impl App {
             }
             ApiResponse::Talk(Ok(response)) => {
                 if let ApiRequest::Talk(cmd) = envelope.original_request {
-                    let mut text = response.dialogue;
-                    let ends_dialog = text.contains(END_OF_DIALOGUE_TAG);
-                    let ends_dialog_only = ends_dialog && text.starts_with(END_OF_DIALOGUE_TAG);
-
-                    if ends_dialog_only {
-                        if !self.state.game.overlays.is_open(OverlayKind::Dialogue) {
-                            text = "**nothing**".to_string();
-                        } else {
-                            self.state.game.overlays.close(OverlayKind::Dialogue);
-                            return;
-                        }
-                    } else if ends_dialog {
-                        text = text.replace(END_OF_DIALOGUE_TAG, "").trim().to_string();
-                    }
-
-                    self.state.game.overlays.inspected_entity = Some(cmd.npc_name.clone());
-
-                    let display_name = self.state.game.manifest.npc_name(&cmd.npc_name);
-
-                    if !self.state.game.overlays.is_open(OverlayKind::Dialogue) {
-                        self.state
-                            .game
-                            .log_action(format!("You talked to {}.", display_name));
-                    }
-
-                    if !ends_dialog_only {
-                        self.state
-                            .game
-                            .log_action(format!("[{}] says: \"{}\"", display_name, text));
-                    }
-
-                    if let Some(dialog) = self.state.game.overlays.dialogue_mut() {
-                        dialog.add(text, ends_dialog);
-                    } else {
-                        self.state
-                            .game
-                            .overlays
-                            .open(Overlay::Dialogue(DialogueState::new(
-                                cmd.npc_name,
-                                display_name,
-                                text,
-                                ends_dialog,
-                            )));
-                    }
+                    self.on_talked_to(response, cmd.npc_name);
                 }
             }
             ApiResponse::Take(Ok(response)) => {
@@ -156,35 +114,7 @@ impl App {
             }
             ApiResponse::Attack(Ok(response)) => {
                 if let ApiRequest::Attack(cmd) = envelope.original_request {
-                    self.state.game.overlays.inspected_entity = Some(cmd.npc_name.clone());
-
-                    let npc_name = self.state.game.manifest.npc_name(&cmd.npc_name);
-
-                    self.state
-                        .game
-                        .log_action(format!("You attacked {}.", npc_name));
-
-                    let res = response.combat_result;
-
-                    // Update HP manually from attack result
-                    self.state.game.player.hp = res.attacker_hp;
-
-                    let text = format!(
-                        "Combat with {}: You dealt {} damage. (Your HP: {} | Target HP: {}) ",
-                        npc_name, res.damage, res.attacker_hp, res.target_hp
-                    );
-
-                    self.state
-                        .game
-                        .overlays
-                        .open(Overlay::Dialogue(DialogueState::new(
-                            cmd.npc_name,
-                            npc_name,
-                            text.clone(),
-                            true,
-                        )));
-
-                    self.state.game.log_action(text);
+                    self.on_attacked(response, cmd.npc_name);
                 }
             }
             ApiResponse::Quit(Ok(_)) => {

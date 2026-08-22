@@ -122,9 +122,7 @@ impl Component for GameView {
 
 impl Lifecycle for GameView {
     fn on_tick(&mut self, state: &mut AppState) {
-        if state.game.overlays.is_open(OverlayKind::Dialogue) {
-            self.dialogue.on_tick(state);
-        }
+        self.dialogue.on_tick(state);
     }
 
     fn handle_terminal_event(

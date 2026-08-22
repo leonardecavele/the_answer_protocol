@@ -43,7 +43,7 @@ impl OverlayKind {
 }
 
 pub struct Overlays {
-    pub inspected_entity: Option<String>,
+    pub inspected_npc: Option<String>,
     dialogue_closed_at: Option<Instant>,
     overlays: Vec<Overlay>,
 }
@@ -51,7 +51,7 @@ pub struct Overlays {
 impl Overlays {
     pub fn new() -> Self {
         Self {
-            inspected_entity: None,
+            inspected_npc: None,
             dialogue_closed_at: None,
             overlays: Vec::new(),
         }
@@ -61,6 +61,10 @@ impl Overlays {
         let kind = overlay.kind();
         self.overlays.retain(|o| o.kind() != kind);
         self.overlays.push(overlay);
+    }
+
+    pub fn open_dialogue(&mut self, dialogue: DialogueState) {
+        self.open(Overlay::Dialogue(dialogue));
     }
 
     pub fn toggle(&mut self, overlay: Overlay) {
@@ -143,7 +147,7 @@ impl Overlays {
 
     fn after_close(&mut self, kind: OverlayKind) {
         if kind == OverlayKind::Dialogue {
-            self.inspected_entity = None;
+            self.inspected_npc = None;
             self.dialogue_closed_at = Some(Instant::now());
         }
     }

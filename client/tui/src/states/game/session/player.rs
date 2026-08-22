@@ -36,6 +36,10 @@ impl PlayerState {
         self.hp = hp.min(max_hp);
     }
 
+    pub fn set_hp(&mut self, hp: u32) {
+        self.hp = hp.min(self.max_hp);
+    }
+
     pub fn take_damage(&mut self, amount: u32) {
         self.hp = self.hp.saturating_sub(amount);
     }

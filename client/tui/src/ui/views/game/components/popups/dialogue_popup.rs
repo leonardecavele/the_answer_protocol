@@ -21,7 +21,11 @@ use tokio::sync::mpsc;
 pub const CHAR_DELAY_MS: u128 = 2;
 const MAX_HEIGHT_PERCENTAGE: u16 = 40;
 
-pub struct DialoguePopup;
+pub struct DialoguePopup {
+    chars_shown: usize,
+    last_tick: Instant,
+    shown_npc: Option<String>,
+}
 
 impl Default for DialoguePopup {
     fn default() -> Self {
@@ -31,7 +35,11 @@ impl Default for DialoguePopup {
 
 impl DialoguePopup {
     pub fn new() -> Self {
-        Self
+        Self {
+            chars_shown: 0,
+            last_tick: Instant::now(),
+            shown_npc: None,
+        }
     }
 }
 
@@ -69,14 +77,10 @@ impl ScrollableComponent for DialoguePopup {
 
     fn get_content<'a>(&self, state: &'a AppState, max_width: usize) -> Vec<Line<'a>> {
         if let Some(dialog) = state.game.overlays.dialogue() {
-            let visible_text: String = dialog
-                .full_text
-                .chars()
-                .take(dialog.visible_chars)
-                .collect();
-            let mut display_text = visible_text;
+            let mut display_text: String =
+                dialog.full_text.chars().take(self.chars_shown).collect();
 
-            if dialog.visible_chars >= dialog.full_text.chars().count() {
+            if self.chars_shown >= dialog.char_count() {
                 let text = if dialog.ends_dialog {
                     "(Press Enter to close)"
                 } else {
@@ -111,10 +115,8 @@ impl Lifecycle for DialoguePopup {
             return EventFlow::Ignored;
         }
 
-        if dialog.visible_chars < dialog.full_text.chars().count() {
-            if let Some(d) = state.game.overlays.dialogue_mut() {
-                d.visible_chars = d.full_text.chars().count();
-            }
+        if self.chars_shown < dialog.char_count() {
+            self.chars_shown = dialog.char_count();
         } else if dialog.ends_dialog {
             state.game.overlays.close(OverlayKind::Dialogue);
         } else {
@@ -129,12 +131,22 @@ impl Lifecycle for DialoguePopup {
     }
 
     fn on_tick(&mut self, state: &mut AppState) {
-        if let Some(dialog) = state.game.overlays.dialogue_mut()
-            && dialog.visible_chars < dialog.full_text.chars().count()
-            && dialog.last_tick.elapsed().as_millis() > CHAR_DELAY_MS
+        let Some(dialog) = state.game.overlays.dialogue() else {
+            self.chars_shown = 0;
+            self.shown_npc = None;
+            return;
+        };
+
+        if self.shown_npc.as_deref() != Some(dialog.npc_id.as_str()) {
+            self.shown_npc = Some(dialog.npc_id.clone());
+            self.chars_shown = 0;
+        }
+
+        if self.chars_shown < dialog.char_count()
+            && self.last_tick.elapsed().as_millis() > CHAR_DELAY_MS
         {
-            dialog.visible_chars += 1;
-            dialog.last_tick = Instant::now();
+            self.chars_shown += 1;
+            self.last_tick = Instant::now();
         }
     }
 }
