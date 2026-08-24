@@ -4,14 +4,16 @@ use crate::states::game::OverlayKind;
 use crate::ui::components::Lifecycle;
 use crate::ui::components::component::Component;
 use crate::ui::components::lifecycle::EventFlow;
+use crate::ui::image::ImageRenderer;
 use crate::ui::theme::{close_hint, popup_block};
-use crate::ui::utils::{center_area_with_aspect_ratio, centered_rect_percent, wrap_str_to_lines};
+use crate::ui::utils::{centered_rect_percent, wrap_str_to_lines};
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
 use ratatui::{
     Frame,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     widgets::{Clear, Paragraph},
 };
+use ratatui_image::Resize;
 use std::time::Duration;
 use tokio::sync::mpsc::Sender;
 
@@ -22,17 +24,16 @@ const SPACER_HEIGHT: u16 = 1;
 const DESC_HEIGHT: u16 = 6;
 const FOOTER_HEIGHT: u16 = 2;
 
-pub struct ItemDetailPopup;
-
-impl Default for ItemDetailPopup {
-    fn default() -> Self {
-        Self::new()
-    }
+#[derive(Default)]
+pub struct ItemDetailPopup {
+    image_renderer: ImageRenderer,
 }
 
 impl ItemDetailPopup {
     pub fn new() -> Self {
-        Self {}
+        Self {
+            image_renderer: ImageRenderer::new(),
+        }
     }
 }
 
@@ -66,28 +67,17 @@ impl Component for ItemDetailPopup {
             ])
             .split(inner_area);
 
-        let mut actual_image_area = chunks[0];
+        let image_area = chunks[0];
         let desc_area = chunks[2];
         let footer_area = chunks[3];
 
-        match &item.sprite.frame_at(Duration::ZERO) {
+        match item.sprite.frame_at(Duration::ZERO) {
             Some(image_path) => {
-                if let Some((img_width, img_height)) =
-                    state.ui.image_manager.get_dimensions(image_path)
-                {
-                    actual_image_area =
-                        center_area_with_aspect_ratio(actual_image_area, img_width, img_height);
-                }
-
-                state.ui.image_manager.render(
-                    frame,
-                    actual_image_area,
-                    image_path,
-                    ratatui_image::Resize::Fit(None),
-                );
+                self.image_renderer
+                    .draw_fitted(frame, image_area, image_path, Resize::Fit(None));
             }
             None => {
-                let mut centered_fallback_area = actual_image_area;
+                let mut centered_fallback_area = image_area;
                 if centered_fallback_area.height > 1 {
                     centered_fallback_area.y += centered_fallback_area.height / 2;
                     centered_fallback_area.height = 1;

@@ -5,7 +5,8 @@ use crate::ui::components::Lifecycle;
 use crate::ui::components::component::Component;
 use crate::ui::components::interactive::is_mouse_in_rect;
 use crate::ui::components::lifecycle::EventFlow;
-use crate::ui::utils::{center_area_with_aspect_ratio, wrap_str_to_lines};
+use crate::ui::image::ImageRenderer;
+use crate::ui::utils::wrap_str_to_lines;
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
 use ratatui::style::Stylize;
 use ratatui::widgets::{Block, BorderType, Borders};
@@ -15,6 +16,7 @@ use ratatui::{
     style::{Color, Modifier, Style},
     widgets::{Clear, Paragraph},
 };
+use ratatui_image::Resize;
 use std::time::Instant;
 use tokio::sync::mpsc::Sender;
 
@@ -83,6 +85,7 @@ pub struct RightPanel {
     animation_start: Instant,
     shown_npc: Option<String>,
     area: Option<Rect>,
+    image_renderer: ImageRenderer,
 }
 
 impl Default for RightPanel {
@@ -97,6 +100,7 @@ impl RightPanel {
             animation_start: Instant::now(),
             shown_npc: None,
             area: None,
+            image_renderer: ImageRenderer::new(),
         }
     }
 
@@ -153,34 +157,14 @@ impl RightPanel {
             return None;
         };
 
-        let (image_width, image_height) = state.ui.image_manager.get_dimensions(&image_path)?;
-        let aspect = (image_width as f32) / (image_height as f32 / 2.0);
+        let aspect = self.image_renderer.aspect_ratio(&image_path)?;
 
         Some((available_height as f32 * aspect) as u16)
     }
 
-    fn draw_image(
-        &self,
-        state: &AppState,
-        frame: &mut Frame,
-        area: Rect,
-        image_path: &str,
-    ) -> Rect {
-        let image_area = match state.ui.image_manager.get_dimensions(image_path) {
-            Some((image_width, image_height)) => {
-                center_area_with_aspect_ratio(area, image_width, image_height)
-            }
-            None => area,
-        };
-
-        state.ui.image_manager.render(
-            frame,
-            image_area,
-            image_path,
-            ratatui_image::Resize::Scale(None),
-        );
-
-        image_area
+    fn draw_image(&self, frame: &mut Frame, area: Rect, image_path: &str) -> Rect {
+        self.image_renderer
+            .draw_fitted(frame, area, image_path, Resize::Scale(None))
     }
 
     fn draw_message(&self, frame: &mut Frame, area: Rect, text: &str, color: Color) {
@@ -285,7 +269,7 @@ impl Component for RightPanel {
                 self.draw_disconnected(frame, area);
                 return;
             }
-            Content::Image(image_path) => self.draw_image(state, frame, area, &image_path),
+            Content::Image(image_path) => self.draw_image(frame, area, &image_path),
             Content::Message(text) => {
                 self.draw_message(frame, area, text, Color::Reset);
                 area
