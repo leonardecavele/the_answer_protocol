@@ -1,15 +1,14 @@
 pub(crate) mod api;
 pub(crate) mod bridge;
+pub(crate) mod config;
 pub(crate) mod connect;
 pub(crate) mod event;
 
-use crate::client::event::ServerEvent;
-use crate::error::{CommandError, InternalError, TapError};
-use crate::protocol::command::Command;
-use crate::protocol::command::enums::{ApiRequest, ApiResponse};
-use crate::protocol::frame::Frame;
+use crate::events::ServerEvent;
 use crate::protocol::request::Request;
-use crate::protocol::response::Opcode;
+use crate::{
+    ApiRequest, ApiResponse, Command, CommandError, Frame, InternalError, Opcode, TapError,
+};
 use std::time::Duration;
 use tokio::sync::mpsc::Sender;
 use tokio::sync::{broadcast, watch};
@@ -42,32 +41,6 @@ pub struct Client {
     bridge: BridgeHandle,
     close_timeout: Duration,
     state: watch::Receiver<ConnectionState>,
-}
-
-pub struct ClientConfig {
-    pub connect_timeout: Duration,
-    pub handshake_timeout: Duration,
-    pub request_timeout: Duration,
-    pub close_timeout: Duration,
-    pub max_frame_length: usize,
-    pub command_channel_capacity: usize,
-    pub event_channel_capacity: usize,
-    pub frame_channel_capacity: usize,
-}
-
-impl Default for ClientConfig {
-    fn default() -> Self {
-        ClientConfig {
-            connect_timeout: Duration::from_secs(5),
-            handshake_timeout: Duration::from_secs(2),
-            request_timeout: Duration::from_secs(10),
-            close_timeout: Duration::from_secs(2),
-            max_frame_length: 65_536,
-            command_channel_capacity: 512,
-            event_channel_capacity: 512,
-            frame_channel_capacity: 512,
-        }
-    }
 }
 
 impl Client {

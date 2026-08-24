@@ -2,7 +2,8 @@ mod client;
 mod error;
 mod protocol;
 
-pub use client::{Client, ClientConfig, Connection, ConnectionState, ServerInfo};
+pub use client::config::ClientConfig;
+pub use client::{Client, Connection, ConnectionState};
 pub use error::{CommandError, InternalError, NetworkError, ProtocolError, TapError};
 pub use protocol::command::{ApiRequest, ApiResponse, Command};
 
