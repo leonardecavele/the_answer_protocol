@@ -1,9 +1,9 @@
 use crate::events::{ApiEvent, ApplicationEvent, NetworkEvent};
 use crate::network::envelopes::{RequestEnvelope, ResponseEnvelope};
-use api_client::Client;
 use api_client::ConnectionState;
+use api_client::{Client, Connection};
 use mpsc::Sender;
-use tokio::sync::broadcast::error::RecvError;
+use tokio::sync::broadcast::error::{RecvError, TryRecvError};
 use tokio::sync::mpsc;
 use tokio_util::task::AbortOnDropHandle;
 use tracing::{info, warn};
@@ -28,10 +28,33 @@ impl NetworkManager {
             let server_address = format!("{}:{}", server_ip, server_port);
 
             match Client::connect(&server_address).await {
-                Ok((mut client, mut event_receiver)) => {
-                    let sender = event_sender.clone();
+                Ok(Connection {
+                    mut client,
+                    mut events,
+                    mut frames,
+                }) => {
+                    let login_result = client.login(player_name.clone()).await;
 
-                    match client.login(player_name.clone()).await {
+                    loop {
+                        match frames.try_recv() {
+                            Ok(frame) => {
+                                let _ = event_sender
+                                    .send(ApplicationEvent::Api(ApiEvent::Frame(frame)))
+                                    .await;
+                            }
+                            Err(TryRecvError::Lagged(count)) => {
+                                let _ = event_sender
+                                    .send(ApplicationEvent::Api(ApiEvent::Lagged {
+                                        stream: "frame",
+                                        count: count as usize,
+                                    }))
+                                    .await;
+                            }
+                            Err(_) => break,
+                        }
+                    }
+
+                    match login_result {
                         Ok(Ok(_)) => {
                             let _ = event_sender
                                 .send(ApplicationEvent::Network(
@@ -43,12 +66,34 @@ impl NetworkManager {
                                 ))
                                 .await;
 
+                            let sender = event_sender.clone();
                             let mut client_state = client.state();
                             let _event_forward_task = AbortOnDropHandle::new(tokio::spawn(
                                 async move {
                                     loop {
                                         tokio::select! {
-                                            event = event_receiver.recv() => {
+                                            frame_recv = frames.recv() => {
+                                                match frame_recv {
+                                                    Ok(frame) => {
+                                                        let _ = sender
+                                                            .send(ApplicationEvent::Api(ApiEvent::Frame(frame)))
+                                                            .await;
+                                                    }
+                                                    Err(RecvError::Lagged(count)) => {
+                                                        let _ = sender
+                                                            .send(ApplicationEvent::Api(ApiEvent::Lagged {
+                                                            stream: "frame",
+                                                            count: count as usize
+                                                        }))
+                                                            .await;
+                                                    }
+                                                    Err(RecvError::Closed) => {
+                                                        info!("connection closed");
+                                                        break;
+                                                    }
+                                                }
+                                            },
+                                            event = events.recv() => {
                                                 match event {
                                                     Ok(server_event) => {
                                                         let _ = sender
@@ -58,7 +103,12 @@ impl NetworkManager {
                                                             .await;
                                                     }
                                                     Err(RecvError::Lagged(count)) => {
-                                                        warn!("client lagged (missing {} event(s))", count);
+                                                        let _ = sender
+                                                            .send(ApplicationEvent::Api(ApiEvent::Lagged {
+                                                            stream: "event",
+                                                            count: count as usize
+                                                        }))
+                                                            .await;
                                                     }
                                                     Err(RecvError::Closed) => {
                                                         info!("connection closed");
@@ -90,12 +140,6 @@ impl NetworkManager {
 
                             while let Some(envelope) = command_rx.recv().await {
                                 let original_request = envelope.request.clone();
-
-                                let _ = event_sender
-                                    .send(ApplicationEvent::Api(ApiEvent::LogApiRequest(
-                                        envelope.clone(),
-                                    )))
-                                    .await;
 
                                 match client.execute_request(envelope.request).await {
                                     Ok(api_response) => {

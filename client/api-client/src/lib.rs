@@ -2,10 +2,11 @@ mod client;
 mod error;
 mod protocol;
 
-pub use client::{Client, ClientConfig, ConnectionState, ServerInfo};
+pub use client::{Client, ClientConfig, Connection, ConnectionState, ServerInfo};
 pub use error::{CommandError, InternalError, NetworkError, ProtocolError, TapError};
 pub use protocol::command::{ApiRequest, ApiResponse, Command};
 
+pub use protocol::frame::{Frame, FrameDirection};
 pub use protocol::response::{Opcode, ServerResponse};
 
 pub mod events {

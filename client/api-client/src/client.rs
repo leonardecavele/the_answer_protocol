@@ -7,6 +7,7 @@ use crate::client::event::ServerEvent;
 use crate::error::{CommandError, InternalError, TapError};
 use crate::protocol::command::Command;
 use crate::protocol::command::enums::{ApiRequest, ApiResponse};
+use crate::protocol::frame::Frame;
 use crate::protocol::request::Request;
 use crate::protocol::response::Opcode;
 use std::time::Duration;
@@ -27,6 +28,7 @@ pub enum ConnectionState {
 struct BridgeHandle {
     task: JoinHandle<()>,
     request_sender: Sender<Request>,
+    frame_sender: broadcast::Sender<Frame>,
     event_sender: broadcast::Sender<ServerEvent>,
     cancellation: CancellationToken,
 }
@@ -50,6 +52,7 @@ pub struct ClientConfig {
     pub max_frame_length: usize,
     pub command_channel_capacity: usize,
     pub event_channel_capacity: usize,
+    pub frame_channel_capacity: usize,
 }
 
 impl Default for ClientConfig {
@@ -59,9 +62,10 @@ impl Default for ClientConfig {
             handshake_timeout: Duration::from_secs(2),
             request_timeout: Duration::from_secs(10),
             close_timeout: Duration::from_secs(2),
-            max_frame_length: 65536,
-            command_channel_capacity: 2048,
-            event_channel_capacity: 2048,
+            max_frame_length: 65_536,
+            command_channel_capacity: 512,
+            event_channel_capacity: 512,
+            frame_channel_capacity: 512,
         }
     }
 }
@@ -73,6 +77,10 @@ impl Client {
 
     pub fn subscribe(&self) -> broadcast::Receiver<ServerEvent> {
         self.bridge.event_sender.subscribe()
+    }
+
+    pub fn subscribe_frames(&self) -> broadcast::Receiver<Frame> {
+        self.bridge.frame_sender.subscribe()
     }
 
     async fn request<C: Command>(
@@ -164,4 +172,10 @@ impl Drop for Client {
         self.bridge.task.abort();
         info!("Api client dropped :: background tasks properly stopped.");
     }
+}
+
+pub struct Connection {
+    pub client: Client,
+    pub events: broadcast::Receiver<ServerEvent>,
+    pub frames: broadcast::Receiver<Frame>,
 }

@@ -12,7 +12,7 @@ use crate::network::envelopes::ResponseEnvelope;
 use crate::states::game::ChatChannel;
 use crate::states::notification::Notification;
 use api_client::events::{GameServerEvent, GroupEvent, RoomEvent, ServerEvent};
-use api_client::{ApiRequest, ApiResponse};
+use api_client::{ApiRequest, ApiResponse, FrameDirection};
 
 impl App {
     pub(crate) fn handle_api_event(&mut self, api_event: ApiEvent) {
@@ -20,24 +20,22 @@ impl App {
             ApiEvent::Server(server_event) => {
                 self.handle_server_event(server_event);
             }
+            ApiEvent::Lagged { stream, count } => {
+                let message = format!("{} {}(s) lost", count, stream);
+                self.record_trace("lag", message);
+            }
             ApiEvent::ApiResponse(envelope) => {
                 self.handle_api_response(envelope);
             }
-            ApiEvent::LogApiRequest(envelope) => {
-                self.record_trace(
-                    "api request",
-                    format!("{} - {:?}", envelope.id, envelope.request),
-                );
-            }
+            ApiEvent::Frame(frame) => match frame.direction {
+                FrameDirection::Received => self.record_trace("frame recv", frame.line),
+                FrameDirection::Sent => self.record_trace("frame sent", frame.line),
+            },
         }
     }
 
     pub(crate) fn handle_api_response(&mut self, envelope: ResponseEnvelope) {
         if let Some(error) = envelope.response.get_error() {
-            self.record_trace(
-                "api response",
-                format!("[ERROR] {} - {}", envelope.id, error),
-            );
             self.state
                 .ui
                 .notifications
@@ -45,11 +43,6 @@ impl App {
 
             return;
         }
-
-        self.record_trace(
-            "api response",
-            format!("{} - {:?}", envelope.id, envelope.response),
-        );
 
         match envelope.response {
             ApiResponse::Connect(Ok(response)) => {
@@ -130,8 +123,6 @@ impl App {
     }
 
     pub(crate) fn handle_server_event(&mut self, event: ServerEvent) {
-        self.record_trace("server", format!("{:?}", event));
-
         match event {
             ServerEvent::Connect(name) => {
                 self.on_player_joined_server(name);

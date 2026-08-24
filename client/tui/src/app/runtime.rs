@@ -48,8 +48,6 @@ impl App {
     }
 
     pub(super) fn send(&mut self, request: ApiRequest) {
-        self.record_trace("request", format!("{:?}", request));
-
         if let Some(network_manager) = &self.network_manager {
             let envelope = RequestEnvelope::new(request);
             network_manager.send_command(envelope);

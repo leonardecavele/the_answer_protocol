@@ -31,8 +31,6 @@ impl App {
                 server_port,
                 player_name,
             } => {
-                self.load_state_from_server();
-
                 self.state
                     .ui
                     .notifications
@@ -47,6 +45,7 @@ impl App {
                 self.state.network.is_connected = true;
                 self.state.game.player.set_name(player_name);
 
+                self.load_state_from_server();
                 self.view_manager.set_view(Box::new(GameView::new()));
             }
             NetworkEvent::ConnectionFailed { error_message } => {

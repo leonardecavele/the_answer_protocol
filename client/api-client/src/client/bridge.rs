@@ -1,6 +1,7 @@
 use crate::client::ConnectionState;
 use crate::client::event::ServerEvent;
 use crate::error::{NetworkError, TapError};
+use crate::protocol::frame::{Frame, FrameDirection};
 use crate::protocol::request::Request;
 use crate::protocol::response::{Opcode, ServerResponse};
 use futures::SinkExt;
@@ -38,11 +39,16 @@ impl PendingRequest {
     }
 }
 
+pub(crate) struct BridgeChannels {
+    pub state: watch::Sender<ConnectionState>,
+    pub frames: broadcast::Sender<Frame>,
+    pub events: broadcast::Sender<ServerEvent>,
+    pub requests: Receiver<Request>,
+}
+
 pub(crate) struct Bridge {
     socket: Framed<TcpStream, LinesCodec>,
-    state_sender: watch::Sender<ConnectionState>,
-    event_sender: broadcast::Sender<ServerEvent>,
-    request_receiver: Receiver<Request>,
+    channels: BridgeChannels,
     pending_request: Option<PendingRequest>,
     request_timeout: Duration,
 }
@@ -50,16 +56,12 @@ pub(crate) struct Bridge {
 impl Bridge {
     pub(crate) fn new(
         socket: Framed<TcpStream, LinesCodec>,
-        state_sender: watch::Sender<ConnectionState>,
-        event_sender: broadcast::Sender<ServerEvent>,
-        request_receiver: Receiver<Request>,
+        channels: BridgeChannels,
         request_timeout: Duration,
     ) -> Bridge {
         Bridge {
             socket,
-            state_sender,
-            event_sender,
-            request_receiver,
+            channels,
             pending_request: None,
             request_timeout,
         }
@@ -78,7 +80,7 @@ impl Bridge {
             let flow = tokio::select! {
                 frame = self.socket.next() => self.handle_incoming(frame).await,
 
-                request_opt = self.request_receiver.recv(), if self.pending_request.is_none() => {
+                request_opt = self.channels.requests.recv(), if self.pending_request.is_none() => {
                     match request_opt {
                         Some(request) => self.handle_outgoing(request).await,
                         None => Ok(Flow::Stop(Disconnection::ClosedByClient)),
@@ -133,7 +135,7 @@ impl Bridge {
             None => ConnectionState::Closed,
             Some(reason) => ConnectionState::Lost(reason),
         };
-        let _ = self.state_sender.send(state);
+        let _ = self.channels.state.send(state);
 
         info!("network connection closed");
     }
@@ -155,6 +157,10 @@ impl Bridge {
         };
 
         debug!("recv frame: {}", line);
+        let _ = self.channels.frames.send(Frame {
+            direction: FrameDirection::Received,
+            line: line.clone(),
+        });
 
         let response = match ServerResponse::try_from(line) {
             Ok(response) => response,
@@ -181,7 +187,7 @@ impl Bridge {
                 return Ok(Flow::Continue);
             }
             Opcode::Evt => {
-                let _ = self.event_sender.send(ServerEvent::from(response));
+                let _ = self.channels.events.send(ServerEvent::from(response));
                 return Ok(Flow::Continue);
             }
             Opcode::Ok | Opcode::Err => {}
@@ -215,13 +221,18 @@ impl Bridge {
         );
 
         let raw_command = request.raw_command.clone();
+
+        debug!("send frame: {}", raw_command);
+        let _ = self.channels.frames.send(Frame {
+            direction: FrameDirection::Sent,
+            line: raw_command.clone(),
+        });
+
         self.pending_request = Some(PendingRequest {
             request,
             created_at: Instant::now(),
             timeout: self.request_timeout,
         });
-
-        debug!("send frame: {}", raw_command);
 
         if let Err(codec_error) = self.socket.send(raw_command).await {
             self.fail_pending_request(NetworkError::Disconnected.into());
