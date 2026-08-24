@@ -1,4 +1,4 @@
-use crate::app::App;
+use crate::app::runtime::App;
 use crate::states::game::DialogueState;
 use crate::states::notification::Notification;
 use crate::ui::views::editor::EditorView;

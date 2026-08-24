@@ -1,4 +1,4 @@
-use crate::app::App;
+use crate::app::runtime::App;
 use crate::states::game::{DialogueState, END_OF_DIALOGUE_TAG, OverlayKind};
 use api_client::commands::TalkResponse;
 

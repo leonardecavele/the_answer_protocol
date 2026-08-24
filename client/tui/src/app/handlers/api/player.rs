@@ -1,4 +1,4 @@
-use crate::app::App;
+use crate::app::runtime::App;
 use crate::states::game::Item;
 use api_client::commands::{
     DropResponse, InventoryResponse, QuestResponse, QuestsResponse, StatusResponse, TakeResponse,

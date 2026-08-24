@@ -1,4 +1,4 @@
-use crate::app::App;
+use crate::app::runtime::App;
 use crate::states::notification::Notification;
 use api_client::ApiRequest;
 use api_client::commands::{GroupCreateResponse, GroupJoinResponse, LookCommand};
@@ -65,6 +65,6 @@ impl App {
             .game
             .log_action(format!("Group moved to {}.", direction));
 
-        self.handle_request(ApiRequest::Look(LookCommand));
+        self.send(ApiRequest::Look(LookCommand));
     }
 }

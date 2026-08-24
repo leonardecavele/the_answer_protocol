@@ -6,7 +6,7 @@ mod player;
 mod room;
 mod server;
 
-use crate::app::App;
+use crate::app::runtime::App;
 use crate::events::ApiEvent;
 use crate::network::envelopes::ResponseEnvelope;
 use crate::states::game::ChatChannel;

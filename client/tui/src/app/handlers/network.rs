@@ -1,4 +1,4 @@
-use crate::app::App;
+use crate::app::runtime::App;
 use crate::events::NetworkEvent;
 use crate::network::NetworkManager;
 use crate::network::manager::NOTIF_ID_CONNECTION_ATTEMPT;
