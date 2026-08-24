@@ -6,7 +6,7 @@ use crate::ui::components::component::Component;
 use crate::ui::components::interactive::is_mouse_in_rect;
 use crate::ui::components::lifecycle::EventFlow;
 use crate::ui::image::ImageRenderer;
-use crate::ui::utils::wrap_str_to_lines;
+use crate::ui::text::wrap_str_to_lines;
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
 use ratatui::style::Stylize;
 use ratatui::widgets::{Block, BorderType, Borders};

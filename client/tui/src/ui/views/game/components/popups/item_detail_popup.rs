@@ -5,8 +5,9 @@ use crate::ui::components::Lifecycle;
 use crate::ui::components::component::Component;
 use crate::ui::components::lifecycle::EventFlow;
 use crate::ui::image::ImageRenderer;
+use crate::ui::layout::centered_rect_percent;
+use crate::ui::text::wrap_str_to_lines;
 use crate::ui::theme::{close_hint, popup_block};
-use crate::ui::utils::{centered_rect_percent, wrap_str_to_lines};
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
 use ratatui::{
     Frame,

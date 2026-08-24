@@ -2,8 +2,8 @@ use crate::states::app::AppState;
 use crate::states::game::GameFocus;
 use crate::ui::components::Lifecycle;
 use crate::ui::components::scrollable::ScrollableComponent;
+use crate::ui::text::wrap_slice_to_lines;
 use crate::ui::theme::{help_hint, panel_block};
-use crate::ui::utils::wrap_slice_to_lines;
 use ratatui::text::Line;
 use ratatui::widgets::Block;
 

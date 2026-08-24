@@ -1,4 +1,4 @@
-use crate::ui::utils::fit_area;
+use crate::ui::layout::fit_area;
 use ratatui::Frame;
 use ratatui::layout::Rect;
 use ratatui_image::picker::Picker;

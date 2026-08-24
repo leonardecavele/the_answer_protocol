@@ -5,8 +5,8 @@ use crate::states::game::{Overlay, OverlayKind};
 use crate::ui::components::Lifecycle;
 use crate::ui::components::component::Component;
 use crate::ui::components::lifecycle::EventFlow;
+use crate::ui::layout::centered_rect;
 use crate::ui::theme::popup_block;
-use crate::ui::utils::centered_rect;
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
 use mpsc::Sender;
 use ratatui::{
