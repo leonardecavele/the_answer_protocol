@@ -513,6 +513,7 @@ impl GameManager {
             "received command {} from player {} with args <{}>",
             command_name, player_name, data
         );
+        
         if !(command_name == "CONNECT" || command_name == "QUIT" || command_name == "FIGHT_ATTACK") {
             if let Some(already_in_instance) = self.check_player_is_in_instance(player_name, player_id, command_name){
                 return already_in_instance.dump();
@@ -520,9 +521,9 @@ impl GameManager {
         }
         match command_name {
             "CONNECT" => {
-                // if player_name in self.get_players_by_names().keys(){
-
-                // }
+                if self.get_players_by_names().contains_key(player_name) {
+                    self.disconnect_player(player_name.to_owned());
+                }
                 self.connect_player(player_name.to_owned());
                 let player_room = match self.get_player_from_name(player_name) {
                     Some(p) => p.get_current_room(),
@@ -615,23 +616,7 @@ impl GameManager {
             "MOVE" => self.group_command_move(player_name.to_owned(), command_name, vec![], data),
 
             "QUIT" => {
-                let room = LOST_ITEM_SPAWN;
-                // this part is for the lost item, that drops when quitting
-                if self.player_has_item(player_id, LOST_ITEM as ItemId) {
-                    let mut players = self.get_all_players_at_room(room);
-                    let lost_item_name = self.get_item_name(&(LOST_ITEM as ItemId));
-                    let event = self.generate_event_json(
-                        &mut players,
-                        player_name,
-                        "DROP",
-                        Item::protocol_representation(LOST_ITEM as ItemId, lost_item_name.as_str())
-                            .as_str(),
-                        true,
-                    );
-                    self.remove_item_from_player(player_id, LOST_ITEM as ItemId);
-                    self.add_item_to_room(room, LOST_ITEM as ItemId);
-                    self.add_diff_to_tick(event);
-                }
+
                 let player_success = self.get_player_success(player_id);
                 // player_success : Option<Option<bool>
                 if player_success.is_some() && player_success.unwrap().is_none() {
@@ -846,6 +831,15 @@ impl GameManager {
                     {
                         let file_name = instance.get_assigned_file_name().to_string();
                         let npc_id = instance.get_npc_id();
+                        if self.check_action_already_taken(player_id, npc_id) {
+                            return generate_json(
+                                player_name,
+                                command_name,
+                                ErrorCode::ActionAlreadyTaken,
+                                "",
+                            )
+                            .dump();
+                        }
                         Some((file_name, npc_id))
                     } else {
                         None
@@ -886,39 +880,6 @@ impl GameManager {
                         .dump();
                     }
                 };
-
-                if let Some(instance_player_count) =
-                    self.get_nb_players_in_player_instance(player_id)
-                {
-                    if self.check_action_already_taken(player_id, npc_id) {
-                        return generate_json(
-                            player_name,
-                            command_name,
-                            ErrorCode::ActionAlreadyTaken,
-                            "",
-                        )
-                        .dump();
-                    }
-                    let npc_combat_start_hp =
-                        self.get_npc_combat_start_hp(npc_id).unwrap_or_else(|| {
-                            warn!("npc combat start hp not found for npc: {}", npc_id);
-                            0
-                        });
-                    let npc_hp = self.get_npc_hp(npc_id).unwrap_or_else(|| {
-                        warn!("npc hp not found for npc: {}", npc_id);
-                        0
-                    });
-                    let dmg =
-                        self.calculate_dmg(npc_combat_start_hp, instance_player_count, npc_hp);
-                    let combat_result = self.player_attacks_npc(dmg, player_id, npc_id);
-                    return generate_json(
-                        player_name,
-                        command_name,
-                        ErrorCode::NoError,
-                        combat_result.as_str(),
-                    )
-                    .dump();
-                }
 
                 let combat_result = self.player_attacks_npc(1, player_id, npc_id);
 

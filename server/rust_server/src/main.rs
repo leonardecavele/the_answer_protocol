@@ -1,4 +1,4 @@
-use rust_server::constantes::TickResult;
+use rust_server::constantes::{AUTO_SAVE_INTERVAL, TickResult};
 use rust_server::game_manager::GameManager;
 use rust_server::parser::Parser;
 
@@ -81,7 +81,14 @@ fn main() -> std::io::Result<()> {
     })
     .expect("error while setting Ctrl-C handler");
 
+    let mut last_save_time = Instant::now();
     loop {
+        if last_save_time.elapsed() >= AUTO_SAVE_INTERVAL {
+            game_manager.save_server_state();
+            last_save_time = Instant::now();
+            info!("[routine] saved server state");
+        }
+
         if !running.load(Ordering::Relaxed) {
             game_manager.save_server_state();
             return Ok(());

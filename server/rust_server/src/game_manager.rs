@@ -1,8 +1,9 @@
 use crate::combat_instances::CombatInstanceManager;
 use crate::commands::generate_json;
 use crate::constantes::{
-    CODE_NL_SEP, CODE_SP_SEP, Direction, MAX_DMG_DEALT, MAX_TIME_FOR_COMBAT, MIN_DMG_DEALT,
-    NPC_MAX_DMG, NPC_MIN_DMG, NPC_RESPAWN_TIME, PLAYER_ROOM_SPAWN, TEST_FILES_DIR,
+    CODE_NL_SEP, CODE_SP_SEP, Direction, LOST_ITEM, LOST_ITEM_SPAWN, MAX_DMG_DEALT,
+    MAX_TIME_FOR_COMBAT, MIN_DMG_DEALT, NPC_MAX_DMG, NPC_MIN_DMG, NPC_RESPAWN_TIME,
+    PLAYER_ROOM_SPAWN, TEST_FILES_DIR,
 };
 
 use crate::constantes::ErrorCode;
@@ -69,6 +70,7 @@ impl GameManager {
         };
 
         manager.restore_server_state();
+        manager.ensure_lost_item_exists();
         manager
     }
 
@@ -77,6 +79,29 @@ impl GameManager {
     }
 
     fn save_player(&mut self, player_id: PlayerId) {
+        if self.player_has_item(player_id, crate::constantes::LOST_ITEM as u64) {
+            let player_name = self.players.get(&player_id).unwrap().get_name().to_string();
+            let mut players = self.get_all_players_at_room(crate::constantes::LOST_ITEM_SPAWN);
+            let lost_item_name = self.get_item_name(&(crate::constantes::LOST_ITEM as u64));
+            let event = self.generate_event_json(
+                &mut players,
+                &player_name,
+                "DROP",
+                crate::items::Item::protocol_representation(
+                    crate::constantes::LOST_ITEM as u64,
+                    lost_item_name.as_str(),
+                )
+                .as_str(),
+                true,
+            );
+            self.remove_item_from_player(player_id, crate::constantes::LOST_ITEM as u64);
+            self.add_item_to_room(
+                crate::constantes::LOST_ITEM_SPAWN,
+                crate::constantes::LOST_ITEM as u64,
+            );
+            self.add_diff_to_tick(event);
+        }
+
         if let Some(player) = self.players.get(&player_id) {
             let inventory = player.get_inventory().clone();
             let player_quests = self
@@ -187,16 +212,49 @@ impl GameManager {
                     }
                 }
 
+                let mut items_to_start_timer = std::collections::HashSet::new();
+
                 if let Ok(room_id) = room_id_str.parse::<u32>() {
                     if let Some(room) = self.all_rooms.get_mut(&room_id) {
-                        room.set_inventory(inventory);
+                        let mut merged_inventory = inventory;
+                        // Add any newly defined items from rooms.json that didn't exist when the save was created
+                        for base_item in room.get_inventory().get_items() {
+                            if *base_item >= server_save.next_item_id {
+                                merged_inventory.add_item(*base_item);
+                            }
+                        }
+                        items_to_start_timer = merged_inventory.get_items().clone();
+                        room.set_inventory(merged_inventory);
                     }
                 } else {
                     self.set_default_ids();
                 }
+
+                for item_id in items_to_start_timer {
+                    self.start_dropped_at_for_item(item_id);
+                }
             }
         } else {
             self.set_default_ids();
+        }
+    }
+
+    pub fn ensure_lost_item_exists(&mut self) {
+        let lost_item_id = LOST_ITEM as u64;
+        let mut found = false;
+        for room in self.all_rooms.values() {
+            if room.contains_item(lost_item_id) {
+                found = true;
+                break;
+            }
+        }
+        if !found {
+            warn!(
+                "lost_item was missing from all rooms on server start. respawning it in {}.",
+                LOST_ITEM_SPAWN
+            );
+            self.add_item_to_room(LOST_ITEM_SPAWN, lost_item_id);
+            self.start_dropped_at_for_item(lost_item_id);
         }
     }
 
@@ -244,11 +302,16 @@ impl GameManager {
         for item_id in items_to_check {
             if !self.item_exists(item_id) {
                 warn!(
-                    "Removing invalid item {} from player {}",
+                    "Removing invalid item_id: <{}> from player {}",
                     item_id, save_data.name
                 );
                 save_data.inventory.remove_item(item_id);
             }
+        }
+
+        if save_data.inventory.contains_item(LOST_ITEM as u64) {
+            tracing::error!("removing invalid lost_item from player {}", save_data.name);
+            save_data.inventory.remove_item(LOST_ITEM as u64);
         }
 
         let mut seen_quests = std::collections::HashSet::new();
@@ -580,15 +643,18 @@ impl GameManager {
         if let Some(item) = Item::parse_item(item_rep) {
             return Some(item);
         }
-            room
-            .get_inventory()
+        room.get_inventory()
             .get_items()
             .iter()
             .find(|item_id| self.get_item_name(item_id) == item_rep)
             .map(|item_id| (*item_id, self.get_item_name(item_id)))
     }
 
-    pub fn parse_item_from_player(&self, item_rep: &str, player: &Player) -> Option<(ItemId, String)> {
+    pub fn parse_item_from_player(
+        &self,
+        item_rep: &str,
+        player: &Player,
+    ) -> Option<(ItemId, String)> {
         if let Some(item) = Item::parse_item(item_rep) {
             return Some(item);
         }
@@ -620,11 +686,20 @@ impl GameManager {
         }
     }
 
-    pub fn check_player_is_in_instance(&self, player_name: &str, player_id: PlayerId, command: &str) -> Option<JsonValue> {
-        if self.combat_instances.player_is_in_instance(player_id){
-            Some(generate_json(player_name, command, ErrorCode::PlayerAlreadyInCombat, ""))
-        }
-        else{
+    pub fn check_player_is_in_instance(
+        &self,
+        player_name: &str,
+        player_id: PlayerId,
+        command: &str,
+    ) -> Option<JsonValue> {
+        if self.combat_instances.player_is_in_instance(player_id) {
+            Some(generate_json(
+                player_name,
+                command,
+                ErrorCode::PlayerAlreadyInCombat,
+                "",
+            ))
+        } else {
             None
         }
     }
@@ -838,7 +913,8 @@ impl GameManager {
                 &player_name,
                 "KILL",
                 npc_repr.as_str(),
-                false,            );
+                false,
+            );
             self.add_diff_to_tick(event);
         }
         format!(
@@ -846,7 +922,6 @@ impl GameManager {
             player_hp, new_npc_hp, dealt_damage, status
         )
     }
-
 
     pub fn player_has_quest(&self, player_id: PlayerId, quest_id: Questid) -> bool {
         self.quest_instances.iter().any(|quest_instance| {
