@@ -15,12 +15,12 @@ use ratatui::text::Span;
 use ratatui::widgets::{Block, Paragraph};
 use ratatui_code_editor::editor::Editor;
 use ratatui_code_editor::theme::vesper;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 use tokio::sync::mpsc;
-// TODO: ajouter un timeout si l'event FightEnd n'est jamais envoye (timeout: time + 10s)
 // TODO: ajouter une barre de vie + image du mob
 
 const EDITOR_LANGUAGE: &str = "c";
+const FIGHT_END_GRACE: Duration = Duration::from_secs(10);
 const EDITOR_BG: Color = Color::Rgb(0x16, 0x16, 0x16);
 const HEADER_HEIGHT: u16 = 3;
 const FOOTER_HEIGHT: u16 = 3;
@@ -35,6 +35,7 @@ pub struct EditorView {
     sp_sep: String,
     started_at: Instant,
     editor_area: Rect,
+    timed_out: bool,
 }
 
 impl EditorView {
@@ -57,6 +58,7 @@ impl EditorView {
             sp_sep: fight_data.sp_sep.clone(),
             started_at: Instant::now(),
             editor_area: Rect::default(),
+            timed_out: false,
         })
     }
 
@@ -70,6 +72,10 @@ impl EditorView {
     fn remaining_seconds(&self) -> u64 {
         self.time
             .saturating_sub(self.started_at.elapsed().as_secs())
+    }
+
+    fn grace_deadline(&self) -> Duration {
+        Duration::from_secs(self.time) + FIGHT_END_GRACE
     }
 
     fn header(&self, state: &AppState) -> Paragraph<'static> {
@@ -150,6 +156,15 @@ impl Component for EditorView {
 }
 
 impl Lifecycle for EditorView {
+    fn on_tick(&mut self, _state: &mut AppState, sender: &Sender<ApplicationEvent>) {
+        if self.timed_out || self.started_at.elapsed() < self.grace_deadline() {
+            return;
+        }
+
+        self.timed_out = true;
+        let _ = sender.try_send(ApplicationEvent::FightTimedOut);
+    }
+
     fn handle_terminal_event(
         &mut self,
         state: &mut AppState,

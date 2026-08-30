@@ -128,7 +128,7 @@ impl Lifecycle for DialoguePopup {
         EventFlow::Consumed
     }
 
-    fn on_tick(&mut self, state: &mut AppState) {
+    fn on_tick(&mut self, state: &mut AppState, _sender: &Sender<ApplicationEvent>) {
         let Some(dialog) = state.game.overlays.get::<DialogueState>() else {
             self.chars_shown = 0;
             self.shown_npc = None;

@@ -67,8 +67,8 @@ impl<T: InteractiveComponent> Lifecycle for Interactive<T> {
         self.inner.handle_terminal_event(state, event, sender)
     }
 
-    fn on_tick(&mut self, state: &mut AppState) {
-        self.inner.on_tick(state);
+    fn on_tick(&mut self, state: &mut AppState, sender: &mpsc::Sender<ApplicationEvent>) {
+        self.inner.on_tick(state, sender);
     }
 }
 

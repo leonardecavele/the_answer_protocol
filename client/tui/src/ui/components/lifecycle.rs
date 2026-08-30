@@ -27,5 +27,5 @@ pub trait Lifecycle {
         EventFlow::Ignored
     }
 
-    fn on_tick(&mut self, _state: &mut AppState) {}
+    fn on_tick(&mut self, _state: &mut AppState, _sender: &Sender<ApplicationEvent>) {}
 }

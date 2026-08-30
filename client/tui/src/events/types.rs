@@ -12,6 +12,7 @@ pub enum ApplicationEvent {
     SendRequest(ApiRequest),
     SendRawCommand(String),
     Api(ApiEvent),
+    FightTimedOut,
 }
 
 #[derive(Debug, Clone)]

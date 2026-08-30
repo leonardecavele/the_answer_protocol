@@ -86,6 +86,14 @@ impl App {
         self.view_manager.set_view(Box::new(GameView::new()));
     }
 
+    pub(crate) fn on_fight_timed_out(&mut self) {
+        self.state.ui.notifications.push(Notification::warning(
+            "The server never ended the fight. Leaving the editor.",
+        ));
+
+        self.on_fight_end();
+    }
+
     pub(crate) fn on_attacked(&mut self, response: AttackResponse, npc_id: String) {
         let npc_name = self.state.game.manifest.npc_name(&npc_id);
         let combat = response.combat_result;

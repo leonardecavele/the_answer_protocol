@@ -132,12 +132,15 @@ impl App {
             ApplicationEvent::Api(api_event) => self.handle_api_event(api_event),
             ApplicationEvent::SendRequest(request) => self.send(request),
             ApplicationEvent::SendRawCommand(command) => self.handle_raw_command(command),
+            ApplicationEvent::FightTimedOut => self.on_fight_timed_out(),
         }
     }
 
     fn handle_tick(&mut self) {
         self.state.ui.notifications.retain_active();
-        self.view_manager.on_tick(&mut self.state);
+
+        let sender = self.event_broker.sender();
+        self.view_manager.on_tick(&mut self.state, &sender);
     }
 
     fn handle_raw_command(&mut self, command: String) {

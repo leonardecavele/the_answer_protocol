@@ -67,7 +67,7 @@ impl Lifecycle for ViewManager {
         self.active_view.handle_terminal_event(state, event, sender)
     }
 
-    fn on_tick(&mut self, state: &mut AppState) {
-        self.active_view.on_tick(state)
+    fn on_tick(&mut self, state: &mut AppState, sender: &Sender<ApplicationEvent>) {
+        self.active_view.on_tick(state, sender)
     }
 }
