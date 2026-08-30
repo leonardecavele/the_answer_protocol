@@ -1,6 +1,6 @@
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
-use crate::states::game::OverlayKind;
+use crate::states::game::QuestDetailState;
 use crate::ui::components::Lifecycle;
 use crate::ui::components::component::Component;
 use crate::ui::components::lifecycle::EventFlow;
@@ -74,8 +74,8 @@ impl QuestDetailPopup {
 
 impl Component for QuestDetailPopup {
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
-        let quest_name = match state.game.overlays.target_of(OverlayKind::QuestDetail) {
-            Some(name) => name,
+        let quest_name = match state.game.overlays.get::<QuestDetailState>() {
+            Some(overlay) => overlay.name.as_str(),
             None => return,
         };
 
@@ -118,7 +118,7 @@ impl Lifecycle for QuestDetailPopup {
         event: &CrosstermEvent,
         _event_sender: &Sender<ApplicationEvent>,
     ) -> EventFlow {
-        if !state.game.overlays.is_open(OverlayKind::QuestDetail) {
+        if !state.game.overlays.is_open::<QuestDetailState>() {
             return EventFlow::Ignored;
         }
 

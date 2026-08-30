@@ -1,5 +1,5 @@
 use crate::app::runtime::App;
-use crate::states::game::{DialogueState, END_OF_DIALOGUE_TAG, OverlayKind};
+use crate::states::game::{DialogueState, END_OF_DIALOGUE_TAG};
 use api_client::commands::TalkResponse;
 
 impl App {
@@ -7,11 +7,11 @@ impl App {
         let mut text = response.dialogue;
         let ends_dialog = text.contains(END_OF_DIALOGUE_TAG);
         let ends_dialog_only = ends_dialog && text.starts_with(END_OF_DIALOGUE_TAG);
-        let was_open = self.state.game.overlays.is_open(OverlayKind::Dialogue);
+        let was_open = self.state.game.overlays.is_open::<DialogueState>();
 
         if ends_dialog_only {
             if was_open {
-                self.state.game.overlays.close(OverlayKind::Dialogue);
+                self.state.game.overlays.close_dialogue();
                 return;
             }
 
@@ -35,7 +35,7 @@ impl App {
                 .log_action(format!("[{}] says: \"{}\"", npc_name, text));
         }
 
-        if let Some(dialogue) = self.state.game.overlays.dialogue_mut() {
+        if let Some(dialogue) = self.state.game.overlays.get_mut::<DialogueState>() {
             dialogue.add(text, ends_dialog);
         } else {
             self.state.game.overlays.open_dialogue(DialogueState::new(

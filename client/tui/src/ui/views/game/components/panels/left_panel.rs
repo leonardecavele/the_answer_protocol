@@ -3,7 +3,7 @@ use crate::data::manifest::NpcKind;
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
 use crate::states::game::GameFocus;
-use crate::states::game::Overlay::{ItemActions, NpcActions, QuestDetail};
+use crate::states::game::{ItemActionsState, NpcActionsState, Overlay, QuestDetailState};
 use crate::ui::components::Lifecycle;
 use crate::ui::components::component::Component;
 use crate::ui::components::interactive::is_mouse_in_rect;
@@ -214,7 +214,10 @@ impl Lifecycle for LeftPanel {
 
                     match selected {
                         Some(npc_id) => {
-                            state.game.overlays.open(NpcActions { npc_id });
+                            state
+                                .game
+                                .overlays
+                                .open(Overlay::NpcActions(NpcActionsState::new(npc_id)));
                             EventFlow::Consumed
                         }
                         None => EventFlow::Ignored,
@@ -245,7 +248,10 @@ impl Lifecycle for LeftPanel {
 
                     match selected {
                         Some(item_id) => {
-                            state.game.overlays.open(ItemActions { item_id });
+                            state
+                                .game
+                                .overlays
+                                .open(Overlay::ItemActions(ItemActionsState::new(item_id)));
                             EventFlow::Consumed
                         }
                         None => EventFlow::Ignored,
@@ -265,7 +271,10 @@ impl Lifecycle for LeftPanel {
                 crossterm::event::KeyCode::Enter => match state.game.player.quests.selected() {
                     Some(quest) => {
                         let name = quest.name.clone();
-                        state.game.overlays.open(QuestDetail { name });
+                        state
+                            .game
+                            .overlays
+                            .open(Overlay::QuestDetail(QuestDetailState::new(name)));
                         EventFlow::Consumed
                     }
                     None => EventFlow::Ignored,

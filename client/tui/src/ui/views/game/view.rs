@@ -5,7 +5,7 @@ use crate::ui::components::component::Component;
 use crate::ui::components::lifecycle::EventFlow;
 use crate::ui::components::scrollable::{Scrollable, ScrollableHit};
 
-use crate::states::game::{GameFocus, Overlay, OverlayKind};
+use crate::states::game::{ChatState, GameFocus, HelpState, Overlay, OverlayKind};
 use crate::ui::views::game::components::{
     ActionHistoryPanel, ChatOverlay, DialoguePopup, Footer, FooterHit, Header, HelpOverlay,
     InventoryPanel, InventoryPanelHit, ItemActionsPopup, ItemDetailPopup, LeftPanel, LeftPanelHit,
@@ -146,12 +146,12 @@ impl GameView {
                     .modifiers
                     .contains(crossterm::event::KeyModifiers::CONTROL)
             {
-                state.game.overlays.toggle(Overlay::Help);
+                state.game.overlays.toggle(Overlay::Help(HelpState));
                 return EventFlow::Consumed;
             }
 
             if key.code == KeyCode::F(1) {
-                state.game.overlays.toggle(Overlay::Chat);
+                state.game.overlays.toggle(Overlay::Chat(ChatState));
                 return EventFlow::Consumed;
             }
         }

@@ -1,6 +1,6 @@
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
-use crate::states::game::OverlayKind;
+use crate::states::game::ItemDetailState;
 use crate::ui::components::Lifecycle;
 use crate::ui::components::component::Component;
 use crate::ui::components::lifecycle::EventFlow;
@@ -40,8 +40,8 @@ impl ItemDetailPopup {
 
 impl Component for ItemDetailPopup {
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
-        let item_id = match state.game.overlays.target_of(OverlayKind::ItemDetail) {
-            Some(id) => id,
+        let item_id = match state.game.overlays.get::<ItemDetailState>() {
+            Some(overlay) => overlay.item_id.as_str(),
             None => return,
         };
 
@@ -103,7 +103,7 @@ impl Lifecycle for ItemDetailPopup {
         event: &CrosstermEvent,
         _event_sender: &Sender<ApplicationEvent>,
     ) -> EventFlow {
-        if !state.game.overlays.is_open(OverlayKind::ItemDetail) {
+        if !state.game.overlays.is_open::<ItemDetailState>() {
             return EventFlow::Ignored;
         }
 

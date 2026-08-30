@@ -1,7 +1,7 @@
 use crate::collections::{Step, move_index};
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
-use crate::states::game::{Npc, OverlayKind};
+use crate::states::game::{Npc, NpcActionsState};
 use crate::ui::components::Lifecycle;
 use crate::ui::components::component::Component;
 use crate::ui::components::lifecycle::EventFlow;
@@ -46,8 +46,8 @@ impl NpcActionsPopup {
 
 impl Component for NpcActionsPopup {
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
-        let npc_id = match state.game.overlays.target_of(OverlayKind::NpcActions) {
-            Some(id) => id,
+        let npc_id = match state.game.overlays.get::<NpcActionsState>() {
+            Some(overlay) => overlay.npc_id.as_str(),
             None => return,
         };
 
@@ -87,14 +87,14 @@ impl Lifecycle for NpcActionsPopup {
         event: &CrosstermEvent,
         event_sender: &Sender<ApplicationEvent>,
     ) -> EventFlow {
-        let npc_id = match state.game.overlays.target_of(OverlayKind::NpcActions) {
-            Some(id) => id.to_string(),
+        let npc_id = match state.game.overlays.get::<NpcActionsState>() {
+            Some(overlay) => overlay.npc_id.clone(),
             None => return EventFlow::Ignored,
         };
 
         if let CrosstermEvent::Key(key) = event {
             let Some(actions) = state.game.find_npc(&npc_id).map(Self::actions_of) else {
-                state.game.overlays.close(OverlayKind::NpcActions);
+                state.game.overlays.close::<NpcActionsState>();
                 self.selected_action_index = 0;
                 return EventFlow::Consumed;
             };

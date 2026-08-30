@@ -1,3 +1,5 @@
+use super::{Overlay, OverlayPayload};
+
 pub const END_OF_DIALOGUE_TAG: &str = "[end of dialogue]";
 
 #[derive(Debug, Clone)]
@@ -26,5 +28,21 @@ impl DialogueState {
 
     pub fn char_count(&self) -> usize {
         self.full_text.chars().count()
+    }
+}
+
+impl OverlayPayload for DialogueState {
+    fn extract(overlay: &Overlay) -> Option<&Self> {
+        match overlay {
+            Overlay::Dialogue(state) => Some(state),
+            _ => None,
+        }
+    }
+
+    fn extract_mut(overlay: &mut Overlay) -> Option<&mut Self> {
+        match overlay {
+            Overlay::Dialogue(state) => Some(state),
+            _ => None,
+        }
     }
 }

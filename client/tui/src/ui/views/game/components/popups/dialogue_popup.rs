@@ -1,6 +1,6 @@
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
-use crate::states::game::OverlayKind;
+use crate::states::game::DialogueState;
 use crate::ui::components::Lifecycle;
 use crate::ui::components::lifecycle::EventFlow;
 use crate::ui::components::scrollable::ScrollableComponent;
@@ -68,7 +68,7 @@ impl ScrollableComponent for DialoguePopup {
     }
 
     fn get_block<'a>(&self, state: &AppState) -> Block<'a> {
-        if let Some(dialog) = state.game.overlays.dialogue() {
+        if let Some(dialog) = state.game.overlays.get::<DialogueState>() {
             popup_block(format!(" {} ", dialog.npc_name)).padding(Padding::uniform(1))
         } else {
             overlay_block()
@@ -76,7 +76,7 @@ impl ScrollableComponent for DialoguePopup {
     }
 
     fn get_content<'a>(&self, state: &'a AppState, max_width: usize) -> Vec<Line<'a>> {
-        if let Some(dialog) = state.game.overlays.dialogue() {
+        if let Some(dialog) = state.game.overlays.get::<DialogueState>() {
             let mut display_text: String =
                 dialog.full_text.chars().take(self.chars_shown).collect();
 
@@ -103,7 +103,7 @@ impl Lifecycle for DialoguePopup {
         event: &CrosstermEvent,
         sender: &Sender<ApplicationEvent>,
     ) -> EventFlow {
-        let Some(dialog) = state.game.overlays.dialogue().cloned() else {
+        let Some(dialog) = state.game.overlays.get::<DialogueState>().cloned() else {
             return EventFlow::Ignored;
         };
 
@@ -118,7 +118,7 @@ impl Lifecycle for DialoguePopup {
         if self.chars_shown < dialog.char_count() {
             self.chars_shown = dialog.char_count();
         } else if dialog.ends_dialog {
-            state.game.overlays.close(OverlayKind::Dialogue);
+            state.game.overlays.close_dialogue();
         } else {
             let request = ApiRequest::Talk(TalkCommand {
                 npc_name: dialog.npc_id.clone(),
@@ -131,7 +131,7 @@ impl Lifecycle for DialoguePopup {
     }
 
     fn on_tick(&mut self, state: &mut AppState) {
-        let Some(dialog) = state.game.overlays.dialogue() else {
+        let Some(dialog) = state.game.overlays.get::<DialogueState>() else {
             self.chars_shown = 0;
             self.shown_npc = None;
             return;

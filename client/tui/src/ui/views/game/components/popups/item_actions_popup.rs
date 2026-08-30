@@ -1,7 +1,7 @@
 use crate::collections::{Step, move_index};
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
-use crate::states::game::{Overlay, OverlayKind};
+use crate::states::game::{ItemActionsState, ItemDetailState, Overlay};
 use crate::ui::components::Lifecycle;
 use crate::ui::components::component::Component;
 use crate::ui::components::lifecycle::EventFlow;
@@ -59,8 +59,8 @@ impl ItemActionsPopup {
 
 impl Component for ItemActionsPopup {
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
-        let item_id = match state.game.overlays.target_of(OverlayKind::ItemActions) {
-            Some(id) => id,
+        let item_id = match state.game.overlays.get::<ItemActionsState>() {
+            Some(overlay) => overlay.item_id.as_str(),
             None => return,
         };
 
@@ -101,8 +101,8 @@ impl Lifecycle for ItemActionsPopup {
         event: &CrosstermEvent,
         event_sender: &Sender<ApplicationEvent>,
     ) -> EventFlow {
-        let item_id = match state.game.overlays.target_of(OverlayKind::ItemActions) {
-            Some(id) => id.to_string(),
+        let item_id = match state.game.overlays.get::<ItemActionsState>() {
+            Some(overlay) => overlay.item_id.clone(),
             None => return EventFlow::Ignored,
         };
 
@@ -130,9 +130,9 @@ impl Lifecycle for ItemActionsPopup {
                     if let Some(act) = actions.get(self.selected_action_index) {
                         match act.as_str() {
                             "VIEW" => {
-                                state.game.overlays.open(Overlay::ItemDetail {
-                                    item_id: item_id.clone(),
-                                });
+                                state.game.overlays.open(Overlay::ItemDetail(
+                                    ItemDetailState::new(item_id.clone()),
+                                ));
                                 return EventFlow::Consumed;
                             }
                             "CANCEL" => {}

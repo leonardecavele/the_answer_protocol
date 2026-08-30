@@ -1,6 +1,6 @@
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
-use crate::states::game::{GameFocus, Overlay};
+use crate::states::game::{GameFocus, ItemActionsState, Overlay};
 use crate::ui::components::Lifecycle;
 use crate::ui::components::component::Component;
 use crate::ui::components::interactive::is_mouse_in_rect;
@@ -154,9 +154,10 @@ impl Lifecycle for InventoryPanel {
                     }
                     crossterm::event::KeyCode::Enter => {
                         if let Some(item) = state.game.player.inventory.selected() {
-                            state.game.overlays.open(Overlay::ItemActions {
-                                item_id: item.id.clone(),
-                            });
+                            state
+                                .game
+                                .overlays
+                                .open(Overlay::ItemActions(ItemActionsState::new(item.id.clone())));
                             return EventFlow::Consumed;
                         }
                     }
