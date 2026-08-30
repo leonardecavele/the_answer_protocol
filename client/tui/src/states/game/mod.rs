@@ -5,7 +5,7 @@ mod world;
 
 pub use interaction::{
     ChatState, DialogueState, END_OF_DIALOGUE_TAG, GameFocus, HelpState, ItemActionsState,
-    ItemDetailState, NpcActionsState, Overlay, OverlayKind, OverlayPayload, Overlays,
+    ItemDetailState, ItemLocation, NpcActionsState, Overlay, OverlayKind, OverlayPayload, Overlays,
     QuestDetailState,
 };
 pub use session::{

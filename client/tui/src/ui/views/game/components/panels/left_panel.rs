@@ -3,7 +3,9 @@ use crate::data::manifest::NpcKind;
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
 use crate::states::game::GameFocus;
-use crate::states::game::{ItemActionsState, NpcActionsState, Overlay, QuestDetailState};
+use crate::states::game::{
+    ItemActionsState, ItemLocation, NpcActionsState, Overlay, QuestDetailState,
+};
 use crate::ui::components::Lifecycle;
 use crate::ui::components::component::Component;
 use crate::ui::components::interactive::is_mouse_in_rect;
@@ -210,14 +212,14 @@ impl Lifecycle for LeftPanel {
                         .room
                         .as_ref()
                         .and_then(|room| room.npcs.selected())
-                        .map(|npc| npc.id.clone());
+                        .map(|npc| (npc.id.clone(), npc.kind.clone()));
 
                     match selected {
-                        Some(npc_id) => {
+                        Some((npc_id, kind)) => {
                             state
                                 .game
                                 .overlays
-                                .open(Overlay::NpcActions(NpcActionsState::new(npc_id)));
+                                .open(Overlay::NpcActions(NpcActionsState::new(npc_id, &kind)));
                             EventFlow::Consumed
                         }
                         None => EventFlow::Ignored,
@@ -225,40 +227,41 @@ impl Lifecycle for LeftPanel {
                 }
                 _ => EventFlow::Ignored,
             },
-            GameFocus::RoomItemsList => match key.code {
-                crossterm::event::KeyCode::Up => {
-                    if let Some(room) = &mut state.game.room {
-                        room.items.move_selection(Step::Previous);
-                    }
-                    EventFlow::Consumed
-                }
-                crossterm::event::KeyCode::Down => {
-                    if let Some(room) = &mut state.game.room {
-                        room.items.move_selection(Step::Next);
-                    }
-                    EventFlow::Consumed
-                }
-                crossterm::event::KeyCode::Enter => {
-                    let selected = state
-                        .game
-                        .room
-                        .as_ref()
-                        .and_then(|room| room.items.selected())
-                        .map(|item| item.id.clone());
-
-                    match selected {
-                        Some(item_id) => {
-                            state
-                                .game
-                                .overlays
-                                .open(Overlay::ItemActions(ItemActionsState::new(item_id)));
-                            EventFlow::Consumed
+            GameFocus::RoomItemsList => {
+                match key.code {
+                    crossterm::event::KeyCode::Up => {
+                        if let Some(room) = &mut state.game.room {
+                            room.items.move_selection(Step::Previous);
                         }
-                        None => EventFlow::Ignored,
+                        EventFlow::Consumed
                     }
+                    crossterm::event::KeyCode::Down => {
+                        if let Some(room) = &mut state.game.room {
+                            room.items.move_selection(Step::Next);
+                        }
+                        EventFlow::Consumed
+                    }
+                    crossterm::event::KeyCode::Enter => {
+                        let selected = state
+                            .game
+                            .room
+                            .as_ref()
+                            .and_then(|room| room.items.selected())
+                            .map(|item| item.id.clone());
+
+                        match selected {
+                            Some(item_id) => {
+                                state.game.overlays.open(Overlay::ItemActions(
+                                    ItemActionsState::new(item_id, ItemLocation::Room),
+                                ));
+                                EventFlow::Consumed
+                            }
+                            None => EventFlow::Ignored,
+                        }
+                    }
+                    _ => EventFlow::Ignored,
                 }
-                _ => EventFlow::Ignored,
-            },
+            }
             GameFocus::QuestList => match key.code {
                 crossterm::event::KeyCode::Up => {
                     state.game.player.quests.move_selection(Step::Previous);
