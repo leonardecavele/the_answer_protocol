@@ -4,10 +4,10 @@ use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
 use crate::states::game::GameFocus;
 use crate::states::game::{
-    ItemActionsState, ItemLocation, NpcActionsState, Overlay, QuestDetailState,
+    ItemActionsState, ItemLocation, NpcActionsState, Overlay, QuestDetailState, Room,
 };
 use crate::ui::components::{Component, EventFlow, Lifecycle, is_mouse_in_rect};
-use crate::ui::theme::{default_block, panel_block, quest_status};
+use crate::ui::theme::{default_block, panel_block, quest_status, selection_style};
 use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect},
@@ -61,11 +61,97 @@ impl LeftPanel {
 
         LeftPanelHit::None
     }
+
+    fn draw_players(state: &AppState, room: &Room, frame: &mut Frame, area: Rect) {
+        let items: Vec<ListItem> = room
+            .players
+            .iter()
+            .map(|name| {
+                let mut style = Style::default();
+                if Some(name) == state.game.player.name.as_ref() {
+                    style = style.fg(Color::Yellow).add_modifier(Modifier::BOLD);
+                }
+                ListItem::new(Span::styled(format!("• {}", name), style))
+            })
+            .collect();
+
+        let list = List::new(items).block(default_block().title(" Room Players "));
+        frame.render_widget(list, area);
+    }
+
+    fn draw_npcs(&mut self, state: &AppState, room: &Room, frame: &mut Frame, area: Rect) {
+        let focused = state.game.focus == GameFocus::NpcList;
+
+        let items: Vec<ListItem> = room
+            .npcs
+            .iter()
+            .enumerate()
+            .map(|(index, npc)| {
+                let color = match npc.kind {
+                    NpcKind::Enemy => Color::Red,
+                    NpcKind::QuestGiver => Color::Yellow,
+                    NpcKind::Dialogue => Color::Blue,
+                    NpcKind::Normal => Color::Reset,
+                };
+                let style = selection_style(color, focused && room.npcs.is_selected(index));
+
+                ListItem::new(Span::styled(format!("• {} ({})", npc.name, npc.id), style))
+            })
+            .collect();
+
+        let list = List::new(items).block(panel_block(" Room NPCs ", focused));
+        frame.render_widget(list, area);
+        self.npcs_area = Some(area);
+    }
+
+    fn draw_items(&mut self, state: &AppState, room: &Room, frame: &mut Frame, area: Rect) {
+        let focused = state.game.focus == GameFocus::RoomItemsList;
+
+        let items: Vec<ListItem> = room
+            .items
+            .iter()
+            .enumerate()
+            .map(|(index, item)| {
+                let style = selection_style(Color::Cyan, focused && room.items.is_selected(index));
+
+                ListItem::new(Span::styled(
+                    format!("• {} ({})", item.name, item.id),
+                    style,
+                ))
+            })
+            .collect();
+
+        let list = List::new(items).block(panel_block(" Room Items ", focused));
+        frame.render_widget(list, area);
+        self.items_area = Some(area);
+    }
+
+    fn draw_quests(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
+        let focused = state.game.focus == GameFocus::QuestList;
+        let quests = &state.game.player.quests;
+
+        let items: Vec<ListItem> = quests
+            .iter()
+            .enumerate()
+            .map(|(index, quest)| {
+                let (label, color) = quest_status(&quest.status);
+                let style = selection_style(color, focused && quests.is_selected(index));
+
+                ListItem::new(Span::styled(format!("[{}] {}", label, quest.name), style))
+            })
+            .collect();
+
+        let list = List::new(items).block(panel_block(" Quests ", focused));
+        frame.render_widget(list, area);
+        self.quests_area = Some(area);
+    }
 }
 
 impl Component for LeftPanel {
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
-        // TODO: refactoriser cette fonction (decouper en plus petit bloc)
+        let Some(room) = &state.game.room else {
+            return;
+        };
 
         let chunks = Layout::default()
             .direction(Direction::Vertical)
@@ -77,99 +163,10 @@ impl Component for LeftPanel {
             ])
             .split(area);
 
-        let Some(room) = &state.game.room else {
-            return;
-        };
-
-        // 1. Room Players
-        let players_items: Vec<ListItem> = room
-            .players
-            .iter()
-            .map(|name| {
-                let mut style = Style::default();
-                if Some(name) == state.game.player.name.as_ref() {
-                    style = style.fg(Color::Yellow).add_modifier(Modifier::BOLD);
-                }
-                ListItem::new(Span::styled(format!("• {}", name), style))
-            })
-            .collect();
-        let players_list = List::new(players_items).block(default_block().title(" Room Players "));
-        frame.render_widget(players_list, chunks[0]);
-
-        // 2. Room NPCs
-        let npcs_items: Vec<ListItem> = room
-            .npcs
-            .iter()
-            .enumerate()
-            .map(|(idx, npc)| {
-                let color = match npc.kind {
-                    NpcKind::Enemy => Color::Red,
-                    NpcKind::QuestGiver => Color::Yellow,
-                    NpcKind::Dialogue => Color::Blue,
-                    NpcKind::Normal => Color::Reset,
-                };
-
-                let mut style = Style::default().fg(color);
-
-                if room.npcs.is_selected(idx) && state.game.focus == GameFocus::NpcList {
-                    style = style.add_modifier(Modifier::REVERSED);
-                }
-
-                ListItem::new(Span::styled(format!("• {} ({})", npc.name, npc.id), style))
-            })
-            .collect();
-        let npcs_block = panel_block(" Room NPCs ", state.game.focus == GameFocus::NpcList);
-        let npcs_list = List::new(npcs_items).block(npcs_block);
-        frame.render_widget(npcs_list, chunks[1]);
-        self.npcs_area = Some(chunks[1]);
-
-        // 3. Room Items
-        let items: Vec<ListItem> = room
-            .items
-            .iter()
-            .enumerate()
-            .map(|(idx, item)| {
-                let mut style = Style::default().fg(Color::Cyan);
-
-                if room.items.is_selected(idx) && state.game.focus == GameFocus::RoomItemsList {
-                    style = style.add_modifier(Modifier::REVERSED);
-                }
-                ListItem::new(Span::styled(
-                    format!("• {} ({})", item.name, item.id),
-                    style,
-                ))
-            })
-            .collect();
-        let items_block = panel_block(" Room Items ", state.game.focus == GameFocus::RoomItemsList);
-        let items_list = List::new(items).block(items_block);
-        frame.render_widget(items_list, chunks[2]);
-        self.items_area = Some(chunks[2]);
-
-        // 4. Quests
-        let quests_items: Vec<ListItem> = state
-            .game
-            .player
-            .quests
-            .iter()
-            .enumerate()
-            .map(|(idx, q)| {
-                let (label, color) = quest_status(&q.status);
-
-                let mut style = Style::default().fg(color);
-
-                if state.game.player.quests.is_selected(idx)
-                    && state.game.focus == GameFocus::QuestList
-                {
-                    style = style.add_modifier(Modifier::REVERSED);
-                }
-
-                ListItem::new(Span::styled(format!("[{}] {}", label, q.name), style))
-            })
-            .collect();
-        let quests_block = panel_block(" Quests ", state.game.focus == GameFocus::QuestList);
-        let quests_list = List::new(quests_items).block(quests_block);
-        frame.render_widget(quests_list, chunks[3]);
-        self.quests_area = Some(chunks[3]);
+        Self::draw_players(state, room, frame, chunks[0]);
+        self.draw_npcs(state, room, frame, chunks[1]);
+        self.draw_items(state, room, frame, chunks[2]);
+        self.draw_quests(state, frame, chunks[3]);
     }
 }
 

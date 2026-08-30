@@ -4,13 +4,13 @@ use crate::states::app::AppState;
 use crate::states::game::NpcActionsState;
 use crate::ui::components::{Component, EventFlow, Lifecycle};
 use crate::ui::layout::centered_rect;
-use crate::ui::theme::popup_block;
+use crate::ui::theme::{popup_block, selection_style};
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
 use mpsc::Sender;
 use ratatui::{
     Frame,
     layout::Rect,
-    style::{Color, Modifier, Style},
+    style::Color,
     text::Span,
     widgets::{Clear, List, ListItem},
 };
@@ -47,10 +47,8 @@ impl Component for NpcActionsPopup {
             .iter()
             .enumerate()
             .map(|(index, action)| {
-                let mut style = Style::default().fg(Color::Reset);
-                if overlay.actions.is_selected(index) {
-                    style = style.add_modifier(Modifier::REVERSED);
-                }
+                let style = selection_style(Color::Reset, overlay.actions.is_selected(index));
+
                 ListItem::new(Span::styled(format!(" {}", action), style))
             })
             .collect();

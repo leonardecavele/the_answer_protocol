@@ -13,6 +13,16 @@ pub fn dim_style() -> Style {
     Style::default().add_modifier(Modifier::DIM)
 }
 
+pub fn selection_style(color: Color, selected: bool) -> Style {
+    let style = Style::default().fg(color);
+
+    if selected {
+        style.add_modifier(Modifier::REVERSED)
+    } else {
+        style
+    }
+}
+
 pub fn quest_status(status: &QuestStatus) -> (&'static str, Color) {
     match status {
         QuestStatus::InProgress => ("in progress", Color::Yellow),

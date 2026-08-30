@@ -2,14 +2,10 @@ use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
 use crate::states::game::{GameFocus, ItemActionsState, ItemLocation, Overlay};
 use crate::ui::components::{Component, EventFlow, Lifecycle, is_mouse_in_rect};
-use crate::ui::theme::panel_block;
+use crate::ui::theme::{panel_block, selection_style};
 use ratatui::layout::Alignment;
 use ratatui::widgets::Paragraph;
-use ratatui::{
-    Frame,
-    layout::Rect,
-    style::{Color, Modifier, Style},
-};
+use ratatui::{Frame, layout::Rect, style::Color};
 use tokio::sync::mpsc::Sender;
 
 const INVENTORY_ITEM_WIDTH: u16 = 20;
@@ -59,7 +55,8 @@ impl Component for InventoryPanel {
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
         self.area = Some(area);
 
-        let inv_block = panel_block(" Inventory ", state.game.focus == GameFocus::InventoryGrid);
+        let focused = state.game.focus == GameFocus::InventoryGrid;
+        let inv_block = panel_block(" Inventory ", focused);
 
         let inv_inner = inv_block.inner(area);
         frame.render_widget(inv_block, area);
@@ -92,12 +89,10 @@ impl Component for InventoryPanel {
             };
 
             let text = format!("{}\n{}", item.name, item.id);
-            let mut p_style = Style::default();
-            if state.game.focus == GameFocus::InventoryGrid
-                && state.game.player.inventory.selected_index() == idx
-            {
-                p_style = p_style.add_modifier(Modifier::REVERSED).fg(Color::Yellow);
-            }
+            let style = selection_style(
+                Color::Reset,
+                focused && state.game.player.inventory.is_selected(idx),
+            );
 
             let mut text_area = cell_area;
             if text_area.height >= 4 {
@@ -107,7 +102,7 @@ impl Component for InventoryPanel {
 
             let paragraph = Paragraph::new(text)
                 .alignment(Alignment::Center)
-                .style(p_style);
+                .style(style);
             frame.render_widget(paragraph, text_area);
         }
     }
