@@ -200,7 +200,7 @@ impl Lifecycle for LeftPanel {
                     EventFlow::Consumed
                 }
                 crossterm::event::KeyCode::Enter => {
-                    if !state.game.overlays.dialogue_cooldown_elapsed() {
+                    if !state.game.dialogue_cooldown_elapsed() {
                         return EventFlow::Consumed;
                     }
 

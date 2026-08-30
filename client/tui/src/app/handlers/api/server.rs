@@ -90,7 +90,7 @@ impl App {
             self.view_manager.set_view(Box::new(GameView::new()));
         }
 
-        self.state.game.overlays.close_all();
+        self.state.game.close_all_overlays();
         self.state.network.is_connected = false;
     }
 }

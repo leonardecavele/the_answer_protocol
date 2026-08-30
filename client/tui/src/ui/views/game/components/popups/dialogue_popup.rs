@@ -116,7 +116,7 @@ impl Lifecycle for DialoguePopup {
         if self.chars_shown < dialog.char_count() {
             self.chars_shown = dialog.char_count();
         } else if dialog.ends_dialog {
-            state.game.overlays.close_dialogue();
+            state.game.close_dialogue();
         } else {
             let request = ApiRequest::Talk(TalkCommand {
                 npc_name: dialog.npc_id.clone(),

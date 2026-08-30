@@ -11,7 +11,7 @@ impl App {
 
         if ends_dialog_only {
             if was_open {
-                self.state.game.overlays.close_dialogue();
+                self.state.game.close_dialogue();
                 return;
             }
 
@@ -21,7 +21,7 @@ impl App {
         }
 
         let npc_name = self.state.game.manifest.npc_name(&npc_id);
-        self.state.game.overlays.inspected_npc = Some(npc_id.clone());
+        self.state.game.inspected_npc = Some(npc_id.clone());
 
         if !was_open {
             self.state
@@ -38,12 +38,9 @@ impl App {
         if let Some(dialogue) = self.state.game.overlays.get_mut::<DialogueState>() {
             dialogue.add(text, ends_dialog);
         } else {
-            self.state.game.overlays.open_dialogue(DialogueState::new(
-                npc_id,
-                npc_name,
-                text,
-                ends_dialog,
-            ));
+            self.state
+                .game
+                .open_dialogue(DialogueState::new(npc_id, npc_name, text, ends_dialog));
         }
     }
 }

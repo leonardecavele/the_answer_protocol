@@ -1,11 +1,14 @@
 use crate::collections::BoundedLog;
 use crate::data::manifest::Manifest;
-use crate::states::game::interaction::{GameFocus, Overlays};
+use crate::states::game::interaction::{DialogueState, GameFocus, Overlay, Overlays};
 use crate::states::game::session::{
     ChatMessage, FightPhase, GroupState, PlayerState, Room, ServerState,
 };
 use crate::states::game::{Item, Npc};
 use std::sync::Arc;
+use std::time::{Duration, Instant};
+
+const DIALOGUE_REOPEN_COOLDOWN: Duration = Duration::from_millis(300);
 
 pub struct GameState {
     pub player: PlayerState,
@@ -20,9 +23,9 @@ pub struct GameState {
     pub action_log: BoundedLog<String>,
 
     pub focus: GameFocus,
+    pub inspected_npc: Option<String>,
+    dialogue_closed_at: Option<Instant>,
 }
-
-// TODO: fermer le dialogue popup si le chef de groupe change de room
 
 impl GameState {
     pub fn new(manifest: Arc<Manifest>) -> Self {
@@ -37,7 +40,37 @@ impl GameState {
             chat_log: BoundedLog::with_max_capacity(200),
             action_log: BoundedLog::with_max_capacity(50),
             focus: GameFocus::default(),
+            inspected_npc: None,
+            dialogue_closed_at: None,
         }
+    }
+
+    pub fn open_dialogue(&mut self, dialogue: DialogueState) {
+        self.overlays.open(Overlay::Dialogue(dialogue));
+    }
+
+    pub fn close_dialogue(&mut self) {
+        self.overlays.close::<DialogueState>();
+        self.inspected_npc = None;
+        self.dialogue_closed_at = Some(Instant::now());
+    }
+
+    pub fn close_all_overlays(&mut self) {
+        self.overlays.close_all();
+        self.inspected_npc = None;
+    }
+
+    pub fn end_npc_interaction(&mut self) {
+        if self.overlays.is_open::<DialogueState>() {
+            self.close_dialogue();
+        } else {
+            self.inspected_npc = None;
+        }
+    }
+
+    pub fn dialogue_cooldown_elapsed(&self) -> bool {
+        self.dialogue_closed_at
+            .is_none_or(|closed_at| closed_at.elapsed() >= DIALOGUE_REOPEN_COOLDOWN)
     }
 
     pub fn log_action(&mut self, text: String) {

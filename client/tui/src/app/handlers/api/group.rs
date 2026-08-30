@@ -61,6 +61,7 @@ impl App {
     }
 
     pub(crate) fn on_group_moved(&mut self, direction: String) {
+        self.state.game.end_npc_interaction();
         self.state
             .game
             .log_action(format!("Group moved to {}.", direction));

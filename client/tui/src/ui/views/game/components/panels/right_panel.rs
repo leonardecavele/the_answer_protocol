@@ -126,7 +126,7 @@ impl RightPanel {
         let elapsed = self.animation_start.elapsed();
         let manifest = &state.game.manifest;
 
-        if let Some(id) = &state.game.overlays.inspected_npc
+        if let Some(id) = &state.game.inspected_npc
             && let Some(image_path) = Sprite::of_npc(id, manifest).frame_at(elapsed)
         {
             return Content::Image(image_path.to_string());
@@ -142,7 +142,7 @@ impl RightPanel {
     }
 
     fn sync_animation(&mut self, state: &AppState) {
-        let current = state.game.overlays.inspected_npc.as_deref();
+        let current = state.game.inspected_npc.as_deref();
         if self.shown_npc.as_deref() != current {
             self.shown_npc = current.map(str::to_owned);
             self.animation_start = Instant::now();

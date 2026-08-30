@@ -37,7 +37,7 @@ impl App {
     }
 
     pub(crate) fn on_moved(&mut self, direction: String) {
-        self.state.game.overlays.inspected_npc = None;
+        self.state.game.end_npc_interaction();
         self.state
             .game
             .log_action(format!("You moved {}.", direction));

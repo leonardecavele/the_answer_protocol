@@ -30,7 +30,7 @@ impl App {
         match EditorView::new(&fight_start) {
             Ok(view) => {
                 self.state.game.fight.reset();
-                self.state.game.overlays.close_all();
+                self.state.game.close_all_overlays();
                 self.state
                     .game
                     .log_action(format!("A fight started against {}.", npc_name));
@@ -90,7 +90,7 @@ impl App {
         let npc_name = self.state.game.manifest.npc_name(&npc_id);
         let combat = response.combat_result;
 
-        self.state.game.overlays.inspected_npc = Some(npc_id.clone());
+        self.state.game.inspected_npc = Some(npc_id.clone());
         self.state.game.player.set_hp(combat.attacker_hp);
 
         self.state
@@ -102,12 +102,9 @@ impl App {
             npc_name, combat.damage, combat.attacker_hp, combat.target_hp
         );
 
-        self.state.game.overlays.open_dialogue(DialogueState::new(
-            npc_id,
-            npc_name,
-            text.clone(),
-            true,
-        ));
+        self.state
+            .game
+            .open_dialogue(DialogueState::new(npc_id, npc_name, text.clone(), true));
 
         self.state.game.log_action(text);
     }
