@@ -1,7 +1,8 @@
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
-use crate::states::game::FightPhase;
+use crate::states::game::{FightPhase, Sprite};
 use crate::ui::components::{Component, EventFlow, Lifecycle};
+use crate::ui::image::ImageRenderer;
 use crate::ui::theme::{default_block, dim_style};
 use api_client::ApiRequest;
 use api_client::commands::FightAttackCommand;
@@ -15,15 +16,19 @@ use ratatui::text::Span;
 use ratatui::widgets::{Block, Paragraph};
 use ratatui_code_editor::editor::Editor;
 use ratatui_code_editor::theme::vesper;
+use ratatui_image::Resize;
 use std::time::{Duration, Instant};
 use tokio::sync::mpsc;
-// TODO: ajouter une barre de vie + image du mob
+// TODO: ajouter une barre de vie sous l'image, quand le serveur enverra les PV du mob
 
 const EDITOR_LANGUAGE: &str = "c";
 const FIGHT_END_GRACE: Duration = Duration::from_secs(10);
 const EDITOR_BG: Color = Color::Rgb(0x16, 0x16, 0x16);
 const HEADER_HEIGHT: u16 = 3;
 const FOOTER_HEIGHT: u16 = 3;
+const OPPONENT_WIDTH: u16 = 60;
+const MIN_EDITOR_WIDTH: u16 = 80;
+const NO_IMAGE: &str = " No image ";
 
 pub struct EditorView {
     editor: Editor,
@@ -36,6 +41,7 @@ pub struct EditorView {
     started_at: Instant,
     editor_area: Rect,
     timed_out: bool,
+    image_renderer: ImageRenderer,
 }
 
 impl EditorView {
@@ -59,6 +65,7 @@ impl EditorView {
             started_at: Instant::now(),
             editor_area: Rect::default(),
             timed_out: false,
+            image_renderer: ImageRenderer::new(),
         })
     }
 
@@ -76,6 +83,27 @@ impl EditorView {
 
     fn grace_deadline(&self) -> Duration {
         Duration::from_secs(self.time) + FIGHT_END_GRACE
+    }
+
+    fn draw_opponent(&self, state: &AppState, frame: &mut Frame, area: Rect) {
+        let block = default_block();
+        let inner = block.inner(area);
+        frame.render_widget(block, area);
+
+        let sprite = Sprite::of_npc(&self.npc_id, &state.game.manifest);
+
+        match sprite.frame_at(self.started_at.elapsed()) {
+            Some(image_path) => {
+                self.image_renderer
+                    .draw_fitted(frame, inner, image_path, Resize::Scale(None));
+            }
+            None => frame.render_widget(
+                Paragraph::new(NO_IMAGE)
+                    .alignment(Alignment::Center)
+                    .style(dim_style()),
+                inner,
+            ),
+        }
     }
 
     fn header(&self, state: &AppState) -> Paragraph<'static> {
@@ -140,7 +168,19 @@ impl Component for EditorView {
         frame.render_widget(self.header(state), chunks[0]);
         frame.render_widget(self.footer(state), chunks[2]);
 
-        self.editor_area = chunks[1];
+        let opponent_fits = chunks[1].width >= OPPONENT_WIDTH + MIN_EDITOR_WIDTH;
+        let opponent_width = if opponent_fits { OPPONENT_WIDTH } else { 0 };
+
+        let middle = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints([Constraint::Min(1), Constraint::Length(opponent_width)])
+            .split(chunks[1]);
+
+        if opponent_fits {
+            self.draw_opponent(state, frame, middle[1]);
+        }
+
+        self.editor_area = middle[0];
         frame.render_widget(
             Block::default().style(Style::default().bg(EDITOR_BG)),
             self.editor_area,
