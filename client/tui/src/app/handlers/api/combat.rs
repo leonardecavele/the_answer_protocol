@@ -29,7 +29,10 @@ impl App {
 
         match EditorView::new(&fight_start) {
             Ok(view) => {
-                self.state.game.fight.reset();
+                self.state
+                    .game
+                    .fight
+                    .start(fight_start.npc_hp, fight_start.npc_max_hp);
                 self.state.game.close_all_overlays();
                 self.state
                     .game
@@ -60,6 +63,10 @@ impl App {
             }
         }
 
+        if fight_result.success {
+            self.state.game.fight.damage_npc(fight_result.damage_dealt);
+        }
+
         let who = match is_me {
             true => "You",
             false => fight_result.player_name.as_str(),
@@ -81,7 +88,7 @@ impl App {
     }
 
     pub(crate) fn on_fight_end(&mut self) {
-        self.state.game.fight.reset();
+        self.state.game.fight.end();
         self.state.game.log_action("The fight ended.".to_string());
         self.view_manager.set_view(Box::new(GameView::new()));
     }

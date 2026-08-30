@@ -9,8 +9,8 @@ pub use interaction::{
     QuestDetailState,
 };
 pub use session::{
-    ChatChannel, ChatMessage, ChatSender, Exits, FightPhase, GroupState, PlayerState, Room,
-    ServerState,
+    ChatChannel, ChatMessage, ChatSender, Exits, FightPhase, FightState, GroupState, NpcHealth,
+    PlayerState, Room, ServerState,
 };
 pub use state::GameState;
 pub use world::{Direction, Item, Npc, Sprite};
