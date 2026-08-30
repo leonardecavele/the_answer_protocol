@@ -44,80 +44,68 @@ impl App {
             return;
         }
 
-        match envelope.response {
-            ApiResponse::Connect(Ok(response)) => {
+        match (envelope.original_request, envelope.response) {
+            (ApiRequest::Connect(_), ApiResponse::Connect(Ok(response))) => {
                 self.on_connected(response);
             }
-            ApiResponse::Who(Ok(response)) => {
+            (ApiRequest::Who(_), ApiResponse::Who(Ok(response))) => {
                 self.on_who(response);
             }
-            ApiResponse::FightCreate(Ok(_)) => {}
-            ApiResponse::FightAttack(Ok(_)) => {}
-            ApiResponse::Status(Ok(response)) => {
+            (ApiRequest::FightCreate(_), ApiResponse::FightCreate(Ok(_))) => {}
+            (ApiRequest::FightAttack(_), ApiResponse::FightAttack(Ok(_))) => {}
+            (ApiRequest::Status(_), ApiResponse::Status(Ok(response))) => {
                 self.on_status(response);
             }
-            ApiResponse::GroupCreate(Ok(response)) => {
+            (ApiRequest::GroupCreate(_), ApiResponse::GroupCreate(Ok(response))) => {
                 self.on_group_created(response);
             }
-            ApiResponse::GroupJoin(Ok(response)) => {
-                if let ApiRequest::GroupJoin(cmd) = envelope.original_request {
-                    self.on_group_joined(response, cmd.leader_name);
-                }
+            (ApiRequest::GroupJoin(cmd), ApiResponse::GroupJoin(Ok(response))) => {
+                self.on_group_joined(response, cmd.leader_name);
             }
-            ApiResponse::GroupLeave(Ok(_)) => {
+            (ApiRequest::GroupLeave(_), ApiResponse::GroupLeave(Ok(_))) => {
                 self.on_group_left();
             }
-            ApiResponse::GlobalChat(Ok(_)) => {
-                if let ApiRequest::GlobalChat(cmd) = envelope.original_request {
-                    self.on_global_chat_sent(cmd.message);
-                }
+            (ApiRequest::GlobalChat(cmd), ApiResponse::GlobalChat(Ok(_))) => {
+                self.on_global_chat_sent(cmd.message);
             }
-            ApiResponse::PrivateChat(Ok(_)) => {
-                if let ApiRequest::PrivateChat(cmd) = envelope.original_request {
-                    self.on_private_chat_sent(cmd.to, cmd.message);
-                }
+            (ApiRequest::PrivateChat(cmd), ApiResponse::PrivateChat(Ok(_))) => {
+                self.on_private_chat_sent(cmd.to, cmd.message);
             }
-            ApiResponse::Look(Ok(response)) => {
+            (ApiRequest::Look(_), ApiResponse::Look(Ok(response))) => {
                 self.on_look(response);
             }
-            ApiResponse::Move(Ok(_)) => {
-                if let ApiRequest::Move(cmd) = envelope.original_request {
-                    self.on_moved(cmd.direction);
-                }
+            (ApiRequest::Move(cmd), ApiResponse::Move(Ok(_))) => {
+                self.on_moved(cmd.direction);
             }
-            ApiResponse::Inventory(Ok(response)) => {
+            (ApiRequest::Inventory(_), ApiResponse::Inventory(Ok(response))) => {
                 self.on_inventory(response);
             }
-            ApiResponse::Quests(Ok(response)) => {
+            (ApiRequest::Quests(_), ApiResponse::Quests(Ok(response))) => {
                 self.on_quests(response);
             }
-            ApiResponse::Quest(Ok(response)) => {
+            (ApiRequest::Quest(_), ApiResponse::Quest(Ok(response))) => {
                 self.on_quest(response);
             }
-            ApiResponse::Talk(Ok(response)) => {
-                if let ApiRequest::Talk(cmd) = envelope.original_request {
-                    self.on_talked_to(response, cmd.npc_name);
-                }
+            (ApiRequest::Talk(cmd), ApiResponse::Talk(Ok(response))) => {
+                self.on_talked_to(response, cmd.npc_name);
             }
-            ApiResponse::Take(Ok(response)) => {
+            (ApiRequest::Take(_), ApiResponse::Take(Ok(response))) => {
                 self.on_take_item(response);
             }
-            ApiResponse::Drop(Ok(response)) => {
+            (ApiRequest::Drop(_), ApiResponse::Drop(Ok(response))) => {
                 self.on_drop_item(response);
             }
-            ApiResponse::Attack(Ok(response)) => {
-                if let ApiRequest::Attack(cmd) = envelope.original_request {
-                    self.on_attacked(response, cmd.npc_name);
-                }
+            (ApiRequest::Attack(cmd), ApiResponse::Attack(Ok(response))) => {
+                self.on_attacked(response, cmd.npc_name);
             }
-            ApiResponse::Quit(Ok(_)) => {
+            (ApiRequest::Quit(_), ApiResponse::Quit(Ok(_))) => {
                 self.state.should_quit = true;
             }
-            response => {
-                self.state.ui.trace_log.push(format!(
-                    "Missing handle response for command: {:?} -- Response: {:?}",
-                    envelope.original_request, response
-                ));
+            (request, response) => {
+                self.record_trace(
+                    "unpaired response",
+                    format!("request: {:?} -- response: {:?}", request, response),
+                );
             }
         }
     }
