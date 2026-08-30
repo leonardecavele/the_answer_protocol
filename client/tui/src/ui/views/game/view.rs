@@ -1,9 +1,6 @@
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
-use crate::ui::components::Lifecycle;
-use crate::ui::components::component::Component;
-use crate::ui::components::lifecycle::EventFlow;
-use crate::ui::components::scrollable::{Scrollable, ScrollableHit};
+use crate::ui::components::{Component, EventFlow, Lifecycle, Scrollable, ScrollableHit};
 
 use crate::states::game::{ChatState, GameFocus, HelpState, Overlay, OverlayKind};
 use crate::ui::views::game::components::{

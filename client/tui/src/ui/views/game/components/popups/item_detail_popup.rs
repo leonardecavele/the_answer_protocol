@@ -1,9 +1,7 @@
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
 use crate::states::game::ItemDetailState;
-use crate::ui::components::Lifecycle;
-use crate::ui::components::component::Component;
-use crate::ui::components::lifecycle::EventFlow;
+use crate::ui::components::{Component, EventFlow, Lifecycle};
 use crate::ui::image::ImageRenderer;
 use crate::ui::layout::centered_rect_percent;
 use crate::ui::text::wrap_str_to_lines;

@@ -1,11 +1,9 @@
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
 use crate::states::game::GameFocus;
-use crate::ui::components::Lifecycle;
-use crate::ui::components::component::Component;
-use crate::ui::components::interactive::{Interactive, is_mouse_in_rect};
-use crate::ui::components::lifecycle::EventFlow;
-use crate::ui::components::widgets::text_input::TextInput;
+use crate::ui::components::{
+    Component, EventFlow, Interactive, Lifecycle, TextInput, is_mouse_in_rect,
+};
 use crossterm::event::{Event as CrosstermEvent, KeyCode, KeyEvent};
 use ratatui::{Frame, layout::Rect};
 

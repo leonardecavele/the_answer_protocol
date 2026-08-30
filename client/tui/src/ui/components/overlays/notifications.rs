@@ -1,10 +1,7 @@
 use crate::events::ApplicationEvent;
 use crate::events::types::NotificationType;
 use crate::states::app::AppState;
-use crate::ui::components::Lifecycle;
-use crate::ui::components::component::Component;
-use crate::ui::components::interactive::is_mouse_in_rect;
-use crate::ui::components::lifecycle::EventFlow;
+use crate::ui::components::{Component, EventFlow, Lifecycle, is_mouse_in_rect};
 use crate::ui::text::wrap_str_to_lines;
 use crate::ui::theme::default_block;
 use crossterm::event::{Event as CrosstermEvent, MouseButton, MouseEvent, MouseEventKind};

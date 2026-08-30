@@ -1,6 +1,5 @@
 use crate::states::app::AppState;
-use crate::ui::components::Lifecycle;
-use crate::ui::components::component::Component;
+use crate::ui::components::{Component, Lifecycle};
 use crate::ui::text::wrap_str_to_lines;
 use crate::ui::theme::default_block;
 use ratatui::widgets::Paragraph;

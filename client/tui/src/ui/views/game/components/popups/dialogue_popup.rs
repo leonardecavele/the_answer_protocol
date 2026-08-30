@@ -1,9 +1,7 @@
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
 use crate::states::game::DialogueState;
-use crate::ui::components::Lifecycle;
-use crate::ui::components::lifecycle::EventFlow;
-use crate::ui::components::scrollable::ScrollableComponent;
+use crate::ui::components::{EventFlow, Lifecycle, ScrollableComponent};
 use crate::ui::text::wrap_str_to_lines;
 use crate::ui::theme::{overlay_block, popup_block};
 use api_client::ApiRequest;

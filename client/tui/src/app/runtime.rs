@@ -5,8 +5,7 @@ use crate::network::NetworkManager;
 use crate::network::envelopes::RequestEnvelope;
 use crate::states::app::AppState;
 use crate::states::notification::Notification;
-use crate::ui::components::Lifecycle;
-use crate::ui::components::component::Component;
+use crate::ui::components::{Component, Lifecycle};
 use crate::ui::view::ViewManager;
 use api_client::ApiRequest;
 use api_client::commands::{

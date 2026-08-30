@@ -6,10 +6,7 @@ use crate::states::game::GameFocus;
 use crate::states::game::{
     ItemActionsState, ItemLocation, NpcActionsState, Overlay, QuestDetailState,
 };
-use crate::ui::components::Lifecycle;
-use crate::ui::components::component::Component;
-use crate::ui::components::interactive::is_mouse_in_rect;
-use crate::ui::components::lifecycle::EventFlow;
+use crate::ui::components::{Component, EventFlow, Lifecycle, is_mouse_in_rect};
 use crate::ui::theme::{default_block, panel_block, quest_status};
 use ratatui::{
     Frame,

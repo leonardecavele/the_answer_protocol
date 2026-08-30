@@ -1,9 +1,8 @@
+use super::component::Component;
+use super::interactive::is_mouse_in_rect;
+use super::lifecycle::{EventFlow, Lifecycle};
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
-use crate::ui::components::Lifecycle;
-use crate::ui::components::component::Component;
-use crate::ui::components::interactive::is_mouse_in_rect;
-use crate::ui::components::lifecycle::EventFlow;
 use crossterm::event::{Event as CrosstermEvent, KeyCode, MouseEventKind};
 use mpsc::Sender;
 use ratatui::Frame;

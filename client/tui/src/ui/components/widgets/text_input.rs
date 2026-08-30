@@ -1,8 +1,6 @@
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
-use crate::ui::components::Lifecycle;
-use crate::ui::components::interactive::InteractiveComponent;
-use crate::ui::components::lifecycle::EventFlow;
+use crate::ui::components::{EventFlow, InteractiveComponent, Lifecycle};
 use crate::ui::theme::{default_block, dim_style};
 use crossterm::event::{Event as CrosstermEvent, KeyCode, KeyEvent};
 use ratatui::Frame;

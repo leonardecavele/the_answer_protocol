@@ -1,7 +1,6 @@
 use crate::states::app::AppState;
 use crate::states::game::{ChatChannel, ChatSender};
-use crate::ui::components::Lifecycle;
-use crate::ui::components::scrollable::ScrollableComponent;
+use crate::ui::components::{Lifecycle, ScrollableComponent};
 use crate::ui::text::wrap_str_to_lines;
 use crate::ui::theme::overlay_block;
 use ratatui::layout::Rect;

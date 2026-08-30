@@ -1,10 +1,7 @@
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
 use crate::states::game::{GameFocus, ItemActionsState, ItemLocation, Overlay};
-use crate::ui::components::Lifecycle;
-use crate::ui::components::component::Component;
-use crate::ui::components::interactive::is_mouse_in_rect;
-use crate::ui::components::lifecycle::EventFlow;
+use crate::ui::components::{Component, EventFlow, Lifecycle, is_mouse_in_rect};
 use crate::ui::theme::panel_block;
 use ratatui::layout::Alignment;
 use ratatui::widgets::Paragraph;

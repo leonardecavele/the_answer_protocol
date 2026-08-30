@@ -1,9 +1,7 @@
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
 use crate::states::game::FightPhase;
-use crate::ui::components::Lifecycle;
-use crate::ui::components::component::Component;
-use crate::ui::components::lifecycle::EventFlow;
+use crate::ui::components::{Component, EventFlow, Lifecycle};
 use crate::ui::theme::{default_block, dim_style};
 use api_client::ApiRequest;
 use api_client::commands::FightAttackCommand;

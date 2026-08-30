@@ -1,13 +1,11 @@
+use super::component::Component;
+use super::lifecycle::{EventFlow, Lifecycle};
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
-use crate::ui::components::component::Component;
 use crossterm::event::{Event as CrosstermEvent, MouseEvent};
 use ratatui::Frame;
 use ratatui::layout::Rect;
 use tokio::sync::mpsc;
-
-use crate::ui::components::Lifecycle;
-use crate::ui::components::lifecycle::EventFlow;
 
 pub trait InteractiveComponent: Lifecycle {
     fn render(&mut self, state: &AppState, frame: &mut Frame, area: Rect);
