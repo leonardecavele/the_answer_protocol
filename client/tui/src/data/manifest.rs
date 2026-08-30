@@ -23,8 +23,6 @@ pub struct NpcEntry {
     pub image_path: Option<String>,
     pub image_paths: Option<Vec<String>>,
     pub frame_ms: Option<u64>,
-    #[serde(default)]
-    pub actions: Vec<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]

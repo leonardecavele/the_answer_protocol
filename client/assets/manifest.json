@@ -3,26 +3,22 @@
         "0.vquetier": {
             "name": "vquetier",
             "type": "dialogue",
-            "image_path": "../assets/pictures/mobs/talk/vquetier/vquetier.png",
-            "actions": ["Talk"]
+            "image_path": "../assets/pictures/mobs/talk/vquetier/vquetier.png"
         },
         "1.faon": {
             "name": "faon",
             "type": "dialogue",
-            "image_path": "../assets/pictures/mobs/talk/faon/faon.png",
-            "actions": ["Talk"]
+            "image_path": "../assets/pictures/mobs/talk/faon/faon.png"
         },
         "2.smenard": {
             "name": "smenard",
             "type": "dialogue",
-            "image_path": "../assets/pictures/mobs/talk/smenard/smenard.png",
-            "actions": ["Talk"]
+            "image_path": "../assets/pictures/mobs/talk/smenard/smenard.png"
         },
         "3.mdourdoi": {
             "name": "mdourdoi",
             "type": "enemy",
-            "image_path": "../assets/pictures/mobs/fight/mdourdoi/mdourdoi_cluster_du_bas.png",
-            "actions": ["Talk", "Attack"]
+            "image_path": "../assets/pictures/mobs/fight/mdourdoi/mdourdoi_cluster_du_bas.png"
         },
         "4.gagulhon": {
             "name": "gagulhon",
@@ -31,74 +27,62 @@
                 "../assets/pictures/mobs/talk/gagulhon/gagulhon1.png",
                 "../assets/pictures/mobs/talk/gagulhon/gagulhon2.png"
             ],
-            "frame_ms": 500,
-            "actions": ["Talk"]
+            "frame_ms": 500
         },
         "5.ndalailallema": {
             "name": "ndalailallema",
             "type": "quest_giver",
-            "image_path": "../assets/pictures/mobs/quest/ndalailallema/ndalailallema.png",
-            "actions": ["Talk", "Quest"]
+            "image_path": "../assets/pictures/mobs/quest/ndalailallema/ndalailallema.png"
         },
         "6.gabach": {
             "name": "gabach",
             "type": "dialogue",
-			"image_path": "../assets/pictures/mobs/talk/gabach/gabach.jpg",
-            "actions": ["Talk"]
+			"image_path": "../assets/pictures/mobs/talk/gabach/gabach.jpg"
         },
         "7.enchevri": {
             "name": "enchevri",
             "type": "enemy",
-            "image_path": "../assets/pictures/mobs/fight/enchevri/enchevri_cluster_du_haut.png",
-            "actions": ["Talk", "Attack"]
+            "image_path": "../assets/pictures/mobs/fight/enchevri/enchevri_cluster_du_haut.png"
         },
         "8.acampion": {
             "name": "acampion",
             "type": "enemy",
-            "image_path": "../assets/pictures/mobs/fight/acampion/acampion_afk.png",
-            "actions": ["Talk", "Attack"]
+            "image_path": "../assets/pictures/mobs/fight/acampion/acampion_afk.png"
         },
         "9.mphippen": {
             "name": "mphippen",
             "type": "dialogue",
-            "image_path": "../assets/pictures/mobs/talk/mphippen/mphippen.jpeg",
-            "actions": ["Talk"]
+            "image_path": "../assets/pictures/mobs/talk/mphippen/mphippen.jpeg"
         },
         "10.crappo": {
             "name": "crappo",
             "type": "enemy",
-			"image_path": "../assets/pictures/mobs/fight/crappo/crappo.jpg",
-            "actions": ["Talk", "Attack"]
+			"image_path": "../assets/pictures/mobs/fight/crappo/crappo.jpg"
         },
         "11.ayteyssi": {
             "name": "ayteyssi",
             "type": "dialogue",
-            "image_path": "../assets/pictures/mobs/talk/ayteyssi/ayteyssi.png",
-            "actions": ["Talk"]
+            "image_path": "../assets/pictures/mobs/talk/ayteyssi/ayteyssi.png"
         },
         "12.ldecavel": {
             "name": "ldecavel",
             "type": "enemy",
-            "image_path": "../assets/pictures/mobs/fight/ldecavel/ldecavel.png",
-            "actions": ["Talk", "Attack"]
+            "image_path": "../assets/pictures/mobs/fight/ldecavel/ldecavel.png"
         },
         "13.cobussie": {
             "name": "cobussie",
             "type": "dialogue",
-			"image_path": "../assets/pictures/mobs/talk/cobussie/cobussie.jpeg",
-            "actions": ["Talk"]
+			"image_path": "../assets/pictures/mobs/talk/cobussie/cobussie.jpeg"
         },
         "14.ibady": {
             "name": "ibady",
             "type": "enemy",
-            "image_path": "../assets/pictures/mobs/fight/ibady/ibady.jpg",
-            "actions": ["Talk", "Attack"]
+            "image_path": "../assets/pictures/mobs/fight/ibady/ibady.jpg"
         },
         "15.bokim": {
             "name": "bokim",
             "type": "dialogue",
-			"image_path": "../assets/pictures/mobs/talk/bokim/bokim.jpg",
-            "actions": ["Talk"]
+			"image_path": "../assets/pictures/mobs/talk/bokim/bokim.jpg"
         }
     },
     "items": {
