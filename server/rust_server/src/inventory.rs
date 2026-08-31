@@ -1,10 +1,16 @@
 use crate::items::ItemId;
-use std::collections::HashSet;
 use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Inventory {
     items: HashSet<ItemId>,
+}
+
+impl Default for Inventory {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl Inventory {
@@ -15,7 +21,7 @@ impl Inventory {
     }
 
     pub fn contains_item(&self, item_id: ItemId) -> bool {
-        return self.items.contains(&item_id);
+        self.items.contains(&item_id)
     }
 
     pub fn add_item(&mut self, item_id: ItemId) {

@@ -67,7 +67,7 @@ func isOk(args string, client *session.Client, gameServerManager *game_conn.Game
 		return protocol.ResponseGameServerClosed, nil
 	}
 
-	if client.State != session.AUTHENTICATED {
+	if !client.IsAuthenticated() {
 		return protocol.ResponseNotConnected, nil
 	}
 

@@ -8,7 +8,9 @@ client/tui/docs/
 !server/assets/tests/
 !server/assets/tests/*.c
 *debug*
+*.py
 .zed
 .vscode
 *:Zone.Identifier
 *.log
+*_test.go

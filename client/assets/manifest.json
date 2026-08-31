@@ -116,7 +116,7 @@
             "image_path": "../assets/pictures/rooms/pature.jpeg",
             "direction": "N"
         },
-        "2.devant_l_ecole": {
+        "2.devant_l'école": {
 			"image_path": "../assets/pictures/rooms/devant_l_ecole.jpg",
             "direction": "W"
         },

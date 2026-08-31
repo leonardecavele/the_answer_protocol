@@ -112,7 +112,7 @@ func chatPrivateScope(client *session.Client, message string, _ *game_conn.GameS
 }
 
 func handleChatCommand(args string, client *session.Client, gameServerManager *game_conn.GameServerManager) (string, error) {
-	if client.State != session.AUTHENTICATED {
+	if !client.IsAuthenticated() {
 		return protocol.ResponseNotConnected, nil
 	}
 

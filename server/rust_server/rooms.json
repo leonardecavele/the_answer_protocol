@@ -8,11 +8,11 @@
     {
       "name": "pature",
       "description": "Un petit pré verdoyant et fleuri.",
-      "exits": { "north": "cluster_du_bas", "east": "devant_l_ecole" },
+      "exits": { "north": "cluster_du_bas", "east": "devant_l'école" },
       "items": [0]
     },
     {
-      "name": "devant_l_ecole",
+      "name": "devant_l'école",
       "description": "Un grand panneau 42 vous accueille à la meilleure école du numérique.",
       "exits": { "west": "entree", "south": "pature" }
     },
@@ -38,7 +38,7 @@
     {
       "name": "entree",
       "description": "Habitat naturel de ceux qui maîtrisent l'art du babyfoot.",
-      "exits": { "west": "afk", "east": "devant_l_ecole" }
+      "exits": { "west": "afk", "east": "devant_l'école" }
     },
     {
       "name": "cantina",

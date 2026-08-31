@@ -74,7 +74,7 @@ impl Parser {
                     ));
                 }
             }
-            for (_dir, dest) in room.get_exits() {
+            for dest in room.get_exits().values() {
                 if !valid_room_names.contains(dest) {
                     return Err(format!(
                         "Room {} ({}) has an exit to invalid room name '{}'",
@@ -122,10 +122,10 @@ impl Parser {
         if parsed["quests"].is_array() {
             for item in parsed["quests"].members() {
                 if let Some(quest) = Quest::new(item) {
-                    if quests.contains_key(quest.get_id()) {
-                        return Err(format!("duplicate quest: {}", quest.get_id()));
+                    if quests.contains_key(quest.get_name()) {
+                        return Err(format!("duplicate quest: {}", quest.get_name()));
                     }
-                    quests.insert(quest.get_id().clone(), quest);
+                    quests.insert(quest.get_name().to_string(), quest);
                 } else {
                     return Err(format!("invalid quest: {}", item));
                 }
@@ -226,7 +226,10 @@ impl Parser {
                     for (dir, dest) in room["exits"].entries() {
                         let dir_lower = dir.to_lowercase();
                         if !["north", "east", "south", "west"].contains(&dir_lower.as_str()) {
-                            return Err(format!("invalid exit direction '{}' in room {}", dir, room_id));
+                            return Err(format!(
+                                "invalid exit direction '{}' in room {}",
+                                dir, room_id
+                            ));
                         }
                         if let Some(dest_str) = dest.as_str() {
                             exits.insert(dir.to_uppercase(), dest_str.to_string());

@@ -77,6 +77,7 @@ func main() {
 	}()
 
 	gameServerManager := &game_conn.GameServerManager{}
+	connectionManager := session.NewConnectionManager()
 	room := session.NewRoom()
 
 	go gameServerManager.HandleGameServer(
@@ -107,6 +108,16 @@ func main() {
 			}
 		}
 
-		go client_conn.HandleClient(session.NewClient(conn, room), gameServerManager)
+		client := session.NewClient(conn, room)
+		if err := connectionManager.Subscribe(client); err != nil {
+			logger.AppLogger.Error("%s Connection rejected: %v", client.Id, err)
+			_ = conn.Close()
+			continue
+		}
+
+		go func() {
+			defer connectionManager.Release(client)
+			client_conn.HandleClient(client, gameServerManager)
+		}()
 	}
 }

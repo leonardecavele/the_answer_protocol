@@ -29,6 +29,7 @@ type Client struct {
 	Room        *Room
 	commandChan chan game_conn.CommandFromGameServer
 	eventChan   chan protocol.Event
+	stateMutex  sync.RWMutex
 	writeMutex  sync.Mutex
 }
 
@@ -45,7 +46,7 @@ func NewClient(conn net.Conn, room *Room) *Client {
 
 func (c *Client) DeleteClient(gameServerManager *game_conn.GameServerManager) error {
 	username := c.Username
-	state := c.State
+	state := c.GetState()
 
 	if state == AUTHENTICATED && c.Group != nil {
 		c.QuitGroup()
@@ -60,6 +61,8 @@ func (c *Client) DeleteClient(gameServerManager *game_conn.GameServerManager) er
 		})
 	}
 
+	c.Room.DeleteUsername(c)
+
 	if state == AUTHENTICATED {
 		c.Room.BroadcastEvent(protocol.EventBatch{
 			IgnoredPlayers: []string{username},
@@ -72,7 +75,6 @@ func (c *Client) DeleteClient(gameServerManager *game_conn.GameServerManager) er
 		})
 	}
 
-	c.Room.DeleteUsername(c)
 	closeErr := c.Conn.Close()
 
 	if state == AUTHENTICATED {
@@ -85,6 +87,28 @@ func (c *Client) DeleteClient(gameServerManager *game_conn.GameServerManager) er
 		}
 	}
 	return closeErr
+}
+
+func (c *Client) GetState() ClientState {
+	if c == nil {
+		return CONNECTED
+	}
+
+	c.stateMutex.RLock()
+	defer c.stateMutex.RUnlock()
+
+	return c.State
+}
+
+func (c *Client) IsAuthenticated() bool {
+	return c.GetState() == AUTHENTICATED
+}
+
+func (c *Client) authenticate(username string) {
+	c.stateMutex.Lock()
+	c.Username = username
+	c.State = AUTHENTICATED
+	c.stateMutex.Unlock()
 }
 
 func (c *Client) Write(message string) error {
@@ -170,10 +194,20 @@ func (c *Client) InSameRoom(clients []*Client, gameServerManager *game_conn.Game
 	return true, nil
 }
 
-func (c *Client) SendEvent(event protocol.Event) {
-	c.eventChan <- event
+func (c *Client) SendEvent(event protocol.Event) bool {
+	select {
+	case c.eventChan <- event:
+		return true
+	default:
+		return false
+	}
 }
 
-func (c *Client) SendCommand(command game_conn.CommandFromGameServer) {
-	c.commandChan <- command
+func (c *Client) SendCommand(command game_conn.CommandFromGameServer) bool {
+	select {
+	case c.commandChan <- command:
+		return true
+	default:
+		return false
+	}
 }

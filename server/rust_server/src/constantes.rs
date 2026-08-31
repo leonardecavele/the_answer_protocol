@@ -3,8 +3,10 @@ use std::time::Duration;
 use crate::room::RoomId;
 
 pub const TEST_FILES_DIR: &str = "assets/code";
-pub const NPC_DMG: u32 = 100;
-pub const MIN: u64 = 60;
+
+pub const NPC_MAX_DMG: u32 = 50;
+pub const NPC_MIN_DMG: u32 = 25;
+pub const MINUTE: u64 = 60;
 pub const MIN_DMG_DEALT: u32 = 5;
 pub const MAX_DMG_DEALT: u32 = u32::MAX;
 pub const LOST_ITEM: u8 = 0;
@@ -13,8 +15,8 @@ pub const CODE_NL_SEP: &str = "<NL>";
 pub const CODE_SP_SEP: &str = "<SP>";
 pub const LOST_ITEM_SPAWN: &str = "pature";
 pub const LOST_ITEM_SPAWN_ID: RoomId = 2 as RoomId;
-pub const PLAYER_ROOM_SPAWN: &str = "devant_l_ecole";
-pub const MAX_TIME_FOR_COMBAT: Duration = Duration::from_secs(3 * MIN + 42);
+pub const PLAYER_ROOM_SPAWN: &str = "devant_l'école";
+pub const MAX_TIME_FOR_COMBAT: Duration = Duration::from_secs(3 * MINUTE + 42);
 pub const NPC_RESPAWN_TIME: Duration = Duration::from_secs(30);
 pub const ITEM_DESPAWN_TIME: Duration = Duration::from_mins(1);
 pub const TICK_TIME_AMPLIFICATION: u64 = 1;
@@ -61,6 +63,7 @@ pub enum ErrorCode {
     PlayerNotInCombat,
     FileNotFound,
     NoContent,
+    RoomNotFound,
 }
 
 impl ErrorCode {
@@ -88,6 +91,7 @@ impl ErrorCode {
             Self::PlayerAlreadyInCombat => 410,
             Self::PlayerNotInCombat => 411,
             Self::FileNotFound => 412,
+            Self::RoomNotFound => 413,
             Self::ConnectionFailed => 900,
             Self::SendFailed => 901,
             Self::InvalidGroupCommand => 997,
