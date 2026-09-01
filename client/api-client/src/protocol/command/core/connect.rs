@@ -35,6 +35,11 @@ impl Command for ConnectCommand {
     fn refine_error(&self, error: &mut CommandError) {
         error.with_message(match error.code {
             Some(201) => Some(format!("{} already taken", self.player_name)),
+            Some(400) => Some(
+                "a username must be 3 to 20 characters, start with a letter, \
+                 and use only letters, digits, - or _"
+                    .to_string(),
+            ),
             _ => None,
         })
     }

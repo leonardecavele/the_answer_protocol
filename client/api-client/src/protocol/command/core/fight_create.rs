@@ -41,6 +41,13 @@ impl Command for FightCreateCommand {
         Ok(FightCreateResponse)
     }
 
+    fn refine_error(&self, error: &mut CommandError) {
+        error.with_message(match error.code {
+            Some(404) => Some("npc not found".to_string()),
+            _ => None,
+        })
+    }
+
     fn from_str(args: &str) -> Option<Self> {
         Some(Self {
             npc_id: args.to_string(),

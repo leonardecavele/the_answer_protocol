@@ -30,7 +30,7 @@ impl Command for GroupChatCommand {
 
     fn refine_error(&self, error: &mut CommandError) {
         error.with_message(match error.code {
-            Some(401) => Some("you are not in a group".to_string()),
+            Some(404) => Some("group not found".to_string()),
             _ => None,
         })
     }

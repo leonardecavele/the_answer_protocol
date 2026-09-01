@@ -81,7 +81,6 @@ impl Command for QuestCommand {
 
     fn refine_error(&self, error: &mut CommandError) {
         error.with_message(match error.code {
-            Some(400) => Some("no quest available".to_string()),
             Some(404) => Some("npc not found".to_string()),
             _ => None,
         })

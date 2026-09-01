@@ -38,8 +38,8 @@ impl Command for AttackCommand {
 
     fn refine_error(&self, error: &mut CommandError) {
         error.with_message(match error.code {
-            Some(400) => Some("npc not hostile".to_string()),
             Some(404) => Some("npc not found".to_string()),
+            Some(405) => Some("this npc cannot be attacked".to_string()),
             _ => None,
         })
     }
