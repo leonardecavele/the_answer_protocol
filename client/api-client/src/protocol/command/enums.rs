@@ -50,10 +50,27 @@ use crate::protocol::command::resource_interaction::status::StatusResponse;
 use crate::protocol::command::resource_interaction::take::TakeResponse;
 use crate::protocol::command::resource_interaction::talk::TalkResponse;
 
+fn strip_keyword<'a>(input: &'a str, keyword: &str) -> Option<&'a str> {
+    let mut rest = input.trim_start();
+
+    for word in keyword.split_whitespace() {
+        let end = rest.find(char::is_whitespace).unwrap_or(rest.len());
+        let (head, tail) = rest.split_at(end);
+
+        if !head.eq_ignore_ascii_case(word) {
+            return None;
+        }
+
+        rest = tail.trim_start();
+    }
+
+    Some(rest)
+}
+
 macro_rules! define_api_protocol {
     (
         $(
-            $variant:ident($cmd_type:ty, $resp_type:ty) => $cmd_name:expr
+            $variant:ident($cmd_type:ty, $resp_type:ty) => [$($keyword:expr),+ $(,)?]
         ),* $(,)?
     ) => {
         #[derive(Debug, Clone)]
@@ -65,16 +82,15 @@ macro_rules! define_api_protocol {
 
         impl ApiRequest {
             pub fn parse(input: &str) -> Option<Self> {
-                let mut parts = input.trim().splitn(2, ' ');
-                let keyword = parts.next()?.to_lowercase();
-                let args = parts.next().unwrap_or("");
-
-                match keyword.as_str() {
+                $(
                     $(
-                        $cmd_name => <$cmd_type>::from_str(args).map(ApiRequest::$variant),
-                    )*
-                    _ => None,
-                }
+                        if let Some(args) = strip_keyword(input, $keyword) {
+                            return <$cmd_type>::from_str(args).map(ApiRequest::$variant);
+                        }
+                    )+
+                )*
+
+                None
             }
         }
 
@@ -99,27 +115,27 @@ macro_rules! define_api_protocol {
 }
 
 define_api_protocol! {
-    Connect(ConnectCommand, ConnectResponse) => "connect",
-    Quit(QuitCommand, QuitResponse) => "quit",
-    Look(LookCommand, LookResponse) => "look",
-    Move(MoveCommand, MoveResponse) => "move",
-    Who(WhoCommand, WhoResponse) => "who",
-    FightCreate(FightCreateCommand, FightCreateResponse) => "fc",
-    FightAttack(FightAttackCommand, FightAttackResponse) => "fa",
-    GlobalChat(GlobalChatCommand, GlobalChatResponse) => "say",
-    RoomChat(RoomChatCommand, RoomChatResponse) => "cr",
-    GroupChat(GroupChatCommand, GroupChatResponse) => "cg",
-    PrivateChat(PrivateChatCommand, PrivateChatResponse) => "msg",
-    Take(TakeCommand, TakeResponse) => "take",
-    Drop(DropCommand, DropResponse) => "drop",
-    Inventory(InventoryCommand, InventoryResponse) => "inv",
-    Status(StatusCommand, StatusResponse) => "status",
-    Talk(TalkCommand, TalkResponse) => "talk",
-    Attack(AttackCommand, AttackResponse) => "attack",
-    Quest(QuestCommand, QuestResponse) => "quest",
-    Quests(QuestsCommand, QuestsResponse) => "quests",
-    GroupCreate(GroupCreateCommand, GroupCreateResponse) => "gc",
-    GroupJoin(GroupJoinCommand, GroupJoinResponse) => "gj",
-    GroupLeave(GroupLeaveCommand, GroupLeaveResponse) => "gl",
-    GroupInvite(GroupInviteCommand, GroupInviteResponse) => "gi",
+    Connect(ConnectCommand, ConnectResponse) => ["connect"],
+    Quit(QuitCommand, QuitResponse) => ["quit"],
+    Look(LookCommand, LookResponse) => ["look"],
+    Move(MoveCommand, MoveResponse) => ["move"],
+    Who(WhoCommand, WhoResponse) => ["who"],
+    FightCreate(FightCreateCommand, FightCreateResponse) => ["fight create", "fc"],
+    FightAttack(FightAttackCommand, FightAttackResponse) => ["fight attack", "fa"],
+    GlobalChat(GlobalChatCommand, GlobalChatResponse) => ["chat global", "say"],
+    RoomChat(RoomChatCommand, RoomChatResponse) => ["chat room", "cr"],
+    GroupChat(GroupChatCommand, GroupChatResponse) => ["chat group", "cg"],
+    PrivateChat(PrivateChatCommand, PrivateChatResponse) => ["chat private", "msg"],
+    Take(TakeCommand, TakeResponse) => ["take"],
+    Drop(DropCommand, DropResponse) => ["drop"],
+    Inventory(InventoryCommand, InventoryResponse) => ["inventory", "inv"],
+    Status(StatusCommand, StatusResponse) => ["status"],
+    Talk(TalkCommand, TalkResponse) => ["talk"],
+    Attack(AttackCommand, AttackResponse) => ["attack"],
+    Quest(QuestCommand, QuestResponse) => ["quest"],
+    Quests(QuestsCommand, QuestsResponse) => ["quests"],
+    GroupCreate(GroupCreateCommand, GroupCreateResponse) => ["group create", "gc"],
+    GroupJoin(GroupJoinCommand, GroupJoinResponse) => ["group join", "gj"],
+    GroupLeave(GroupLeaveCommand, GroupLeaveResponse) => ["group leave", "gl"],
+    GroupInvite(GroupInviteCommand, GroupInviteResponse) => ["group invite", "gi"],
 }

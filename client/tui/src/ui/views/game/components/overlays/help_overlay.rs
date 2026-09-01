@@ -13,7 +13,7 @@ use ratatui::{
 };
 use tokio::sync::mpsc;
 
-const HELP_WIDTH: u16 = 60;
+const HELP_WIDTH: u16 = 64;
 const HELP_HEIGHT: u16 = 20;
 
 pub struct HelpOverlay;
@@ -123,23 +123,23 @@ impl ScrollableComponent for HelpOverlay {
             Line::from("  look : look around the room"),
             Line::from("  move <NORTH|SOUTH|EAST|WEST> : move to direction"),
             Line::from("  who : see online players"),
-            Line::from("  say <msg> : send a global message"),
-            Line::from("  cr <msg> : send a message to your room"),
-            Line::from("  cg <msg> : send a message to your group"),
-            Line::from("  msg <name> <msg> : send a private message"),
+            Line::from("  chat global <msg> (say) : send a global message"),
+            Line::from("  chat room <msg> (cr) : send a message to your room"),
+            Line::from("  chat group <msg> (cg) : send a message to your group"),
+            Line::from("  chat private <name> <msg> (msg) : send a private message"),
             Line::from("  take <item> : take an item"),
             Line::from("  drop <item> : drop an item"),
-            Line::from("  inv : view inventory"),
+            Line::from("  inventory (inv) : view inventory"),
             Line::from("  status : view status"),
             Line::from("  talk <npc> : talk to npc"),
             Line::from("  attack <npc> : attack npc"),
-            Line::from("  fc <npc> : duel an npc in the code editor"),
+            Line::from("  fight create <npc> (fc) : duel an npc in the code editor"),
             Line::from("  quest <npc> : ask an npc for a quest"),
             Line::from("  quests : list all active quests"),
-            Line::from("  gc : create a new group"),
-            Line::from("  gj <name> : join a player's group"),
-            Line::from("  gi <name> : invite a player to your group"),
-            Line::from("  gl : leave your current group"),
+            Line::from("  group create (gc) : create a new group"),
+            Line::from("  group join <name> (gj) : join a player's group"),
+            Line::from("  group invite <name> (gi) : invite a player to your group"),
+            Line::from("  group leave (gl) : leave your current group"),
             Line::from(""),
             Line::from(vec![Span::styled(
                 "Hud & status",
