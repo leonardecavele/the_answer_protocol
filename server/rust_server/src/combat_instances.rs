@@ -87,6 +87,8 @@ pub struct CombatInstance {
     pub combat_start_time: Instant, // Option<bool> because the success is None until the player played
     file_name: String,
     pub evaluating_players_count: u32,
+    left_players: Vec<PlayerId>,
+    died_players: Vec<PlayerId>
 }
 
 impl CombatInstance {
@@ -111,7 +113,13 @@ impl CombatInstance {
             combat_start_time: Instant::now(),
             file_name,
             evaluating_players_count: 0,
+            left_players: Vec::new(),
+            died_players: Vec::new()
         }
+    }
+
+    pub fn player_died(&mut self, player_id: PlayerId) {
+        self.died_players.push(player_id);
     }
 
     pub fn get_leader(&self) -> PlayerId {
@@ -129,6 +137,10 @@ impl CombatInstance {
         self.npc_id
     }
 
+    pub fn player_left_group(&mut self, player_id: PlayerId) {
+        self.left_players.push(player_id);
+    }
+
     pub fn force_finish(&mut self) {
         for success in self.players_success.values_mut() {
             if success.is_none() {
@@ -136,6 +148,14 @@ impl CombatInstance {
             }
         }
     }
+    pub fn get_died_players(&self) -> &Vec<PlayerId> {
+        &self.died_players
+    }
+
+    pub fn get_left_players(&self) -> &Vec<PlayerId> {
+        &self.left_players
+    }
+    
     pub fn all_players_finished(&self) -> bool {
         self.players_success.values().all(|s| s.is_some())
     }

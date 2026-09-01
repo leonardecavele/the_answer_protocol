@@ -13,7 +13,6 @@ pub struct Save {
     pub max_hp: u32,
     pub inventory: Inventory,
     pub current_room: String,
-    pub dialogs_index: HashMap<String, (usize, usize)>,
     pub quests: Vec<(Questid, QuestState)>,
 }
 
@@ -26,7 +25,6 @@ impl Default for Save {
             max_hp: PLAYER_STARTING_MAX_HP,
             inventory: Inventory::new(),
             current_room: PLAYER_ROOM_SPAWN.to_string(),
-            dialogs_index: HashMap::new(),
             quests: Vec::new(),
         }
     }

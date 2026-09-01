@@ -7,7 +7,7 @@ use crate::npc::Npc;
 use crate::room::RoomName;
 use crate::save::Save;
 use rand::RngExt;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 pub type PlayerId = u32;
 pub type PlayerCount = u32;
@@ -50,7 +50,7 @@ impl Player {
             max_hp: save.max_hp,
             inventory: save.inventory,
             current_room: save.current_room,
-            dialogs_index: save.dialogs_index,
+            dialogs_index: HashMap::new(),
         }
     }
     pub fn set_name(&mut self, new_name: String) {

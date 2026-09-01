@@ -1,5 +1,5 @@
 use crate::constants::{
-    BASE_COMMAND_RESPONSE, CODE_NL_SEP, CODE_SP_SEP, ErrorCode, LOST_ITEM, LOST_ITEM_SPAWN, MAX_TIME_FOR_COMBAT, NPC_MOB, SKIP_PLAYER_EXISTS_TEST, TEST_FILES_DIR,
+    BASE_COMMAND_RESPONSE, CODE_NL_SEP, CODE_SP_SEP, ErrorCode, MAX_TIME_FOR_COMBAT, NPC_MOB, SKIP_PLAYER_EXISTS_TEST, TEST_FILES_DIR,
 };
 use crate::game_manager::GameManager;
 use crate::items::{Item, ItemId};
@@ -518,7 +518,7 @@ impl GameManager {
             command_name, player_name, data
         );
         
-        if !(command_name == "CONNECT" || command_name == "QUIT" || command_name == "FIGHT_ATTACK") {
+        if !(command_name == "CONNECT" || command_name == "QUIT" || command_name == "FIGHT_ATTACK" || command_name == "GROUP LEAVE") {
             if let Some(already_in_instance) = self.check_player_is_in_instance(player_name, player_id, command_name){
                 return already_in_instance.dump();
             }
@@ -1061,6 +1061,18 @@ impl GameManager {
                     command_name,
                     ErrorCode::NoError,
                     quests_json.dump().as_str(),
+                )
+                .dump()
+            }
+            "GROUP LEAVE" => {
+                if let Some(instance) = self.combat_instances.get_mut_instance_for_player(player_id) {
+                    instance.player_left_group(player_id);
+                }
+                generate_json(
+                    player_name,
+                    command_name,
+                    ErrorCode::NoError,
+                    BASE_COMMAND_RESPONSE,
                 )
                 .dump()
             }
