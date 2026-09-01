@@ -1,10 +1,10 @@
-use crate::combat_instances::CombatInstanceManager;
+use crate::combat_instances::{CombatInstance, CombatInstanceManager};
 use crate::commands::generate_json;
 use crate::constants::LOOT::TShirt;
 use crate::constants::{
     CODE_NL_SEP, CODE_SP_SEP, Direction, LOST_ITEM, LOST_ITEM_SPAWN, MAX_DMG_DEALT,
     MAX_TIME_FOR_COMBAT, MIN_DMG_DEALT, NPC_MAX_DMG, NPC_MIN_DMG, NPC_RESPAWN_TIME,
-    PLAYER_ROOM_SPAWN, PLAYER_STARTING_HP, TEST_FILES_DIR,
+    PLAYER_ROOM_SPAWN, TEST_FILES_DIR,
 };
 
 use crate::constants::ErrorCode;
@@ -92,23 +92,6 @@ impl GameManager {
     }
 
     fn save_player(&mut self, player_id: PlayerId) {
-        if self.player_has_item(player_id, LOST_ITEM) {
-            let player_name = self.players.get(&player_id).unwrap().get_name().to_string();
-            let mut players = self.get_all_players_at_room(LOST_ITEM_SPAWN);
-            let lost_item_name = self.get_item_name(LOST_ITEM);
-            let event = self.generate_event_json(
-                &mut players,
-                &player_name,
-                "DROP",
-                crate::items::Item::protocol_representation(LOST_ITEM, lost_item_name.as_str())
-                    .as_str(),
-                true,
-            );
-            self.remove_item_from_player(player_id, LOST_ITEM);
-            self.add_item_to_room(LOST_ITEM_SPAWN, LOST_ITEM);
-            self.add_diff_to_tick(event);
-        }
-
         if let Some(player) = self.players.get(&player_id) {
             let mut inventory = crate::inventory::Inventory::new();
             for item_id in player.get_items() {
@@ -129,7 +112,6 @@ impl GameManager {
                 max_hp: player.get_max_hp(),
                 inventory,
                 current_room: player.get_current_room().to_owned(),
-                dialogs_index: std::collections::HashMap::new(),
                 quests: player_quests,
             };
             if let Err(e) =
@@ -336,6 +318,7 @@ impl GameManager {
         }
 
         if !self.room_exists(&save_data.current_room) {
+            warn!("Room '{}' does not exist, falling back to default spawn room", save_data.current_room);
             save_data.current_room = PLAYER_ROOM_SPAWN.to_string();
         }
 
@@ -413,6 +396,24 @@ impl GameManager {
                 return;
             }
         };
+
+        if self.player_has_item(player_id, LOST_ITEM) {
+            let player_name = self.players.get(&player_id).unwrap().get_name().to_string();
+            let mut players = self.get_all_players_at_room(LOST_ITEM_SPAWN);
+            let lost_item_name = self.get_item_name(LOST_ITEM);
+            let event = self.generate_event_json(
+                &mut players,
+                &player_name,
+                "DROP",
+                crate::items::Item::protocol_representation(LOST_ITEM, lost_item_name.as_str())
+                    .as_str(),
+                true,
+            );
+            self.remove_item_from_player(player_id, LOST_ITEM);
+            self.add_item_to_room(LOST_ITEM_SPAWN, LOST_ITEM);
+            self.add_diff_to_tick(event);
+        }
+
         self.save_player(player_id);
         
         if let Some(player) = self.players.remove(&player_id) {
@@ -600,11 +601,22 @@ impl GameManager {
     }
 
     pub fn get_npcs_in_room_as_protocol_representations(&self, room_name: &str) -> Vec<String> {
-        self.all_npcs
+        let mut npcs: Vec<_> = self
+            .all_npcs
             .values()
-            .filter(|&npc| npc.get_spawn_room() == room_name && npc.get_death().is_none())
+            .filter(|npc| {
+                npc.get_spawn_room() == room_name
+                    && npc.get_death().is_none()
+            })
+            .collect();
+    
+        npcs.sort_by_key(|npc| npc.get_id());
+        // sort by id to ensure consistent order
+        npcs
+            .into_iter()
             .map(|npc| npc.get_protocol_representation())
             .collect()
+
     }
 
     pub fn punish_inactive_players_in_combat(&mut self) {
@@ -715,11 +727,18 @@ impl GameManager {
     }
 
     pub fn convert_items_to_string(&self, inventory: &Inventory) -> Vec<String> {
-        inventory
+        let mut item_ids: Vec<_> = inventory
             .get_items()
             .iter()
-            .map(|item_id| format!("{}.{}", item_id, self.get_item_name(*item_id)))
-            .collect()
+            .copied()
+            .collect();
+        
+        item_ids.sort_unstable();
+        
+        item_ids
+            .into_iter()
+            .map(|item_id| format!("{}.{}", item_id, self.get_item_name(item_id)))
+            .collect::<Vec<String>>()
     }
 
     pub fn reset_dropped_at_for_item(&mut self, item_id: ItemId) {
@@ -822,6 +841,9 @@ impl GameManager {
             false,
         );
         self.add_diff_to_tick(event);
+        if let Some(instance) = self.combat_instances.get_mut_instance_for_player(player_id) {
+            instance.player_died(player_id);
+        }
     }
 
     pub fn get_player_instance_group(&self, player_id: PlayerId) -> Option<Vec<String>> {
@@ -1032,15 +1054,25 @@ impl GameManager {
                 self.get_room_id_from_name(PLAYER_ROOM_SPAWN)
             })
     }
-    pub fn get_finished_instances_players(&mut self) -> Vec<Vec<PlayerId>> {
-        let mut vec: Vec<Vec<PlayerId>> = Vec::new();
-        let mut players: Vec<PlayerId> = Vec::new();
+    pub fn get_finished_instances_players(&mut self) -> Vec<Vec<(PlayerId, bool)>> {
+        fn can_send_teleport_event(instance: &CombatInstance, player: PlayerId) -> bool {
+            let left_players = instance.get_left_players();
+            let died_players = instance.get_died_players();
+            !died_players.is_empty() && !left_players.contains(&player) && !died_players.contains(&player)
+        }
+
+        let mut vec: Vec<Vec<(PlayerId, bool)>> = Vec::new();
         for (_npc_id, instance) in self.combat_instances.instances.iter() {
             if instance.all_players_finished() {
-                players.extend(instance.get_grouped_players());
-                players.push(instance.get_leader());
-                vec.push(players.clone());
-                players.clear();
+                let mut players_info: Vec<(PlayerId, bool)> = Vec::new();
+                let mut all_players = instance.get_grouped_players().clone();
+                all_players.push(instance.get_leader());
+                
+                for player in all_players {
+                    players_info.push((player, can_send_teleport_event(instance, player)));
+                }
+                
+                vec.push(players_info);
             }
         }
         vec
@@ -1054,17 +1086,35 @@ impl GameManager {
         for grouped_players in finished_instances_players {
             if !grouped_players.is_empty() {
                 let mut grouped_players_strings: Vec<String> = Vec::new();
-                for player in grouped_players {
-                    if let Some(player) = self.get_player(player) {
+                let mut send_teleport_event_players: Vec<String> = Vec::new();
+                for (player_id, can_send) in grouped_players {
+                    if let Some(player) = self.get_player(player_id) {
                         grouped_players_strings.push(player.get_name().to_owned());
+                        if can_send {
+                            send_teleport_event_players.push(player.get_name().to_owned());
+                        }
                     }
                 }
-                let event = GameManager::generate_no_player_event_json(
+                let fight_end_event = GameManager::generate_no_player_event_json(
                     &grouped_players_strings,
                     "FIGHT END",
                     "",
                 );
-                self.add_diff_to_tick(event);
+                self.add_diff_to_tick(fight_end_event);
+
+                for player in &send_teleport_event_players {
+                    if let Some(player) = self.get_mut_player_from_name(player){
+                        player.move_to_room(&PLAYER_ROOM_SPAWN.to_owned());   
+                    }
+        
+                }
+                let teleport_event = GameManager::generate_no_player_event_json(
+                    &send_teleport_event_players,
+                    "TELEPORT",
+                    "",
+                );
+                self.add_diff_to_tick(teleport_event);
+                
             }
         }
         self.combat_instances.remove_finished_instances();
