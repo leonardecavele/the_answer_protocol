@@ -1,12 +1,10 @@
 package game_conn
 
 import (
-	"go_server/config"
 	serverError "go_server/error"
 	"go_server/helper"
 	"go_server/logger"
 	"go_server/protocol"
-	"strconv"
 	"sync"
 	"time"
 )
@@ -125,12 +123,11 @@ func (manager *GameServerManager) AskQuestion(question QuestionToGameServer) (An
 
 func (manager *GameServerManager) HandleGameServer(
 	quit <-chan struct{},
+	addr string,
 	reconnectPlayers func(*GameServerManager) error,
 	routeCommand func(username string, command CommandFromGameServer) bool,
 	broadcastEvent func(eventBatch protocol.EventBatch),
 ) {
-	addr := config.GameServerIP + ":" + strconv.Itoa(config.GameServerPort)
-
 	for {
 		select {
 		case <-quit:

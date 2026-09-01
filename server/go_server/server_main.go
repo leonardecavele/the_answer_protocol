@@ -2,6 +2,8 @@ package main
 
 import (
 	"bufio"
+	"errors"
+	"flag"
 	"fmt"
 	"go_server/client_conn"
 	"go_server/config"
@@ -14,7 +16,6 @@ import (
 	"net"
 	"os"
 	"os/signal"
-	"strconv"
 	"strings"
 	"sync"
 	"syscall"
@@ -31,6 +32,15 @@ func shutdownServer(quit chan struct{}, listener net.Listener, stopOnce *sync.On
 }
 
 func main() {
+	serverOptions, err := config.ParseServerOptions(os.Args[1:])
+	if err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			return
+		}
+		fmt.Fprintln(os.Stderr, "Invalid arguments:", err)
+		os.Exit(2)
+	}
+
 	logFile, logErr := os.Create("app.log")
 	if logErr != nil {
 		logger.AppLogger.Error("Log file error: %v", logErr)
@@ -82,19 +92,20 @@ func main() {
 
 	go gameServerManager.HandleGameServer(
 		quit,
+		serverOptions.RustServerAddress(),
 		room.ReconnectPlayersToGameServer,
 		room.RouteCommand,
 		room.BroadcastEvent,
 	)
 
-	listener, listenErr := net.Listen("tcp", ":"+strconv.Itoa(config.GoServerPort))
+	listener, listenErr := net.Listen("tcp", serverOptions.GoServerAddress())
 	if listenErr != nil {
 		logger.AppLogger.Error(fmt.Sprint(listenErr))
 		os.Exit(int(serverError.CodeListenerError))
 	}
 	defer listener.Close()
 
-	logger.AppLogger.Info("TCP server started on " + helper.GetServerIP() + ":" + strconv.Itoa(config.GoServerPort))
+	logger.AppLogger.Info("TCP server started on %s", net.JoinHostPort(helper.GetServerIP(), fmt.Sprint(serverOptions.GoServerPort)))
 
 	for {
 		conn, err := listener.Accept()
