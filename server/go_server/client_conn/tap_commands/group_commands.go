@@ -1,6 +1,8 @@
 package tap_commands
 
 import (
+	"errors"
+	serverError "go_server/error"
 	"go_server/game_conn"
 	"go_server/protocol"
 	"go_server/session"
@@ -133,6 +135,15 @@ func groupLeave(args string, client *session.Client, gameServerManager *game_con
 			EventName: "GROUP LEAVE",
 		})
 	}
+
+	if err := gameServerManager.WriteCommand(game_conn.CommandToGameServer{
+		Player:    client.Username,
+		Command:   "GROUP LEAVE",
+		Arguments: "",
+	}); err != nil && !errors.Is(err, serverError.ErrGameServerNotConnected) {
+		return "", err
+	}
+
 	return "OK", nil
 }
 
