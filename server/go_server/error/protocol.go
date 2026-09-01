@@ -41,6 +41,7 @@ const (
 	PlayerNotInCombatError     = 411
 	FileNotFoundError          = 412
 	RoomNotFoundError          = 413
+	TooManyRequestsError       = 429
 
 	ConnectionFailedError  = 900
 	SendFailedError        = 901

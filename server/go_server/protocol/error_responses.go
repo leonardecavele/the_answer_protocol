@@ -46,6 +46,7 @@ var (
 	ResponsePlayerNotInCombat     = ResponseError(serverError.PlayerNotInCombatError, "PLAYER_NOT_IN_COMBAT")
 	ResponseFileNotFound          = ResponseError(serverError.FileNotFoundError, "FILE_NOT_FOUND")
 	ResponseRoomNotFound          = ResponseError(serverError.RoomNotFoundError, "ROOM_NOT_FOUND")
+	ResponseTooManyRequests       = ResponseError(serverError.TooManyRequestsError, "TOO_MANY_REQUESTS")
 	ResponseConnectionFailed      = ResponseError(serverError.ConnectionFailedError, "CONNECTION_FAILED")
 	ResponseGameServerClosed      = ResponseConnectionFailed
 	ResponseSendFailed            = ResponseError(serverError.SendFailedError, "SEND_FAILED")

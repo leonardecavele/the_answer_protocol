@@ -102,6 +102,14 @@ func HandleClient(client *session.Client, gameServerManager *game_conn.GameServe
 			return
 		}
 
+		if !client.AllowCommand() {
+			logger.AppLogger.Error("%s Command rate limit exceeded", client.Id)
+			if err := client.Write(protocol.ResponseTooManyRequests); err != nil {
+				logger.AppLogger.Error("%s Write error: %v\n", client.Id, err)
+			}
+			return
+		}
+
 		logger.AppLogger.Info("%s Client Read: %s", client.Id, str)
 		response, err := handleTapCommand(str, client, gameServerManager)
 		if err != nil {
