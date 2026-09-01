@@ -108,7 +108,7 @@ func (gameServer *GameServer) Read(
 				Events: []protocol.Event{
 					{
 						EventName: "GAME SERVER",
-						Data: "DISCONNECTED",
+						Data:      "DISCONNECTED",
 					},
 				},
 			})
