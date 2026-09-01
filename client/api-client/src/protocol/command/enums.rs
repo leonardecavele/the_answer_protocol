@@ -5,7 +5,9 @@ use crate::error::CommandError;
 
 // Command Imports
 use crate::protocol::command::communication::global_chat::GlobalChatCommand;
+use crate::protocol::command::communication::group_chat::GroupChatCommand;
 use crate::protocol::command::communication::private_chat::PrivateChatCommand;
+use crate::protocol::command::communication::room_chat::RoomChatCommand;
 use crate::protocol::command::core::connect::ConnectCommand;
 use crate::protocol::command::core::look::LookCommand;
 use crate::protocol::command::core::r#move::MoveCommand;
@@ -27,7 +29,9 @@ use crate::protocol::command::resource_interaction::talk::TalkCommand;
 // Response Imports
 use crate::protocol::command::Command;
 use crate::protocol::command::communication::global_chat::GlobalChatResponse;
+use crate::protocol::command::communication::group_chat::GroupChatResponse;
 use crate::protocol::command::communication::private_chat::PrivateChatResponse;
+use crate::protocol::command::communication::room_chat::RoomChatResponse;
 use crate::protocol::command::core::connect::ConnectResponse;
 use crate::protocol::command::core::look::LookResponse;
 use crate::protocol::command::core::r#move::MoveResponse;
@@ -103,6 +107,8 @@ define_api_protocol! {
     FightCreate(FightCreateCommand, FightCreateResponse) => "fc",
     FightAttack(FightAttackCommand, FightAttackResponse) => "fa",
     GlobalChat(GlobalChatCommand, GlobalChatResponse) => "say",
+    RoomChat(RoomChatCommand, RoomChatResponse) => "cr",
+    GroupChat(GroupChatCommand, GroupChatResponse) => "cg",
     PrivateChat(PrivateChatCommand, PrivateChatResponse) => "msg",
     Take(TakeCommand, TakeResponse) => "take",
     Drop(DropCommand, DropResponse) => "drop",

@@ -4,18 +4,18 @@ use crate::protocol::response::ServerResponse;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone)]
-pub struct GlobalChatCommand {
+pub struct GroupChatCommand {
     pub message: String,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
-pub struct GlobalChatResponse;
+pub struct GroupChatResponse;
 
-impl Command for GlobalChatCommand {
-    type ResponseData = GlobalChatResponse;
+impl Command for GroupChatCommand {
+    type ResponseData = GroupChatResponse;
 
     fn encode(&self) -> String {
-        format!("CHAT GLOBAL {}", self.message)
+        format!("CHAT GROUP {}", self.message)
     }
 
     fn parse_response(&self, response: ServerResponse) -> Result<Self::ResponseData, CommandError> {
@@ -25,7 +25,14 @@ impl Command for GlobalChatCommand {
                 message: "invalid arguments".to_string(),
             });
         }
-        Ok(GlobalChatResponse)
+        Ok(GroupChatResponse)
+    }
+
+    fn refine_error(&self, error: &mut CommandError) {
+        error.with_message(match error.code {
+            Some(401) => Some("you are not in a group".to_string()),
+            _ => None,
+        })
     }
 
     fn from_str(args: &str) -> Option<Self> {

@@ -21,8 +21,14 @@ pub mod commands {
     pub use crate::protocol::command::communication::global_chat::{
         GlobalChatCommand, GlobalChatResponse,
     };
+    pub use crate::protocol::command::communication::group_chat::{
+        GroupChatCommand, GroupChatResponse,
+    };
     pub use crate::protocol::command::communication::private_chat::{
         PrivateChatCommand, PrivateChatResponse,
+    };
+    pub use crate::protocol::command::communication::room_chat::{
+        RoomChatCommand, RoomChatResponse,
     };
     pub use crate::protocol::command::core::connect::{ConnectCommand, ConnectResponse};
     pub use crate::protocol::command::core::fight_attack::{

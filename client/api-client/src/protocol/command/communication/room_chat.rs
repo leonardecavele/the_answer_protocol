@@ -4,18 +4,18 @@ use crate::protocol::response::ServerResponse;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone)]
-pub struct GlobalChatCommand {
+pub struct RoomChatCommand {
     pub message: String,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
-pub struct GlobalChatResponse;
+pub struct RoomChatResponse;
 
-impl Command for GlobalChatCommand {
-    type ResponseData = GlobalChatResponse;
+impl Command for RoomChatCommand {
+    type ResponseData = RoomChatResponse;
 
     fn encode(&self) -> String {
-        format!("CHAT GLOBAL {}", self.message)
+        format!("CHAT ROOM {}", self.message)
     }
 
     fn parse_response(&self, response: ServerResponse) -> Result<Self::ResponseData, CommandError> {
@@ -25,7 +25,7 @@ impl Command for GlobalChatCommand {
                 message: "invalid arguments".to_string(),
             });
         }
-        Ok(GlobalChatResponse)
+        Ok(RoomChatResponse)
     }
 
     fn from_str(args: &str) -> Option<Self> {

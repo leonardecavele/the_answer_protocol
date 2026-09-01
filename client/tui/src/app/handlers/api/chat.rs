@@ -11,6 +11,22 @@ impl App {
         });
     }
 
+    pub(crate) fn on_room_chat_sent(&mut self, message: String) {
+        self.state.game.chat_log.push(ChatMessage {
+            channel: ChatChannel::Room,
+            sender: ChatSender::Me,
+            content: message,
+        });
+    }
+
+    pub(crate) fn on_group_chat_sent(&mut self, message: String) {
+        self.state.game.chat_log.push(ChatMessage {
+            channel: ChatChannel::Group,
+            sender: ChatSender::Me,
+            content: message,
+        });
+    }
+
     pub(crate) fn on_private_chat_sent(&mut self, to: String, message: String) {
         self.state.game.chat_log.push(ChatMessage {
             sender: ChatSender::Me,

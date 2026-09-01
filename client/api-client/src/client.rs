@@ -1,9 +1,9 @@
-pub(crate) mod api;
 pub(crate) mod bridge;
 pub(crate) mod config;
 pub(crate) mod connect;
 pub(crate) mod event;
 
+use crate::commands::{ConnectCommand, ConnectResponse};
 use crate::events::ServerEvent;
 use crate::protocol::request::Request;
 use crate::{
@@ -15,7 +15,7 @@ use tokio::sync::{broadcast, watch};
 use tokio::task::JoinHandle;
 use tokio::time::timeout;
 use tokio_util::sync::CancellationToken;
-use tracing::{info, warn};
+use tracing::{debug, info, warn};
 
 #[derive(Debug, Clone)]
 pub enum ConnectionState {
@@ -95,6 +95,14 @@ impl Client {
         }
     }
 
+    pub async fn login(
+        &mut self,
+        player_name: String,
+    ) -> Result<Result<ConnectResponse, CommandError>, TapError> {
+        debug!("sending connect request for player: {}", player_name);
+        self.request(ConnectCommand { player_name }).await
+    }
+
     pub async fn execute_request(&self, request: ApiRequest) -> Result<ApiResponse, TapError> {
         match request {
             ApiRequest::Connect(cmd) => Ok(ApiResponse::Connect(self.request(cmd).await?)),
@@ -105,6 +113,8 @@ impl Client {
             ApiRequest::FightCreate(cmd) => Ok(ApiResponse::FightCreate(self.request(cmd).await?)),
             ApiRequest::FightAttack(cmd) => Ok(ApiResponse::FightAttack(self.request(cmd).await?)),
             ApiRequest::GlobalChat(cmd) => Ok(ApiResponse::GlobalChat(self.request(cmd).await?)),
+            ApiRequest::RoomChat(cmd) => Ok(ApiResponse::RoomChat(self.request(cmd).await?)),
+            ApiRequest::GroupChat(cmd) => Ok(ApiResponse::GroupChat(self.request(cmd).await?)),
             ApiRequest::PrivateChat(cmd) => Ok(ApiResponse::PrivateChat(self.request(cmd).await?)),
             ApiRequest::Take(cmd) => Ok(ApiResponse::Take(self.request(cmd).await?)),
             ApiRequest::Drop(cmd) => Ok(ApiResponse::Drop(self.request(cmd).await?)),

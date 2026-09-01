@@ -68,6 +68,12 @@ impl App {
             (ApiRequest::GlobalChat(cmd), ApiResponse::GlobalChat(Ok(_))) => {
                 self.on_global_chat_sent(cmd.message);
             }
+            (ApiRequest::RoomChat(cmd), ApiResponse::RoomChat(Ok(_))) => {
+                self.on_room_chat_sent(cmd.message);
+            }
+            (ApiRequest::GroupChat(cmd), ApiResponse::GroupChat(Ok(_))) => {
+                self.on_group_chat_sent(cmd.message);
+            }
             (ApiRequest::PrivateChat(cmd), ApiResponse::PrivateChat(Ok(_))) => {
                 self.on_private_chat_sent(cmd.to, cmd.message);
             }
