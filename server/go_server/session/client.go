@@ -81,7 +81,7 @@ func (c *Client) DeleteClient(gameServerManager *game_conn.GameServerManager) er
 				{
 					// EmittedBy: username,
 					EventName: "STATS",
-					Data:      fmt.Sprintf("%d", c.Room.Count()),
+					Data:      fmt.Sprintf("players=%d", c.Room.Count()),
 				},
 			},
 		})
