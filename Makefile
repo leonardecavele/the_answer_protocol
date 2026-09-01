@@ -13,7 +13,8 @@ CYAN := \033[36m
 RESET := \033[0m
 
 CLIENT_ARGS ?=
-GUI_ARGS ?=
+GO_SERVER_ARGS ?=
+RUST_SERVER_ARGS ?=
 
 RUN_DIR ?= /tmp/the_answer_protocol-$(shell id -u)
 GO_SERVER_PID_FILE := $(RUN_DIR)/go-server.pid
@@ -98,7 +99,7 @@ run:
 	@(cd $(RUST_SERVER_DIR) && exec ./target/debug/rust_server) > "$(RUST_SERVER_LOG)" 2>&1 & \
 		echo $$! > "$(RUST_SERVER_PID_FILE)"
 	@$(HELPERS) info_log "starting Go server in background"
-	@(cd $(GO_SERVER_DIR) && exec ./go_server) > "$(GO_SERVER_LOG)" 2>&1 & \
+	@(cd $(GO_SERVER_DIR) && exec ./go_server $(GO_SERVER_ARGS)) > "$(GO_SERVER_LOG)" 2>&1 & \
 		echo $$! > "$(GO_SERVER_PID_FILE)"
 	@$(HELPERS) info_log "starting TUI client"
 	@cd $(CLIENT_DIR) && exec ./target/debug/tui $(CLIENT_ARGS)
@@ -136,7 +137,7 @@ run-client-tui: build-client-tui
 
 run-client-gui: build-client-gui
 	@$(HELPERS) info_log "running GUI client"
-	@cd $(CLIENT_DIR) && ./target/debug/gui $(GUI_ARGS)
+	@cd $(CLIENT_DIR) && ./target/debug/gui $(CLIENT_ARGS)
 
 lint-client:
 	@$(HELPERS) ensure_cargo && ensure_clippy && ensure_rustfmt && info_log "linting clients"
@@ -151,7 +152,7 @@ build-go-server:
 
 run-go-server: build-go-server
 	@$(HELPERS) info_log "running Go server"
-	@cd $(GO_SERVER_DIR) && ./go_server
+	@cd $(GO_SERVER_DIR) && ./go_server $(GO_SERVER_ARGS)
 
 lint-go-server:
 	@$(HELPERS) ensure_go && info_log "linting Go server"
@@ -166,7 +167,7 @@ build-rust-server:
 
 run-rust-server: build-rust-server
 	@$(HELPERS) info_log "running Rust server"
-	@cd $(RUST_SERVER_DIR) && ./target/debug/rust_server
+	@cd $(RUST_SERVER_DIR) && ./target/debug/rust_server $(RUST_SERVER_ARGS)
 
 lint-rust-server:
 	@$(HELPERS) ensure_cargo && ensure_clippy && ensure_rustfmt && info_log "linting Rust server"
