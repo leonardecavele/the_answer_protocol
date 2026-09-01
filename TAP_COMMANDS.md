@@ -1,370 +1,527 @@
-# TAP COMMANDS
+# TAP Commands
 
-## Format
+This document describes the public, line-oriented protocol exposed by the Go
+server. It reflects the current Go command handlers, the Rust game-server
+responses, and the typed commands available in `api-client`.
 
-### Command Format
+## Transport and framing
 
-<pre><code class="language-abnf">; command format
-<a id="message" href="TAP_COMMANDS.md#message">message</a> = <a href="TAP_COMMANDS.md#command-line">command-line</a>
-<a id="command-line" href="TAP_COMMANDS.md#command-line">command-line</a> = <a href="TAP_COMMANDS.md#command-name">command-name</a> [SP <a href="TAP_COMMANDS.md#arguments">arguments</a>] LF
-<a id="command-name" href="TAP_COMMANDS.md#command-name">command-name</a> = 1*ALPHA
-<a id="arguments" href="TAP_COMMANDS.md#arguments">arguments</a> = 1*(VCHAR / SP)
-</code></pre>
+TAP is a UTF-8 protocol over TCP. Each command and response occupies one line.
+The Go server accepts `LF` and trims an optional preceding `CR`; it always writes
+`LF`.
 
-### Success Response Format
+```abnf
+command-line  = command-name [SP arguments] [CR] LF
+command-name  = 1*ALPHA
+arguments     = 1*(VCHAR / SP / utf8-nonascii)
 
-<pre><code class="language-abnf">; success response format
-<a id="response-line" href="TAP_COMMANDS.md#response-line">response-line</a> = "OK" [SP <a href="TAP_COMMANDS.md#response-data">response-data</a>] LF
-<a id="response-data" href="TAP_COMMANDS.md#response-data">response-data</a> = 1*(VCHAR / SP)
-</code></pre>
-
-## Arguments
-
-### Common Values
-
-<pre><code class="language-abnf">; common values
-<a id="line-text" href="TAP_COMMANDS.md#line-text">line-text</a> = VCHAR *(SP / VCHAR)
-<a id="json-text" href="TAP_COMMANDS.md#json-text">json-text</a> = &lt;valid JSON text encoded on one line, without LF&gt;
-<a id="json-array" href="TAP_COMMANDS.md#json-array">json-array</a> = &lt;valid JSON array encoded on one line, without LF&gt;
-<a id="number" href="TAP_COMMANDS.md#number">number</a> = 1*DIGIT
-</code></pre>
-
-### Arguments
-
-<pre><code class="language-abnf">; protocol values
-<a id="protocol-version" href="TAP_COMMANDS.md#protocol-version">protocol-version</a> = <a href="TAP_COMMANDS.md#number">number</a>
-</code></pre>
-
-<pre><code class="language-abnf">; player values
-<a id="username" href="TAP_COMMANDS.md#username">username</a> = ALPHA *(ALPHA / DIGIT / "_" / "-")
-<a id="leader-name" href="TAP_COMMANDS.md#leader-name">leader-name</a> = <a href="TAP_COMMANDS.md#username">username</a>
-<a id="player-server-count" href="TAP_COMMANDS.md#player-server-count">player-server-count</a> = <a href="TAP_COMMANDS.md#number">number</a>
-</code></pre>
-
-<pre><code class="language-abnf">; world values
-<a id="room-id" href="TAP_COMMANDS.md#room-id">room-id</a> = 1*(ALPHA / DIGIT / "_" / "-" / ".")
-<a id="direction" href="TAP_COMMANDS.md#direction">direction</a> = 1*ALPHA
-</code></pre>
-
-<pre><code class="language-abnf">; group values
-<a id="group-id" href="TAP_COMMANDS.md#group-id">group-id</a> = 1*(ALPHA / DIGIT / "_" / "-" / ".")
-</code></pre>
-
-<pre><code class="language-abnf">; resource values
-<a id="item-identifier" href="TAP_COMMANDS.md#item-identifier">item-identifier</a> = <a href="TAP_COMMANDS.md#line-text">line-text</a>
-<a id="npc-name" href="TAP_COMMANDS.md#npc-name">npc-name</a> = <a href="TAP_COMMANDS.md#line-text">line-text</a>
-<a id="dialogue" href="TAP_COMMANDS.md#dialogue">dialogue</a> = <a href="TAP_COMMANDS.md#line-text">line-text</a>
-</code></pre>
-
-<pre><code class="language-abnf">; chat values
-<a id="chat-scope" href="TAP_COMMANDS.md#chat-scope">chat-scope</a> = "GLOBAL" / "ROOM" / "GROUP"
-<a id="chat-message" href="TAP_COMMANDS.md#chat-message">chat-message</a> = <a href="TAP_COMMANDS.md#line-text">line-text</a>
-</code></pre>
-
-<pre><code class="language-abnf">; json payloads
-<a id="current-room-state-json" href="TAP_COMMANDS.md#current-room-state-json">current-room-state-json</a> = <a href="TAP_COMMANDS.md#json-text">json-text</a>
-<a id="combat-result-json" href="TAP_COMMANDS.md#combat-result-json">combat-result-json</a> = <a href="TAP_COMMANDS.md#json-text">json-text</a>
-<a id="player-status-json" href="TAP_COMMANDS.md#player-status-json">player-status-json</a> = <a href="TAP_COMMANDS.md#json-text">json-text</a>
-<a id="quest-data-json" href="TAP_COMMANDS.md#quest-data-json">quest-data-json</a> = <a href="TAP_COMMANDS.md#json-text">json-text</a>
-<a id="quest-list-json" href="TAP_COMMANDS.md#quest-list-json">quest-list-json</a> = <a href="TAP_COMMANDS.md#json-array">json-array</a>
-<a id="inventory-json" href="TAP_COMMANDS.md#inventory-json">inventory-json</a> = <a href="TAP_COMMANDS.md#json-array">json-array</a>
-</code></pre>
-
-## Establish Connection
-
-Client
-```bash
-./client 127.0.0.1 4242
+success-line  = "OK" [SP response-data] LF
+response-data = 1*(VCHAR / SP / utf8-nonascii)
+utf8-nonascii = <a valid non-ASCII UTF-8 sequence>
 ```
 
-Server
+Client frames, including the line ending, are limited to 4,096 bytes. A client
+should keep at most one command awaiting an `OK` or `ERR` response on a
+connection, while continuing to process any interleaved `EVT` frames.
+
+Top-level command names are case-sensitive and must be uppercase. Group and
+fight subcommands, and chat scopes, are normalized by the Go server. Movement
+directions are interpreted by Rust and must be `NORTH`, `SOUTH`, `EAST`, or
+`WEST`.
+
+## Handshake and authentication
+
+Immediately after accepting a TCP connection, the Go server sends:
+
+```text
+OK hello proto=1
+```
+
+Protocol version 1 is the only version accepted end to end by the current
+`api-client`. The client then has 30 seconds to authenticate with `CONNECT`.
+
+A username:
+
+- contains between 3 and 20 ASCII characters;
+- starts with an ASCII letter;
+- contains only ASCII letters, digits, `_`, or `-` after the first character.
+
+The Go server canonicalizes accepted usernames to uppercase.
+
+## Support matrix
+
+| TAP command | Implemented by | Typed `api-client` command | Status |
+| --- | --- | --- | --- |
+| `CONNECT`, `LOOK`, `MOVE`, `QUIT`, `WHO` | Go, with game state from Rust where required | Yes | Supported |
+| `CHAT GLOBAL`, `CHAT PRIVATE` | Go | Yes | Supported |
+| `CHAT ROOM`, `CHAT GROUP` | Go; room delivery asks Rust for `ROOM_PLAYERS` | No | Supported through raw TAP only |
+| `GROUP CREATE`, `GROUP INVITE`, `GROUP JOIN`, `GROUP LEAVE` | Go; room checks ask Rust when available | Yes | Supported |
+| `GROUP QUIT` | Go | No | Raw alias of `GROUP LEAVE` |
+| `TAKE`, `DROP`, `INVENTORY`, `TALK`, `ATTACK`, `STATUS`, `QUESTS`, and solo `QUEST` | Go forwards to Rust | Yes | Supported, subject to the compatibility notes below |
+| Grouped `QUEST` | Go sends a grouped envelope, but Rust has no grouped quest handler | Yes | Incomplete; currently times out |
+| `FIGHT CREATE`, `FIGHT ATTACK` | Go forwards to Rust | Yes | Supported |
+| `USE` | Go forwards it, but Rust has no handler | No | Incomplete; do not use |
+
+## Common failures
+
+All commands are subject to syntax, authentication, rate-limit, and connection
+errors. In particular:
+
+```text
+ERR 400 EMPTY_COMMAND
+ERR 400 COMMAND_NOT_FOUND
+ERR 400 INVALID_ARGUMENTS
+ERR 400 NOT_CONNECTED
+ERR 429 TOO_MANY_REQUESTS
+ERR 900 CONNECTION_FAILED
+ERR 902 GAME_SERVER_TIMEOUT
+ERR 999 UNKNOWN_ERROR
+```
+
+`TOO_MANY_REQUESTS` is sent after more than ten commands in one second and is
+followed by connection closure. `CONNECTION_FAILED` and
+`GAME_SERVER_TIMEOUT` apply only when a command or routing decision needs the
+Rust server. The complete catalog is in `TAP_ERRORS.md`.
 
-<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#response-line">response-line</a>
-<a id="server-greeting" href="TAP_COMMANDS.md#server-greeting">server-greeting</a> = "OK" SP "hello" SP "proto=" <a href="TAP_COMMANDS.md#protocol-version">protocol-version</a> LF
-</code></pre>
+## Core commands
 
-## Core Commands
+### CONNECT
 
-### CONNECT command
+```text
+CONNECT <username>
+```
 
-Client
+```text
+OK connected
+```
 
-<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#command-line">command-line</a>
-<a id="connect-request" href="TAP_COMMANDS.md#connect-request">connect-request</a> = "CONNECT" SP <a href="TAP_COMMANDS.md#username">username</a> LF
-</code></pre>
+`CONNECT` authenticates the Go session and registers the player with Rust when
+the game server is available. A missing Rust server does not prevent Go-side
+authentication; the client then receives `EVT GAME SERVER DISCONNECTED`.
 
-Server
+Command-specific failures include `INVALID_USERNAME`, `NAME_IN_USE`,
+`ALREADY_CONNECTED`, and `ROOM_FULL`.
 
-<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#response-line">response-line</a>
-<a id="connect-response" href="TAP_COMMANDS.md#connect-response">connect-response</a> = <a href="TAP_COMMANDS.md#connect-success">connect-success</a> / <a href="TAP_ERRORS.md#err-name-in-use">err-name-in-use</a> / <a href="TAP_ERRORS.md#err-already-connected">err-already-connected</a>
+### LOOK
 
-<a id="connect-success" href="TAP_COMMANDS.md#connect-success">connect-success</a> = "OK" SP "connected" LF
-</code></pre>
+```text
+LOOK
+```
 
-### LOOK command
+```text
+OK <room-state-json>
+```
 
-Client
+Example payload:
 
-<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#command-line">command-line</a>
-<a id="look-request" href="TAP_COMMANDS.md#look-request">look-request</a> = "LOOK" LF
-</code></pre>
+```json
+{
+  "room": {
+    "id": "2.devant_l_ecole",
+    "name": "Devant l'école",
+    "description": "A large 42 sign marks the entrance.",
+    "exits": {
+      "WEST": "Entree",
+      "SOUTH": "Pature"
+    }
+  },
+  "players": ["ALICE", "BOB"],
+  "items": ["0.objet_perdu"],
+  "npcs": ["4.gagulhon", "11.ayteyssi"]
+}
+```
 
-Server
+The `id` and resource values are protocol representations. Display names and
+exit destinations are formatted by Rust. Command-specific failures include
+`PLAYER_NOT_FOUND` and `ROOM_NOT_FOUND`.
 
-<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#response-line">response-line</a>
-<a id="look-response" href="TAP_COMMANDS.md#look-response">look-response</a> = "OK" SP <a href="TAP_COMMANDS.md#current-room-state-json">current-room-state-json</a> LF
-</code></pre>
+### MOVE
 
-### MOVE command
+```text
+MOVE <NORTH|SOUTH|EAST|WEST>
+```
 
-Client
+```text
+OK room=<room-identifier>
+```
 
-<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#command-line">command-line</a>
-<a id="move-request" href="TAP_COMMANDS.md#move-request">move-request</a> = "MOVE" SP <a href="TAP_COMMANDS.md#direction">direction</a> LF
-</code></pre>
+If the player belongs to a group, only the leader may send `MOVE`; Rust moves
+the other group members with the leader and emits `GROUPMOVE` events to them.
+Command-specific failures include `NO_EXIT`, `NOT_GROUP_LEADER`,
+`PLAYER_NOT_FOUND`, and `PLAYER_ALREADY_IN_COMBAT`.
 
-Server
+### WHO
 
-<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#response-line">response-line</a>
-<a id="move-response" href="TAP_COMMANDS.md#move-response">move-response</a> = <a href="TAP_COMMANDS.md#successful-move">successful-move</a> / <a href="TAP_ERRORS.md#err-no-exit">err-no-exit</a>
+```text
+WHO
+```
 
-<a id="successful-move" href="TAP_COMMANDS.md#successful-move">successful-move</a> = "OK" SP "room=" <a href="TAP_COMMANDS.md#room-id">room-id</a> LF
-</code></pre>
+```text
+OK players=<count>
+```
 
-### QUIT command
+The count is the number of players authenticated on this Go server. It does not
+require the Rust server.
 
-Client
+### QUIT
 
-<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#command-line">command-line</a>
-<a id="quit-request" href="TAP_COMMANDS.md#quit-request">quit-request</a> = <a href="TAP_COMMANDS.md#quit-request-command">quit-request-command</a> / &lt;server/client connection issue or program aborption&gt;
+```text
+QUIT
+```
 
-<a id="quit-request-command" href="TAP_COMMANDS.md#quit-request-command">quit-request-command</a> = "QUIT" LF
-</code></pre>
+```text
+OK bye
+```
 
-Server
+After sending the response, Go closes the connection, releases group state,
+notifies other clients, and sends a best-effort internal `QUIT` to Rust.
 
-<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#response-line">response-line</a>
-<a id="quit-response" href="TAP_COMMANDS.md#quit-response">quit-response</a> = "OK" SP "bye" LF
-</code></pre>
+## Chat commands
 
-## Communication Commands
+### Global chat
 
-### CHAT command
+```text
+CHAT GLOBAL <message>
+```
 
-Client
+The sender receives `OK`. Every other authenticated client receives:
 
-<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#command-line">command-line</a>
-<a id="chat-request" href="TAP_COMMANDS.md#chat-request">chat-request</a> = "CHAT" SP <a href="TAP_COMMANDS.md#chat-scope">chat-scope</a> SP <a href="TAP_COMMANDS.md#chat-message">chat-message</a> LF
-</code></pre>
+```text
+EVT GLOBAL CHAT <username> <message>
+```
 
-Server
+### Room chat
 
-<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#response-line">response-line</a>
-<a id="chat-response" href="TAP_COMMANDS.md#chat-response">chat-response</a> = <a href="TAP_COMMANDS.md#chat-success">chat-success</a> / <a href="TAP_ERRORS.md#err-not-in-group">err-not-in-group</a> / <a href="TAP_ERRORS.md#err-invalid-scope">err-invalid-scope</a> / <a href="TAP_ERRORS.md#err-no-such-group">err-no-such-group</a>
+```text
+CHAT ROOM <message>
+```
 
-<a id="chat-success" href="TAP_COMMANDS.md#chat-success">chat-success</a> = "OK" LF
-</code></pre>
+The sender receives `OK`. Go asks Rust for the players in the sender's room and
+routes the event to those players:
 
-### WHO command
+```text
+EVT ROOM CHAT <username> <message>
+```
 
-Client
+This command requires a working Go-to-Rust connection.
 
-<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#command-line">command-line</a>
-<a id="who-request" href="TAP_COMMANDS.md#who-request">who-request</a> = "WHO" LF
-</code></pre>
+### Group chat
 
-Server
+```text
+CHAT GROUP <message>
+```
 
-<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#response-line">response-line</a>
-<a id="who-response" href="TAP_COMMANDS.md#who-response">who-response</a> = "OK" SP "players=" <a href="TAP_COMMANDS.md#player-server-count">player-server-count</a> LF
-</code></pre>
+The sender receives `OK`. Other group members receive:
 
-## Group Management Commands
+```text
+EVT GROUP CHAT <username> <message>
+```
 
-### GROUP CREATE command
+The sender receives `NOT_IN_GROUP` when no group is active.
 
-Client
+### Private chat
 
-<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#command-line">command-line</a>
-<a id="group-create-request" href="TAP_COMMANDS.md#group-create-request">group-create-request</a> = "GROUP" SP "CREATE" LF
-</code></pre>
+```text
+CHAT PRIVATE <username> <message>
+```
 
-Server
+The sender receives `OK`. The named recipient receives:
 
-<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#response-line">response-line</a>
-<a id="group-create-response" href="TAP_COMMANDS.md#group-create-response">group-create-response</a> = <a href="TAP_COMMANDS.md#group-create-success">group-create-success</a> / <a href="TAP_ERRORS.md#err-already-in-group">err-already-in-group</a>
+```text
+EVT PRIVATE CHAT <sender> <message>
+```
 
-<a id="group-create-success" href="TAP_COMMANDS.md#group-create-success">group-create-success</a> = "OK" SP "group=" <a href="TAP_COMMANDS.md#group-id">group-id</a> LF
-</code></pre>
+An unknown recipient returns `NO_SUCH_USER`.
 
-### GROUP INVITE command
+All chat messages must contain at least one non-whitespace character. An unknown
+scope returns `INVALID_SCOPE`.
 
-Client
+## Group commands
 
-<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#command-line">command-line</a>
-<a id="group-invite-request" href="TAP_COMMANDS.md#group-invite-request">group-invite-request</a> = "GROUP" SP "INVITE" SP <a href="TAP_COMMANDS.md#username">username</a> LF
-</code></pre>
+Groups are maintained by the Go server. A group contains at most three players,
+and invitations expire after five minutes.
 
-Server
+### GROUP CREATE
 
-<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#response-line">response-line</a>
-<a id="group-invite-response" href="TAP_COMMANDS.md#group-invite-response">group-invite-response</a> = <a href="TAP_COMMANDS.md#group-invite-success">group-invite-success</a> / <a href="TAP_ERRORS.md#err-not-in-group">err-not-in-group</a> / <a href="TAP_ERRORS.md#err-no-such-user">err-no-such-user</a> / <a href="TAP_ERRORS.md#err-already-in-group">err-already-in-group</a> / <a href="TAP_ERRORS.md#err-group-not-found">err-group-not-found</a>
+```text
+GROUP CREATE
+```
 
-<a id="group-invite-success" href="TAP_COMMANDS.md#group-invite-success">group-invite-success</a> = "OK" LF
-</code></pre>
+```text
+OK group=<group-id>
+```
 
-### GROUP JOIN command
+The authenticated player becomes the group leader. An existing membership
+returns `ALREADY_IN_GROUP`.
 
-Client
+### GROUP INVITE
 
-<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#command-line">command-line</a>
-<a id="group-join-request" href="TAP_COMMANDS.md#group-join-request">group-join-request</a> = "GROUP" SP "JOIN" SP <a href="TAP_COMMANDS.md#leader-name">leader-name</a> LF
-</code></pre>
+```text
+GROUP INVITE <username>
+```
 
-Server
+```text
+OK
+```
 
-<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#response-line">response-line</a>
-<a id="group-join-response" href="TAP_COMMANDS.md#group-join-response">group-join-response</a> = <a href="TAP_COMMANDS.md#group-join-success">group-join-success</a> / <a href="TAP_ERRORS.md#err-no-such-user">err-no-such-user</a> / <a href="TAP_ERRORS.md#err-already-in-group">err-already-in-group</a> / <a href="TAP_ERRORS.md#err-not-invited">err-not-invited</a> / <a href="TAP_ERRORS.md#err-group-not-found">err-group-not-found</a>
+When the Rust server is connected, the inviter and target must be in the same
+game room. The target receives `EVT GROUP INVITE <leader>`. Possible failures
+include `NOT_IN_GROUP`, `NO_SUCH_USER`, `ALREADY_IN_GROUP`, `GROUP_FULL`,
+`GROUP_NOT_FOUND`, and `NOT_IN_SAME_ROOM`.
 
-<a id="group-join-success" href="TAP_COMMANDS.md#group-join-success">group-join-success</a> = "OK" SP "group=" <a href="TAP_COMMANDS.md#group-id">group-id</a> LF
-</code></pre>
+During a Rust outage, the current handler still returns `OK` and sends the
+invite event, but does not record the invitation. The recipient cannot use that
+notice to join a group.
 
-### GROUP LEAVE command
+### GROUP JOIN
 
-Client
+```text
+GROUP JOIN <leader-or-member-username>
+```
 
-<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#command-line">command-line</a>
-<a id="group-leave-request" href="TAP_COMMANDS.md#group-leave-request">group-leave-request</a> = "GROUP" SP "LEAVE" LF
-</code></pre>
+```text
+OK group=<group-id>
+```
 
-Server
+The argument may name any connected member of the invited group. Joining
+requires a valid invitation and, when Rust is connected, the same game room.
+Existing members receive `EVT GROUP JOIN <username>`. Possible failures include
+`NO_SUCH_USER`, `ALREADY_IN_GROUP`, `NOT_INVITED`, `GROUP_FULL`,
+`GROUP_NOT_FOUND`, and `NOT_IN_SAME_ROOM`.
 
-<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#response-line">response-line</a>
-<a id="group-leave-response" href="TAP_COMMANDS.md#group-leave-response">group-leave-response</a> = <a href="TAP_COMMANDS.md#group-leave-success">group-leave-success</a> / <a href="TAP_ERRORS.md#err-not-in-group">err-not-in-group</a> / <a href="TAP_ERRORS.md#err-group-not-found">err-group-not-found</a>
+`GROUP JOIN` must not be attempted while Rust is disconnected. The current Go
+handler skips group assignment and then dereferences the missing membership,
+which can terminate the Go process.
 
-<a id="group-leave-success" href="TAP_COMMANDS.md#group-leave-success">group-leave-success</a> = "OK" LF
-</code></pre>
+### GROUP LEAVE
 
-## Resource Interaction Commands
+```text
+GROUP LEAVE
+```
 
-### TAKE command
+```text
+OK
+```
 
-Client
+`GROUP QUIT` is accepted as an undocumented-client alias with the same behavior.
+If the leader leaves, Go dissolves the group. Other members receive
+`EVT GROUP LEAVE <username>`. A player without a group receives `NOT_IN_GROUP`.
 
-<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#command-line">command-line</a>
-<a id="take-request" href="TAP_COMMANDS.md#take-request">take-request</a> = "TAKE" SP <a href="TAP_COMMANDS.md#item-identifier">item-identifier</a> LF
-</code></pre>
+## Resource and NPC commands
 
-Server
+An item or NPC can normally be addressed by its `<numeric-id>.<name>` protocol
+representation. Rust also accepts a unique exact name in the relevant room or
+inventory.
 
-<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#response-line">response-line</a>
-<a id="take-response" href="TAP_COMMANDS.md#take-response">take-response</a> = <a href="TAP_COMMANDS.md#take-success">take-success</a> / <a href="TAP_ERRORS.md#err-item-not-found">err-item-not-found</a>
+### TAKE
 
-<a id="take-success" href="TAP_COMMANDS.md#take-success">take-success</a> = "OK" SP "taken=" <a href="TAP_COMMANDS.md#item-identifier">item-identifier</a> LF
-</code></pre>
+```text
+TAKE <item-identifier>
+```
 
-### DROP command
+```text
+OK taken=<item-identifier>
+```
 
-Client
+Other players in the room receive `EVT TAKE <username> <item-identifier>`.
+Failures include `ITEM_NOT_FOUND` and `PLAYER_NOT_FOUND`.
 
-<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#command-line">command-line</a>
-<a id="drop-request" href="TAP_COMMANDS.md#drop-request">drop-request</a> = "DROP" SP <a href="TAP_COMMANDS.md#item-identifier">item-identifier</a> LF
-</code></pre>
+### DROP
 
-Server
+```text
+DROP <item-identifier>
+```
 
-<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#response-line">response-line</a>
-<a id="drop-response" href="TAP_COMMANDS.md#drop-response">drop-response</a> = <a href="TAP_COMMANDS.md#drop-success">drop-success</a> / <a href="TAP_ERRORS.md#err-item-not-in-inventory">err-item-not-in-inventory</a>
+```text
+OK dropped=<item-identifier>
+```
 
-<a id="drop-success" href="TAP_COMMANDS.md#drop-success">drop-success</a> = "OK" SP "dropped=" <a href="TAP_COMMANDS.md#item-identifier">item-identifier</a> LF
-</code></pre>
+Other players in the room receive `EVT DROP <username> <item-identifier>`.
+Failures include `ITEM_NOT_IN_INVENTORY` and `PLAYER_NOT_FOUND`. Rust may use
+its shared numeric `404` code while resolving the item; Go maps every `DROP`
+error with that code to `ITEM_NOT_IN_INVENTORY`.
 
-### INVENTORY command
+### INVENTORY
 
-Client
+```text
+INVENTORY
+```
 
-<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#command-line">command-line</a>
-<a id="inventory-request" href="TAP_COMMANDS.md#inventory-request">inventory-request</a> = "INVENTORY" LF
-</code></pre>
+```text
+OK ["0.objet_perdu","2.t_shirt"]
+```
 
-Server
+The response data is a JSON array of item protocol representations.
 
-<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#response-line">response-line</a>
-<a id="inventory-response" href="TAP_COMMANDS.md#inventory-response">inventory-response</a> = "OK" SP <a href="TAP_COMMANDS.md#inventory-json">inventory-json</a> LF
-</code></pre>
+### TALK
 
-### TALK command
+```text
+TALK <npc-identifier>
+```
 
-Client
+```text
+OK <dialogue-text>
+```
 
-<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#command-line">command-line</a>
-<a id="talk-request" href="TAP_COMMANDS.md#talk-request">talk-request</a> = "TALK" SP <a href="TAP_COMMANDS.md#npc-name">npc-name</a> LF
-</code></pre>
+The response advances that player's dialogue with the NPC. Rust uses
+`[end of dialogue]` to mark the end of a dialogue sequence. Failures include
+`NPC_NOT_FOUND` and `PLAYER_NOT_FOUND`. Although Go defines an
+`NPC_NOT_IN_ROOM` mapping for `TALK`, the current Rust handler folds a room
+mismatch into `NPC_NOT_FOUND`.
 
-Server
+### ATTACK
 
-<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#response-line">response-line</a>
-<a id="talk-response" href="TAP_COMMANDS.md#talk-response">talk-response</a> = <a href="TAP_COMMANDS.md#talk-success">talk-success</a> / <a href="TAP_ERRORS.md#err-npc-not-found">err-npc-not-found</a>
+```text
+ATTACK <npc-identifier>
+```
 
-<a id="talk-success" href="TAP_COMMANDS.md#talk-success">talk-success</a> = "OK" SP <a href="TAP_COMMANDS.md#dialogue">dialogue</a> LF
-</code></pre>
+```text
+OK <combat-result-json>
+```
 
-### ATTACK command
+```json
+{
+  "attacker_hp": 100,
+  "target_hp": 149,
+  "damage": 1,
+  "status": "combat"
+}
+```
 
-Client
+This is the legacy direct-damage command, separate from the code-challenge
+`FIGHT` flow. Failures include `NPC_NOT_FOUND`, `NPC_NOT_IN_ROOM`,
+`NPC_NOT_HOSTILE`, and `NPC_IN_COMBAT`. If the player is already in a
+code-challenge fight, Rust returns code `410`; Go does not map that code for
+`ATTACK`, so the TAP response is `UNKNOWN_ERROR`.
 
-<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#command-line">command-line</a>
-<a id="attack-request" href="TAP_COMMANDS.md#attack-request">attack-request</a> = "ATTACK" SP <a href="TAP_COMMANDS.md#npc-name">npc-name</a> LF
-</code></pre>
+### STATUS
 
-Server
+```text
+STATUS
+```
 
-<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#response-line">response-line</a>
-<a id="attack-response" href="TAP_COMMANDS.md#attack-response">attack-response</a> = <a href="TAP_COMMANDS.md#attack-success">attack-success</a> / <a href="TAP_ERRORS.md#err-npc-not-found">err-npc-not-found</a> / <a href="TAP_ERRORS.md#err-npc-not-hostile">err-npc-not-hostile</a>
+```text
+OK <player-status-json>
+```
 
-<a id="attack-success" href="TAP_COMMANDS.md#attack-success">attack-success</a> = "OK" SP <a href="TAP_COMMANDS.md#combat-result-json">combat-result-json</a> LF
-</code></pre>
+```json
+{
+  "hp": 80,
+  "max_hp": 100,
+  "status": "healthy"
+}
+```
 
-### STATUS command
+The status is `healthy` at 80% HP or above, `normal` at 30% or above but below
+80%, and `critical` below 30%.
 
-Client
+## Quest commands
 
-<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#command-line">command-line</a>
-<a id="status-request" href="TAP_COMMANDS.md#status-request">status-request</a> = "STATUS" LF
-</code></pre>
+### QUEST
 
-Server
+```text
+QUEST <npc-identifier>
+```
 
-<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#response-line">response-line</a>
-<a id="status-response" href="TAP_COMMANDS.md#status-response">status-response</a> = "OK" SP <a href="TAP_COMMANDS.md#player-status-json">player-status-json</a> LF
-</code></pre>
+```text
+OK <quest-json>
+```
 
-### QUEST command
+```json
+{
+  "name": "Tunnel",
+  "description": "Complete the requested objective.",
+  "reward": [
+    {
+      "qty": 1,
+      "chance": 100,
+      "type": "MERCI"
+    }
+  ],
+  "status": "in progress"
+}
+```
 
-Client
+If the player belongs to a group, Go permits only the leader and sends a grouped
+internal `QUEST`. Rust does not implement grouped quest envelopes, so this path
+normally ends in `GAME_SERVER_TIMEOUT`. If the leader is already in a fight,
+Rust's pre-dispatch combat guard instead returns code `410`; because that code
+is not mapped for `QUEST`, Go exposes it as `UNKNOWN_ERROR`. Solo failures
+include `NPC_NOT_FOUND`, `NPC_NOT_IN_ROOM`, `PLAYER_NOT_FOUND`, and
+`NO_QUEST_AVAILABLE`; a non-leader receives `NOT_GROUP_LEADER` before anything
+is forwarded.
 
-<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#command-line">command-line</a>
-<a id="quest-request" href="TAP_COMMANDS.md#quest-request">quest-request</a> = "QUEST" SP <a href="TAP_COMMANDS.md#npc-name">npc-name</a> LF
-</code></pre>
+The current Rust wire object uses `name`. The current `api-client::QuestData`
+expects `quest_id`, so a non-empty quest response does not deserialize through
+the typed client until that implementation mismatch is fixed.
 
-Server
+### QUESTS
 
-<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#response-line">response-line</a>
-<a id="quest-response" href="TAP_COMMANDS.md#quest-response">quest-response</a> = <a href="TAP_COMMANDS.md#quest-success">quest-success</a> / <a href="TAP_ERRORS.md#err-npc-not-found">err-npc-not-found</a> / <a href="TAP_ERRORS.md#err-no-quest-available">err-no-quest-available</a>
+```text
+QUESTS
+```
 
-<a id="quest-success" href="TAP_COMMANDS.md#quest-success">quest-success</a> = "OK" SP <a href="TAP_COMMANDS.md#quest-data-json">quest-data-json</a> LF
-</code></pre>
+```text
+OK [<quest-json>,...]
+```
 
-### QUESTS command
+The response is a JSON array using the same quest object shape as `QUEST`.
+`[]` is valid when the player has no active quest. The same `name` versus
+`quest_id` compatibility issue applies to non-empty arrays.
 
-Client
+## Code-challenge fight commands
 
-<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#command-line">command-line</a>
-<a id="quests-request" href="TAP_COMMANDS.md#quests-request">quests-request</a> = "QUESTS" LF
-</code></pre>
+### FIGHT CREATE
 
-Server
+```text
+FIGHT CREATE <npc-identifier>
+```
 
-<pre><code class="language-abnf">; <a href="TAP_COMMANDS.md#response-line">response-line</a>
-<a id="quests-response" href="TAP_COMMANDS.md#quests-response">quests-response</a> = "OK" SP <a href="TAP_COMMANDS.md#quest-list-json">quest-list-json</a> LF
-</code></pre>
+```text
+OK FIGHT CREATED
+```
+
+The NPC must be a hostile NPC in the player's room and must not already be in a
+combat instance. A group leader creates one combat instance for the group;
+non-leaders receive `NOT_GROUP_LEADER`. Rust sends each participant an
+`EVT FIGHT START` payload containing the source code, separators, time limit,
+and NPC health.
+
+Failures include `NPC_NOT_FOUND`, `NPC_NOT_IN_ROOM`, `NPC_NOT_HOSTILE`,
+`NPC_IN_COMBAT`, `PLAYER_ALREADY_IN_COMBAT`, and `FILE_NOT_FOUND`.
+
+### FIGHT ATTACK
+
+```text
+FIGHT ATTACK <encoded-code>
+```
+
+```text
+OK Processing
+```
+
+`encoded-code` is a single-line source submission. Clients must replace spaces
+and newlines with the `sp_sep` and `nl_sep` values received in `EVT FIGHT START`.
+Evaluation is asynchronous; results arrive through `EVT FIGHT RESULT`, followed
+eventually by `EVT FIGHT END`.
+
+Failures include `PLAYER_NOT_FOUND` and `PLAYER_NOT_IN_COMBAT`. Rust also emits
+code `409` for a duplicate action, but Go's current `FIGHT_ATTACK` map does not
+associate that code with `ACTION_ALREADY_TAKEN`; the public result is therefore
+`ERR 999 UNKNOWN_ERROR` for that case.
+
+## Incomplete USE command
+
+The Go listener currently recognizes:
+
+```text
+USE <arguments>
+```
+
+It forwards an internal `USE` command, but the Rust server has no matching
+handler and `api-client` exposes no typed command. With Rust connected, the Go
+handler normally returns `GAME_SERVER_TIMEOUT`. If the player is already in a
+fight, Rust's global combat guard returns code `410` before command dispatch;
+Go has no `USE` error map, so this becomes `UNKNOWN_ERROR`. Without Rust, the
+result is `CONNECTION_FAILED`. `USE` is therefore not part of the supported TAP
+contract.

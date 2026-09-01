@@ -1,75 +1,135 @@
-# TAP EVENTS
+# TAP Events
 
-## Format
+Events are unsolicited server-to-client frames. They may arrive between a
+command request and its response. A client must route `EVT` frames separately
+and keep waiting for the corresponding `OK` or `ERR` frame.
 
-<pre><code class="language-abnf">; event format
-<a id="message" href="TAP_EVENTS.md#message">message</a> = <a href="TAP_EVENTS.md#event-line">event-line</a>
-<a id="event-line" href="TAP_EVENTS.md#event-line">event-line</a> = "EVT" SP <a href="TAP_EVENTS.md#event-type">event-type</a> SP <a href="TAP_EVENTS.md#event-data">event-data</a> LF
-<a id="event-type" href="TAP_EVENTS.md#event-type">event-type</a> = 1*ALPHA
-<a id="event-data" href="TAP_EVENTS.md#event-data">event-data</a> = 1*(VCHAR / SP)
-</code></pre>
+## Frame format
 
-## Arguments
+TAP uses UTF-8, line-oriented frames. Every event ends with `LF` on the wire.
 
-<pre><code class="language-abnf">; event arguments format
-<a id="username" href="TAP_EVENTS.md#username">username</a> = ALPHA *(ALPHA / DIGIT / "_" / "-")
-<a id="leader-name" href="TAP_EVENTS.md#leader-name">leader-name</a> = <a href="TAP_EVENTS.md#username">username</a>
-<a id="chat-message" href="TAP_EVENTS.md#chat-message">chat-message</a> = VCHAR *(SP / VCHAR)
-<a id="player-server-count" href="TAP_EVENTS.md#player-server-count">player-server-count</a> = 1*DIGIT
-</code></pre>
+```abnf
+event-line = "EVT" SP event-content LF
+event-content = 1*(VCHAR / SP / utf8-nonascii)
+utf8-nonascii = <a valid non-ASCII UTF-8 sequence>
+```
 
-## Room Events
+The Go formatter builds an event in this order:
 
-<pre><code class="language-abnf">; <a href="TAP_EVENTS.md#event-line">event-line</a>
-<a id="room-event" href="TAP_EVENTS.md#room-event">room-event</a> = <a href="TAP_EVENTS.md#room-presence-enter-event">room-presence-enter-event</a> / <a href="TAP_EVENTS.md#room-presence-leave-event">room-presence-leave-event</a> / <a href="TAP_EVENTS.md#room-chat-event">room-chat-event</a>
+```text
+EVT <event_name> [<emitted_by>] [<data>]
+```
 
-<a id="room-presence-enter-event" href="TAP_EVENTS.md#room-presence-enter-event">room-presence-enter-event</a> = "EVT" SP "ROOM" SP "PRESENCE" SP "ENTER" SP <a href="TAP_EVENTS.md#username">username</a> LF
-<a id="room-presence-leave-event" href="TAP_EVENTS.md#room-presence-leave-event">room-presence-leave-event</a> = "EVT" SP "ROOM" SP "PRESENCE" SP "LEAVE" SP <a href="TAP_EVENTS.md#username">username</a> LF
-<a id="room-chat-event" href="TAP_EVENTS.md#room-chat-event">room-chat-event</a> = "EVT" SP "ROOM" SP "CHAT" SP <a href="TAP_EVENTS.md#username">username</a> SP <a href="TAP_EVENTS.md#chat-message">chat-message</a> LF
-</code></pre>
+`event_name` may contain spaces, and `emitted_by` is optional. The concrete
+forms below are the authoritative way to split an event.
 
-| Event | Meaning |
-|---|---|
-| `EVT ROOM PRESENCE ENTER <username>` | Player entered the current room |
-| `EVT ROOM PRESENCE LEAVE <username>` | Player left the current room |
-| `EVT ROOM CHAT <username> <message>` | Room-scoped chat message |
+## Session and server events
 
-## Global Events
+| Frame | Meaning |
+| --- | --- |
+| `EVT CONNECT <username>` | Another player authenticated. The newly connected player does not receive its own event. |
+| `EVT QUIT <username>` | An authenticated player disconnected or sent `QUIT`. |
+| `EVT STATS players=<count>` | The number of authenticated players changed. |
+| `EVT GAME SERVER CONNECTED` | The Go server connected or reconnected to the Rust game server. |
+| `EVT GAME SERVER DISCONNECTED` | The Rust game-server connection is unavailable. |
 
-<pre><code class="language-abnf">; <a href="TAP_EVENTS.md#event-line">event-line</a>
-<a id="global-event" href="TAP_EVENTS.md#global-event">global-event</a> = <a href="TAP_EVENTS.md#global-chat-event">global-chat-event</a>
+## Chat events
 
-<a id="global-chat-event" href="TAP_EVENTS.md#global-chat-event">global-chat-event</a> = "EVT" SP "GLOBAL" SP "CHAT" SP <a href="TAP_EVENTS.md#username">username</a> SP <a href="TAP_EVENTS.md#chat-message">chat-message</a> LF
-</code></pre>
+| Frame | Delivery |
+| --- | --- |
+| `EVT GLOBAL CHAT <username> <message>` | Every other authenticated TAP client. |
+| `EVT ROOM CHAT <username> <message>` | Other players reported by Rust as being in the sender's room. |
+| `EVT GROUP CHAT <username> <message>` | Other members of the sender's Go-side group. |
+| `EVT PRIVATE CHAT <username> <message>` | Only the named recipient of `CHAT PRIVATE`. |
 
-| Event | Meaning |
-|---|---|
-| `EVT GLOBAL CHAT <username> <message>` | Server-wide chat message |
+Messages are non-empty, single-line UTF-8 text. Spaces are preserved after the
+sender field.
 
-## Group Events
+## Group and movement events
 
-<pre><code class="language-abnf">; <a href="TAP_EVENTS.md#event-line">event-line</a>
-<a id="group-event" href="TAP_EVENTS.md#group-event">group-event</a> = <a href="TAP_EVENTS.md#group-invite-event">group-invite-event</a> / <a href="TAP_EVENTS.md#group-join-event">group-join-event</a> / <a href="TAP_EVENTS.md#group-leave-event">group-leave-event</a> / <a href="TAP_EVENTS.md#group-chat-event">group-chat-event</a>
+| Frame | Meaning |
+| --- | --- |
+| `EVT GROUP INVITE <leader>` | The recipient was invited to the leader's group. |
+| `EVT GROUP JOIN <username>` | A player joined the recipient's group. |
+| `EVT GROUP LEAVE <username>` | A player left the group, disconnected, or caused the group to be dissolved. |
+| `EVT GROUPMOVE <leader> <direction>` | A non-leader group member was moved with the leader. |
+| `EVT ROOM <username> PRESENCE ENTER` | The player entered the recipient's room. |
+| `EVT ROOM <username> PRESENCE LEAVE` | The player left the recipient's room. |
 
-<a id="group-invite-event" href="TAP_EVENTS.md#group-invite-event">group-invite-event</a> = "EVT" SP "GROUP" SP "INVITE" SP <a href="TAP_EVENTS.md#leader-name">leader-name</a> LF
-<a id="group-join-event" href="TAP_EVENTS.md#group-join-event">group-join-event</a> = "EVT" SP "GROUP" SP "JOIN" SP <a href="TAP_EVENTS.md#username">username</a> LF
-<a id="group-leave-event" href="TAP_EVENTS.md#group-leave-event">group-leave-event</a> = "EVT" SP "GROUP" SP "LEAVE" SP <a href="TAP_EVENTS.md#username">username</a> LF
-<a id="group-chat-event" href="TAP_EVENTS.md#group-chat-event">group-chat-event</a> = "EVT" SP "GROUP" SP "CHAT" SP <a href="TAP_EVENTS.md#username">username</a> SP <a href="TAP_EVENTS.md#chat-message">chat-message</a> LF
-</code></pre>
+The room presence order is intentionally `ROOM`, username, then `PRESENCE` and
+the action. This is the order emitted by the Go formatter and parsed by
+`api-client`.
 
-| Event | Meaning |
-|---|---|
-| `EVT GROUP INVITE <leader>` | Group invitation received |
-| `EVT GROUP JOIN <username>` | Player joined the group |
-| `EVT GROUP LEAVE <username>` | Player left the group |
-| `EVT GROUP CHAT <username> <message>` | Group-scoped chat message |
+## World and resource events
 
-## Stats Events
+| Frame | Meaning |
+| --- | --- |
+| `EVT TAKE <username> <item-identifier>` | Another player took an item from the room. |
+| `EVT DROP <username> <item-identifier>` | Another player dropped an item in the room. |
+| `EVT SPAWN type=ITEM id=<item-identifier>` | An item spawned in the current room. |
+| `EVT SPAWN type=NPC id=<npc-identifier>` | An NPC respawned in the current room. |
+| `EVT DESPAWN type=ITEM id=<item-identifier>` | A dropped item despawned from the current room. |
+| `EVT KILL <username> <npc-identifier>` | The named player killed an NPC. |
+| `EVT DEATH <username> respawn_room_id=<room-name>` | A player died and was reset to the spawn room. |
 
-<pre><code class="language-abnf">; <a href="TAP_EVENTS.md#event-line">event-line</a>
-<a id="stats-event" href="TAP_EVENTS.md#stats-event">stats-event</a> = "EVT" SP "STATS" SP "players=" <a href="TAP_EVENTS.md#player-server-count">player-server-count</a> LF
-</code></pre>
+Item, NPC, and room identifiers are the representations produced by the Rust
+server, normally `<numeric-id>.<name>` for resources and rooms.
 
-| Event | Meaning |
-|---|---|
-| `EVT STATS players=<count>` | Updated player count |
+## Fight events
+
+### Fight start
+
+```text
+EVT FIGHT START <fight-start-json>
+```
+
+```json
+{
+  "code": "int<SP>answer(void)<SP>{<NL>...<NL>}",
+  "time": 222,
+  "nl_sep": "<NL>",
+  "sp_sep": "<SP>",
+  "npc_id": "12.ldecavel",
+  "npc_hp": 150,
+  "npc_max_hp": 150
+}
+```
+
+The event is delivered to every player in the newly created combat instance.
+`code` uses the separators supplied by `nl_sep` and `sp_sep` so the payload
+remains on one TAP line.
+
+### Fight result
+
+```text
+EVT FIGHT RESULT <fight-result-json>
+```
+
+```json
+{
+  "player_name": "ALICE",
+  "success": true,
+  "damage_dealt": 50
+}
+```
+
+The result is delivered to the players in the combat instance after a code
+submission has been evaluated.
+
+### Fight end
+
+```text
+EVT FIGHT END
+```
+
+This event indicates that the combat instance has finished and was removed.
+
+## JSON event data
+
+When event data is a structured Go value, the Go server serializes it as compact
+JSON. When Rust supplies JSON as a string, the string is forwarded verbatim
+after the event name. JSON event payloads therefore remain on a single line and
+must not contain a literal `LF`.
+
+An event not matching one of the concrete forms is exposed by `api-client` as
+`ServerEvent::Unknown` rather than being treated as a command response.

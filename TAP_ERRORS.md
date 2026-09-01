@@ -1,91 +1,97 @@
-# TAP ERRORS
+# TAP Errors
 
-## Format
+This document describes the error frames that the Go TAP server can send to a
+client. The catalog is derived from the Go error response definitions and the
+error codes returned by the Rust game server.
 
-### Response Format
+## Frame format
 
-<pre><code class="language-abnf">; response format
-<a id="message" href="TAP_ERRORS.md#message">message</a> = <a href="TAP_ERRORS.md#response-line">response-line</a>
-<a id="response-line" href="TAP_ERRORS.md#response-line">response-line</a> = ("OK" / <a href="TAP_ERRORS.md#error-response">error-response</a>) [SP <a href="TAP_ERRORS.md#response-data">response-data</a>] LF
-<a id="response-data" href="TAP_ERRORS.md#response-data">response-data</a> = 1*(VCHAR / SP)
-</code></pre>
+TAP uses UTF-8, line-oriented frames. Every error ends with `LF` on the wire.
 
-### Error Format
+```abnf
+error-line    = "ERR" SP error-code SP error-name LF
+error-code    = 3DIGIT
+error-name    = 1*(ALPHA / DIGIT / "_")
+```
 
-<pre><code class="language-abnf">; error format
-<a id="error-response" href="TAP_ERRORS.md#error-response">error-response</a> = "ERR" SP <a href="TAP_ERRORS.md#error-code">error-code</a> SP <a href="TAP_ERRORS.md#error-message">error-message</a>
-<a id="error-code" href="TAP_ERRORS.md#error-code">error-code</a> = 3DIGIT
-<a id="error-message" href="TAP_ERRORS.md#error-message">error-message</a> = 1*(ALPHA / DIGIT / "_")
-</code></pre>
+Example:
 
-## Errors
+```text
+ERR 404 NPC_NOT_FOUND
+```
 
-<pre><code class="language-abnf">; error response-lines
-<a id="err-name-in-use" href="TAP_ERRORS.md#err-name-in-use">err-name-in-use</a> = "ERR" SP "201" SP "NAME_IN_USE" LF
-<a id="err-no-exit" href="TAP_ERRORS.md#err-no-exit">err-no-exit</a> = "ERR" SP "301" SP "NO_EXIT" LF
-<a id="err-not-in-group" href="TAP_ERRORS.md#err-not-in-group">err-not-in-group</a> = "ERR" SP "401" SP "NOT_IN_GROUP" LF
-<a id="err-already-in-group" href="TAP_ERRORS.md#err-already-in-group">err-already-in-group</a> = "ERR" SP "402" SP "ALREADY_IN_GROUP" LF
-<a id="err-item-not-found" href="TAP_ERRORS.md#err-item-not-found">err-item-not-found</a> = "ERR" SP "404" SP "ITEM_NOT_FOUND" LF
-<a id="err-item-not-in-inventory" href="TAP_ERRORS.md#err-item-not-in-inventory">err-item-not-in-inventory</a> = "ERR" SP "404" SP "ITEM_NOT_IN_INVENTORY" LF
-<a id="err-npc-not-found" href="TAP_ERRORS.md#err-npc-not-found">err-npc-not-found</a> = "ERR" SP "404" SP "NPC_NOT_FOUND" LF
-<a id="err-npc-not-hostile" href="TAP_ERRORS.md#err-npc-not-hostile">err-npc-not-hostile</a> = "ERR" SP "405" SP "NPC_NOT_HOSTILE" LF
-<a id="err-no-quest-available" href="TAP_ERRORS.md#err-no-quest-available">err-no-quest-available</a> = "ERR" SP "406" SP "NO_QUEST_AVAILABLE" LF
-<a id="err-connection-failed" href="TAP_ERRORS.md#err-connection-failed">err-connection-failed</a> = "ERR" SP "900" SP "CONNECTION_FAILED" LF
-<a id="err-send-failed" href="TAP_ERRORS.md#err-send-failed">err-send-failed</a> = "ERR" SP "901" SP "SEND_FAILED" LF
-</code></pre>
+Codes are not unique identifiers by themselves. Several error names share a
+code, so clients should retain both the numeric code and the symbolic name.
 
-| Error | Meaning |
-|---|---|
-| `ERR 201 NAME_IN_USE` | Requested username already taken |
-| `ERR 301 NO_EXIT` | Invalid movement direction |
-| `ERR 401 NOT_IN_GROUP` | Group operation requires group membership |
-| `ERR 402 ALREADY_IN_GROUP` | Player already belongs to a group |
-| `ERR 404 ITEM_NOT_FOUND` | Requested item not available in the room |
-| `ERR 404 ITEM_NOT_IN_INVENTORY` | Requested item not in player inventory |
-| `ERR 404 NPC_NOT_FOUND` | Requested NPC not present |
-| `ERR 405 NPC_NOT_HOSTILE` | NPC cannot be attacked |
-| `ERR 406 NO_QUEST_AVAILABLE` | NPC has no quest, or the quest is already completed |
-| `ERR 900 CONNECTION_FAILED` | Connection establishment failed |
-| `ERR 901 SEND_FAILED` | Message transmission failed |
+## Protocol errors
 
-## Additional Errors
+| Code | Error name | Meaning |
+| --- | --- | --- |
+| `201` | `NAME_IN_USE` | The requested username is already authenticated on the Go server. |
+| `204` | `NO_CONTENT` | The Rust server returned no usable command data. This code is defined and routed globally, but is not emitted by a current command handler. |
+| `301` | `NO_EXIT` | The direction is invalid or the current room has no exit in that direction. |
+| `400` | `ALREADY_CONNECTED` | The client sent `CONNECT` after it was already authenticated. |
+| `400` | `NOT_CONNECTED` | The command requires an authenticated TAP session. |
+| `400` | `INVALID_USERNAME` | The username violates the TAP username rules. |
+| `400` | `ROOM_FULL` | The Go server already has its maximum number of authenticated clients. |
+| `400` | `GROUP_FULL` | The target group already contains three players. |
+| `400` | `EMPTY_COMMAND` | The client sent an empty command line. |
+| `400` | `COMMAND_NOT_FOUND` | The top-level command or group/fight subcommand is unknown. |
+| `400` | `INVALID_ARGUMENTS` | Arguments are missing, unexpected, or contain invalid surrounding whitespace. |
+| `400` | `INVALID_SCOPE` | The `CHAT` scope is not `GLOBAL`, `ROOM`, `GROUP`, or `PRIVATE`. |
+| `401` | `NOT_IN_GROUP` | The requested operation requires group membership. |
+| `402` | `ALREADY_IN_GROUP` | The player or invitation target already belongs to a group. |
+| `403` | `NO_SUCH_USER` | The requested user is not authenticated on the Go server. |
+| `403` | `NOT_INVITED` | The player has no current invitation to the target group. Invitations expire after five minutes. |
+| `403` | `NOT_GROUP_LEADER` | Only the group leader may perform the requested grouped action. |
+| `404` | `ITEM_NOT_FOUND` | The item identifier cannot be resolved in the current room. |
+| `404` | `ITEM_NOT_IN_INVENTORY` | The item is not in the player's inventory. |
+| `404` | `NPC_NOT_FOUND` | The NPC identifier cannot be resolved. |
+| `404` | `GROUP_NOT_FOUND` | The referenced group no longer exists. |
+| `404` | `NO_SUCH_GROUP` | A requested group cannot be found. This name is defined for routed game-server errors. |
+| `405` | `PLAYER_NOT_FOUND` | The Rust game server does not know the player. |
+| `405` | `NPC_NOT_HOSTILE` | The selected NPC cannot be attacked. |
+| `406` | `NO_QUEST_AVAILABLE` | The NPC has no quest currently available to the player. |
+| `407` | `NPC_NOT_IN_ROOM` | The selected NPC is not in the player's room. |
+| `407` | `NOT_IN_SAME_ROOM` | A group invitation or join target is not in the same room. |
+| `408` | `NPC_IN_COMBAT` | The NPC already belongs to another combat instance. |
+| `409` | `ACTION_ALREADY_TAKEN` | The player already submitted an action for the current combat round. This name is defined, but the current `FIGHT ATTACK` map exposes that Rust error as `UNKNOWN_ERROR`. |
+| `410` | `PLAYER_ALREADY_IN_COMBAT` | The command is unavailable while the player is in a combat instance, or a new combat was requested for a player already fighting. Go maps it for `MOVE` and `FIGHT CREATE`; on other forwarded commands the same Rust code becomes `UNKNOWN_ERROR`. |
+| `411` | `PLAYER_NOT_IN_COMBAT` | `FIGHT ATTACK` was sent without an active combat instance. |
+| `412` | `FILE_NOT_FOUND` | The Rust server could not load the challenge source file for a fight. |
+| `413` | `ROOM_NOT_FOUND` | The Rust server cannot resolve the player's current room. |
+| `429` | `TOO_MANY_REQUESTS` | More than ten commands were received within one second. The Go server sends this error and then closes the client connection. |
+| `900` | `CONNECTION_FAILED` | The Rust game server is unavailable or a Go handler failed while communicating with it. |
+| `901` | `SEND_FAILED` | A command could not be transmitted between the servers. This mapping is defined, but no current Rust command handler emits it. |
+| `902` | `GAME_SERVER_TIMEOUT` | The Rust server did not answer a forwarded command within three seconds. |
+| `997` | `INVALID_GROUP_COMMAND` | Reserved for a rejected internal grouped-command envelope. The current Rust validation path does not emit it. |
+| `998` | `INVALID_QUESTION` | Reserved for a rejected internal question envelope. The current Rust validation path does not emit it. |
+| `999` | `INVALID_COMMAND` | The Rust server rejected an internal command envelope or invalid JSON. |
+| `999` | `UNKNOWN_ERROR` | The Go server received an unmapped, invalid, or unexpected game-server error code. |
 
-<pre><code class="language-abnf">; custom error response-lines
-<a id="err-already-connected" href="TAP_ERRORS.md#err-already-connected">err-already-connected</a> = "ERR" SP "400" SP "ALREADY_CONNECTED" LF
-<a id="err-not-connected" href="TAP_ERRORS.md#err-not-connected">err-not-connected</a> = "ERR" SP "400" SP "NOT_CONNECTED" LF
-<a id="err-invalid-username" href="TAP_ERRORS.md#err-invalid-username">err-invalid-username</a> = "ERR" SP "400" SP "INVALID_USERNAME" LF
-<a id="err-room-full" href="TAP_ERRORS.md#err-room-full">err-room-full</a> = "ERR" SP "400" SP "ROOM_FULL" LF
-<a id="err-group-full" href="TAP_ERRORS.md#err-group-full">err-group-full</a> = "ERR" SP "400" SP "GROUP_FULL" LF
-<a id="err-empty-command" href="TAP_ERRORS.md#err-empty-command">err-empty-command</a> = "ERR" SP "400" SP "EMPTY_COMMAND" LF
-<a id="err-command-not-found" href="TAP_ERRORS.md#err-command-not-found">err-command-not-found</a> = "ERR" SP "400" SP "COMMAND_NOT_FOUND" LF
-<a id="err-invalid-arguments" href="TAP_ERRORS.md#err-invalid-arguments">err-invalid-arguments</a> = "ERR" SP "400" SP "INVALID_ARGUMENTS" LF
-<a id="err-invalid-scope" href="TAP_ERRORS.md#err-invalid-scope">err-invalid-scope</a> = "ERR" SP "400" SP "INVALID_SCOPE" LF
-<a id="err-no-such-user" href="TAP_ERRORS.md#err-no-such-user">err-no-such-user</a> = "ERR" SP "403" SP "NO_SUCH_USER" LF
-<a id="err-not-invited" href="TAP_ERRORS.md#err-not-invited">err-not-invited</a> = "ERR" SP "403" SP "NOT_INVITED" LF
-<a id="err-group-not-found" href="TAP_ERRORS.md#err-group-not-found">err-group-not-found</a> = "ERR" SP "404" SP "GROUP_NOT_FOUND" LF
-<a id="err-no-such-group" href="TAP_ERRORS.md#err-no-such-group">err-no-such-group</a> = "ERR" SP "404" SP "NO_SUCH_GROUP" LF
-<a id="err-not-group-leader" href="TAP_ERRORS.md#err-not-group-leader">err-not-group-leader</a> = "ERR" SP "403" SP "NOT_GROUP_LEADER" LF
-<a id="err-invalid-question" href="TAP_ERRORS.md#err-invalid-question">err-invalid-question</a> = "ERR" SP "998" SP "INVALID_QUESTION" LF
-<a id="err-invalid-command" href="TAP_ERRORS.md#err-invalid-command">err-invalid-command</a> = "ERR" SP "999" SP "INVALID_COMMAND" LF
-<a id="err-unknown-error" href="TAP_ERRORS.md#err-unknown-error">err-unknown-error</a> = "ERR" SP "999" SP "UNKNOWN_ERROR" LF
-</code></pre>
+## Where errors originate
 
-| Error | Meaning |
-|---|---|
-| `ERR 400 ALREADY_CONNECTED` | Client tried to connect while already authenticated |
-| `ERR 400 NOT_CONNECTED` | Command requires an authenticated client |
-| `ERR 400 INVALID_USERNAME` | Username does not match the protocol format |
-| `ERR 400 ROOM_FULL` | Target room cannot accept another player |
-| `ERR 400 GROUP_FULL` | Target group cannot accept another player |
-| `ERR 400 EMPTY_COMMAND` | Client sent an empty command line |
-| `ERR 400 COMMAND_NOT_FOUND` | Command is not supported by this server |
-| `ERR 400 INVALID_ARGUMENTS` | Command arguments do not match the expected format |
-| `ERR 400 INVALID_SCOPE` | Chat scope is not `GLOBAL`, `ROOM`, or `GROUP` |
-| `ERR 403 NO_SUCH_USER` | Requested user does not exist or is not connected |
-| `ERR 403 NOT_INVITED` | Player tried to join a group without a valid invitation |
-| `ERR 404 GROUP_NOT_FOUND` | Target group does not exist anymore |
-| `ERR 404 NO_SUCH_GROUP` | Requested group does not exist |
-| `ERR 403 NOT_GROUP_LEADER` | Player must be the group leader to perform this action |
-| `ERR 998 INVALID_QUESTION` | Game server received an invalid question payload |
-| `ERR 999 INVALID_COMMAND` | The player sent an invalid command format |
-| `ERR 999 UNKNOWN_ERROR` | Server received an unknown or invalid game-server error code |
+The Go server generates session and syntax errors directly, including
+`INVALID_USERNAME`, `NOT_CONNECTED`, group errors, rate limiting, and failures
+to reach the Rust server.
+
+The Rust server returns numeric error codes inside its internal JSON response.
+The Go server maps the code through the command-specific response table before
+it sends a TAP error. If the code is not valid for the pending command, the
+client receives `ERR 999 UNKNOWN_ERROR`.
+
+The following failures close the TCP connection instead of guaranteeing a TAP
+error frame:
+
+- a frame larger than 4,096 bytes;
+- a client read timeout;
+- a socket read or write failure;
+- failure to authenticate within 30 seconds;
+- rejection before the TAP client handler starts because the connection or
+  per-host connection-attempt limit was reached.
+
+## Client-side errors
+
+The Rust `api-client` also exposes local `NetworkError`, `ProtocolError`, and
+`InternalError` values. These are client-library failures, not `ERR` frames, and
+therefore are not assigned TAP error codes.
