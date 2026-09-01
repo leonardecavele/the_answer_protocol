@@ -133,6 +133,7 @@ impl ScrollableComponent for HelpOverlay {
             Line::from("  status : view status"),
             Line::from("  talk <npc> : talk to npc"),
             Line::from("  attack <npc> : attack npc"),
+            Line::from("  fc <npc> : duel an npc in the code editor"),
             Line::from("  quest <npc> : ask an npc for a quest"),
             Line::from("  quests : list all active quests"),
             Line::from("  gc : create a new group"),

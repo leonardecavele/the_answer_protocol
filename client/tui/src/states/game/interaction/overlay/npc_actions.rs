@@ -2,28 +2,51 @@ use super::{Overlay, OverlayPayload};
 use crate::collections::SelectableList;
 use crate::data::manifest::NpcKind;
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum NpcAction {
+    Talk,
+    Attack,
+    Fight,
+    Quest,
+    Cancel,
+}
+
+impl NpcAction {
+    pub fn label(self) -> &'static str {
+        match self {
+            Self::Talk => "TALK",
+            Self::Attack => "ATTACK",
+            Self::Fight => "DUEL",
+            Self::Quest => "QUEST",
+            Self::Cancel => "CANCEL",
+        }
+    }
+
+    pub fn keyword(self) -> Option<&'static str> {
+        match self {
+            Self::Talk => Some("TALK"),
+            Self::Attack => Some("ATTACK"),
+            Self::Fight => Some("FC"),
+            Self::Quest => Some("QUEST"),
+            Self::Cancel => None,
+        }
+    }
+}
+
 pub struct NpcActionsState {
     pub npc_id: String,
-    pub actions: SelectableList<String>,
+    pub actions: SelectableList<NpcAction>,
 }
 
 impl NpcActionsState {
-    pub const TALK: &'static str = "TALK";
-    pub const ATTACK: &'static str = "ATTACK";
-    pub const QUEST: &'static str = "QUEST";
-    pub const CANCEL: &'static str = "CANCEL";
-
     pub fn new(npc_id: String, kind: &NpcKind) -> Self {
-        let mut actions: Vec<String> = match kind {
-            NpcKind::Enemy => vec![Self::TALK, Self::ATTACK],
-            NpcKind::QuestGiver => vec![Self::TALK, Self::QUEST],
-            NpcKind::Dialogue | NpcKind::Normal => vec![Self::TALK],
-        }
-        .into_iter()
-        .map(str::to_string)
-        .collect();
+        let mut actions = match kind {
+            NpcKind::Enemy => vec![NpcAction::Talk, NpcAction::Attack, NpcAction::Fight],
+            NpcKind::QuestGiver => vec![NpcAction::Talk, NpcAction::Quest],
+            NpcKind::Dialogue | NpcKind::Normal => vec![NpcAction::Talk],
+        };
 
-        actions.push(Self::CANCEL.to_string());
+        actions.push(NpcAction::Cancel);
 
         Self {
             npc_id,
@@ -31,11 +54,8 @@ impl NpcActionsState {
         }
     }
 
-    pub fn selected_command(&self) -> Option<&str> {
-        self.actions
-            .selected()
-            .map(String::as_str)
-            .filter(|action| *action != Self::CANCEL)
+    pub fn selected_command(&self) -> Option<&'static str> {
+        self.actions.selected().and_then(|action| action.keyword())
     }
 }
 

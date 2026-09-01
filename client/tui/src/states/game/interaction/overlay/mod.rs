@@ -11,7 +11,7 @@ pub use dialogue::{DialogueState, END_OF_DIALOGUE_TAG};
 pub use help::HelpState;
 pub use item_actions::{ItemActionsState, ItemLocation};
 pub use item_detail::ItemDetailState;
-pub use npc_actions::NpcActionsState;
+pub use npc_actions::{NpcAction, NpcActionsState};
 pub use quest_detail::QuestDetailState;
 
 use std::mem;

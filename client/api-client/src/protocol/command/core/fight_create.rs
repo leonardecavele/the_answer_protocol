@@ -49,8 +49,11 @@ impl Command for FightCreateCommand {
     }
 
     fn from_str(args: &str) -> Option<Self> {
+        if args.trim().is_empty() {
+            return None;
+        }
         Some(Self {
-            npc_id: args.to_string(),
+            npc_id: args.trim().to_string(),
         })
     }
 }

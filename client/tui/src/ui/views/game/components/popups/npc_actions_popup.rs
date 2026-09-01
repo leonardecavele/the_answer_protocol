@@ -49,7 +49,7 @@ impl Component for NpcActionsPopup {
             .map(|(index, action)| {
                 let style = selection_style(Color::Reset, overlay.actions.is_selected(index));
 
-                ListItem::new(Span::styled(format!(" {}", action), style))
+                ListItem::new(Span::styled(format!(" {}", action.label()), style))
             })
             .collect();
 
@@ -75,7 +75,7 @@ impl Lifecycle for NpcActionsPopup {
         };
 
         let npc_id = overlay.npc_id.clone();
-        let command = overlay.selected_command().map(str::to_string);
+        let command = overlay.selected_command();
 
         if state.game.find_npc(&npc_id).is_none() {
             state.game.overlays.close::<NpcActionsState>();
