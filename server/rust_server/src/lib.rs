@@ -1,6 +1,6 @@
 pub mod combat_instances;
 pub mod commands;
-pub mod constantes;
+pub mod constants;
 pub mod game_manager;
 pub mod inventory;
 pub mod items;

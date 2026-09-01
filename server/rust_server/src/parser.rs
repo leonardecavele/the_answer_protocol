@@ -1,6 +1,6 @@
 use tracing::error;
 
-use crate::constantes::{LOST_ITEM, LOST_ITEM_SPAWN_ID};
+use crate::constants::{LOST_ITEM, LOST_ITEM_SPAWN_ID, PLAYER_ROOM_SPAWN};
 use crate::items::{Item, ItemId};
 use crate::npc::{Npc, NpcId};
 use crate::quests::{Quest, Questid};
@@ -61,6 +61,13 @@ impl Parser {
         let mut valid_room_names = HashSet::new();
         for room in self.rooms.values() {
             valid_room_names.insert(room.get_name().to_string());
+        }
+
+        if !valid_room_names.contains(PLAYER_ROOM_SPAWN) {
+            return Err(format!(
+                "PLAYER_ROOM_SPAWN '{}' is not defined",
+                PLAYER_ROOM_SPAWN
+            ));
         }
 
         for (room_id, room) in &self.rooms {

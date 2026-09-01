@@ -1,10 +1,9 @@
 use crate::items::ItemId;
 use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Inventory {
-    items: HashSet<ItemId>,
+    items: Vec<ItemId>,
 }
 
 impl Default for Inventory {
@@ -16,7 +15,7 @@ impl Default for Inventory {
 impl Inventory {
     pub fn new() -> Self {
         Self {
-            items: HashSet::new(),
+            items: Vec::new(),
         }
     }
 
@@ -25,17 +24,19 @@ impl Inventory {
     }
 
     pub fn add_item(&mut self, item_id: ItemId) {
-        self.items.insert(item_id);
+        self.items.push(item_id);
     }
 
     pub fn remove_item(&mut self, item_id: ItemId) {
-        self.items.remove(&item_id);
+        if let Some(pos) = self.items.iter().position(|&x| x == item_id) {
+            self.items.remove(pos);
+        }
     }
 
-    pub fn get_items(&self) -> &HashSet<ItemId> {
+    pub fn get_items(&self) -> &Vec<ItemId> {
         &self.items
     }
-    pub fn get_items_mut(&mut self) -> &mut HashSet<ItemId> {
+    pub fn get_items_mut(&mut self) -> &mut Vec<ItemId> {
         &mut self.items
     }
 }

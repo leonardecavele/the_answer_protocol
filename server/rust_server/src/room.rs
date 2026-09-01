@@ -1,4 +1,4 @@
-use crate::constantes::Direction;
+use crate::constants::Direction;
 use crate::inventory::Inventory;
 use crate::items::ItemId;
 use std::collections::HashMap;

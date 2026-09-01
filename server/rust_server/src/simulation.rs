@@ -1,6 +1,6 @@
 use tracing::debug;
 
-use crate::constantes::{ITEM_DESPAWN_TIME, LOST_ITEM, LOST_ITEM_SPAWN, TICK_TIME, TickResult};
+use crate::constants::{ITEM_DESPAWN_TIME, LOST_ITEM, LOST_ITEM_SPAWN, TICK_TIME, TickResult};
 use crate::game_manager::GameManager;
 use crate::items::ItemId;
 use std::sync::mpsc;
@@ -44,7 +44,7 @@ impl GameManager {
 
         for room in self.all_rooms.values() {
             for item_id in room.get_inventory().get_items() {
-                if let Some(item) = self.all_items.get(item_id)
+                if let Some(item) = self.get_item(*item_id)
                     && let Some(dropped_time) = item.get_dropped_at()
                         && current_time.duration_since(dropped_time) >= ITEM_DESPAWN_TIME {
                             let no_despawn_room = item.get_remove_despawn_in_room();
@@ -81,6 +81,9 @@ impl GameManager {
                     &data,
                 );
                 self.add_diff_to_tick(event_spawn);
+            } else {
+                // Completely despawned from the world, we can recycle the ID
+                self.recycle_item_id(item_id);
             }
         }
 

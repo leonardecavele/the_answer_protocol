@@ -1,4 +1,4 @@
-use crate::constantes::{PLAYER_ROOM_SPAWN, PLAYER_STARTING_HP, PLAYER_STARTING_MAX_HP};
+use crate::constants::{PLAYER_ROOM_SPAWN, PLAYER_STARTING_HP, PLAYER_STARTING_MAX_HP};
 use crate::inventory::Inventory;
 use crate::quests::QuestState;
 use crate::quests::Questid;
@@ -35,7 +35,6 @@ impl Default for Save {
 #[derive(Serialize, Deserialize, Clone)]
 pub struct ServerSave {
     pub next_player_id: u32,
-    pub next_item_id: u64,
     pub rooms_inventory: HashMap<String, Inventory>,
 }
 
@@ -43,7 +42,6 @@ impl Default for ServerSave {
     fn default() -> Self {
         Self {
             next_player_id: 0,
-            next_item_id: 1,
             rooms_inventory: HashMap::new(),
         }
     }
