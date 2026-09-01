@@ -2,6 +2,7 @@ package tap_commands
 
 import (
 	"errors"
+	"fmt"
 	serverError "go_server/error"
 	"go_server/game_conn"
 	"go_server/protocol"
@@ -52,6 +53,17 @@ func handleConnectCommand(args string, client *session.Client, gameServerManager
 			{
 				EmittedBy: client.Username,
 				EventName: "CONNECT",
+			},
+		},
+	})
+
+	client.Room.BroadcastEvent(protocol.EventBatch{
+		IgnoredPlayers: []string{client.Username},
+		Events: []protocol.Event{
+			{
+				// EmittedBy: client.Username,
+				EventName: "STATS",
+				Data:      fmt.Sprintf("%d", client.Room.Count()),
 			},
 		},
 	})
