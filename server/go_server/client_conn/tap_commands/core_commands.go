@@ -63,7 +63,7 @@ func handleConnectCommand(args string, client *session.Client, gameServerManager
 			{
 				// EmittedBy: client.Username,
 				EventName: "STATS",
-				Data:      fmt.Sprintf("%d", client.Room.Count()),
+				Data:      fmt.Sprintf("players=%d", client.Room.Count()),
 			},
 		},
 	})
