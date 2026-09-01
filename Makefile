@@ -31,8 +31,35 @@ HELPERS = \
 	ensure_clippy() { command -v cargo-clippy >/dev/null 2>&1 || { error_log "cargo-clippy is required"; return 1; }; }; \
 	ensure_rustfmt() { command -v rustfmt >/dev/null 2>&1 || { error_log "rustfmt is required"; return 1; }; }; \
 	ensure_gui() { test -f "$(CLIENT_DIR)/gui/Cargo.toml" || { error_log "the gui client is not present on this branch"; return 1; }; }; \
-	ensure_stopped() { pid_file="$$1"; name="$$2"; test -f "$$pid_file" || return 0; pid=$$(cat "$$pid_file"); case "$$pid" in ''|*[!0-9]*) rm -f "$$pid_file"; return 0;; esac; kill -0 "$$pid" 2>/dev/null || { rm -f "$$pid_file"; return 0; }; error_log "$$name is already running (PID $$pid)"; return 1; }; \
-	stop_process() { pid_file="$$1"; name="$$2"; expected_exe="$$3"; test -f "$$pid_file" || { info_log "$$name is not running"; return 0; }; pid=$$(cat "$$pid_file"); case "$$pid" in ''|*[!0-9]*) error_log "invalid PID for $$name"; return 1;; esac; kill -0 "$$pid" 2>/dev/null || { rm -f "$$pid_file"; info_log "$$name is not running"; return 0; }; actual_exe=$$(readlink "/proc/$$pid/exe" 2>/dev/null); test "$$actual_exe" = "$$expected_exe" || { error_log "refusing to stop $$name: PID $$pid belongs to another process"; return 1; }; kill "$$pid" || { error_log "could not stop $$name (PID $$pid)"; return 1; }; rm -f "$$pid_file"; info_log "$$name stopped"; };
+	is_pid() { \
+		case "$$1" in ''|*[!0-9]*) return 1;; *) return 0;; esac; \
+	}; \
+	is_running() { kill -0 "$$1" 2>/dev/null; }; \
+	clear_pid() { rm -f "$$1"; }; \
+	process_exe() { readlink "/proc/$$1/exe" 2>/dev/null; }; \
+	ensure_stopped() { \
+		pid_file="$$1"; \
+		name="$$2"; \
+		test -f "$$pid_file" || return 0; \
+		pid=$$(cat "$$pid_file"); \
+		is_pid "$$pid" || { clear_pid "$$pid_file"; return 0; }; \
+		is_running "$$pid" || { clear_pid "$$pid_file"; return 0; }; \
+		error_log "$$name is already running (PID $$pid)"; \
+		return 1; \
+	}; \
+	stop_process() { \
+		pid_file="$$1"; \
+		name="$$2"; \
+		expected_exe="$$3"; \
+		test -f "$$pid_file" || { info_log "$$name is not running"; return 0; }; \
+		pid=$$(cat "$$pid_file"); \
+		is_pid "$$pid" || { error_log "invalid PID for $$name"; return 1; }; \
+		is_running "$$pid" || { clear_pid "$$pid_file"; info_log "$$name is not running"; return 0; }; \
+		test "$$(process_exe "$$pid")" = "$$expected_exe" || { error_log "refusing to stop $$name: PID $$pid belongs to another process"; return 1; }; \
+		kill "$$pid" || { error_log "could not stop $$name (PID $$pid)"; return 1; }; \
+		clear_pid "$$pid_file"; \
+		info_log "$$name stopped"; \
+	};
 
 # GLOBAL
 
