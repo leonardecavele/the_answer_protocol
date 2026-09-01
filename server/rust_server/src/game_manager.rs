@@ -1,12 +1,13 @@
 use crate::combat_instances::CombatInstanceManager;
 use crate::commands::generate_json;
-use crate::constantes::{
+use crate::constants::LOOT::TShirt;
+use crate::constants::{
     CODE_NL_SEP, CODE_SP_SEP, Direction, LOST_ITEM, LOST_ITEM_SPAWN, MAX_DMG_DEALT,
     MAX_TIME_FOR_COMBAT, MIN_DMG_DEALT, NPC_MAX_DMG, NPC_MIN_DMG, NPC_RESPAWN_TIME,
-    PLAYER_ROOM_SPAWN, TEST_FILES_DIR,
+    PLAYER_ROOM_SPAWN, PLAYER_STARTING_HP, TEST_FILES_DIR,
 };
 
-use crate::constantes::ErrorCode;
+use crate::constants::ErrorCode;
 use crate::inventory::Inventory;
 use crate::items::{Item, ItemId};
 use crate::npc::{Npc, NpcId};
@@ -17,7 +18,8 @@ use crate::room::{Room, RoomId, RoomName};
 use crate::save::{Save, ServerSave};
 use crate::tester::test;
 use json::{JsonValue, object};
-use std::collections::HashMap;
+use std::collections::{HashMap, BinaryHeap};
+use std::cmp::Reverse;
 use std::io::Write;
 use std::net::TcpStream;
 use std::sync::mpsc;
@@ -29,7 +31,8 @@ pub struct GameManager {
     players: HashMap<PlayerId, Player>,
     players_by_name: HashMap<String, PlayerId>,
     next_player_id: PlayerCount,
-    next_item_id: ItemId,
+    pub nb_models: u64,
+    free_item_ids: BinaryHeap<Reverse<ItemId>>,
     pub all_items: HashMap<ItemId, Item>,
     pub all_rooms: HashMap<RoomId, Room>,
     pub all_npcs: HashMap<NpcId, Npc>,
@@ -51,11 +54,13 @@ impl GameManager {
         writer_stream: TcpStream,
         parser: Parser,
     ) -> Self {
+        let nb_models = parser.get_items().len() as u64;
         let mut manager = Self {
             players: HashMap::new(),
             players_by_name: HashMap::new(),
             next_player_id: 0,
-            next_item_id: 0,
+            nb_models: parser.get_items().len() as u64,
+            free_item_ids: BinaryHeap::new(),
             all_items: parser.get_items().clone(),
             all_rooms: parser.get_rooms().clone(),
             all_npcs: parser.get_npcs().clone(),
@@ -78,32 +83,39 @@ impl GameManager {
         &self.players
     }
 
+    pub fn get_item(&self, item_id: ItemId) -> Option<&Item> {
+        self.all_items.get(&item_id)
+    }
+
+    pub fn get_item_mut(&mut self, item_id: ItemId) -> Option<&mut Item> {
+        self.all_items.get_mut(&item_id)
+    }
+
     fn save_player(&mut self, player_id: PlayerId) {
-        if self.player_has_item(player_id, crate::constantes::LOST_ITEM as u64) {
+        if self.player_has_item(player_id, LOST_ITEM) {
             let player_name = self.players.get(&player_id).unwrap().get_name().to_string();
-            let mut players = self.get_all_players_at_room(crate::constantes::LOST_ITEM_SPAWN);
-            let lost_item_name = self.get_item_name(&(crate::constantes::LOST_ITEM as u64));
+            let mut players = self.get_all_players_at_room(LOST_ITEM_SPAWN);
+            let lost_item_name = self.get_item_name(LOST_ITEM);
             let event = self.generate_event_json(
                 &mut players,
                 &player_name,
                 "DROP",
-                crate::items::Item::protocol_representation(
-                    crate::constantes::LOST_ITEM as u64,
-                    lost_item_name.as_str(),
-                )
-                .as_str(),
+                crate::items::Item::protocol_representation(LOST_ITEM, lost_item_name.as_str())
+                    .as_str(),
                 true,
             );
-            self.remove_item_from_player(player_id, crate::constantes::LOST_ITEM as u64);
-            self.add_item_to_room(
-                crate::constantes::LOST_ITEM_SPAWN,
-                crate::constantes::LOST_ITEM as u64,
-            );
+            self.remove_item_from_player(player_id, LOST_ITEM);
+            self.add_item_to_room(LOST_ITEM_SPAWN, LOST_ITEM);
             self.add_diff_to_tick(event);
         }
 
         if let Some(player) = self.players.get(&player_id) {
-            let inventory = player.get_inventory().clone();
+            let mut inventory = crate::inventory::Inventory::new();
+            for item_id in player.get_items() {
+                if let Some(item) = self.all_items.get(item_id) {
+                    inventory.add_item(item.get_model_id());
+                }
+            }
             let player_quests = self
                 .quest_instances
                 .iter()
@@ -164,6 +176,38 @@ impl GameManager {
         }
     }
 
+    pub fn instantiate_item(&mut self, item_id: ItemId) -> ItemId {
+        //the lost item only exists in one example so
+        // return directly the model instead of instanciating a new one
+        if item_id == LOST_ITEM {
+            return LOST_ITEM;
+        }
+        let new_id = self
+            .free_item_ids
+            .pop()
+            .map(|rev| rev.0)
+            .unwrap_or(self.all_items.len() as u64);
+
+        let new_item = if let Some(item) = self.get_item(item_id) {
+            item.clone_as_instance(new_id)
+        } else {
+            error!("tried to instantiate unknown item: {}", item_id);
+            self.free_item_ids.push(Reverse(new_id));
+            return LOST_ITEM;
+        };
+        self.all_items.insert(new_id, new_item);
+        new_id
+    }
+
+    pub fn recycle_item_id(&mut self, item_id: ItemId) {
+        if item_id != LOST_ITEM {
+            self.all_items.remove(&item_id);
+            if item_id < self.all_items.len() as ItemId {
+                self.free_item_ids.push(Reverse(item_id));
+            }
+        }
+    }
+
     pub fn save_server_state(&mut self) {
         let player_ids: Vec<PlayerId> = self.players.keys().copied().collect();
         for id in player_ids {
@@ -172,12 +216,17 @@ impl GameManager {
 
         let mut rooms_inventory = HashMap::new();
         for (room_id, room) in &self.all_rooms {
-            rooms_inventory.insert(room_id.to_string(), room.get_inventory().clone());
+            let mut inventory = crate::inventory::Inventory::new();
+            for item_id in room.get_inventory().get_items() {
+                if let Some(item) = self.get_item(*item_id) {
+                    inventory.add_item(item.get_model_id());
+                }
+            }
+            rooms_inventory.insert(room_id.to_string(), inventory);
         }
 
         let server_save = crate::save::ServerSave {
             next_player_id: self.next_player_id,
-            next_item_id: self.next_item_id,
             rooms_inventory,
         };
 
@@ -196,35 +245,29 @@ impl GameManager {
             return;
         };
 
-        if server_save.next_player_id > 0 || server_save.next_item_id > 1 {
+        if server_save.next_player_id > 0 {
             self.next_player_id = server_save.next_player_id;
-            self.next_item_id = server_save.next_item_id;
             for (room_id_str, mut inventory) in server_save.rooms_inventory {
                 let items_to_check: Vec<ItemId> = inventory.get_items().iter().cloned().collect();
+                inventory.get_items_mut().clear();
                 for item_id in items_to_check {
-                    if !self.item_exists(item_id) {
+                    if item_id >= self.nb_models {
                         tracing::warn!(
                             "Removing invalid item {} from room {}",
                             item_id,
                             room_id_str
                         );
-                        inventory.remove_item(item_id);
+                    } else {
+                        inventory.add_item(self.instantiate_item(item_id));
                     }
                 }
 
-                let mut items_to_start_timer = std::collections::HashSet::new();
+                let mut items_to_start_timer = Vec::new();
 
                 if let Ok(room_id) = room_id_str.parse::<u32>() {
                     if let Some(room) = self.all_rooms.get_mut(&room_id) {
-                        let mut merged_inventory = inventory;
-                        // Add any newly defined items from rooms.json that didn't exist when the save was created
-                        for base_item in room.get_inventory().get_items() {
-                            if *base_item >= server_save.next_item_id {
-                                merged_inventory.add_item(*base_item);
-                            }
-                        }
-                        items_to_start_timer = merged_inventory.get_items().clone();
-                        room.set_inventory(merged_inventory);
+                        items_to_start_timer = inventory.get_items().clone();
+                        room.set_inventory(inventory);
                     }
                 } else {
                     self.set_default_ids();
@@ -240,7 +283,7 @@ impl GameManager {
     }
 
     pub fn ensure_lost_item_exists(&mut self) {
-        let lost_item_id = LOST_ITEM as u64;
+        let lost_item_id = LOST_ITEM;
         let mut found = false;
         for room in self.all_rooms.values() {
             if room.contains_item(lost_item_id) {
@@ -260,7 +303,6 @@ impl GameManager {
 
     pub fn set_default_ids(&mut self) {
         self.next_player_id = 0;
-        self.next_item_id = self.all_items.len() as ItemId;
     }
 
     pub fn get_all_items(&mut self) -> &mut HashMap<ItemId, Item> {
@@ -299,19 +341,18 @@ impl GameManager {
 
         // Filter out nonexistent items from player's inventory
         let items_to_check: Vec<ItemId> = save_data.inventory.get_items().iter().cloned().collect();
+        save_data.inventory.get_items_mut().clear();
         for item_id in items_to_check {
-            if !self.item_exists(item_id) {
+            if item_id >= self.nb_models {
                 warn!(
                     "Removing invalid item_id: <{}> from player {}",
                     item_id, save_data.name
                 );
-                save_data.inventory.remove_item(item_id);
+            } else if item_id == LOST_ITEM {
+                tracing::error!("removing invalid lost_item from player {}", save_data.name);
+            } else {
+                save_data.inventory.add_item(self.instantiate_item(item_id));
             }
-        }
-
-        if save_data.inventory.contains_item(LOST_ITEM as u64) {
-            tracing::error!("removing invalid lost_item from player {}", save_data.name);
-            save_data.inventory.remove_item(LOST_ITEM as u64);
         }
 
         let mut seen_quests = std::collections::HashSet::new();
@@ -373,8 +414,15 @@ impl GameManager {
             }
         };
         self.save_player(player_id);
-        self.players.remove(&player_id);
+        
+        if let Some(player) = self.players.remove(&player_id) {
+            for item_id in player.get_items().iter().rev() {
+                self.recycle_item_id(*item_id);
+            }
+        }
+
         self.players_by_name.remove(&name);
+        
         self.quest_instances.retain(|q| q.get_player() != player_id);
     }
 
@@ -382,8 +430,8 @@ impl GameManager {
         self.players.len()
     }
 
-    pub fn get_item_name(&self, item_id: &ItemId) -> String {
-        self.all_items.get(item_id).unwrap().get_name().to_owned()
+    pub fn get_item_name(&self, item_id: ItemId) -> String {
+        self.get_item(item_id).unwrap().get_name().to_owned()
     }
 
     pub fn remove_item_from_player(&mut self, player_id: PlayerId, item_id: ItemId) {
@@ -402,7 +450,7 @@ impl GameManager {
         let items: Vec<String> = player
             .get_items()
             .iter()
-            .map(|item_id| format!("{}.{}", item_id, self.get_item_name(item_id)))
+            .map(|item_id| format!("{}.{}", item_id, self.get_item_name(*item_id)))
             .collect();
 
         format!("{:?}", items)
@@ -496,7 +544,7 @@ impl GameManager {
     }
 
     pub fn item_exists_with_name(&self, item_id: ItemId, item_name: &str) -> bool {
-        let item = self.all_items.get(&item_id);
+        let item = self.get_item(item_id);
         item.is_some_and(|item| item.get_name() == item_name)
     }
 
@@ -646,8 +694,8 @@ impl GameManager {
         room.get_inventory()
             .get_items()
             .iter()
-            .find(|item_id| self.get_item_name(item_id) == item_rep)
-            .map(|item_id| (*item_id, self.get_item_name(item_id)))
+            .find(|item_id| self.get_item_name(**item_id) == item_rep)
+            .map(|item_id| (*item_id, self.get_item_name(*item_id)))
     }
 
     pub fn parse_item_from_player(
@@ -662,26 +710,26 @@ impl GameManager {
             .get_inventory()
             .get_items()
             .iter()
-            .find(|item_id| self.get_item_name(item_id) == item_rep)
-            .map(|item_id| (*item_id, self.get_item_name(item_id)))
+            .find(|item_id| self.get_item_name(**item_id) == item_rep)
+            .map(|item_id| (*item_id, self.get_item_name(*item_id)))
     }
 
     pub fn convert_items_to_string(&self, inventory: &Inventory) -> Vec<String> {
         inventory
             .get_items()
             .iter()
-            .map(|item_id| format!("{}.{}", item_id, self.get_item_name(item_id)))
+            .map(|item_id| format!("{}.{}", item_id, self.get_item_name(*item_id)))
             .collect()
     }
 
     pub fn reset_dropped_at_for_item(&mut self, item_id: ItemId) {
-        if let Some(item) = self.all_items.get_mut(&item_id) {
+        if let Some(item) = self.get_item_mut(item_id) {
             item.stop_dropped_at();
         }
     }
 
     pub fn start_dropped_at_for_item(&mut self, item_id: ItemId) {
-        if let Some(item) = self.all_items.get_mut(&item_id) {
+        if let Some(item) = self.get_item_mut(item_id) {
             item.set_dropped_at(Instant::now());
         }
     }
@@ -932,11 +980,11 @@ impl GameManager {
     }
 
     pub fn player_has_item(&self, player_id: PlayerId, item_id: ItemId) -> bool {
-        self.get_player(player_id).unwrap().has_item(item_id)
-    }
-
-    pub fn get_mut_item(&mut self, item_id: ItemId) -> &mut Item {
-        self.all_items.get_mut(&item_id).unwrap()
+        if let Some(player) = self.get_player(player_id) {
+            player.has_item(item_id)
+        } else {
+            false
+        }
     }
 
     pub fn get_random_test_file_name(&self) -> String {
@@ -979,7 +1027,10 @@ impl GameManager {
             .values()
             .find(|room| room.get_name() == room_name)
             .map(|room| room.get_id())
-            .unwrap_or(2 as RoomId)
+            .unwrap_or_else(|| {
+                warn!("Room '{}' not found, using default room id", room_name);
+                self.get_room_id_from_name(PLAYER_ROOM_SPAWN)
+            })
     }
     pub fn get_finished_instances_players(&mut self) -> Vec<Vec<PlayerId>> {
         let mut vec: Vec<Vec<PlayerId>> = Vec::new();

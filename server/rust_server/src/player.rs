@@ -1,4 +1,4 @@
-use crate::constantes::{
+use crate::constants::{
     NO_MORE_MESSAGES, PLAYER_ROOM_SPAWN, PLAYER_STARTING_HP, PLAYER_STARTING_MAX_HP,
 };
 use crate::inventory::Inventory;
@@ -72,7 +72,7 @@ impl Player {
         self.hp = hp;
     }
 
-    pub fn get_items(&self) -> &HashSet<ItemId> {
+    pub fn get_items(&self) -> &Vec<ItemId> {
         self.inventory.get_items()
     }
     pub fn add_item(&mut self, item_id: ItemId) {

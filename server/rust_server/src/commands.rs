@@ -1,6 +1,5 @@
-use crate::constantes::{
-    BASE_COMMAND_RESPONSE, CODE_NL_SEP, CODE_SP_SEP, ErrorCode, LOST_ITEM, LOST_ITEM_SPAWN,
-    MAX_TIME_FOR_COMBAT, NPC_MOB, TEST_FILES_DIR,
+use crate::constants::{
+    BASE_COMMAND_RESPONSE, CODE_NL_SEP, CODE_SP_SEP, ErrorCode, LOST_ITEM, LOST_ITEM_SPAWN, MAX_TIME_FOR_COMBAT, NPC_MOB, SKIP_PLAYER_EXISTS_TEST, TEST_FILES_DIR,
 };
 use crate::game_manager::GameManager;
 use crate::items::{Item, ItemId};
@@ -498,16 +497,21 @@ impl GameManager {
         }
 
         let player_name = json_object["player"].as_str().unwrap_or("");
-        let player_id = match self.get_player_id(player_name) {
-            Some(id) => *id,
-            None => {
-                warn!("Player not found: {}", player_name);
-                return generate_json(player_name, "", ErrorCode::PlayerNotFound, "").dump();
+        let command_name = json_object["command"].as_str().unwrap_or("");
+        let data = json_object["data"].as_str().unwrap_or("");
+        let skip_player_exists_test = command_name == "CONNECT";
+        let player_id = if skip_player_exists_test {
+            SKIP_PLAYER_EXISTS_TEST
+        } else {
+            match self.get_player_id(player_name) {
+                Some(id) => *id,
+                None => {
+                    warn!("Player not found: {}", player_name);
+                    return generate_json(player_name, "", ErrorCode::PlayerNotFound, "").dump();
+                }
             }
         };
         
-        let command_name = json_object["command"].as_str().unwrap_or("");
-        let data = json_object["data"].as_str().unwrap_or("");
 
         info!(
             "received command {} from player {} with args <{}>",

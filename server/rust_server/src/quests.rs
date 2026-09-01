@@ -1,4 +1,4 @@
-use crate::{constantes::LOOT, player::PlayerId};
+use crate::{constants::LOOT, player::PlayerId};
 use json::JsonValue;
 
 pub type Questid = String;

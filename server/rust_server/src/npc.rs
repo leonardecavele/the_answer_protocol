@@ -2,7 +2,7 @@ use json::JsonValue;
 use std::time::Instant;
 use tracing::error;
 
-use crate::constantes::{NPC_MOB, NPC_QUEST_GIVER, NPC_TALKER};
+use crate::constants::{NPC_MOB, NPC_QUEST_GIVER, NPC_TALKER};
 use crate::quests::Questid;
 use crate::room::RoomName;
 
