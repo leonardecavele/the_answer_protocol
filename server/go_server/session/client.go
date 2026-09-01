@@ -32,6 +32,8 @@ type Client struct {
 	eventChan   chan protocol.Event
 	stateMutex  sync.RWMutex
 	writeMutex  sync.Mutex
+	rateMutex   sync.Mutex
+	commandRate rateWindow
 }
 
 func NewClient(conn net.Conn, room *Room) *Client {
@@ -114,6 +116,15 @@ func (c *Client) GetState() ClientState {
 
 func (c *Client) IsAuthenticated() bool {
 	return c.GetState() == AUTHENTICATED
+}
+
+func (c *Client) AllowCommand() bool {
+	if c == nil {
+		return false
+	}
+	c.rateMutex.Lock()
+	defer c.rateMutex.Unlock()
+	return c.commandRate.allow(time.Now(), config.MaxCommandsPerWindow, config.CommandRateWindow)
 }
 
 func (c *Client) authenticate(username string) {

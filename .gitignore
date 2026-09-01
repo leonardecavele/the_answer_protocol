@@ -12,3 +12,4 @@
 *:Zone.Identifier
 *.log
 *_test.go
+!server/go_server/**/*_test.go

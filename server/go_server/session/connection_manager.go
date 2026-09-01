@@ -3,6 +3,7 @@ package session
 import (
 	"go_server/config"
 	serverError "go_server/error"
+	"net"
 	"sync"
 	"time"
 )
@@ -12,6 +13,8 @@ type ConnectionManager struct {
 	connections           map[*Client]*time.Timer
 	maxConnection         int
 	authenticationTimeout time.Duration
+	connectionAttempts    map[string]*rateWindow
+	lastAttemptCleanup    time.Time
 }
 
 func NewConnectionManager() *ConnectionManager {
@@ -23,7 +26,17 @@ func newConnectionManager(maxConnection int, authenticationTimeout time.Duration
 		connections:           make(map[*Client]*time.Timer, maxConnection),
 		maxConnection:         maxConnection,
 		authenticationTimeout: authenticationTimeout,
+		connectionAttempts:    make(map[string]*rateWindow),
 	}
+}
+
+func remoteHost(client *Client) string {
+	address := client.Conn.RemoteAddr().String()
+	host, _, err := net.SplitHostPort(address)
+	if err != nil {
+		return address
+	}
+	return host
 }
 
 func (manager *ConnectionManager) Subscribe(client *Client) error {
@@ -36,6 +49,23 @@ func (manager *ConnectionManager) Subscribe(client *Client) error {
 
 	manager.mutex.Lock()
 	defer manager.mutex.Unlock()
+
+	now := time.Now()
+	if now.Sub(manager.lastAttemptCleanup) >= config.ConnectionAttemptWindow {
+		for host, window := range manager.connectionAttempts {
+			if window.expired(now, config.ConnectionAttemptWindow) {
+				delete(manager.connectionAttempts, host)
+			}
+		}
+		manager.lastAttemptCleanup = now
+	}
+	host := remoteHost(client)
+	if manager.connectionAttempts[host] == nil {
+		manager.connectionAttempts[host] = &rateWindow{}
+	}
+	if !manager.connectionAttempts[host].allow(now, config.MaxConnectionAttempts, config.ConnectionAttemptWindow) {
+		return serverError.ErrRateLimitExceeded
+	}
 
 	if _, ok := manager.connections[client]; ok {
 		return serverError.ErrConnectionAlreadySubscribed

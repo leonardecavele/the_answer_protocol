@@ -9,6 +9,7 @@ var (
 	ErrInvalidConnection           = errors.New("invalid connection")
 	ErrConnectionAlreadySubscribed = errors.New("connection already subscribed")
 	ErrMaxConnection               = errors.New("maximum number of connections reached")
+	ErrRateLimitExceeded           = errors.New("rate limit exceeded")
 	ErrReadStringTooLong           = errors.New("read string exceeds maximum size")
 	ErrGameServerNotConnected      = errors.New("game server not connected")
 	ErrGameServerAnswerTimeout     = errors.New("timeout waiting for game server answer")
