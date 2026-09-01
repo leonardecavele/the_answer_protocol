@@ -3,6 +3,7 @@ package session
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"go_server/config"
 	serverError "go_server/error"
 	"go_server/game_conn"
@@ -70,6 +71,17 @@ func (c *Client) DeleteClient(gameServerManager *game_conn.GameServerManager) er
 				{
 					EmittedBy: username,
 					EventName: "QUIT",
+				},
+			},
+		})
+
+		c.Room.BroadcastEvent(protocol.EventBatch{
+			IgnoredPlayers: []string{username},
+			Events: []protocol.Event{
+				{
+					// EmittedBy: username,
+					EventName: "STATS",
+					Data:      fmt.Sprintf("players=%d", c.Room.Count()),
 				},
 			},
 		})

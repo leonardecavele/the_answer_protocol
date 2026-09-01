@@ -2,6 +2,7 @@ package tap_commands
 
 import (
 	"errors"
+	"fmt"
 	serverError "go_server/error"
 	"go_server/game_conn"
 	"go_server/protocol"
@@ -15,6 +16,9 @@ func handleConnectCommand(args string, client *session.Client, gameServerManager
 			return false
 		}
 		if len(username) < 3 || len(username) > 20 {
+			return false
+		}
+		if !((username[0] >= 'a' && username[0] <= 'z') || (username[0] >= 'A' && username[0] <= 'Z')) {
 			return false
 		}
 		for _, c := range username {
@@ -49,6 +53,17 @@ func handleConnectCommand(args string, client *session.Client, gameServerManager
 			{
 				EmittedBy: client.Username,
 				EventName: "CONNECT",
+			},
+		},
+	})
+
+	client.Room.BroadcastEvent(protocol.EventBatch{
+		IgnoredPlayers: []string{client.Username},
+		Events: []protocol.Event{
+			{
+				// EmittedBy: client.Username,
+				EventName: "STATS",
+				Data:      fmt.Sprintf("players=%d", client.Room.Count()),
 			},
 		},
 	})

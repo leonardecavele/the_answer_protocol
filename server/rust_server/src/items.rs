@@ -7,6 +7,7 @@ pub type ItemId = u64;
 #[derive(Clone)]
 pub struct Item {
     id: ItemId,
+    model_id: ItemId,
     name: String,
     description: String,
     dropped_at: Option<Instant>,
@@ -17,11 +18,23 @@ impl Item {
     pub fn new(id: ItemId, name: String, description: String) -> Self {
         Self {
             id,
+            model_id: id,
             name,
             description,
             dropped_at: None,
             remove_despawn_in_room: None,
         }
+    }
+
+    pub fn get_model_id(&self) -> ItemId {
+        self.model_id
+    }
+
+    pub fn clone_as_instance(&self, new_id: ItemId) -> Self {
+        let mut new_item = self.clone();
+        new_item.id = new_id;
+        // The model_id remains the same as the original base item
+        new_item
     }
     pub fn get_remove_despawn_in_room(&self) -> Option<RoomId> {
         self.remove_despawn_in_room
