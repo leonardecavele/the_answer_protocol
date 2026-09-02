@@ -1,14 +1,3 @@
-pub mod app;
-pub mod data;
-pub mod errors;
-pub mod events;
-pub mod network;
-pub mod states;
-pub mod ui;
-
-pub(crate) mod collections;
-
-use crate::app::App;
 use clap::Parser;
 use crossterm::event::{DisableMouseCapture, EnableMouseCapture};
 use crossterm::execute;
@@ -19,6 +8,7 @@ use ratatui::Terminal;
 use ratatui::backend::CrosstermBackend;
 use std::{io, panic};
 use tracing_subscriber::EnvFilter;
+use tui::app::App;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
