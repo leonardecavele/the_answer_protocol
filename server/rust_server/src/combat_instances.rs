@@ -36,15 +36,15 @@ impl CombatInstanceManager {
 
     pub fn get_all_players_in_combat(&self, npc_id: NpcId) -> Vec<PlayerId> {
         let mut vec = Vec::new();
-        let instance_wrap = self.instances.get(&npc_id);
-        if instance_wrap.is_none() {
+        if let Some(instance) = self.instances.get(&npc_id){
+            vec.extend(instance.get_grouped_players());
+            vec.push(instance.leader);
+            return vec;            
+        }
+        else{
             warn!("No combat instance found for npc_id: {}", npc_id);
             return vec;
         }
-        let instance = instance_wrap.unwrap();
-        vec.extend(instance.get_grouped_players());
-        vec.push(instance.leader);
-        vec
     }
 
     pub fn get_mut_instance_for_npc(&mut self, npc_id: NpcId) -> Option<&mut CombatInstance> {

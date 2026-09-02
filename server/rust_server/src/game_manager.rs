@@ -54,7 +54,6 @@ impl GameManager {
         writer_stream: TcpStream,
         parser: Parser,
     ) -> Self {
-        let nb_models = parser.get_items().len() as u64;
         let mut manager = Self {
             players: HashMap::new(),
             players_by_name: HashMap::new(),
@@ -596,8 +595,9 @@ impl GameManager {
     }
 
     pub fn move_player_to_room(&mut self, player_name: &str, room_name: &str) {
-        let player = self.get_mut_player_from_name(player_name).unwrap();
-        player.move_to_room(&room_name.to_owned());
+        if let Some(player) = self.get_mut_player_from_name(player_name){
+            player.move_to_room(&room_name.to_owned());
+        }
     }
 
     pub fn get_npcs_in_room_as_protocol_representations(&self, room_name: &str) -> Vec<String> {
@@ -724,6 +724,11 @@ impl GameManager {
             .iter()
             .find(|item_id| self.get_item_name(**item_id) == item_rep)
             .map(|item_id| (*item_id, self.get_item_name(*item_id)))
+    }
+
+    pub fn get_item_needed(&self, room_name: &RoomName) -> Option<&String> {
+        self.get_room_by_name(room_name.as_str())
+            .and_then(|room| room.get_item_needed())
     }
 
     pub fn convert_items_to_string(&self, inventory: &Inventory) -> Vec<String> {
@@ -1120,6 +1125,7 @@ impl GameManager {
         self.combat_instances.remove_finished_instances();
     }
 
+    // pub fn check_timed_quest_
     pub fn test_code(&mut self, file_name: &str, sent_code: &str, player: &str, npc_id: NpcId) {
         let sender = self.tester_sender.clone();
         let mut response = object! {"player": player, "npc_id": npc_id, "success": false};

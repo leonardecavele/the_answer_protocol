@@ -81,6 +81,16 @@ impl Parser {
                     ));
                 }
             }
+            if let Some(needed) = room.get_item_needed() {
+                if !self.items.values().any(|i| i.get_name() == needed) {
+                    return Err(format!(
+                        "Room {} ({}) requires item_needed '{}' which does not exist in items.json",
+                        room_id,
+                        room.get_name(),
+                        needed
+                    ));
+                }
+            }
             for dest in room.get_exits().values() {
                 if !valid_room_names.contains(dest) {
                     return Err(format!(
@@ -251,8 +261,10 @@ impl Parser {
                     return Err(format!("exits must be an object in room {}", room_id));
                 }
 
+                let item_needed = room["item_needed"].as_str().map(|s| s.to_string());
+
                 let mut parsed_room =
-                    Room::new(room_id, name.to_string(), description.to_string(), exits);
+                    Room::new(room_id, name.to_string(), description.to_string(), exits, item_needed);
 
                 if room["items"].is_array() {
                     for item_id_json in room["items"].members() {

@@ -1,8 +1,9 @@
 use crate::constants::{
-    BASE_COMMAND_RESPONSE, CODE_NL_SEP, CODE_SP_SEP, ErrorCode, MAX_TIME_FOR_COMBAT, NPC_MOB, SKIP_PLAYER_EXISTS_TEST, TEST_FILES_DIR,
+    BASE_COMMAND_RESPONSE, CODE_NL_SEP, CODE_SP_SEP, ErrorCode, MAX_TIME_FOR_COMBAT, NPC_MOB,
+    SKIP_PLAYER_EXISTS_TEST, TEST_FILES_DIR,
 };
 use crate::game_manager::GameManager;
-use crate::items::{Item, ItemId};
+use crate::items::ItemId;
 use crate::npc::NpcId;
 use crate::quests::QuestState;
 use crate::room::Room;
@@ -28,13 +29,13 @@ fn generate_question_json(question: &str, data: &str, id: &str) -> JsonValue {
 }
 
 impl GameManager {
-    fn get_item_name_from_id(&mut self, item_id: ItemId) -> String {
-        let item_wrap = self.get_all_items().get(&item_id);
-        if item_wrap.is_none() {
-            warn!("No item found for item_id: {}", item_id);
-            return format!("{}.item_not_found", item_id);
+    fn get_item_repr_from_id(&mut self, item_id: ItemId) -> String {
+        if let Some(item_wrap) = self.get_all_items().get(&item_id) {
+            return format!("{}.{}", item_id, item_wrap.get_name());
         }
-        format!("{}.{}", item_id, item_wrap.unwrap().get_name())
+
+        warn!("No item found for item_id: {}", item_id);
+        format!("{}.item_not_found", item_id)
     }
 
     fn validate_command_json(&self, parsed_json: &JsonValue) -> ErrorCode {
@@ -146,7 +147,10 @@ impl GameManager {
         self.combat_instances.add_instance(
             leader_id,
             npc_id,
-            self.get_npc_hp(npc_id).unwrap(),
+            self.get_npc_hp(npc_id).unwrap_or_else(|| {
+                warn!("No NPC found for id: {}", npc_id);
+                0
+            }),
             grouped_players_ids,
             file_name.clone(),
         );
@@ -159,15 +163,12 @@ impl GameManager {
         };
 
         let file_path = format!("{}/{}", TEST_FILES_DIR, file_name);
-        let code: Result<String, std::io::Error> = std::fs::read_to_string(&file_path);
-        if code.is_err() {
+        let Ok(code) = std::fs::read_to_string(&file_path) else {
             error!("Failed to read code from file: {:?}", file_name);
             return generate_json(leader, command_name, ErrorCode::FileNotFound, "").dump();
-        }
-        let code_without_nl_sp = code
-            .unwrap()
-            .replace(" ", CODE_SP_SEP)
-            .replace("\n", CODE_NL_SEP);
+        };
+
+        let code_without_nl_sp = code.replace(" ", CODE_SP_SEP).replace("\n", CODE_NL_SEP);
         let mut players_to_notify = players.clone();
         players_to_notify.push(leader.to_owned());
         let args_to_send = object! { "code": code_without_nl_sp,
@@ -231,6 +232,26 @@ impl GameManager {
 
         let mut all_moving_players = vec![leader.clone()];
         all_moving_players.extend(additional_players.clone());
+        if let Some(item_needed) = self.get_item_needed(&room_to_go) {
+            let mut any_has_item = false;
+            for player_to_check in &all_moving_players {
+                if let Some(player) = self.get_player_from_name(player_to_check) {
+                    if player
+                        .get_inventory()
+                        .get_items()
+                        .iter()
+                        .any(|item_id| self.get_item_name(*item_id) == *item_needed)
+                    {
+                        any_has_item = true;
+                        break;
+                    }
+                }
+            }
+            if !any_has_item {
+                return generate_json(&leader, command_name, ErrorCode::MissingItem, item_needed)
+                    .dump();
+            }
+        }
 
         for p in &all_moving_players {
             self.move_player_to_room(p, room_to_go.as_str());
@@ -315,11 +336,12 @@ impl GameManager {
             Some(id) => *id,
             None => {
                 warn!("Leader not found: {}", leader);
-                return generate_json(leader, command_name, ErrorCode::PlayerNotFound, "")
-                    .dump();
+                return generate_json(leader, command_name, ErrorCode::PlayerNotFound, "").dump();
             }
         };
-        if let Some(already_in_instance) = self.check_player_is_in_instance(leader, leader_id, command_name){
+        if let Some(already_in_instance) =
+            self.check_player_is_in_instance(leader, leader_id, command_name)
+        {
             return already_in_instance.dump();
         }
         let data = json_object["data"].as_str().unwrap_or("");
@@ -363,13 +385,11 @@ impl GameManager {
                 .dump());
             }
         };
-        let npc_wrapped = self.parse_npc(target_npc, player_room.to_owned());
-        if npc_wrapped.is_none() {
+        let Some((npc_id, _)) = self.parse_npc(target_npc, player_room.to_owned()) else {
             return Err(
                 generate_json(player_name, command_name, ErrorCode::NpcNotFound, "").dump(),
             );
-        }
-        let (npc_id, _) = npc_wrapped.unwrap();
+        };
         if !self.npc_is_in_room(npc_id, player_room) {
             return Err(
                 generate_json(player_name, command_name, ErrorCode::NpcNotInRoom, "").dump(),
@@ -472,15 +492,10 @@ impl GameManager {
         read the message, simulate the corresponding action and return the response
         */
 
-        let json = json::parse(&msg);
-
-        if json.is_err() {
-            error!("invalid json");
+        let Ok(json_object) = json::parse(&msg) else {
+            error!("parsed msg but found invalid json");
             return generate_json("", "", ErrorCode::InvalidCommand, "").dump();
-        }
-
-        let json_object = json.unwrap();
-
+        };
         let group_command_json_validity = self.validate_grouped_command(&json_object);
         if group_command_json_validity == ErrorCode::NoError {
             return self.handle_group_command(&json_object);
@@ -511,15 +526,20 @@ impl GameManager {
                 }
             }
         };
-        
 
         info!(
             "received command {} from player {} with args <{}>",
             command_name, player_name, data
         );
-        
-        if !(command_name == "CONNECT" || command_name == "QUIT" || command_name == "FIGHT_ATTACK" || command_name == "GROUP LEAVE") {
-            if let Some(already_in_instance) = self.check_player_is_in_instance(player_name, player_id, command_name){
+
+        if !(command_name == "CONNECT"
+            || command_name == "QUIT"
+            || command_name == "FIGHT_ATTACK"
+            || command_name == "GROUP LEAVE")
+        {
+            if let Some(already_in_instance) =
+                self.check_player_is_in_instance(player_name, player_id, command_name)
+            {
                 return already_in_instance.dump();
             }
         }
@@ -620,17 +640,17 @@ impl GameManager {
             "MOVE" => self.group_command_move(player_name.to_owned(), command_name, vec![], data),
 
             "QUIT" => {
-
-                let player_success = self.get_player_success(player_id);
-                // player_success : Option<Option<bool>
-                if player_success.is_some() && player_success.unwrap().is_none() {
-                    let npc_id = self
-                        .combat_instances
-                        .get_instance_for_player(player_id)
-                        .unwrap()
-                        .get_npc_id();
-                    self.npc_attacks_player(self.generate_npc_dmg(), player_id, npc_id);
+                if let Some(player_combat_info) = self.get_player_success(player_id) {
+                    if player_combat_info.is_none() {
+                        let npc_id = self
+                            .combat_instances
+                            .get_instance_for_player(player_id)
+                            .expect("safe, we check it in get_player_success")
+                            .get_npc_id();
+                        self.npc_attacks_player(self.generate_npc_dmg(), player_id, npc_id);
+                    }
                 }
+                // player_success : Option<Option<bool>: first option if the player does not exist and the second for the success{
 
                 self.disconnect_player(player_name.to_owned());
                 BASE_COMMAND_RESPONSE.to_owned()
@@ -661,7 +681,6 @@ impl GameManager {
                     return generate_json(player_name, command_name, ErrorCode::NpcNotFound, "")
                         .dump();
                 }
-
 
                 let dialog = {
                     let player = match self.get_mut_player_from_name(player_name) {
@@ -706,28 +725,24 @@ impl GameManager {
                     (player.get_id(), player.get_current_room().to_owned())
                 };
                 let Some(room) = self.get_room_by_name(player_room.as_str()) else {
-                        warn!("Room not found: {}", player_room);
-                        return generate_json(player_name, command_name, ErrorCode::RoomNotFound, "")
-                            .dump();
-                    };
+                    warn!("Room not found: {}", player_room);
+                    return generate_json(player_name, command_name, ErrorCode::RoomNotFound, "")
+                        .dump();
+                };
                 let item = data;
                 let room_name = room.get_name().to_owned();
-                let parsed_item: Option<(ItemId, String)> =
-                    self.parse_item(item, &room);
+                let parsed_item: Option<(ItemId, String)> = self.parse_item(item, &room);
                 if parsed_item.is_none() {
                     return generate_json(player_name, command_name, ErrorCode::ItemNotFound, "")
                         .dump();
                 }
                 let (item_id, item_name) = parsed_item.unwrap();
 
-                if !self.item_exists_with_name(item_id, item_name.as_str()) || !room.contains_item(item_id){
-                    return generate_json(
-                        player_name,
-                        command_name,
-                        ErrorCode::ItemNotFound,
-                        "",
-                    )
-                    .dump();
+                if !self.item_exists_with_name(item_id, item_name.as_str())
+                    || !room.contains_item(item_id)
+                {
+                    return generate_json(player_name, command_name, ErrorCode::ItemNotFound, "")
+                        .dump();
                 }
 
                 self.remove_item_from_room(room_name.as_str(), item_id);
@@ -743,7 +758,7 @@ impl GameManager {
                     player_name,
                     command_name,
                     ErrorCode::NoError,
-                    self.get_item_name_from_id(item_id).to_string().as_str(),
+                    self.get_item_repr_from_id(item_id).to_string().as_str(),
                 )
                 .dump()
             }
@@ -908,13 +923,8 @@ impl GameManager {
             "QUEST" => {
                 let target_npc = data;
                 let Some(player) = self.get_player_from_name(player_name) else {
-                    return generate_json(
-                                player_name,
-                                command_name,
-                                ErrorCode::PlayerNotFound,
-                                "",
-                            )
-                            .dump();
+                    return generate_json(player_name, command_name, ErrorCode::PlayerNotFound, "")
+                        .dump();
                 };
                 let player_room = player.get_current_room();
                 // if player
@@ -1065,7 +1075,8 @@ impl GameManager {
                 .dump()
             }
             "GROUP LEAVE" => {
-                if let Some(instance) = self.combat_instances.get_mut_instance_for_player(player_id) {
+                if let Some(instance) = self.combat_instances.get_mut_instance_for_player(player_id)
+                {
                     instance.player_left_group(player_id);
                 }
                 generate_json(

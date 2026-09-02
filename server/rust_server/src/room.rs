@@ -12,6 +12,7 @@ pub struct Room {
     protocol_representation: String,
     all_items: Inventory,
     exits: HashMap<Direction, RoomName>,
+    item_needed: Option<String>,
 }
 
 impl Room {
@@ -20,6 +21,7 @@ impl Room {
         name: String,
         description: String,
         exits: HashMap<Direction, RoomName>,
+        item_needed: Option<String>,
     ) -> Self {
         let protocol_representation = Room::protocol_representation(id, name.clone());
         Self {
@@ -29,6 +31,7 @@ impl Room {
             protocol_representation,
             all_items: Inventory::new(),
             exits,
+            item_needed,
         }
     }
     pub fn get_id_from_protocol_representation(protocol_representation: &str) -> RoomId {
@@ -44,6 +47,9 @@ impl Room {
     }
     pub fn get_exits(&self) -> &HashMap<Direction, RoomName> {
         &self.exits
+    }
+    pub fn get_item_needed(&self) -> Option<&String> {
+        self.item_needed.as_ref()
     }
     pub fn get_id(&self) -> RoomId {
         self.id
