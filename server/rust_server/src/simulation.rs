@@ -11,7 +11,8 @@ impl GameManager {
         loop {
             // Process any pending responses from the code tester thread
             self.process_tester_responses()?;
-
+            self.process_admin_commands();
+            
             if tick_timer.elapsed() >= TICK_TIME {
                 break;
             }

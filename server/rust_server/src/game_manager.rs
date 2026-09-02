@@ -42,6 +42,7 @@ pub struct GameManager {
     mpsc_receiver: mpsc::Receiver<String>,
     pub tester_receiver: mpsc::Receiver<String>,
     pub tester_sender: mpsc::Sender<String>,
+    pub command_receiver: mpsc::Receiver<String>,
     writer_stream: TcpStream,
     tick_diff: HashMap<String, JsonValue>,
 }
@@ -53,6 +54,7 @@ impl GameManager {
         tester_sender: mpsc::Sender<String>,
         writer_stream: TcpStream,
         parser: Parser,
+        command_receiver: mpsc::Receiver<String>,
     ) -> Self {
         let mut manager = Self {
             players: HashMap::new(),
@@ -70,6 +72,7 @@ impl GameManager {
             tester_receiver,
             tester_sender,
             writer_stream,
+            command_receiver,
             tick_diff: HashMap::new(),
         };
 
@@ -123,6 +126,12 @@ impl GameManager {
                 "Player not found: {} while saving the game progression",
                 player_id
             );
+        }
+    }
+
+    pub fn process_admin_commands(&mut self) {
+        while let Ok(response) = self.command_receiver.try_recv() {
+            self.handle_admin_command(response.as_str());
         }
     }
 

@@ -1088,7 +1088,7 @@ impl GameManager {
                 .dump()
             }
             _ => {
-                println!("Unknown command: {}", command_name);
+                warn!("Unknown command: {}", command_name);
                 "".to_owned()
             }
         }

@@ -13,3 +13,5 @@ pub mod room;
 pub mod save;
 pub mod simulation;
 pub mod tester;
+pub mod logs;
+pub mod admin_commands;
