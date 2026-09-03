@@ -5,7 +5,11 @@ The server side is split into two processes:
 - [Rust server](rust_server/README.md): game world, rooms, items, NPCs, quests,
   persistence, combat, and C challenge evaluation.
 
-This document is the source of truth for communication between them.
+This document is the source of truth for communication between them. The root
+[Architecture](../README.md#architecture) section explains the complete system
+design, while the root [TAP commands](../README.md#tap-commands),
+[errors](../README.md#tap-errors), and [events](../README.md#tap-events) sections
+define the public client protocol.
 
 ## Topology
 
@@ -135,6 +139,10 @@ example as:
 ```text
 EVT ROOM BOB PRESENCE ENTER
 ```
+
+This example only illustrates the internal-to-public translation. See the root
+[TAP event reference](../README.md#tap-events) for the complete public event
+catalog and wire syntax.
 
 Go accepts either one event-batch object or a JSON array of event-batch objects.
 Rust currently emits one object per target player at the end of a tick. The

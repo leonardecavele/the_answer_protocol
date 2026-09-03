@@ -3,9 +3,7 @@ clients, performs the protocol handshake, authenticates usernames, maintains
 chat and group state, and translates game commands between TAP and the Rust
 server's internal JSON protocol.
 
-See the [server architecture](../README.md) for the Go-to-Rust wire contract and
-the root [TAP commands](../../README.md#tap-commands) for the public client
-protocol.
+See the [server architecture](../README.md) for the Go-to-Rust wire contract.
 
 ## Requirements
 
@@ -13,11 +11,10 @@ protocol.
 - a running Rust server for world, item, NPC, quest, status, and combat
   commands.
 
-The Go server can start without Rust. `CONNECT`, `WHO`, global/private/group
-chat for existing groups, and `GROUP CREATE` or `GROUP LEAVE` remain available,
-while commands that need game state return `ERR 900 CONNECTION_FAILED`.
-Invitation and join behavior during a Rust outage is unsafe and is described
-under known implementation gaps.
+The Go server can accept sessions while Rust is unavailable. Operations owned
+entirely by the gateway remain available, while world operations report the
+backend failure defined in the root
+[TAP error reference](../../README.md#tap-errors).
 
 ## Build and run
 
@@ -73,27 +70,21 @@ frame.
 
 ### Rust connection
 
-The server retries the Rust endpoint every five seconds. A disconnect clears
-the active game connection and broadcasts `EVT GAME SERVER DISCONNECTED`.
-After reconnecting, it re-registers all authenticated usernames and broadcasts
-`EVT GAME SERVER CONNECTED`.
+The gateway maintains one connection to the Rust game server and coordinates
+pending commands, questions, disconnect events, and player registration after
+a reconnect. See the server [routing and timing](../README.md#routing-and-timing)
+section for the retry sequence and response deadlines.
 
 ## Command ownership
 
-Handled primarily in Go:
+Go owns the public connection, authentication, session, chat, and group layers.
+Commands requiring authoritative world state are translated and forwarded to
+Rust.
 
-- handshake, `CONNECT`, `QUIT`, and `WHO`;
-- all chat scopes;
-- group creation, invitations, joins, leaves, and group event routing.
-
-Forwarded to Rust:
-
-- `LOOK`, `MOVE`, `TAKE`, `DROP`, `INVENTORY`, `TALK`, `ATTACK`, and `STATUS`;
-- `QUEST`, `QUESTS`, `FIGHT CREATE`, and `FIGHT ATTACK`.
-
-`CHAT ROOM` and same-room group checks use the internal `ROOM_PLAYERS`
-question. Grouped `MOVE` and `FIGHT CREATE` include all group members in one
-internal command.
+See the server [internal command matrix](../README.md#internal-command-matrix)
+for exact routing, grouped envelopes, response handling, and internal
+questions. See the root [TAP command reference](../../README.md#tap-commands)
+for the complete public wire syntax and behavior.
 
 ## Package layout
 
@@ -109,6 +100,6 @@ internal command.
 
 ## Logging
 
-At startup, the server creates or truncates `app.log` in its working directory
-and logs to both standard output and that file. Run it from `server/go_server`
-when you want the log to remain beside the server source.
+See the root [Server Logging](../../README.md#server-logging) section for the Go
+log format, event coverage, output destinations, monitoring commands, and abuse
+detection guidance.

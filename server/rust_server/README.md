@@ -43,7 +43,7 @@ connection closes, the game loop saves state and exits.
 Set `RUST_LOG` to change tracing verbosity:
 
 ```bash
-RUST_LOG=debug cargo run
+RUST_LOG=debug make run-rust-server
 ```
 
 ## Startup and game loop
@@ -75,40 +75,29 @@ exits, unknown item IDs, invalid NPC spawn rooms, and unknown NPC quest IDs.
 Protocol representations normally use `<numeric-id>.<name>`, for example
 `2.devant_l_ecole`, `0.objet_perdu`, or `12.ldecavel`.
 
+See the root [World Design](../../README.md#world-design) section for the room
+graph, NPC roles, item distribution, and gameplay-facing world description.
+
 ## Accepted internal commands
 
-| Command | Purpose |
-| --- | --- |
-| `CONNECT` | Create or restore a player and emit room presence. |
-| `LOOK` | Return the current room, players, items, NPCs, and exits. |
-| `MOVE` | Move a single player or group and emit presence/group movement events. |
-| `QUIT` | Save and disconnect a player. |
-| `TAKE`, `DROP`, `INVENTORY` | Manage item ownership and room inventory. |
-| `TALK` | Advance dialogue with an NPC in the same room. |
-| `ATTACK` | Perform the legacy direct-damage attack. |
-| `STATUS` | Return HP, maximum HP, and health status. |
-| `QUEST`, `QUESTS` | Assign or list quests. |
-| `FIGHT_CREATE` | Create a code-challenge combat instance. |
-| `FIGHT_ATTACK` | Queue an encoded C submission for evaluation. |
-
-Grouped envelopes are implemented only for `MOVE` and `FIGHT_CREATE`.
-`ROOM_PLAYERS` is the only accepted internal question.
+The server [internal command matrix](../README.md#internal-command-matrix) is
+the source of truth for accepted commands, envelope forms, response payloads,
+group handling, and internal questions. The root
+[TAP command reference](../../README.md#tap-commands) separately documents the
+public syntax seen by clients.
 
 ## Events
 
-Rust accumulates game changes in a per-player tick diff. At the end of a tick,
-it sends one JSON event batch for each affected player. Current event names
-include:
-
-- `ROOM`, with `PRESENCE ENTER` or `PRESENCE LEAVE` data;
-- `GROUPMOVE`, `TAKE`, and `DROP`;
-- `SPAWN`, `DESPAWN`, `KILL`, and `DEATH`;
-- `FIGHT START`, `FIGHT RESULT`, and `FIGHT END`.
-
-Go turns those objects into the public frames cataloged in the root
-[TAP events](../../README.md#tap-events) section.
+Rust accumulates game changes in a per-player tick diff and sends one targeted
+JSON event batch for each affected player at the end of the tick. The server
+[targeted event batch](../README.md#targeted-event-batch) section documents that
+private JSON envelope. Go translates it into the public frames cataloged in the
+root [TAP event reference](../../README.md#tap-events).
 
 ## C challenge sandbox
+
+See the root [Combat System](../../README.md#combat-system) section for fight
+creation, participant actions, damage, deadlines, death, and respawn rules.
 
 `FIGHT_CREATE` selects a source file from `assets/code`. The file name also
 selects a trusted test harness from `assets/tests`.
