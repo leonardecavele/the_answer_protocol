@@ -118,7 +118,7 @@ The three programs expose runtime address options, using `RUST_SERVER_ARGS`, `GO
 make run \
   CLIENT_ARGS="--ip 127.0.0.1 --port 38800" \
   GO_SERVER_ARGS="--go-server-port 38800 --rust-server-ip 127.0.0.1 --rust-server-port 38801"
-  RUST_SERVER_ARGS="--rust-server-port 38800"
+  RUST_SERVER_ARGS="--rust-server-port 38801"
 ```
 
 The convenience target starts both servers in the background and the TUI in

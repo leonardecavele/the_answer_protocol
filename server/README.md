@@ -21,9 +21,9 @@ sequenceDiagram
     G-->>C: OK, ERR, or EVT + LF
 ```
 
-The Rust server listens on `0.0.0.0:38801` and accepts one Go connection. The
-Go server listens for TAP clients on port `38800` by default and maintains one
-outbound Rust connection.
+The Rust server listens on `0.0.0.0:38801` by default and accepts one Go
+connection. The Go server listens for TAP clients on port `38800` by default
+and maintains one outbound Rust connection.
 
 Both directions use UTF-8, newline-delimited frames. JSON must be encoded on a
 single line. The Go side limits incoming frames from Rust to 4,096 bytes and

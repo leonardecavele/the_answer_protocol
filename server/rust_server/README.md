@@ -26,8 +26,19 @@ make build-rust-server
 make run-rust-server
 ```
 
-The server listens on `0.0.0.0:38801`. If the reader
-side of that connection closes, the game loop saves state and exits.
+| Flag | Default | Purpose |
+| --- | --- | --- |
+| `--rust-server-port` | `38801` | Internal TCP listening port for the Go server. |
+
+Pass the flag through Make when another port is required:
+
+```bash
+make run-rust-server RUST_SERVER_ARGS="--rust-server-port 38802"
+```
+
+The server listens on `0.0.0.0:38801` by default. The Go server must be
+configured with the same Rust-server port. If the reader side of that
+connection closes, the game loop saves state and exits.
 
 Set `RUST_LOG` to change tracing verbosity:
 
@@ -40,7 +51,7 @@ RUST_LOG=debug cargo run
 1. Parse and validate all four world JSON files.
 2. Restore server and player saves where available.
 3. Ensure the special lost item exists.
-4. Bind port `38801` and accept the Go server.
+4. Bind the configured port (`38801` by default) and accept the Go server.
 5. Run the game tick at 10 Hz.
 6. Process incoming commands, tester results, respawns, item despawns, combat
    deadlines, event batches, and periodic saves.
