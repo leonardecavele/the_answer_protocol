@@ -2092,6 +2092,9 @@ version = "0.1.0"
 dependencies = [
  "api-client",
  "eframe",
+ "tokio",
+ "tokio-util",
+ "tui",
 ]
 
 [[package]]

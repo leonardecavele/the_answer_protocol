@@ -74,7 +74,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut terminal = terminal_setup()?;
 
-    let mut app = App::new(cli.ip, cli.port);
+    let mut app = App::with_terminal_input(cli.ip, cli.port);
     let res = app.run(&mut terminal).await;
 
     terminal_restore(terminal)?;

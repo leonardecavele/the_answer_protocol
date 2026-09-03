@@ -31,6 +31,30 @@ impl EventBroker {
         let task_sender = sender.clone();
 
         let background_task = tokio::spawn(async move {
+            let mut tick_interval = interval_at(Instant::now() + TICK_RATE, TICK_RATE);
+
+            loop {
+                tick_interval.tick().await;
+
+                if task_sender.send(ApplicationEvent::Tick).await.is_err() {
+                    break;
+                }
+            }
+        });
+
+        Self {
+            receiver,
+            sender,
+            background_task,
+        }
+    }
+
+    pub fn with_terminal_input() -> Self {
+        let (sender, receiver) = mpsc::channel(MAX_EVENTS_BUS);
+
+        let task_sender = sender.clone();
+
+        let background_task = tokio::spawn(async move {
             let mut event_stream = EventStream::new();
             let mut tick_interval = interval_at(Instant::now() + TICK_RATE, TICK_RATE);
 

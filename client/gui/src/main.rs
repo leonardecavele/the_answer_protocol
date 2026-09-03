@@ -1,27 +1,56 @@
 use eframe::egui;
+use tokio::runtime::Handle;
+use tui::app::App;
+use tui::events::TICK_RATE;
 
-fn main() {
-    let native_options = eframe::NativeOptions::default();
-    eframe::run_native("My egui App", native_options, Box::new(|cc| Ok(Box::new(MyEguiApp::new(cc)))));
+const DEFAULT_IP: &str = "127.0.0.1";
+const DEFAULT_PORT: &str = "38800";
+const MAX_NOTIFICATIONS: usize = 5;
+
+struct GuiApp {
+    app: App,
+    runtime: Handle,
 }
 
-#[derive(Default)]
-struct MyEguiApp {}
-
-impl MyEguiApp {
-    fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        // Customize egui here with cc.egui_ctx.set_fonts and cc.egui_ctx.set_global_style.
-        // Restore app state using cc.storage (requires the "persistence" feature).
-        // Use the cc.gl (a glow::Context) to create graphics shaders and buffers that you can use
-        // for e.g. egui::PaintCallback.
-        Self::default()
+impl GuiApp {
+    fn new(runtime: Handle) -> Self {
+        Self {
+            app: App::new(DEFAULT_IP.to_string(), DEFAULT_PORT.to_string()),
+            runtime,
+        }
     }
 }
 
-impl eframe::App for MyEguiApp {
-    fn ui(&mut self, ui: &mut egui::Ui, frame: &mut eframe::Frame) {
+impl eframe::App for GuiApp {
+    fn logic(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        let _guard = self.runtime.enter();
+
+        while let Ok(event) = self.app.try_next_event() {
+            self.app.update(event);
+        }
+
+        ctx.request_repaint_after(TICK_RATE);
+    }
+
+    fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ui, |ui| {
-            ui.heading("Hello World!");
+            ui.heading("The Answer Protocol");
+            ui.separator();
+
+            for notification in self.app.state.ui.notifications.latest(MAX_NOTIFICATIONS) {
+                ui.label(notification.message.as_str());
+            }
         });
     }
+}
+
+#[tokio::main]
+async fn main() -> eframe::Result {
+    let gui = GuiApp::new(Handle::current());
+
+    eframe::run_native(
+        "The Answer Protocol",
+        eframe::NativeOptions::default(),
+        Box::new(|_cc| Ok(Box::new(gui))),
+    )
 }

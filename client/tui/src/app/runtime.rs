@@ -17,7 +17,7 @@ use std::io;
 use std::sync::Arc;
 
 pub struct App {
-    pub(super) state: AppState,
+    pub state: AppState,
     pub(super) event_broker: EventBroker,
     pub(super) network_manager: Option<NetworkManager>,
     pub(super) view_manager: ViewManager,
@@ -25,6 +25,14 @@ pub struct App {
 
 impl App {
     pub fn new(ip: String, port: String) -> Self {
+        Self::with_broker(ip, port, EventBroker::new())
+    }
+
+    pub fn with_terminal_input(ip: String, port: String) -> Self {
+        Self::with_broker(ip, port, EventBroker::with_terminal_input())
+    }
+
+    fn with_broker(ip: String, port: String, event_broker: EventBroker) -> Self {
         let (manifest, err) = match Manifest::load() {
             Ok(manifest) => (manifest, None),
             Err(error) => (Manifest::default(), Some(error)),
@@ -40,10 +48,14 @@ impl App {
 
         Self {
             state,
-            event_broker: EventBroker::new(),
+            event_broker,
             network_manager: None,
             view_manager: ViewManager::new(ip, port),
         }
+    }
+
+    pub fn try_next_event(&mut self) -> Result<ApplicationEvent, ApplicationError> {
+        self.event_broker.try_next_event()
     }
 
     pub(super) fn send(&mut self, request: ApiRequest) {
@@ -120,7 +132,7 @@ impl App {
         Ok(())
     }
 
-    fn update(&mut self, event: ApplicationEvent) {
+    pub fn update(&mut self, event: ApplicationEvent) {
         match event {
             ApplicationEvent::Tick => self.handle_tick(),
             ApplicationEvent::Terminal(crossterm_event) => {
