@@ -6,6 +6,6 @@ edition = "2024"
 [dependencies]
 api-client = { path = "../api-client" }
 tui = { path = "../tui" }
-eframe = "0.36.1"
+eframe = "~0.34.0"
 tokio = { version = "1.52.3", features = ["full"] }
 tokio-util = { version = "0.7.18", features = ["rt"] }
