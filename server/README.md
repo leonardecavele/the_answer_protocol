@@ -1,5 +1,3 @@
-# Server Architecture and Internal Protocol
-
 The server side is split into two processes:
 
 - [Go server](go_server/README.md): public TAP endpoint, authentication,
@@ -7,8 +5,7 @@ The server side is split into two processes:
 - [Rust server](rust_server/README.md): game world, rooms, items, NPCs, quests,
   persistence, combat, and C challenge evaluation.
 
-This document is the source of truth for communication between them. It
-supersedes `INTERNAL_PROTOCOL.md`.
+This document is the source of truth for communication between them.
 
 ## Topology
 
@@ -263,10 +260,6 @@ queue.
 }
 ```
 
-Rust currently uses `name` in quest responses. The typed client expects
-`quest_id`; this is a known compatibility mismatch, not an alternate wire
-format.
-
 ## Routing and timing
 
 The Go reader classifies each non-acknowledgement Rust frame in this order:
@@ -290,7 +283,8 @@ reconnect normally requires restarting Rust.
 
 Rust error codes are numeric and carry no symbolic name internally. Go maps
 them using the pending command before producing the public TAP error. The
-authoritative public error catalog is [TAP_ERRORS.md](../TAP_ERRORS.md).
+authoritative public error catalog is the root [TAP errors](../README.md#tap-errors)
+section.
 
 Transport failures while a TAP command is running are exposed as
 `CONNECTION_FAILED`; a missing command response becomes `GAME_SERVER_TIMEOUT`.

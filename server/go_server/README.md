@@ -1,12 +1,10 @@
-# Go TAP Server
-
 The Go server is the public endpoint for The Answer Protocol. It accepts TAP
 clients, performs the protocol handshake, authenticates usernames, maintains
 chat and group state, and translates game commands between TAP and the Rust
 server's internal JSON protocol.
 
 See the [server architecture](../README.md) for the Go-to-Rust wire contract and
-the root [TAP documentation](../../TAP_COMMANDS.md) for the public client
+the root [TAP commands](../../README.md#tap-commands) for the public client
 protocol.
 
 ## Requirements
@@ -28,17 +26,6 @@ From the repository root:
 ```bash
 make build-go-server
 make run-go-server
-```
-
-Directly:
-
-```bash
-cd server/go_server
-go build
-./go_server \
-  --go-server-port 38800 \
-  --rust-server-ip 127.0.0.1 \
-  --rust-server-port 38801
 ```
 
 | Flag | Default | Purpose |
@@ -125,29 +112,3 @@ internal command.
 At startup, the server creates or truncates `app.log` in its working directory
 and logs to both standard output and that file. Run it from `server/go_server`
 when you want the log to remain beside the server source.
-
-## Known implementation gaps
-
-- `USE` is registered as a TAP command but has no Rust handler and always fails
-  or times out. During a fight, Rust's pre-dispatch code `410` is unmapped for
-  `USE` and becomes `UNKNOWN_ERROR`.
-- `GROUP QUIT` is a raw alias of `GROUP LEAVE`; the typed client only exposes
-  leave.
-- A grouped `QUEST` is forwarded as a grouped internal command, but Rust only
-  accepts grouped `MOVE` and `FIGHT_CREATE`; grouped quest requests normally
-  time out. During a fight, the pre-dispatch code `410` becomes
-  `UNKNOWN_ERROR` because it is not mapped for `QUEST`.
-- Group invitation and join state depends on Rust-backed same-room checks when
-  the game server is connected. During an outage, `GROUP INVITE` sends a notice
-  but fails to store it, and `GROUP JOIN` can panic after skipping assignment.
-  Do not use either operation until Rust is connected.
-
-## Verification
-
-```bash
-go test ./...
-go vet ./...
-```
-
-The repository currently has no Go behavioral test files; `go test` verifies
-that every package compiles.

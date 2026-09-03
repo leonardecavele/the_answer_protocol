@@ -1,5 +1,3 @@
-# Rust Game Server
-
 The Rust server owns the persistent game world for The Answer Protocol. It
 loads rooms, items, NPCs, and quests; tracks players and combat instances;
 produces per-player event batches; saves progress; and evaluates C submissions
@@ -28,20 +26,7 @@ make build-rust-server
 make run-rust-server
 ```
 
-Directly:
-
-```bash
-cd server/rust_server
-cargo build
-cargo run
-```
-
-The working directory matters: the executable loads `npcs.json`, `items.json`,
-`rooms.json`, `quests.json`, and `assets/code` through relative paths. Start it
-from `server/rust_server`.
-
-The server listens on `0.0.0.0:38801`. It currently has no CLI configuration
-and accepts one Go connection for the lifetime of the process. If the reader
+The server listens on `0.0.0.0:38801`. If the reader
 side of that connection closes, the game loop saves state and exits.
 
 Set `RUST_LOG` to change tracing verbosity:
@@ -109,8 +94,8 @@ include:
 - `SPAWN`, `DESPAWN`, `KILL`, and `DEATH`;
 - `FIGHT START`, `FIGHT RESULT`, and `FIGHT END`.
 
-Go turns those objects into the public frames cataloged in
-[TAP_EVENTS.md](../../TAP_EVENTS.md).
+Go turns those objects into the public frames cataloged in the root
+[TAP events](../../README.md#tap-events) section.
 
 ## C challenge sandbox
 
@@ -130,26 +115,3 @@ The compiled program runs without networking, capabilities, writable host
 mounts, standard input/output, or the normal C runtime. Compilation and
 execution are additionally bounded by CPU, address-space, file, descriptor,
 and stack limits.
-
-## Known implementation gaps
-
-- `GROUP LEAVE` and `USE` have no Rust command match. Go does not wait for the
-  former, while `USE` normally times out. The global in-combat guard runs before
-  dispatch, so it can return code `410` for either command instead.
-- Go can produce a grouped `QUEST`, but Rust does not implement that grouped
-  command.
-- Quest responses use a `name` field; the current typed client expects
-  `quest_id`.
-- The process accepts only one Go connection and exits after that connection
-  is lost; Go-side reconnection normally requires a Rust process restart.
-
-## Verification
-
-```bash
-cargo test
-cargo clippy --all-targets
-cargo fmt --all --check
-```
-
-The crate currently contains no unit tests, so `cargo test` primarily verifies
-library, binary, and documentation compilation.
