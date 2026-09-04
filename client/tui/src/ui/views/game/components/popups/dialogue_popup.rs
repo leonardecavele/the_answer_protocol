@@ -1,10 +1,10 @@
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
-use crate::states::game::OverlayKind;
-use crate::ui::components::Lifecycle;
-use crate::ui::components::scrollable::ScrollableComponent;
+use crate::states::game::DialogueState;
+use crate::ui::components::{EventFlow, Lifecycle, ScrollableComponent};
+use crate::ui::layout::percent_of;
+use crate::ui::text::wrap_str_to_lines;
 use crate::ui::theme::{overlay_block, popup_block};
-use crate::ui::utils::wrap_str_to_lines;
 use api_client::ApiRequest;
 use api_client::commands::TalkCommand;
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
@@ -17,14 +17,28 @@ use ratatui::{
 use std::time::Instant;
 use tokio::sync::mpsc;
 
-pub const CHAR_DELAY_MS: u128 = 2;
+const CHAR_DELAY_MS: u128 = 2;
 const MAX_HEIGHT_PERCENTAGE: u16 = 40;
 
-pub struct DialoguePopup;
+pub struct DialoguePopup {
+    chars_shown: usize,
+    last_tick: Instant,
+    shown_npc: Option<String>,
+}
+
+impl Default for DialoguePopup {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl DialoguePopup {
     pub fn new() -> Self {
-        Self
+        Self {
+            chars_shown: 0,
+            last_tick: Instant::now(),
+            shown_npc: None,
+        }
     }
 }
 
@@ -40,7 +54,7 @@ impl ScrollableComponent for DialoguePopup {
         let total_needed_height = content_height + 4; // 2 borders, 2 padding
 
         let min_height = 6;
-        let max_height = max_area.height * MAX_HEIGHT_PERCENTAGE / 100;
+        let max_height = percent_of(max_area.height, MAX_HEIGHT_PERCENTAGE).max(min_height);
         let popup_height = total_needed_height.clamp(min_height, max_height);
 
         let y = max_area.y + max_area.height.saturating_sub(popup_height);
@@ -53,7 +67,7 @@ impl ScrollableComponent for DialoguePopup {
     }
 
     fn get_block<'a>(&self, state: &AppState) -> Block<'a> {
-        if let Some(dialog) = state.game.overlays.dialogue() {
+        if let Some(dialog) = state.game.overlays.get::<DialogueState>() {
             popup_block(format!(" {} ", dialog.npc_name)).padding(Padding::uniform(1))
         } else {
             overlay_block()
@@ -61,15 +75,11 @@ impl ScrollableComponent for DialoguePopup {
     }
 
     fn get_content<'a>(&self, state: &'a AppState, max_width: usize) -> Vec<Line<'a>> {
-        if let Some(dialog) = state.game.overlays.dialogue() {
-            let visible_text: String = dialog
-                .full_text
-                .chars()
-                .take(dialog.visible_chars)
-                .collect();
-            let mut display_text = visible_text;
+        if let Some(dialog) = state.game.overlays.get::<DialogueState>() {
+            let mut display_text: String =
+                dialog.full_text.chars().take(self.chars_shown).collect();
 
-            if dialog.visible_chars >= dialog.full_text.chars().count() {
+            if self.chars_shown >= dialog.char_count() {
                 let text = if dialog.ends_dialog {
                     "(Press Enter to close)"
                 } else {
@@ -91,42 +101,51 @@ impl Lifecycle for DialoguePopup {
         state: &mut AppState,
         event: &CrosstermEvent,
         sender: &Sender<ApplicationEvent>,
-    ) -> bool {
-        if let Some(dialog) = state.game.overlays.dialogue().cloned() {
-            if let CrosstermEvent::Key(key) = event {
-                if key.code == KeyCode::Enter {
-                    if dialog.visible_chars < dialog.full_text.chars().count() {
-                        if let Some(d) = state.game.overlays.dialogue_mut() {
-                            d.visible_chars = d.full_text.chars().count();
-                        }
-                    } else {
-                        if dialog.ends_dialog {
-                            state.game.overlays.close(OverlayKind::Dialogue);
-                        } else {
-                            let request = ApiRequest::Talk(TalkCommand {
-                                npc_name: dialog.npc_id.clone(),
-                            });
+    ) -> EventFlow {
+        let Some(dialog) = state.game.overlays.get::<DialogueState>().cloned() else {
+            return EventFlow::Ignored;
+        };
 
-                            let _ = sender.try_send(ApplicationEvent::SendRequest(request));
-                        }
-                    }
-                    return true;
-                }
-            }
+        let CrosstermEvent::Key(key) = event else {
+            return EventFlow::Ignored;
+        };
 
-            return true;
+        if key.code != KeyCode::Enter {
+            return EventFlow::Ignored;
         }
-        false
+
+        if self.chars_shown < dialog.char_count() {
+            self.chars_shown = dialog.char_count();
+        } else if dialog.ends_dialog {
+            state.game.close_dialogue();
+        } else {
+            let request = ApiRequest::Talk(TalkCommand {
+                npc_name: dialog.npc_id.clone(),
+            });
+
+            let _ = sender.try_send(ApplicationEvent::SendRequest(request));
+        }
+
+        EventFlow::Consumed
     }
 
-    fn on_tick(&mut self, state: &mut AppState) {
-        if let Some(dialog) = state.game.overlays.dialogue_mut() {
-            if dialog.visible_chars < dialog.full_text.chars().count() {
-                if dialog.last_tick.elapsed().as_millis() > CHAR_DELAY_MS {
-                    dialog.visible_chars += 1;
-                    dialog.last_tick = Instant::now();
-                }
-            }
+    fn on_tick(&mut self, state: &mut AppState, _sender: &Sender<ApplicationEvent>) {
+        let Some(dialog) = state.game.overlays.get::<DialogueState>() else {
+            self.chars_shown = 0;
+            self.shown_npc = None;
+            return;
+        };
+
+        if self.shown_npc.as_deref() != Some(dialog.npc_id.as_str()) {
+            self.shown_npc = Some(dialog.npc_id.clone());
+            self.chars_shown = 0;
+        }
+
+        if self.chars_shown < dialog.char_count()
+            && self.last_tick.elapsed().as_millis() > CHAR_DELAY_MS
+        {
+            self.chars_shown += 1;
+            self.last_tick = Instant::now();
         }
     }
 }

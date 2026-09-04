@@ -29,13 +29,6 @@ impl Command for PrivateChatCommand {
         Ok(PrivateChatResponse)
     }
 
-    fn refine_error(&self, error: &mut CommandError) {
-        error.with_message(match error.code {
-            Some(401) => Some("not in group".to_string()),
-            _ => None,
-        })
-    }
-
     fn from_str(args: &str) -> Option<Self> {
         let (to, message) = args.trim().split_once(' ')?;
         Some(Self {

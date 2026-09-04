@@ -1,16 +1,13 @@
-pub mod scrollable;
-pub mod widgets;
+mod component;
+mod interactive;
+mod lifecycle;
+mod overlays;
+mod scrollable;
+mod widgets;
 
-pub mod interactive;
-
-use crate::states::app::AppState;
-use ratatui::Frame;
-use ratatui::layout::Rect;
-
-pub mod lifecycle;
-
-pub use lifecycle::Lifecycle;
-
-pub trait Component: Lifecycle {
-    fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect);
-}
+pub use component::Component;
+pub use interactive::{Interactive, InteractiveComponent, is_mouse_in_rect};
+pub use lifecycle::{EventFlow, Lifecycle};
+pub use overlays::{NotificationsOverlay, TraceOverlay};
+pub use scrollable::{Scrollable, ScrollableComponent, ScrollableHit};
+pub use widgets::{Button, CloseButton, CommandButton, TextInput};

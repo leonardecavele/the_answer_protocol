@@ -1,28 +1,45 @@
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
 use crate::states::game::GameFocus;
-use crate::ui::components::Component;
-use crate::ui::components::Lifecycle;
-use crate::ui::components::interactive::Interactive;
-use crate::ui::components::widgets::text_input::TextInput;
+use crate::ui::components::{
+    Component, EventFlow, Interactive, Lifecycle, TextInput, is_mouse_in_rect,
+};
 use crossterm::event::{Event as CrosstermEvent, KeyCode, KeyEvent};
 use ratatui::{Frame, layout::Rect};
 
+pub enum FooterHit {
+    CommandInput,
+    None,
+}
+
+#[derive(Default)]
 pub struct Footer {
     pub input: Interactive<TextInput>,
+    area: Option<Rect>,
 }
 
 impl Footer {
     pub fn new() -> Self {
         let mut input = Interactive::new(TextInput::new("Command"));
         input.inner.is_focused = true;
-        Self { input }
+        Self { input, area: None }
+    }
+
+    pub fn hit(&self, column: u16, row: u16) -> FooterHit {
+        if let Some(area) = self.area
+            && is_mouse_in_rect(column, row, area)
+        {
+            return FooterHit::CommandInput;
+        }
+
+        FooterHit::None
     }
 }
 
 impl Component for Footer {
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
-        self.input.inner.is_focused = state.game.focus == GameFocus::Input;
+        self.area = Some(area);
+        self.input.inner.is_focused = state.game.focus() == GameFocus::Input;
         self.input.draw(state, frame, area);
     }
 }
@@ -33,28 +50,27 @@ impl Lifecycle for Footer {
         state: &mut AppState,
         event: &CrosstermEvent,
         event_sender: &tokio::sync::mpsc::Sender<ApplicationEvent>,
-    ) -> bool {
-        if state.game.focus == GameFocus::Input {
-            if let CrosstermEvent::Key(KeyEvent {
+    ) -> EventFlow {
+        if state.game.focus() == GameFocus::Input
+            && let CrosstermEvent::Key(KeyEvent {
                 code: KeyCode::Enter,
                 ..
             }) = event
-            {
-                let command = self.input.inner.value.trim().to_string();
-                if !command.is_empty() {
-                    self.input.inner.value.clear();
-                    let _ = event_sender.try_send(ApplicationEvent::SendRawCommand(command));
-                } else {
-                    state.game.focus = GameFocus::RightPanel;
-                }
-                return true;
+        {
+            let command = self.input.inner.value.trim().to_string();
+            if !command.is_empty() {
+                self.input.inner.value.clear();
+                let _ = event_sender.try_send(ApplicationEvent::SendRawCommand(command));
+            } else {
+                state.game.set_focus(GameFocus::RightPanel);
             }
+            return EventFlow::Consumed;
         }
 
-        if state.game.focus == GameFocus::Input {
+        if state.game.focus() == GameFocus::Input {
             self.input.handle_terminal_event(state, event, event_sender)
         } else {
-            false
+            EventFlow::Ignored
         }
     }
 }

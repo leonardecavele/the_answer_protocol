@@ -1,12 +1,11 @@
+use super::component::Component;
+use super::lifecycle::{EventFlow, Lifecycle};
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
-use crate::ui::components::Component;
 use crossterm::event::{Event as CrosstermEvent, MouseEvent};
 use ratatui::Frame;
 use ratatui::layout::Rect;
 use tokio::sync::mpsc;
-
-use crate::ui::components::Lifecycle;
 
 pub trait InteractiveComponent: Lifecycle {
     fn render(&mut self, state: &AppState, frame: &mut Frame, area: Rect);
@@ -17,11 +16,12 @@ pub trait InteractiveComponent: Lifecycle {
         _event: &CrosstermEvent,
         _sender: &mpsc::Sender<ApplicationEvent>,
         _is_hovered: bool,
-    ) -> bool {
-        false
+    ) -> EventFlow {
+        EventFlow::Ignored
     }
 }
 
+#[derive(Default)]
 pub struct Interactive<T: InteractiveComponent> {
     pub inner: T,
     pub last_area: Option<Rect>,
@@ -50,7 +50,7 @@ impl<T: InteractiveComponent> Lifecycle for Interactive<T> {
         state: &mut AppState,
         event: &CrosstermEvent,
         sender: &mpsc::Sender<ApplicationEvent>,
-    ) -> bool {
+    ) -> EventFlow {
         let is_hovered = match event {
             CrosstermEvent::Mouse(MouseEvent { column, row, .. }) => {
                 self.is_mouse_over(*column, *row)
@@ -60,14 +60,15 @@ impl<T: InteractiveComponent> Lifecycle for Interactive<T> {
         if self
             .inner
             .handle_interactive_event(state, event, sender, is_hovered)
+            .is_consumed()
         {
-            return true;
+            return EventFlow::Consumed;
         }
         self.inner.handle_terminal_event(state, event, sender)
     }
 
-    fn on_tick(&mut self, state: &mut AppState) {
-        self.inner.on_tick(state);
+    fn on_tick(&mut self, state: &mut AppState, sender: &mpsc::Sender<ApplicationEvent>) {
+        self.inner.on_tick(state, sender);
     }
 }
 

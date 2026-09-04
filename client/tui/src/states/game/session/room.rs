@@ -1,42 +1,53 @@
 use crate::collections::SelectableList;
-use crate::states::game::world::{Item, Npc};
+use crate::states::game::Direction;
+use crate::states::game::world::{DIRECTION_COUNT, Item, Npc};
 use std::collections::HashMap;
+use tracing::warn;
 
-pub struct RoomState {
-    pub id: Option<String>,
-    pub name: Option<String>,
-    pub description: Option<String>,
-    pub exits: HashMap<String, String>,
-    pub players: Vec<String>,
+#[derive(Debug, Default)]
+pub struct Exits([Option<String>; DIRECTION_COUNT]);
+
+impl Exits {
+    pub fn get(&self, direction: Direction) -> Option<&str> {
+        self.0[direction.quarter_turns()].as_deref()
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = (Direction, &str)> {
+        Direction::CLOCKWISE
+            .into_iter()
+            .filter_map(|direction| self.get(direction).map(|to| (direction, to)))
+    }
+}
+
+impl From<HashMap<String, String>> for Exits {
+    fn from(value: HashMap<String, String>) -> Self {
+        let mut exits: Exits = Exits::default();
+
+        for (key, to) in value.into_iter() {
+            if let Some(direction) = Direction::from_key(key.as_str()) {
+                exits.0[direction.quarter_turns()] = Some(to);
+            } else {
+                warn!("unknown exit direction: {}", key)
+            }
+        }
+
+        exits
+    }
+}
+
+pub struct Room {
+    pub id: String,
+    pub name: String,
+    pub description: String,
+    pub exits: Exits,
+    pub players: SelectableList<String>,
     pub npcs: SelectableList<Npc>,
     pub items: SelectableList<Item>,
 }
 
-impl RoomState {
-    pub fn new() -> Self {
-        Self {
-            id: None,
-            name: None,
-            description: None,
-            exits: HashMap::new(),
-            players: Vec::new(),
-            npcs: SelectableList::new(),
-            items: SelectableList::new(),
-        }
-    }
-
-    pub fn clear(&mut self) {
-        self.id = None;
-        self.name = None;
-        self.description = None;
-        self.exits.clear();
-        self.players.clear();
-        self.npcs.clear();
-        self.items.clear();
-    }
-
-    pub fn has_exit(&self, direction: &str) -> bool {
-        self.exits.contains_key(direction)
+impl Room {
+    pub fn has_exit(&self, direction: Direction) -> bool {
+        self.exits.get(direction).is_some()
     }
 
     pub fn has_item(&self, id: &str) -> bool {
@@ -47,10 +58,26 @@ impl RoomState {
         let index = self.items.iter().position(|item| item.id == id)?;
         self.items.remove(index)
     }
-}
 
-impl Default for RoomState {
-    fn default() -> Self {
-        Self::new()
+    pub fn spawn_item(&mut self, item: Item) {
+        self.items.push(item);
+    }
+
+    pub fn spawn_npc(&mut self, npc: Npc) {
+        self.npcs.push(npc);
+    }
+
+    pub fn remove_npc(&mut self, id: &str) {
+        self.npcs.retain(|npc| npc.id != id);
+    }
+
+    pub fn player_entered(&mut self, name: String) {
+        if !self.players.contains(&name) {
+            self.players.push(name);
+        }
+    }
+
+    pub fn player_left(&mut self, name: &str) {
+        self.players.retain(|player| player != name);
     }
 }

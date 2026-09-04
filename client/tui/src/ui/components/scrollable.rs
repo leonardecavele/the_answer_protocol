@@ -1,7 +1,8 @@
+use super::component::Component;
+use super::interactive::is_mouse_in_rect;
+use super::lifecycle::{EventFlow, Lifecycle};
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
-use crate::ui::components::Component;
-use crate::ui::components::Lifecycle;
 use crossterm::event::{Event as CrosstermEvent, KeyCode, MouseEventKind};
 use mpsc::Sender;
 use ratatui::Frame;
@@ -10,7 +11,16 @@ use ratatui::text::Line;
 use ratatui::widgets::{Block, Clear, Paragraph};
 use tokio::sync::mpsc;
 
+pub enum ScrollableHit {
+    Box,
+    None,
+}
+
 pub trait ScrollableComponent: Lifecycle {
+    fn is_scrollable(&self, _state: &AppState) -> bool {
+        true
+    }
+
     fn get_area(&self, _state: &AppState, max_area: Rect) -> Rect {
         max_area
     }
@@ -20,10 +30,12 @@ pub trait ScrollableComponent: Lifecycle {
     fn get_content<'a>(&self, state: &'a AppState, max_width: usize) -> Vec<Line<'a>>;
 }
 
+#[derive(Default)]
 pub struct Scrollable<T: ScrollableComponent> {
     pub inner: T,
     pub scroll_offset: u16,
     pub last_max_scroll: u16,
+    area: Option<Rect>,
 }
 
 impl<T: ScrollableComponent> Scrollable<T> {
@@ -32,13 +44,30 @@ impl<T: ScrollableComponent> Scrollable<T> {
             inner,
             scroll_offset: 0,
             last_max_scroll: 0,
+            area: None,
         }
+    }
+
+    pub fn hit(&self, column: u16, row: u16) -> ScrollableHit {
+        if let Some(area) = self.area
+            && is_mouse_in_rect(column, row, area)
+        {
+            return ScrollableHit::Box;
+        }
+
+        ScrollableHit::None
     }
 }
 
 impl<T: ScrollableComponent> Component for Scrollable<T> {
+    fn drawn_area(&self) -> Option<Rect> {
+        self.area
+    }
+
     fn draw(&mut self, state: &AppState, frame: &mut Frame, max_area: Rect) {
         let final_area = self.inner.get_area(state, max_area);
+        self.area = Some(final_area);
+
         let block = self.inner.get_block(state);
 
         let inner_area = block.inner(final_area);
@@ -69,7 +98,11 @@ impl<T: ScrollableComponent> Lifecycle for Scrollable<T> {
         state: &mut AppState,
         event: &CrosstermEvent,
         sender: &Sender<ApplicationEvent>,
-    ) -> bool {
+    ) -> EventFlow {
+        if !self.inner.is_scrollable(state) {
+            return EventFlow::Ignored;
+        }
+
         if let CrosstermEvent::Key(key) = event {
             match key.code {
                 KeyCode::Up => {
@@ -77,22 +110,22 @@ impl<T: ScrollableComponent> Lifecycle for Scrollable<T> {
                         .scroll_offset
                         .saturating_add(1)
                         .min(self.last_max_scroll);
-                    return true;
+                    return EventFlow::Consumed;
                 }
                 KeyCode::Down => {
                     self.scroll_offset = self.scroll_offset.saturating_sub(1);
-                    return true;
+                    return EventFlow::Consumed;
                 }
                 KeyCode::PageUp => {
                     self.scroll_offset = self
                         .scroll_offset
                         .saturating_add(10)
                         .min(self.last_max_scroll);
-                    return true;
+                    return EventFlow::Consumed;
                 }
                 KeyCode::PageDown => {
                     self.scroll_offset = self.scroll_offset.saturating_sub(10);
-                    return true;
+                    return EventFlow::Consumed;
                 }
                 _ => {}
             }
@@ -102,17 +135,17 @@ impl<T: ScrollableComponent> Lifecycle for Scrollable<T> {
                     .scroll_offset
                     .saturating_add(1)
                     .min(self.last_max_scroll);
-                return true;
+                return EventFlow::Consumed;
             } else if mouse.kind == MouseEventKind::ScrollDown {
                 self.scroll_offset = self.scroll_offset.saturating_sub(1);
-                return true;
+                return EventFlow::Consumed;
             }
         }
 
         self.inner.handle_terminal_event(state, event, sender)
     }
 
-    fn on_tick(&mut self, state: &mut AppState) {
-        self.inner.on_tick(state);
+    fn on_tick(&mut self, state: &mut AppState, sender: &Sender<ApplicationEvent>) {
+        self.inner.on_tick(state, sender);
     }
 }

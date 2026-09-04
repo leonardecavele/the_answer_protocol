@@ -11,12 +11,11 @@ pub enum Sprite {
 }
 
 impl Sprite {
-    pub fn of_entity(id: &str, manifest: &Manifest) -> Sprite {
+    pub fn of_npc(id: &str, manifest: &Manifest) -> Sprite {
         manifest
             .npcs
             .get(id)
             .map(Sprite::from)
-            .or_else(|| manifest.items.get(id).map(Sprite::from))
             .unwrap_or(Sprite::None)
     }
 

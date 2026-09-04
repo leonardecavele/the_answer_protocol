@@ -42,7 +42,6 @@ impl Command for GroupJoinCommand {
 
     fn refine_error(&self, error: &mut CommandError) {
         error.with_message(match error.code {
-            Some(402) => Some("already in a group".to_string()),
             Some(403) => Some("no such user or not invited".to_string()),
             Some(404) => Some("group not found".to_string()),
             _ => None,

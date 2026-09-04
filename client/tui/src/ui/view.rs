@@ -1,9 +1,10 @@
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
-use crate::ui::components::scrollable::Scrollable;
-use crate::ui::components::widgets::notifications::NotificationsOverlay;
-use crate::ui::components::widgets::trace_overlay::TraceOverlay;
-use crate::ui::components::{Component, Lifecycle};
+use crate::ui::components::{
+    Component, EventFlow, Lifecycle, NotificationsOverlay, Scrollable, TraceOverlay,
+};
+use crate::ui::layout::{MIN_COLUMNS, MIN_ROWS, interface_area};
+use crate::ui::theme::too_small_hint;
 use crate::ui::views::login::LoginView;
 use crossterm::event::Event as CrosstermEvent;
 use ratatui::Frame;
@@ -32,6 +33,11 @@ impl ViewManager {
 
 impl Component for ViewManager {
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
+        let Some(area) = interface_area(area) else {
+            frame.render_widget(too_small_hint(MIN_COLUMNS, MIN_ROWS), area);
+            return;
+        };
+
         self.active_view.draw(state, frame, area);
 
         if state.ui.show_trace_log {
@@ -48,34 +54,27 @@ impl Lifecycle for ViewManager {
         state: &mut AppState,
         event: &CrosstermEvent,
         sender: &Sender<ApplicationEvent>,
-    ) -> bool {
+    ) -> EventFlow {
         if state.ui.show_trace_log {
-            if self
+            let _ = self
                 .event_overlay
-                .handle_terminal_event(state, &event, sender)
-            {
-                return true;
-            }
+                .handle_terminal_event(state, event, sender);
+
+            return EventFlow::Consumed;
         }
 
         if self
             .notification_overlay
-            .handle_terminal_event(state, &event, sender)
+            .handle_terminal_event(state, event, sender)
+            .is_consumed()
         {
-            return true;
-        }
-
-        if self
-            .active_view
-            .handle_terminal_event(state, &event, sender)
-        {
-            return true;
+            return EventFlow::Consumed;
         }
 
         self.active_view.handle_terminal_event(state, event, sender)
     }
 
-    fn on_tick(&mut self, state: &mut AppState) {
-        self.active_view.on_tick(state)
+    fn on_tick(&mut self, state: &mut AppState, sender: &Sender<ApplicationEvent>) {
+        self.active_view.on_tick(state, sender)
     }
 }

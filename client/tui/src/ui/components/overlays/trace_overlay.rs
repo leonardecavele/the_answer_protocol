@@ -1,9 +1,9 @@
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
-use crate::ui::components::Lifecycle;
-use crate::ui::components::scrollable::ScrollableComponent;
+use crate::ui::components::{EventFlow, Lifecycle, ScrollableComponent};
+use crate::ui::layout::percent_of;
+use crate::ui::text::wrap_slice_to_lines;
 use crate::ui::theme::overlay_block;
-use crate::ui::utils::wrap_slice_to_lines;
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
 use mpsc::Sender;
 use ratatui::layout::Rect;
@@ -17,6 +17,12 @@ const OVERLAY_HEIGHT_PERCENTAGE: u16 = 80;
 
 pub struct TraceOverlay;
 
+impl Default for TraceOverlay {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl TraceOverlay {
     pub fn new() -> Self {
         Self
@@ -25,8 +31,8 @@ impl TraceOverlay {
 
 impl ScrollableComponent for TraceOverlay {
     fn get_area(&self, _state: &AppState, max_area: Rect) -> Rect {
-        let overlay_width = max_area.width * OVERLAY_WIDTH_PERCENTAGE / 100;
-        let overlay_height = max_area.height * OVERLAY_HEIGHT_PERCENTAGE / 100;
+        let overlay_width = percent_of(max_area.width, OVERLAY_WIDTH_PERCENTAGE);
+        let overlay_height = percent_of(max_area.height, OVERLAY_HEIGHT_PERCENTAGE);
 
         Rect {
             x: max_area.x + (max_area.width - overlay_width) / 2,
@@ -60,13 +66,14 @@ impl Lifecycle for TraceOverlay {
         state: &mut AppState,
         event: &CrosstermEvent,
         _sender: &Sender<ApplicationEvent>,
-    ) -> bool {
-        if let CrosstermEvent::Key(key) = event {
-            if key.code == KeyCode::Esc {
-                state.ui.show_trace_log = false;
-                return true;
-            }
+    ) -> EventFlow {
+        if let CrosstermEvent::Key(key) = event
+            && key.code == KeyCode::Esc
+        {
+            state.ui.show_trace_log = false;
+            return EventFlow::Consumed;
         }
-        true
+
+        EventFlow::Ignored
     }
 }

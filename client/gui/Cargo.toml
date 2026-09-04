@@ -1,0 +1,14 @@
+[package]
+name = "gui"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+tui = { path = "../tui" }
+clap = "4.6.1"
+crossterm = "0.29.0"
+eframe = "~0.34.0"
+egui_ratatui = "2.2.0"
+ratatui = "0.30.1"
+soft_ratatui = "0.2.0"
+tokio = { version = "1.52.3", features = ["full"] }

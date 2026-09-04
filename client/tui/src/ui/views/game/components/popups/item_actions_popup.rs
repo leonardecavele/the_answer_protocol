@@ -1,17 +1,16 @@
-use crate::collections::{Step, move_index};
+use crate::collections::Step;
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
-use crate::states::game::{Overlay, OverlayKind};
-use crate::ui::components::Component;
-use crate::ui::components::Lifecycle;
-use crate::ui::theme::popup_block;
-use crate::ui::utils::centered_rect;
-use crossterm::event::{Event as CrosstermEvent, KeyCode};
+use crate::states::game::{ItemActionsState, ItemDetailState, Overlay};
+use crate::ui::components::{Component, EventFlow, Lifecycle, is_mouse_in_rect};
+use crate::ui::layout::centered_rect;
+use crate::ui::theme::{popup_block, selection_style};
+use crossterm::event::{Event as CrosstermEvent, KeyCode, MouseButton, MouseEventKind};
 use mpsc::Sender;
 use ratatui::{
     Frame,
     layout::Rect,
-    style::{Color, Modifier, Style},
+    style::Color,
     text::Span,
     widgets::{Clear, List, ListItem},
 };
@@ -19,67 +18,96 @@ use tokio::sync::mpsc;
 
 const POPUP_WIDTH: u16 = 30;
 
+#[derive(Default)]
 pub struct ItemActionsPopup {
-    pub selected_action_index: usize,
+    area: Option<Rect>,
+    list_area: Option<Rect>,
 }
 
 impl ItemActionsPopup {
     pub fn new() -> Self {
-        Self {
-            selected_action_index: 0,
-        }
+        Self::default()
     }
 
-    fn get_actions(&self, state: &AppState, item_id: &str) -> Vec<String> {
-        let mut actions = Vec::new();
-        if state.game.room.has_item(item_id) {
-            actions.push("TAKE".to_string());
+    pub fn hit(&self, column: u16, row: u16) -> Option<usize> {
+        let area = self.list_area?;
+
+        if !is_mouse_in_rect(column, row, area) {
+            return None;
         }
-        if state.game.player.has_item(item_id) {
-            actions.push("DROP".to_string());
+
+        Some(row.saturating_sub(area.y) as usize)
+    }
+
+    fn activate(
+        &self,
+        state: &mut AppState,
+        item_id: &str,
+        event_sender: &Sender<ApplicationEvent>,
+    ) -> EventFlow {
+        let selected = state
+            .game
+            .overlays
+            .get::<ItemActionsState>()
+            .and_then(|overlay| overlay.actions.selected().cloned());
+
+        match selected.as_deref() {
+            Some(ItemActionsState::VIEW) => {
+                state
+                    .game
+                    .overlays
+                    .open(Overlay::ItemDetail(ItemDetailState::new(
+                        item_id.to_string(),
+                    )));
+                return EventFlow::Consumed;
+            }
+            Some(ItemActionsState::CANCEL) | None => {}
+            Some(action) => {
+                let raw_command = format!("{} {}", action, item_id);
+                let _ = event_sender.try_send(ApplicationEvent::SendRawCommand(raw_command));
+            }
         }
-        actions.push("VIEW".to_string());
-        actions.push("CANCEL".to_string());
-        actions
+
+        state.game.close_top_overlay();
+        EventFlow::Consumed
     }
 }
 
 impl Component for ItemActionsPopup {
+    fn drawn_area(&self) -> Option<Rect> {
+        self.area
+    }
+
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
-        let item_id = match state.game.overlays.target_of(OverlayKind::ItemActions) {
-            Some(id) => id,
-            None => return,
+        let Some(overlay) = state.game.overlays.get::<ItemActionsState>() else {
+            return;
         };
 
-        let actions = self.get_actions(state, item_id);
+        let Some(item) = state.game.find_item(&overlay.item_id) else {
+            return;
+        };
 
-        let popup_area = centered_rect(area, POPUP_WIDTH, actions.len() as u16 + 2);
-
-        let display_name = state
-            .game
-            .manifest
-            .items
-            .get(item_id)
-            .map(|n| n.name.clone())
-            .unwrap_or_else(|| item_id.to_string());
-
-        let title = format!(" {} ", display_name);
+        let title = format!(" {} ", item.name);
+        let popup_area = centered_rect(area, POPUP_WIDTH, overlay.actions.len() as u16 + 2);
 
         frame.render_widget(Clear, popup_area);
 
-        let items: Vec<ListItem> = actions
+        let items: Vec<ListItem> = overlay
+            .actions
             .iter()
             .enumerate()
-            .map(|(i, act)| {
-                let mut style = Style::default().fg(Color::Reset);
-                if i == self.selected_action_index {
-                    style = style.add_modifier(Modifier::REVERSED);
-                }
-                ListItem::new(Span::styled(format!(" {}", act), style))
+            .map(|(index, action)| {
+                let style = selection_style(Color::Reset, overlay.actions.is_selected(index));
+
+                ListItem::new(Span::styled(format!(" {}", action), style))
             })
             .collect();
 
-        let list = List::new(items).block(popup_block(title));
+        let block = popup_block(title);
+        self.area = Some(popup_area);
+        self.list_area = Some(block.inner(popup_area));
+
+        let list = List::new(items).block(block);
 
         frame.render_widget(list, popup_area);
     }
@@ -91,59 +119,49 @@ impl Lifecycle for ItemActionsPopup {
         state: &mut AppState,
         event: &CrosstermEvent,
         event_sender: &Sender<ApplicationEvent>,
-    ) -> bool {
-        let item_id = match state.game.overlays.target_of(OverlayKind::ItemActions) {
-            Some(id) => id.to_string(),
-            None => return false,
+    ) -> EventFlow {
+        let Some(overlay) = state.game.overlays.get::<ItemActionsState>() else {
+            return EventFlow::Ignored;
         };
 
-        if let CrosstermEvent::Key(key) = event {
-            let actions = self.get_actions(state, &item_id);
-            let count = actions.len();
+        let item_id = overlay.item_id.clone();
 
-            match key.code {
-                KeyCode::Up => {
-                    self.selected_action_index =
-                        move_index(self.selected_action_index, count, Step::Previous);
-                    return true;
-                }
-                KeyCode::Down => {
-                    self.selected_action_index =
-                        move_index(self.selected_action_index, count, Step::Next);
-                    return true;
-                }
-                KeyCode::Esc => {
-                    state.game.overlays.close_top();
-                    self.selected_action_index = 0;
-                    return true;
-                }
-                KeyCode::Enter => {
-                    if let Some(act) = actions.get(self.selected_action_index) {
-                        match act.as_str() {
-                            "VIEW" => {
-                                state.game.overlays.open(Overlay::ItemDetail {
-                                    item_id: item_id.clone(),
-                                });
-                                return true;
-                            }
-                            "CANCEL" => {}
-                            _ => {
-                                let cmd = format!("{} {}", act.to_uppercase(), item_id);
-                                let _ =
-                                    event_sender.try_send(ApplicationEvent::SendRawCommand(cmd));
-                            }
-                        }
+        match event {
+            CrosstermEvent::Key(key) => match key.code {
+                KeyCode::Up | KeyCode::Down => {
+                    let step = if key.code == KeyCode::Up {
+                        Step::Previous
+                    } else {
+                        Step::Next
+                    };
+
+                    if let Some(overlay) = state.game.overlays.get_mut::<ItemActionsState>() {
+                        overlay.actions.move_selection(step);
                     }
 
-                    state.game.overlays.close_top();
-                    self.selected_action_index = 0;
-                    return true;
+                    EventFlow::Consumed
                 }
-                _ => {
-                    return true;
+                KeyCode::Esc => {
+                    state.game.close_top_overlay();
+                    EventFlow::Consumed
                 }
+                KeyCode::Enter => self.activate(state, &item_id, event_sender),
+                _ => EventFlow::Ignored,
+            },
+            CrosstermEvent::Mouse(mouse)
+                if mouse.kind == MouseEventKind::Down(MouseButton::Left) =>
+            {
+                let Some(index) = self.hit(mouse.column, mouse.row) else {
+                    return EventFlow::Ignored;
+                };
+
+                if let Some(overlay) = state.game.overlays.get_mut::<ItemActionsState>() {
+                    overlay.actions.select_index(index);
+                }
+
+                self.activate(state, &item_id, event_sender)
             }
+            _ => EventFlow::Ignored,
         }
-        true
     }
 }

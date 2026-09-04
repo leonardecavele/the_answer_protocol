@@ -1,15 +1,18 @@
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
-use crate::states::game::OverlayKind;
-use crate::ui::components::{Component, Lifecycle};
+use crate::states::game::ItemDetailState;
+use crate::ui::components::{Component, EventFlow, Lifecycle};
+use crate::ui::image::ImageRenderer;
+use crate::ui::layout::centered_rect_percent;
+use crate::ui::text::wrap_str_to_lines;
 use crate::ui::theme::{close_hint, popup_block};
-use crate::ui::utils::{center_area_with_aspect_ratio, centered_rect_percent, wrap_str_to_lines};
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
 use ratatui::{
     Frame,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     widgets::{Clear, Paragraph},
 };
+use ratatui_image::Resize;
 use std::time::Duration;
 use tokio::sync::mpsc::Sender;
 
@@ -20,18 +23,29 @@ const SPACER_HEIGHT: u16 = 1;
 const DESC_HEIGHT: u16 = 6;
 const FOOTER_HEIGHT: u16 = 2;
 
-pub struct ItemDetailPopup;
+#[derive(Default)]
+pub struct ItemDetailPopup {
+    area: Option<Rect>,
+    image_renderer: ImageRenderer,
+}
 
 impl ItemDetailPopup {
     pub fn new() -> Self {
-        Self {}
+        Self {
+            area: None,
+            image_renderer: ImageRenderer::new(),
+        }
     }
 }
 
 impl Component for ItemDetailPopup {
+    fn drawn_area(&self) -> Option<Rect> {
+        self.area
+    }
+
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
-        let item_id = match state.game.overlays.target_of(OverlayKind::ItemDetail) {
-            Some(id) => id,
+        let item_id = match state.game.overlays.get::<ItemDetailState>() {
+            Some(overlay) => overlay.item_id.as_str(),
             None => return,
         };
 
@@ -40,6 +54,7 @@ impl Component for ItemDetailPopup {
         };
 
         let popup_area = centered_rect_percent(area, POPUP_WIDTH_PERCENT, POPUP_HEIGHT_PERCENT);
+        self.area = Some(popup_area);
 
         frame.render_widget(Clear, popup_area);
 
@@ -58,28 +73,17 @@ impl Component for ItemDetailPopup {
             ])
             .split(inner_area);
 
-        let mut actual_image_area = chunks[0];
+        let image_area = chunks[0];
         let desc_area = chunks[2];
         let footer_area = chunks[3];
 
-        match &item.sprite.frame_at(Duration::ZERO) {
+        match item.sprite.frame_at(Duration::ZERO) {
             Some(image_path) => {
-                if let Some((img_width, img_height)) =
-                    state.ui.image_manager.get_dimensions(image_path)
-                {
-                    actual_image_area =
-                        center_area_with_aspect_ratio(actual_image_area, img_width, img_height);
-                }
-
-                state.ui.image_manager.render(
-                    frame,
-                    actual_image_area,
-                    image_path,
-                    ratatui_image::Resize::Fit(None),
-                );
+                self.image_renderer
+                    .draw_fitted(frame, image_area, image_path, Resize::Fit(None));
             }
             None => {
-                let mut centered_fallback_area = actual_image_area;
+                let mut centered_fallback_area = image_area;
                 if centered_fallback_area.height > 1 {
                     centered_fallback_area.y += centered_fallback_area.height / 2;
                     centered_fallback_area.height = 1;
@@ -103,20 +107,21 @@ impl Lifecycle for ItemDetailPopup {
         state: &mut AppState,
         event: &CrosstermEvent,
         _event_sender: &Sender<ApplicationEvent>,
-    ) -> bool {
-        if !state.game.overlays.is_open(OverlayKind::ItemDetail) {
-            return false;
+    ) -> EventFlow {
+        if !state.game.overlays.is_open::<ItemDetailState>() {
+            return EventFlow::Ignored;
         }
 
-        if let CrosstermEvent::Key(key) = event {
-            match key.code {
-                KeyCode::Esc | KeyCode::Enter | KeyCode::Char('q') => {
-                    state.game.overlays.close_top();
-                }
-                _ => {}
+        let CrosstermEvent::Key(key) = event else {
+            return EventFlow::Ignored;
+        };
+
+        match key.code {
+            KeyCode::Esc | KeyCode::Enter | KeyCode::Char('q') => {
+                state.game.close_top_overlay();
+                EventFlow::Consumed
             }
+            _ => EventFlow::Ignored,
         }
-
-        true
     }
 }

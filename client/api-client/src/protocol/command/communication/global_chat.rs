@@ -28,13 +28,6 @@ impl Command for GlobalChatCommand {
         Ok(GlobalChatResponse)
     }
 
-    fn refine_error(&self, error: &mut CommandError) {
-        error.with_message(match error.code {
-            Some(401) => Some("not in group".to_string()),
-            _ => None,
-        })
-    }
-
     fn from_str(args: &str) -> Option<Self> {
         if args.trim().is_empty() {
             return None;

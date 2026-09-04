@@ -38,13 +38,6 @@ impl Command for GroupCreateCommand {
         Ok(GroupCreateResponse { group_id })
     }
 
-    fn refine_error(&self, error: &mut CommandError) {
-        error.with_message(match error.code {
-            Some(402) => Some("already in a group".to_string()),
-            _ => None,
-        })
-    }
-
     fn from_str(_args: &str) -> Option<Self> {
         Some(Self)
     }

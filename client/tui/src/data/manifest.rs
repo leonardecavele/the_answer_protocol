@@ -6,17 +6,13 @@ pub const ASSETS_PATH_MANIFEST: &str = "../assets/manifest.json";
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
+#[derive(Default)]
 pub enum NpcKind {
     Enemy,
     QuestGiver,
     Dialogue,
+    #[default]
     Normal,
-}
-
-impl Default for NpcKind {
-    fn default() -> Self {
-        NpcKind::Normal
-    }
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -27,8 +23,6 @@ pub struct NpcEntry {
     pub image_path: Option<String>,
     pub image_paths: Option<Vec<String>>,
     pub frame_ms: Option<u64>,
-    #[serde(default)]
-    pub actions: Vec<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -44,11 +38,6 @@ pub struct RoomEntry {
     pub direction: Option<char>,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
-pub struct QuestConfig {
-    pub description: String,
-}
-
 #[derive(Debug, Deserialize, Serialize, Clone, Default)]
 pub struct Manifest {
     #[serde(default)]
@@ -57,8 +46,6 @@ pub struct Manifest {
     pub items: HashMap<String, ItemEntry>,
     #[serde(default)]
     pub rooms: HashMap<String, RoomEntry>,
-    #[serde(default)]
-    pub quests: HashMap<String, QuestConfig>,
 }
 
 impl Manifest {

@@ -1,27 +1,17 @@
+use crate::collections::Step;
 use crate::events::{ApplicationEvent, NetworkEvent};
 use crate::states::app::AppState;
-use crate::states::ui::Notification;
-use crate::ui::components::Component;
-use crate::ui::components::Lifecycle;
-use crate::ui::components::interactive::Interactive;
-use crate::ui::components::widgets::button::Button;
-use crate::ui::components::widgets::text_input::TextInput;
+use crate::states::notification::Notification;
+use crate::ui::components::{Button, Component, EventFlow, Interactive, Lifecycle, TextInput};
+use crate::ui::views::login::focus::LoginFocus;
 use crossterm::event::{Event as CrosstermEvent, KeyCode, KeyEvent, MouseEvent, MouseEventKind};
 use mpsc::Sender;
 use ratatui::Frame;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use tokio::sync::mpsc;
 
-#[derive(PartialEq)]
-pub enum LoginFocus {
-    PlayerName,
-    ServerIp,
-    ServerPort,
-    ConnectButton,
-}
-
 pub struct LoginView {
-    pub current_focus: LoginFocus,
+    pub focus: LoginFocus,
     pub name_input: Interactive<TextInput>,
     pub ip_input: Interactive<TextInput>,
     pub port_input: Interactive<TextInput>,
@@ -31,45 +21,38 @@ pub struct LoginView {
 impl LoginView {
     pub fn new(ip: String, port: String) -> Self {
         let mut view = Self {
-            current_focus: LoginFocus::PlayerName,
+            focus: LoginFocus::default(),
             name_input: Interactive::new(TextInput::new("Player Name")),
             ip_input: Interactive::new(TextInput::new("Server IP")),
             port_input: Interactive::new(TextInput::new("Server Port")),
             connect_button: Interactive::new(Button::new("Connect")),
         };
-        // Set initial value for defaults
+
         view.ip_input.inner.value = ip;
         view.port_input.inner.value = port;
-
         view.update_focus();
+
         view
     }
 
+    fn set_focus(&mut self, focus: LoginFocus) {
+        self.focus = focus;
+        self.update_focus();
+    }
+
+    fn cycle_focus(&mut self, step: Step) {
+        match step {
+            Step::Next => self.focus.next(),
+            Step::Previous => self.focus.prev(),
+        }
+        self.update_focus();
+    }
+
     fn update_focus(&mut self) {
-        self.name_input.inner.is_focused = self.current_focus == LoginFocus::PlayerName;
-        self.ip_input.inner.is_focused = self.current_focus == LoginFocus::ServerIp;
-        self.port_input.inner.is_focused = self.current_focus == LoginFocus::ServerPort;
-        self.connect_button.inner.is_focused = self.current_focus == LoginFocus::ConnectButton;
-    }
-
-    fn cycle_focus_forward(&mut self) {
-        self.current_focus = match self.current_focus {
-            LoginFocus::PlayerName => LoginFocus::ServerIp,
-            LoginFocus::ServerIp => LoginFocus::ServerPort,
-            LoginFocus::ServerPort => LoginFocus::ConnectButton,
-            LoginFocus::ConnectButton => LoginFocus::PlayerName,
-        };
-        self.update_focus();
-    }
-
-    fn cycle_focus_backward(&mut self) {
-        self.current_focus = match self.current_focus {
-            LoginFocus::PlayerName => LoginFocus::ConnectButton,
-            LoginFocus::ServerIp => LoginFocus::PlayerName,
-            LoginFocus::ServerPort => LoginFocus::ServerIp,
-            LoginFocus::ConnectButton => LoginFocus::ServerPort,
-        };
-        self.update_focus();
+        self.name_input.inner.is_focused = self.focus == LoginFocus::PlayerName;
+        self.ip_input.inner.is_focused = self.focus == LoginFocus::ServerIp;
+        self.port_input.inner.is_focused = self.focus == LoginFocus::ServerPort;
+        self.connect_button.inner.is_focused = self.focus == LoginFocus::ConnectButton;
     }
 }
 
@@ -106,7 +89,6 @@ impl Component for LoginView {
         self.ip_input.draw(state, frame, get_center_rect(3));
         self.port_input.draw(state, frame, get_center_rect(5));
 
-        // Button should be slightly narrower maybe, or just center it
         let button_area = Layout::default()
             .direction(Direction::Horizontal)
             .constraints([
@@ -126,70 +108,61 @@ impl Lifecycle for LoginView {
         state: &mut AppState,
         event: &CrosstermEvent,
         event_sender: &Sender<ApplicationEvent>,
-    ) -> bool {
+    ) -> EventFlow {
         match event {
             CrosstermEvent::Key(KeyEvent { code, .. }) => {
-                // Keyboard navigation
                 if *code == KeyCode::Tab || *code == KeyCode::Down {
-                    self.cycle_focus_forward();
-                    return true;
+                    self.cycle_focus(Step::Next);
+                    return EventFlow::Consumed;
                 }
                 if *code == KeyCode::BackTab || *code == KeyCode::Up {
-                    self.cycle_focus_backward();
-                    return true;
+                    self.cycle_focus(Step::Previous);
+                    return EventFlow::Consumed;
                 }
 
-                if *code == KeyCode::Enter {
-                    if self.current_focus != LoginFocus::ConnectButton {
-                        self.current_focus = LoginFocus::ConnectButton;
-                        self.update_focus();
-                        return true;
+                if *code == KeyCode::Enter
+                    && self.focus != LoginFocus::ConnectButton {
+                    self.set_focus(LoginFocus::ConnectButton);
+                        return EventFlow::Consumed;
                     }
-                }
             }
             CrosstermEvent::Mouse(MouseEvent {
                 kind, column, row, ..
-            }) => {
+            })
                 // Mouse navigation (Left click)
-                if *kind == MouseEventKind::Down(crossterm::event::MouseButton::Left) {
+                if *kind == MouseEventKind::Down(crossterm::event::MouseButton::Left) => {
                     if self.name_input.is_mouse_over(*column, *row) {
-                        self.current_focus = LoginFocus::PlayerName;
-                        self.update_focus();
-                        return true;
+                        self.set_focus(LoginFocus::PlayerName);
+                        return EventFlow::Consumed;
                     } else if self.ip_input.is_mouse_over(*column, *row) {
-                        self.current_focus = LoginFocus::ServerIp;
-                        self.update_focus();
-                        return true;
+                        self.set_focus(LoginFocus::ServerIp);
+                        return EventFlow::Consumed;
                     } else if self.port_input.is_mouse_over(*column, *row) {
-                        self.current_focus = LoginFocus::ServerPort;
-                        self.update_focus();
-                        return true;
+                        self.set_focus(LoginFocus::ServerPort);
+                        return EventFlow::Consumed;
                     } else if self.connect_button.is_mouse_over(*column, *row) {
-                        self.current_focus = LoginFocus::ConnectButton;
-                        self.update_focus();
-                        // Simulate a button press directly if clicked
+                        self.set_focus(LoginFocus::ConnectButton);
                         self.connect_button.inner.is_pressed = true;
                     }
                 }
-            }
             _ => {}
         }
 
-        match self.current_focus {
+        match self.focus {
             LoginFocus::PlayerName => {
                 self.name_input
-                    .handle_terminal_event(state, event, event_sender);
+                    .handle_terminal_event(state, event, event_sender)
             }
-            LoginFocus::ServerIp => {
-                self.ip_input
-                    .handle_terminal_event(state, event, event_sender);
-            }
+            LoginFocus::ServerIp => self
+                .ip_input
+                .handle_terminal_event(state, event, event_sender),
             LoginFocus::ServerPort => {
                 self.port_input
-                    .handle_terminal_event(state, event, event_sender);
+                    .handle_terminal_event(state, event, event_sender)
             }
             LoginFocus::ConnectButton => {
-                self.connect_button
+                let flow = self
+                    .connect_button
                     .handle_terminal_event(state, event, event_sender);
 
                 if self.connect_button.inner.take_pressed() {
@@ -206,7 +179,7 @@ impl Lifecycle for LoginView {
                         state.ui.notifications.push(
                             Notification::info("Connecting...")
                                 .with_id(crate::network::manager::NOTIF_ID_CONNECTION_ATTEMPT)
-                                .with_duration(60000),
+                                .with_ms(60_000),
                         );
                         let _ = event_sender.try_send(ApplicationEvent::Network(
                             NetworkEvent::ConnectionAttemptStarted {
@@ -217,8 +190,9 @@ impl Lifecycle for LoginView {
                         ));
                     }
                 }
+
+                flow
             }
         }
-        true
     }
 }

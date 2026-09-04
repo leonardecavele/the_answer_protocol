@@ -1,16 +1,18 @@
-use crate::client::bridge::Bridge;
-use crate::client::event::ServerEvent;
-use crate::client::{BridgeHandle, Client, ClientConfig, ConnectionState, ServerInfo};
-use crate::error::{NetworkError, ProtocolError, TapError};
+use crate::client::bridge::{Bridge, BridgeChannels};
+use crate::client::config::ClientConfig;
+use crate::client::{BridgeHandle, ServerInfo};
+use crate::events::ServerEvent;
 use crate::protocol::handshake::HandshakeResponse;
 use crate::protocol::request::Request;
-use crate::protocol::response::ServerResponse;
+use crate::{
+    Client, Connection, ConnectionState, Frame, FrameDirection, NetworkError, ProtocolError,
+    ServerResponse, TapError,
+};
 use futures::StreamExt;
 use std::fmt::Display;
 use std::time::Duration;
 use tokio::net::{TcpStream, ToSocketAddrs};
 use tokio::sync::{broadcast, mpsc, watch};
-use tokio::task::JoinHandle;
 use tokio::time::timeout;
 use tokio_util::codec::{Framed, LinesCodec};
 use tokio_util::sync::CancellationToken;
@@ -19,17 +21,14 @@ use tracing::info;
 const SUPPORTED_PROTOCOL: u32 = 1;
 
 impl Client {
-    pub async fn connect<A>(addr: A) -> Result<(Client, broadcast::Receiver<ServerEvent>), TapError>
+    pub async fn connect<A>(addr: A) -> Result<Connection, TapError>
     where
         A: ToSocketAddrs + Clone + Display,
     {
         Self::connect_with(addr, ClientConfig::default()).await
     }
 
-    pub async fn connect_with<A>(
-        addr: A,
-        config: ClientConfig,
-    ) -> Result<(Client, broadcast::Receiver<ServerEvent>), TapError>
+    pub async fn connect_with<A>(addr: A, config: ClientConfig) -> Result<Connection, TapError>
     where
         A: ToSocketAddrs + Clone + Display,
     {
@@ -37,32 +36,26 @@ impl Client {
             Self::connect_tcp(addr, config.connect_timeout, config.max_frame_length).await?;
         info!("successfully connected to TCP socket at {}", server_addr);
 
-        let handshake = Self::handshake(&mut socket, config.handshake_timeout).await?;
-        info!(
-            "handshake successful, protocol version: {}",
-            handshake.server_protocol_version
-        );
-
-        if handshake.server_protocol_version != SUPPORTED_PROTOCOL {
-            return Err(ProtocolError::UnsupportedVersion {
-                server: handshake.server_protocol_version,
-                supported: SUPPORTED_PROTOCOL,
-            }
-            .into());
-        }
-
         let (state_sender, state_receiver) = watch::channel(ConnectionState::Connected);
         let (request_sender, request_receiver) =
             mpsc::channel::<Request>(config.command_channel_capacity);
+        let (frame_sender, frame_receiver) =
+            broadcast::channel::<Frame>(config.frame_channel_capacity);
         let (event_sender, event_receiver) =
             broadcast::channel::<ServerEvent>(config.event_channel_capacity);
-        let cancellation = CancellationToken::new();
 
-        let bridge_task = Self::start_bridge(
+        let handshake =
+            Self::handshake(&mut socket, &frame_sender, config.handshake_timeout).await?;
+
+        let cancellation = CancellationToken::new();
+        let bridge_task = Bridge::start(
             socket,
-            state_sender,
-            event_sender.clone(),
-            request_receiver,
+            BridgeChannels {
+                state: state_sender,
+                events: event_sender.clone(),
+                frames: frame_sender.clone(),
+                requests: request_receiver,
+            },
             cancellation.clone(),
             config.request_timeout,
         );
@@ -75,6 +68,7 @@ impl Client {
             bridge: BridgeHandle {
                 task: bridge_task,
                 request_sender,
+                frame_sender,
                 event_sender,
                 cancellation,
             },
@@ -82,7 +76,11 @@ impl Client {
             state: state_receiver,
         };
 
-        Ok((client, event_receiver))
+        Ok(Connection {
+            client,
+            events: event_receiver,
+            frames: frame_receiver,
+        })
     }
 
     async fn connect_tcp<A>(
@@ -113,28 +111,9 @@ impl Client {
         }
     }
 
-    fn start_bridge(
-        socket: Framed<TcpStream, LinesCodec>,
-        state_sender: watch::Sender<ConnectionState>,
-        event_sender: broadcast::Sender<ServerEvent>,
-        request_receiver: mpsc::Receiver<Request>,
-        cancellation: CancellationToken,
-        request_timeout: Duration,
-    ) -> JoinHandle<()> {
-        tokio::spawn(async move {
-            let mut bridge = Bridge::new(
-                socket,
-                state_sender,
-                event_sender,
-                request_receiver,
-                request_timeout,
-            );
-            bridge.listen(cancellation).await;
-        })
-    }
-
     async fn handshake(
         socket: &mut Framed<TcpStream, LinesCodec>,
+        frame_sender: &broadcast::Sender<Frame>,
         handshake_timeout: Duration,
     ) -> Result<HandshakeResponse, TapError> {
         let frame = timeout(handshake_timeout, socket.next())
@@ -145,13 +124,32 @@ impl Client {
                 })
             })?;
 
-        match frame {
-            Some(Ok(line)) => {
-                let response = ServerResponse::try_from(line)?;
-                Ok(HandshakeResponse::try_from(response)?)
+        let line = match frame {
+            Some(Ok(line)) => line,
+            Some(Err(codec_error)) => return Err(NetworkError::Codec(codec_error).into()),
+            None => return Err(NetworkError::Disconnected.into()),
+        };
+
+        let _ = frame_sender.send(Frame {
+            direction: FrameDirection::Received,
+            line: line.clone(),
+        });
+
+        let handshake = HandshakeResponse::try_from(ServerResponse::try_from(line)?)?;
+
+        info!(
+            "handshake successful, protocol version: {}",
+            handshake.server_protocol_version
+        );
+
+        if handshake.server_protocol_version != SUPPORTED_PROTOCOL {
+            return Err(ProtocolError::UnsupportedVersion {
+                server: handshake.server_protocol_version,
+                supported: SUPPORTED_PROTOCOL,
             }
-            Some(Err(codec_error)) => Err(NetworkError::Codec(codec_error).into()),
-            None => Err(NetworkError::Disconnected.into()),
+            .into());
         }
+
+        Ok(handshake)
     }
 }

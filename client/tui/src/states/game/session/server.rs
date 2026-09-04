@@ -8,6 +8,10 @@ impl ServerState {
             online_players_count: 1,
         }
     }
+
+    pub fn set_online_count(&mut self, count: u32) {
+        self.online_players_count = count;
+    }
 }
 
 impl Default for ServerState {

@@ -1,4 +1,4 @@
-use std::time::Instant;
+use super::{Overlay, OverlayPayload};
 
 pub const END_OF_DIALOGUE_TAG: &str = "[end of dialogue]";
 
@@ -7,9 +7,7 @@ pub struct DialogueState {
     pub npc_id: String,
     pub npc_name: String,
     pub full_text: String,
-    pub visible_chars: usize,
     pub ends_dialog: bool,
-    pub last_tick: Instant,
 }
 
 impl DialogueState {
@@ -18,9 +16,7 @@ impl DialogueState {
             npc_id,
             npc_name,
             full_text,
-            visible_chars: 0,
             ends_dialog,
-            last_tick: Instant::now(),
         }
     }
 
@@ -28,6 +24,25 @@ impl DialogueState {
         self.full_text.push_str("\n\n");
         self.full_text.push_str(&text);
         self.ends_dialog = ends_dialog;
-        self.visible_chars += 2;
+    }
+
+    pub fn char_count(&self) -> usize {
+        self.full_text.chars().count()
+    }
+}
+
+impl OverlayPayload for DialogueState {
+    fn extract(overlay: &Overlay) -> Option<&Self> {
+        match overlay {
+            Overlay::Dialogue(state) => Some(state),
+            _ => None,
+        }
+    }
+
+    fn extract_mut(overlay: &mut Overlay) -> Option<&mut Self> {
+        match overlay {
+            Overlay::Dialogue(state) => Some(state),
+            _ => None,
+        }
     }
 }

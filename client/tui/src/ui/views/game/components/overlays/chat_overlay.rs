@@ -1,9 +1,9 @@
 use crate::states::app::AppState;
-use crate::states::game::ChatChannel;
-use crate::ui::components::Lifecycle;
-use crate::ui::components::scrollable::ScrollableComponent;
+use crate::states::game::{ChatChannel, ChatSender};
+use crate::ui::components::{Lifecycle, ScrollableComponent};
+use crate::ui::layout::percent_of;
+use crate::ui::text::wrap_str_to_lines;
 use crate::ui::theme::overlay_block;
-use crate::ui::utils::wrap_str_to_lines;
 use ratatui::layout::Rect;
 use ratatui::style::Color;
 use ratatui::text::Line;
@@ -14,6 +14,12 @@ const CHAT_HEIGHT_PERCENTAGE: u16 = 80;
 
 pub struct ChatOverlay;
 
+impl Default for ChatOverlay {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ChatOverlay {
     pub fn new() -> Self {
         Self
@@ -22,8 +28,8 @@ impl ChatOverlay {
 
 impl ScrollableComponent for ChatOverlay {
     fn get_area(&self, _state: &AppState, max_area: Rect) -> Rect {
-        let chat_width = (max_area.width * CHAT_WIDTH_PERCENTAGE) / 100;
-        let chat_height = (max_area.height * CHAT_HEIGHT_PERCENTAGE) / 100;
+        let chat_width = percent_of(max_area.width, CHAT_WIDTH_PERCENTAGE);
+        let chat_height = percent_of(max_area.height, CHAT_HEIGHT_PERCENTAGE);
         Rect {
             x: max_area.x + max_area.width.saturating_sub(chat_width),
             y: max_area.y + max_area.height.saturating_sub(chat_height),
@@ -41,13 +47,26 @@ impl ScrollableComponent for ChatOverlay {
 
         for msg in &state.game.chat_log {
             let (prefix, _) = match &msg.channel {
-                ChatChannel::Global => ("[GLOBAL] ", Color::Yellow),
-                ChatChannel::Group => ("[GROUP] ", Color::LightGreen),
-                ChatChannel::Room => ("[ROOM] ", Color::LightCyan),
-                ChatChannel::Private(_) => ("[PRIVATE] ", Color::LightMagenta),
+                ChatChannel::Global => ("[GLOBAL]", Color::Yellow),
+                ChatChannel::Group => ("[GROUP]", Color::LightGreen),
+                ChatChannel::Room => ("[ROOM]", Color::LightCyan),
+                ChatChannel::Private(_) => ("[PRIVATE]", Color::LightMagenta),
             };
 
-            let full_text = format!("{}{}: {}", prefix, msg.sender, msg.content);
+            let full_text = match (&msg.channel, &msg.sender) {
+                (ChatChannel::Private(other), ChatSender::Me) => {
+                    let is_me = state.game.player.is_me(other.as_str());
+
+                    if is_me {
+                        format!("{} (You only): {}", prefix, msg.content)
+                    } else {
+                        format!("{} (You) to {}: {}", prefix, other, msg.content)
+                    }
+                }
+                (_, ChatSender::Me) => format!("{} (You): {}", prefix, msg.content),
+                (_, ChatSender::Other(from)) => format!("{} ({}): {}", prefix, from, msg.content),
+            };
+
             visual_lines.extend(wrap_str_to_lines(&full_text, max_width));
         }
 
