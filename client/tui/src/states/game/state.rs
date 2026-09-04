@@ -95,7 +95,8 @@ impl GameState {
             OverlayKind::NpcActions
             | OverlayKind::ItemActions
             | OverlayKind::QuestDetail
-            | OverlayKind::PlayerActions => {
+            | OverlayKind::PlayerActions
+            | OverlayKind::InvitationActions => {
                 self.overlays.close_top();
                 self.clear_selections();
             }

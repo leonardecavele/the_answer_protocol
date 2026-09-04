@@ -36,7 +36,8 @@ impl GroupState {
 
     pub fn join(&mut self, id: String, leader: String) {
         self.id = Some(id);
-        self.leader = Some(leader.to_uppercase());
+        self.leader = Some(leader.clone());
+        self.remove_invitation(&leader);
     }
 
     pub fn leave(&mut self) {

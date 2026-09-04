@@ -4,9 +4,10 @@ mod state;
 mod world;
 
 pub use interaction::{
-    ChatState, DialogueState, END_OF_DIALOGUE_TAG, GameFocus, HelpState, ItemActionsState,
-    ItemDetailState, ItemLocation, NpcAction, NpcActionsState, Overlay, OverlayKind,
-    OverlayPayload, Overlays, PlayerAction, PlayerActionsState, QuestDetailState,
+    ChatState, DialogueState, END_OF_DIALOGUE_TAG, GameFocus, HelpState, InvitationAction,
+    InvitationActionsState, ItemActionsState, ItemDetailState, ItemLocation, NpcAction,
+    NpcActionsState, Overlay, OverlayKind, OverlayPayload, Overlays, PlayerAction,
+    PlayerActionsState, QuestDetailState,
 };
 pub use session::{
     ChatChannel, ChatMessage, ChatSender, Exits, FightPhase, FightState, GroupState, NpcHealth,

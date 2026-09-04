@@ -6,13 +6,14 @@ use crate::ui::components::{
 use crate::ui::layout::percent_of;
 
 use crate::states::game::{
-    ChatState, GameFocus, HelpState, ItemActionsState, ItemLocation, NpcActionsState, Overlay,
-    OverlayKind, PlayerActionsState, QuestDetailState,
+    ChatState, GameFocus, HelpState, InvitationActionsState, ItemActionsState, ItemLocation,
+    NpcActionsState, Overlay, OverlayKind, PlayerActionsState, QuestDetailState,
 };
 use crate::ui::views::game::components::{
     ActionHistoryPanel, ChatOverlay, DialoguePopup, Footer, FooterHit, Header, HelpOverlay,
-    InventoryPanel, InventoryPanelHit, ItemActionsPopup, ItemDetailPopup, LeftPanel, LeftPanelHit,
-    NpcActionsPopup, PlayerActionsPopup, QuestDetailPopup, RightPanel, RightPanelHit,
+    InventoryPanel, InventoryPanelHit, InvitationActionsPopup, ItemActionsPopup, ItemDetailPopup,
+    LeftPanel, LeftPanelHit, NpcActionsPopup, PlayerActionsPopup, QuestDetailPopup, RightPanel,
+    RightPanelHit,
 };
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
 use ratatui::Frame;
@@ -29,6 +30,7 @@ pub struct GameView {
     chat: Scrollable<ChatOverlay>,
     npc_actions: NpcActionsPopup,
     player_actions: PlayerActionsPopup,
+    invitation_actions: InvitationActionsPopup,
     item_actions: ItemActionsPopup,
     item_detail: ItemDetailPopup,
     quest_detail: QuestDetailPopup,
@@ -55,6 +57,7 @@ impl GameView {
             chat: Scrollable::new(ChatOverlay::new()),
             npc_actions: NpcActionsPopup::new(),
             player_actions: PlayerActionsPopup::new(),
+            invitation_actions: InvitationActionsPopup::new(),
             item_actions: ItemActionsPopup::new(),
             item_detail: ItemDetailPopup::new(),
             quest_detail: QuestDetailPopup::new(),
@@ -70,6 +73,7 @@ impl GameView {
             OverlayKind::Chat => &mut self.chat,
             OverlayKind::NpcActions => &mut self.npc_actions,
             OverlayKind::PlayerActions => &mut self.player_actions,
+            OverlayKind::InvitationActions => &mut self.invitation_actions,
             OverlayKind::ItemActions => &mut self.item_actions,
             OverlayKind::ItemDetail => &mut self.item_detail,
             OverlayKind::QuestDetail => &mut self.quest_detail,
@@ -216,6 +220,9 @@ impl GameView {
                 LeftPanelHit::Npc(_) => state.game.set_focus(GameFocus::NpcList),
                 LeftPanelHit::Item(_) => state.game.set_focus(GameFocus::RoomItemsList),
                 LeftPanelHit::Quest(_) => state.game.set_focus(GameFocus::QuestList),
+                LeftPanelHit::Invitation(_) => {
+                    state.game.set_focus(GameFocus::InvitationList);
+                }
                 LeftPanelHit::None => {}
             }
 
@@ -294,6 +301,15 @@ impl GameView {
                         });
                     } else {
                         state.game.player.quests.select_index(index);
+                    }
+                }
+                LeftPanelHit::Invitation(index) => {
+                    if state.game.group.invitations.is_selected(index) {
+                        requested = state.game.group.invitations.selected().map(|leader| {
+                            Overlay::InvitationActions(InvitationActionsState::new(leader.clone()))
+                        });
+                    } else {
+                        state.game.group.invitations.select_index(index);
                     }
                 }
                 LeftPanelHit::None => {}

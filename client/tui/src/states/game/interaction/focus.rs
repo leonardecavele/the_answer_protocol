@@ -8,16 +8,18 @@ pub enum GameFocus {
     PlayerList,
     NpcList,
     QuestList,
+    InvitationList,
     RoomItemsList,
     InventoryGrid,
     ActionHistory,
 }
 
 impl GameFocus {
-    pub const FOCUS_COUNT: usize = 8;
+    pub const FOCUS_COUNT: usize = 9;
 
     const ORDER: [GameFocus; Self::FOCUS_COUNT] = [
         GameFocus::Input,
+        GameFocus::InvitationList,
         GameFocus::PlayerList,
         GameFocus::NpcList,
         GameFocus::RoomItemsList,
@@ -30,13 +32,14 @@ impl GameFocus {
     fn index(self) -> usize {
         match self {
             GameFocus::Input => 0,
-            GameFocus::PlayerList => 1,
-            GameFocus::NpcList => 2,
-            GameFocus::RoomItemsList => 3,
-            GameFocus::QuestList => 4,
-            GameFocus::ActionHistory => 5,
-            GameFocus::InventoryGrid => 6,
-            GameFocus::RightPanel => 7,
+            GameFocus::InvitationList => 1,
+            GameFocus::PlayerList => 2,
+            GameFocus::NpcList => 3,
+            GameFocus::RoomItemsList => 4,
+            GameFocus::QuestList => 5,
+            GameFocus::ActionHistory => 6,
+            GameFocus::InventoryGrid => 7,
+            GameFocus::RightPanel => 8,
         }
     }
 

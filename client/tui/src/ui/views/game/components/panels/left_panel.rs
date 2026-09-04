@@ -4,8 +4,8 @@ use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
 use crate::states::game::GameFocus;
 use crate::states::game::{
-    ItemActionsState, ItemLocation, NpcActionsState, Overlay, PlayerActionsState, QuestDetailState,
-    Room,
+    InvitationActionsState, ItemActionsState, ItemLocation, NpcActionsState, Overlay,
+    PlayerActionsState, QuestDetailState, Room,
 };
 use crate::ui::components::{CommandButton, Component, EventFlow, Lifecycle, is_mouse_in_rect};
 use crate::ui::theme::{panel_block, quest_status, selection_style};
@@ -20,6 +20,7 @@ use tokio::sync::mpsc::Sender;
 
 pub enum LeftPanelHit {
     Player(usize),
+    Invitation(usize),
     Npc(usize),
     Item(usize),
     Quest(usize),
@@ -31,6 +32,7 @@ pub struct LeftPanel {
     npcs_area: Option<Rect>,
     items_area: Option<Rect>,
     quests_area: Option<Rect>,
+    invitations_area: Option<Rect>,
     quests_button: CommandButton,
 }
 
@@ -47,6 +49,7 @@ impl LeftPanel {
             npcs_area: None,
             items_area: None,
             quests_area: None,
+            invitations_area: None,
             quests_button: CommandButton::new("QUESTS", "QUESTS"),
         }
     }
@@ -82,6 +85,12 @@ impl LeftPanel {
             && let Some(index) = Self::hit_entry(area, column, row)
         {
             return LeftPanelHit::Quest(index);
+        }
+
+        if let Some(area) = self.invitations_area
+            && let Some(index) = Self::hit_entry(area, column, row)
+        {
+            return LeftPanelHit::Invitation(index);
         }
 
         LeftPanelHit::None
@@ -159,6 +168,26 @@ impl LeftPanel {
         self.items_area = Some(area);
     }
 
+    fn draw_invitations(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
+        let focused = state.game.focus() == GameFocus::InvitationList;
+        let invitations = &state.game.group.invitations;
+
+        let items: Vec<ListItem> = invitations
+            .iter()
+            .enumerate()
+            .map(|(index, leader)| {
+                let style =
+                    selection_style(Color::Magenta, focused && invitations.is_selected(index));
+
+                ListItem::new(Span::styled(format!("• {}", leader), style))
+            })
+            .collect();
+
+        let list = List::new(items).block(panel_block(" Invited By ", focused));
+        frame.render_widget(list, area);
+        self.invitations_area = Some(area);
+    }
+
     fn draw_quests(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
         let focused = state.game.focus() == GameFocus::QuestList;
         let quests = &state.game.player.quests;
@@ -195,20 +224,31 @@ impl Component for LeftPanel {
             return;
         };
 
+        let invitations = state.game.group.invitations.len() as u16;
+        let offset = if invitations > 0 { 1 } else { 0 };
+
+        let mut constraints = Vec::with_capacity(5);
+
+        if invitations > 0 {
+            constraints.push(Constraint::Length(invitations + 2));
+        }
+
+        constraints.extend([Constraint::Fill(1); 4]);
+
         let chunks = Layout::default()
             .direction(Direction::Vertical)
-            .constraints([
-                Constraint::Ratio(1, 4),
-                Constraint::Ratio(1, 4),
-                Constraint::Ratio(1, 4),
-                Constraint::Ratio(1, 4),
-            ])
+            .constraints(constraints)
             .split(area);
 
-        self.draw_players(state, room, frame, chunks[0]);
-        self.draw_npcs(state, room, frame, chunks[1]);
-        self.draw_items(state, room, frame, chunks[2]);
-        self.draw_quests(state, frame, chunks[3]);
+        match chunks.first().filter(|_| invitations > 0) {
+            Some(area) => self.draw_invitations(state, frame, *area),
+            None => self.invitations_area = None,
+        }
+
+        self.draw_players(state, room, frame, chunks[offset]);
+        self.draw_npcs(state, room, frame, chunks[offset + 1]);
+        self.draw_items(state, room, frame, chunks[offset + 2]);
+        self.draw_quests(state, frame, chunks[offset + 3]);
     }
 }
 
@@ -264,6 +304,28 @@ impl Lifecycle for LeftPanel {
 
                             state.game.overlays.open(Overlay::PlayerActions(
                                 PlayerActionsState::new(player_name, can_invite),
+                            ));
+                            EventFlow::Consumed
+                        }
+                        None => EventFlow::Ignored,
+                    }
+                }
+                _ => EventFlow::Ignored,
+            },
+            GameFocus::InvitationList => match key.code {
+                crossterm::event::KeyCode::Up => {
+                    state.game.group.invitations.move_selection(Step::Previous);
+                    EventFlow::Consumed
+                }
+                crossterm::event::KeyCode::Down => {
+                    state.game.group.invitations.move_selection(Step::Next);
+                    EventFlow::Consumed
+                }
+                crossterm::event::KeyCode::Enter => {
+                    match state.game.group.invitations.selected().cloned() {
+                        Some(leader) => {
+                            state.game.overlays.open(Overlay::InvitationActions(
+                                InvitationActionsState::new(leader),
                             ));
                             EventFlow::Consumed
                         }
