@@ -9,6 +9,7 @@ use ratatui::backend::CrosstermBackend;
 use std::{io, panic};
 use tui::app::App;
 use tui::cli::Cli;
+use tui::data::assets::Assets;
 use tui::logging;
 
 const LOG_FILE: &str = "tui.log";
@@ -50,7 +51,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut terminal = terminal_setup()?;
 
-    let mut app = App::with_terminal_input(cli.ip, cli.port);
+    let mut app = App::with_terminal_input(cli.ip, cli.port, Assets::new(cli.assets));
     let res = app.run(&mut terminal).await;
 
     terminal_restore(terminal)?;

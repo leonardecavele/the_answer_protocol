@@ -172,14 +172,27 @@ impl RightPanel {
             return None;
         };
 
-        let aspect = self.image_renderer.aspect_ratio(&image_path)?;
+        let aspect = self
+            .image_renderer
+            .aspect_ratio(&state.game.assets, &image_path)?;
 
         Some((available_height as f32 * aspect) as u16)
     }
 
-    fn draw_image(&self, frame: &mut Frame, area: Rect, image_path: &str) -> Rect {
-        self.image_renderer
-            .draw_fitted(frame, area, image_path, Resize::Scale(None))
+    fn draw_image(
+        &self,
+        state: &AppState,
+        frame: &mut Frame,
+        area: Rect,
+        image_path: &str,
+    ) -> Rect {
+        self.image_renderer.draw_fitted(
+            frame,
+            area,
+            &state.game.assets,
+            image_path,
+            Resize::Scale(None),
+        )
     }
 
     fn draw_message(&self, frame: &mut Frame, area: Rect, text: &str, color: Color) {
@@ -288,7 +301,7 @@ impl Component for RightPanel {
                 self.draw_disconnected(frame, area);
                 return;
             }
-            Content::Image(image_path) => self.draw_image(frame, area, &image_path),
+            Content::Image(image_path) => self.draw_image(state, frame, area, &image_path),
             Content::Message(text) => {
                 self.draw_message(frame, area, text, Color::Reset);
                 area

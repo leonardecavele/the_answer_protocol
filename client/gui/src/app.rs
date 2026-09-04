@@ -3,6 +3,7 @@ use crate::screen::{self, Grid, Screen};
 use eframe::egui;
 use tokio::runtime::Handle;
 use tui::app::App;
+use tui::data::assets::Assets;
 use tui::events::{ApplicationEvent, TICK_RATE};
 
 pub struct GuiApp {
@@ -13,9 +14,9 @@ pub struct GuiApp {
 }
 
 impl GuiApp {
-    pub fn new(runtime: Handle, screen: Screen, ip: String, port: String) -> Self {
+    pub fn new(runtime: Handle, screen: Screen, ip: String, port: String, assets: Assets) -> Self {
         Self {
-            app: App::new(ip, port),
+            app: App::new(ip, port, assets),
             screen,
             runtime,
             grid: None,

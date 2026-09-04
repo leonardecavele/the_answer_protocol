@@ -1,3 +1,4 @@
+use crate::data::assets::Assets;
 use crate::data::manifest::Manifest;
 use crate::states::game::GameState;
 use crate::states::network::NetworkState;
@@ -12,12 +13,12 @@ pub struct AppState {
 }
 
 impl AppState {
-    pub fn new(ip: String, port: String, manifest: Arc<Manifest>) -> Self {
+    pub fn new(ip: String, port: String, manifest: Arc<Manifest>, assets: Assets) -> Self {
         Self {
             should_quit: false,
             ui: UiState::new(),
             network: NetworkState::new(ip, port),
-            game: GameState::new(manifest),
+            game: GameState::new(manifest, assets),
         }
     }
 }

@@ -1,3 +1,4 @@
+use crate::data::assets::Assets;
 use crate::data::manifest::Manifest;
 use crate::errors::ApplicationError;
 use crate::events::{ApplicationEvent, EventBroker};
@@ -25,21 +26,21 @@ pub struct App {
 }
 
 impl App {
-    pub fn new(ip: String, port: String) -> Self {
-        Self::with_broker(ip, port, EventBroker::new())
+    pub fn new(ip: String, port: String, assets: Assets) -> Self {
+        Self::with_broker(ip, port, assets, EventBroker::new())
     }
 
-    pub fn with_terminal_input(ip: String, port: String) -> Self {
-        Self::with_broker(ip, port, EventBroker::with_terminal_input())
+    pub fn with_terminal_input(ip: String, port: String, assets: Assets) -> Self {
+        Self::with_broker(ip, port, assets, EventBroker::with_terminal_input())
     }
 
-    fn with_broker(ip: String, port: String, event_broker: EventBroker) -> Self {
-        let (manifest, err) = match Manifest::load() {
+    fn with_broker(ip: String, port: String, assets: Assets, event_broker: EventBroker) -> Self {
+        let (manifest, err) = match Manifest::load(&assets) {
             Ok(manifest) => (manifest, None),
             Err(error) => (Manifest::default(), Some(error)),
         };
 
-        let mut state = AppState::new(ip.clone(), port.clone(), Arc::new(manifest));
+        let mut state = AppState::new(ip.clone(), port.clone(), Arc::new(manifest), assets);
         if let Some(error) = err {
             state
                 .ui

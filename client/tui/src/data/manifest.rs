@@ -1,8 +1,8 @@
+use crate::data::assets::Assets;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::fs;
 
-pub const ASSETS_PATH_MANIFEST: &str = "../assets/manifest.json";
+pub const MANIFEST_FILE: &str = "manifest.json";
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
@@ -49,12 +49,13 @@ pub struct Manifest {
 }
 
 impl Manifest {
-    pub fn load() -> Result<Self, String> {
-        let content = fs::read_to_string(ASSETS_PATH_MANIFEST)
-            .map_err(|e| format!("Failed to read {}: {}", ASSETS_PATH_MANIFEST, e))?;
+    pub fn load(assets: &Assets) -> Result<Self, String> {
+        let content = assets
+            .read(MANIFEST_FILE)
+            .ok_or_else(|| format!("Failed to read {}", MANIFEST_FILE))?;
 
-        let manifest = serde_json::from_str(&content)
-            .map_err(|e| format!("Invalid JSON in manifest.json: {}", e))?;
+        let manifest = serde_json::from_slice(&content)
+            .map_err(|e| format!("Invalid JSON in {}: {}", MANIFEST_FILE, e))?;
 
         Ok(manifest)
     }

@@ -75,6 +75,7 @@ impl App {
                     self.state.network.server_ip.clone(),
                     self.state.network.server_port.clone(),
                     self.state.game.manifest.clone(),
+                    self.state.game.assets.clone(),
                 );
 
                 self.state

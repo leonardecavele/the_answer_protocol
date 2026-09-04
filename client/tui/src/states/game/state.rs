@@ -1,4 +1,5 @@
 use crate::collections::BoundedLog;
+use crate::data::assets::Assets;
 use crate::data::manifest::Manifest;
 use crate::states::game::interaction::{DialogueState, GameFocus, Overlay, OverlayKind, Overlays};
 use crate::states::game::session::{
@@ -18,6 +19,7 @@ pub struct GameState {
     pub overlays: Overlays,
     pub fight: FightState,
     pub manifest: Arc<Manifest>,
+    pub assets: Assets,
 
     pub chat_log: BoundedLog<ChatMessage>,
     pub action_log: BoundedLog<String>,
@@ -28,7 +30,7 @@ pub struct GameState {
 }
 
 impl GameState {
-    pub fn new(manifest: Arc<Manifest>) -> Self {
+    pub fn new(manifest: Arc<Manifest>, assets: Assets) -> Self {
         Self {
             player: PlayerState::new(),
             group: GroupState::new(),
@@ -37,6 +39,7 @@ impl GameState {
             overlays: Overlays::new(),
             fight: FightState::default(),
             manifest,
+            assets,
             chat_log: BoundedLog::with_max_capacity(200),
             action_log: BoundedLog::with_max_capacity(50),
             focus: GameFocus::default(),

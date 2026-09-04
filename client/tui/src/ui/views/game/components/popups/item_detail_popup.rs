@@ -79,8 +79,13 @@ impl Component for ItemDetailPopup {
 
         match item.sprite.frame_at(Duration::ZERO) {
             Some(image_path) => {
-                self.image_renderer
-                    .draw_fitted(frame, image_area, image_path, Resize::Fit(None));
+                self.image_renderer.draw_fitted(
+                    frame,
+                    image_area,
+                    &state.game.assets,
+                    image_path,
+                    Resize::Fit(None),
+                );
             }
             None => {
                 let mut centered_fallback_area = image_area;

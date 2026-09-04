@@ -7,6 +7,7 @@ use clap::Parser;
 use eframe::egui;
 use tokio::runtime::Handle;
 use tui::cli::Cli;
+use tui::data::assets::Assets;
 use tui::logging;
 use tui::ui::{MIN_COLUMNS, MIN_ROWS};
 
@@ -32,7 +33,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         ..Default::default()
     };
 
-    let gui = GuiApp::new(Handle::current(), screen, cli.ip, cli.port);
+    let gui = GuiApp::new(
+        Handle::current(),
+        screen,
+        cli.ip,
+        cli.port,
+        Assets::new(cli.assets),
+    );
 
     eframe::run_native(WINDOW_TITLE, options, Box::new(|_cc| Ok(Box::new(gui))))?;
 

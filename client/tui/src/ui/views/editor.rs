@@ -99,8 +99,13 @@ impl EditorView {
 
         match sprite.frame_at(self.started_at.elapsed()) {
             Some(image_path) => {
-                self.image_renderer
-                    .draw_fitted(frame, area, image_path, Resize::Scale(None));
+                self.image_renderer.draw_fitted(
+                    frame,
+                    area,
+                    &state.game.assets,
+                    image_path,
+                    Resize::Scale(None),
+                );
             }
             None => frame.render_widget(
                 Paragraph::new(NO_IMAGE)
