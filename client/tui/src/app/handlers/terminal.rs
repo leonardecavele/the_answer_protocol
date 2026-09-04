@@ -1,4 +1,4 @@
-use crate::app::App;
+use crate::app::runtime::App;
 use crate::ui::components::Lifecycle;
 use crossterm::event::{Event as CrosstermEvent, KeyCode, KeyModifiers};
 
@@ -17,7 +17,7 @@ impl App {
             }
         }
 
-        self.view_manager.handle_terminal_event(
+        let _ = self.view_manager.handle_terminal_event(
             &mut self.state,
             &event,
             &self.event_broker.sender(),

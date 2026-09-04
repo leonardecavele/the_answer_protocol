@@ -1,17 +1,16 @@
-use crate::collections::{Step, move_index};
+use crate::collections::Step;
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
-use crate::states::game::{Npc, OverlayKind};
-use crate::ui::components::Component;
-use crate::ui::components::Lifecycle;
-use crate::ui::theme::popup_block;
-use crate::ui::utils::centered_rect;
-use crossterm::event::{Event as CrosstermEvent, KeyCode};
+use crate::states::game::NpcActionsState;
+use crate::ui::components::{Component, EventFlow, Lifecycle, is_mouse_in_rect};
+use crate::ui::layout::centered_rect;
+use crate::ui::theme::{popup_block, selection_style};
+use crossterm::event::{Event as CrosstermEvent, KeyCode, MouseButton, MouseEventKind};
 use mpsc::Sender;
 use ratatui::{
     Frame,
     layout::Rect,
-    style::{Color, Modifier, Style},
+    style::Color,
     text::Span,
     widgets::{Clear, List, ListItem},
 };
@@ -19,55 +18,84 @@ use tokio::sync::mpsc;
 
 const POPUP_WIDTH: u16 = 30;
 
+#[derive(Default)]
 pub struct NpcActionsPopup {
-    pub selected_action_index: usize,
+    area: Option<Rect>,
+    list_area: Option<Rect>,
 }
 
 impl NpcActionsPopup {
     pub fn new() -> Self {
-        Self {
-            selected_action_index: 0,
-        }
+        Self::default()
     }
 
-    fn actions_of(npc: &Npc) -> Vec<String> {
-        let mut actions: Vec<String> = npc.actions.iter().map(|a| a.to_uppercase()).collect();
-        actions.push("CANCEL".to_string());
-        actions
+    pub fn hit(&self, column: u16, row: u16) -> Option<usize> {
+        let area = self.list_area?;
+
+        if !is_mouse_in_rect(column, row, area) {
+            return None;
+        }
+
+        Some(row.saturating_sub(area.y) as usize)
+    }
+
+    fn activate(
+        &self,
+        state: &mut AppState,
+        npc_id: &str,
+        event_sender: &Sender<ApplicationEvent>,
+    ) -> EventFlow {
+        let command = state
+            .game
+            .overlays
+            .get::<NpcActionsState>()
+            .and_then(|overlay| overlay.selected_command());
+
+        if let Some(command) = command {
+            let raw_command = format!("{} {}", command, npc_id);
+            let _ = event_sender.try_send(ApplicationEvent::SendRawCommand(raw_command));
+        }
+
+        state.game.close_top_overlay();
+        EventFlow::Consumed
     }
 }
 
 impl Component for NpcActionsPopup {
-    fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
-        let npc_id = match state.game.overlays.target_of(OverlayKind::NpcActions) {
-            Some(id) => id,
-            None => return,
-        };
+    fn drawn_area(&self) -> Option<Rect> {
+        self.area
+    }
 
-        let Some(npc) = state.game.find_npc(npc_id) else {
+    fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
+        let Some(overlay) = state.game.overlays.get::<NpcActionsState>() else {
             return;
         };
 
-        let actions = Self::actions_of(npc);
-        let title = format!(" {} ", npc.name);
+        let Some(npc) = state.game.find_npc(&overlay.npc_id) else {
+            return;
+        };
 
-        let popup_area = centered_rect(area, POPUP_WIDTH, actions.len() as u16 + 2);
+        let title = format!(" {} ", npc.name);
+        let popup_area = centered_rect(area, POPUP_WIDTH, overlay.actions.len() as u16 + 2);
 
         frame.render_widget(Clear, popup_area);
 
-        let items: Vec<ListItem> = actions
+        let items: Vec<ListItem> = overlay
+            .actions
             .iter()
             .enumerate()
-            .map(|(i, action)| {
-                let mut style = Style::default().fg(Color::Reset);
-                if i == self.selected_action_index {
-                    style = style.add_modifier(Modifier::REVERSED);
-                }
-                ListItem::new(Span::styled(format!(" {}", action), style))
+            .map(|(index, action)| {
+                let style = selection_style(Color::Reset, overlay.actions.is_selected(index));
+
+                ListItem::new(Span::styled(format!(" {}", action.label()), style))
             })
             .collect();
 
-        let list = List::new(items).block(popup_block(title));
+        let block = popup_block(title);
+        self.area = Some(popup_area);
+        self.list_area = Some(block.inner(popup_area));
+
+        let list = List::new(items).block(block);
 
         frame.render_widget(list, popup_area);
     }
@@ -79,53 +107,54 @@ impl Lifecycle for NpcActionsPopup {
         state: &mut AppState,
         event: &CrosstermEvent,
         event_sender: &Sender<ApplicationEvent>,
-    ) -> bool {
-        let npc_id = match state.game.overlays.target_of(OverlayKind::NpcActions) {
-            Some(id) => id.to_string(),
-            None => return false,
+    ) -> EventFlow {
+        let Some(overlay) = state.game.overlays.get::<NpcActionsState>() else {
+            return EventFlow::Ignored;
         };
 
-        if let CrosstermEvent::Key(key) = event {
-            let Some(actions) = state.game.find_npc(&npc_id).map(Self::actions_of) else {
-                state.game.overlays.close(OverlayKind::NpcActions);
-                self.selected_action_index = 0;
-                return true;
-            };
+        let npc_id = overlay.npc_id.clone();
 
-            let count = actions.len();
+        if state.game.find_npc(&npc_id).is_none() {
+            state.game.overlays.close::<NpcActionsState>();
+            return EventFlow::Consumed;
+        }
 
-            match key.code {
-                KeyCode::Up => {
-                    self.selected_action_index =
-                        move_index(self.selected_action_index, count, Step::Previous);
-                    return true;
-                }
-                KeyCode::Down => {
-                    self.selected_action_index =
-                        move_index(self.selected_action_index, count, Step::Next);
-                    return true;
+        match event {
+            CrosstermEvent::Key(key) => match key.code {
+                KeyCode::Up | KeyCode::Down => {
+                    let step = if key.code == KeyCode::Up {
+                        Step::Previous
+                    } else {
+                        Step::Next
+                    };
+
+                    if let Some(overlay) = state.game.overlays.get_mut::<NpcActionsState>() {
+                        overlay.actions.move_selection(step);
+                    }
+
+                    EventFlow::Consumed
                 }
                 KeyCode::Esc => {
-                    state.game.overlays.close_top();
-                    self.selected_action_index = 0;
-                    return true;
+                    state.game.close_top_overlay();
+                    EventFlow::Consumed
                 }
-                KeyCode::Enter => {
-                    if let Some(action) = actions.get(self.selected_action_index) {
-                        if action != "CANCEL" {
-                            let cmd = format!("{} {}", action.to_uppercase(), npc_id);
-                            let _ = event_sender.try_send(ApplicationEvent::SendRawCommand(cmd));
-                        }
-                    }
-                    state.game.overlays.close_top();
-                    self.selected_action_index = 0;
-                    return true;
+                KeyCode::Enter => self.activate(state, &npc_id, event_sender),
+                _ => EventFlow::Ignored,
+            },
+            CrosstermEvent::Mouse(mouse)
+                if mouse.kind == MouseEventKind::Down(MouseButton::Left) =>
+            {
+                let Some(index) = self.hit(mouse.column, mouse.row) else {
+                    return EventFlow::Ignored;
+                };
+
+                if let Some(overlay) = state.game.overlays.get_mut::<NpcActionsState>() {
+                    overlay.actions.select_index(index);
                 }
-                _ => {
-                    return true;
-                }
+
+                self.activate(state, &npc_id, event_sender)
             }
+            _ => EventFlow::Ignored,
         }
-        true
     }
 }

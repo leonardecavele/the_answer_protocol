@@ -1,9 +1,9 @@
-use crate::app::App;
+use crate::app::runtime::App;
 use crate::events::NetworkEvent;
 use crate::network::NetworkManager;
 use crate::network::manager::NOTIF_ID_CONNECTION_ATTEMPT;
 use crate::states::app::AppState;
-use crate::states::ui::Notification;
+use crate::states::notification::Notification;
 use crate::ui::views::game::GameView;
 use crate::ui::views::login::LoginView;
 
@@ -31,8 +31,6 @@ impl App {
                 server_port,
                 player_name,
             } => {
-                self.load_state_from_server();
-
                 self.state
                     .ui
                     .notifications
@@ -45,8 +43,9 @@ impl App {
                 self.state.network.server_ip = server_ip;
                 self.state.network.server_port = server_port;
                 self.state.network.is_connected = true;
-                self.state.game.player.name = Some(player_name);
+                self.state.game.player.set_name(player_name);
 
+                self.load_state_from_server();
                 self.view_manager.set_view(Box::new(GameView::new()));
             }
             NetworkEvent::ConnectionFailed { error_message } => {

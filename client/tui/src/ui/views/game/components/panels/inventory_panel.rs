@@ -1,43 +1,81 @@
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
-use crate::states::game::{GameFocus, Overlay};
-use crate::ui::components::Component;
-use crate::ui::components::Lifecycle;
-use crate::ui::theme::panel_block;
+use crate::states::game::{GameFocus, ItemActionsState, ItemLocation, Overlay};
+use crate::ui::components::{CommandButton, Component, EventFlow, Lifecycle, is_mouse_in_rect};
+use crate::ui::theme::{panel_block, selection_style};
 use ratatui::layout::Alignment;
 use ratatui::widgets::Paragraph;
-use ratatui::{
-    Frame,
-    layout::Rect,
-    style::{Color, Modifier, Style},
-};
+use ratatui::{Frame, layout::Rect, style::Color};
 use tokio::sync::mpsc::Sender;
 
-pub const INVENTORY_ITEM_WIDTH: u16 = 20;
-pub const INVENTORY_ITEM_HEIGHT: u16 = 4;
+const INVENTORY_ITEM_WIDTH: u16 = 20;
+const INVENTORY_ITEM_HEIGHT: u16 = 4;
+
+pub enum InventoryPanelHit {
+    Item(Option<usize>),
+    None,
+}
 
 pub struct InventoryPanel {
-    pub inventory_cols: usize,
-    pub inventory_area: Option<Rect>,
+    cols: usize,
+    area: Option<Rect>,
+    refresh_button: CommandButton,
+}
+
+impl Default for InventoryPanel {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl InventoryPanel {
     pub fn new() -> Self {
         Self {
-            inventory_cols: 1,
-            inventory_area: None,
+            cols: 1,
+            area: None,
+            refresh_button: CommandButton::new("INVENTORY", "INVENTORY"),
         }
+    }
+
+    pub fn hit(&self, column: u16, row: u16) -> InventoryPanelHit {
+        if let Some(area) = self.area
+            && is_mouse_in_rect(column, row, area)
+        {
+            let rel_x = column.saturating_sub(area.x);
+            let rel_y = row.saturating_sub(area.y);
+            if rel_x > 0 && rel_y > 0 {
+                let col = (rel_x - 1) as usize / INVENTORY_ITEM_WIDTH as usize;
+                let row = (rel_y - 1) as usize / INVENTORY_ITEM_HEIGHT as usize;
+                let cols = self.cols.max(1);
+                let index = row * cols + col;
+                return InventoryPanelHit::Item(Some(index));
+            }
+
+            return InventoryPanelHit::Item(None);
+        }
+
+        InventoryPanelHit::None
     }
 }
 
 impl Component for InventoryPanel {
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
-        self.inventory_area = Some(area);
+        self.area = Some(area);
 
-        let inv_block = panel_block(" Inventory ", state.game.focus == GameFocus::InventoryGrid);
+        let focused = state.game.focus() == GameFocus::InventoryGrid;
+        let inv_block = panel_block(" Inventory ", focused);
 
         let inv_inner = inv_block.inner(area);
         frame.render_widget(inv_block, area);
+
+        let button_width = self.refresh_button.width();
+
+        if area.width > button_width + 2 {
+            let button_area = Rect::new(area.right() - button_width - 1, area.y, button_width, 1);
+            self.refresh_button.draw(frame, button_area);
+        } else {
+            self.refresh_button.hide();
+        }
 
         if state.game.player.inventory.is_empty() {
             let p = Paragraph::new(" Your inventory is empty. ").alignment(Alignment::Center);
@@ -45,8 +83,8 @@ impl Component for InventoryPanel {
             return;
         }
 
-        self.inventory_cols = (inv_inner.width / INVENTORY_ITEM_WIDTH) as usize;
-        let cols = self.inventory_cols.max(1);
+        self.cols = (inv_inner.width / INVENTORY_ITEM_WIDTH) as usize;
+        let cols = self.cols.max(1);
 
         for (idx, item) in state.game.player.inventory.iter().enumerate() {
             let col = idx % cols;
@@ -67,12 +105,10 @@ impl Component for InventoryPanel {
             };
 
             let text = format!("{}\n{}", item.name, item.id);
-            let mut p_style = Style::default();
-            if state.game.focus == GameFocus::InventoryGrid
-                && state.game.player.inventory.selected_index() == idx
-            {
-                p_style = p_style.add_modifier(Modifier::REVERSED).fg(Color::Yellow);
-            }
+            let style = selection_style(
+                Color::Reset,
+                focused && state.game.player.inventory.is_selected(idx),
+            );
 
             let mut text_area = cell_area;
             if text_area.height >= 4 {
@@ -82,7 +118,7 @@ impl Component for InventoryPanel {
 
             let paragraph = Paragraph::new(text)
                 .alignment(Alignment::Center)
-                .style(p_style);
+                .style(style);
             frame.render_widget(paragraph, text_area);
         }
     }
@@ -93,49 +129,69 @@ impl Lifecycle for InventoryPanel {
         &mut self,
         state: &mut AppState,
         event: &crossterm::event::Event,
-        _event_sender: &Sender<ApplicationEvent>,
-    ) -> bool {
-        if state.game.focus == GameFocus::InventoryGrid {
-            if let crossterm::event::Event::Key(key) = event {
-                let inv_count = state.game.player.inventory.len();
-                if inv_count > 0 {
-                    let cols = self.inventory_cols.max(1);
-                    let current = state.game.player.inventory.selected_index();
+        event_sender: &Sender<ApplicationEvent>,
+    ) -> EventFlow {
+        if let crossterm::event::Event::Mouse(mouse) = event
+            && mouse.kind
+                == crossterm::event::MouseEventKind::Down(crossterm::event::MouseButton::Left)
+            && let Some(command) = self.refresh_button.hit(mouse.column, mouse.row)
+        {
+            let _ = event_sender.try_send(ApplicationEvent::SendRawCommand(command.to_string()));
+            return EventFlow::Consumed;
+        }
 
-                    match key.code {
-                        crossterm::event::KeyCode::Up => {
-                            if current >= cols {
-                                state.game.player.inventory.select_index(current - cols);
-                            }
-                            return true;
+        if state.game.focus() == GameFocus::InventoryGrid
+            && let crossterm::event::Event::Key(key) = event
+        {
+            let inv_count = state.game.player.inventory.len();
+            if inv_count > 0 {
+                let cols = self.cols.max(1);
+
+                match key.code {
+                    crossterm::event::KeyCode::Up
+                    | crossterm::event::KeyCode::Down
+                    | crossterm::event::KeyCode::Left
+                    | crossterm::event::KeyCode::Right => {
+                        let inventory = &mut state.game.player.inventory;
+
+                        match inventory.selected_index() {
+                            None => inventory.select_index(0),
+                            Some(current) => match key.code {
+                                crossterm::event::KeyCode::Up if current >= cols => {
+                                    inventory.select_index(current - cols)
+                                }
+                                crossterm::event::KeyCode::Down => {
+                                    inventory.select_index(current + cols)
+                                }
+                                crossterm::event::KeyCode::Left if current > 0 => {
+                                    inventory.select_index(current - 1)
+                                }
+                                crossterm::event::KeyCode::Right => {
+                                    inventory.select_index(current + 1)
+                                }
+                                _ => {}
+                            },
                         }
-                        crossterm::event::KeyCode::Down => {
-                            state.game.player.inventory.select_index(current + cols);
-                            return true;
-                        }
-                        crossterm::event::KeyCode::Left => {
-                            if current > 0 {
-                                state.game.player.inventory.select_index(current - 1);
-                            }
-                            return true;
-                        }
-                        crossterm::event::KeyCode::Right => {
-                            state.game.player.inventory.select_index(current + 1);
-                            return true;
-                        }
-                        crossterm::event::KeyCode::Enter => {
-                            if let Some(item) = state.game.player.inventory.selected() {
-                                state.game.overlays.open(Overlay::ItemActions {
-                                    item_id: item.id.clone(),
-                                });
-                                return true;
-                            }
-                        }
-                        _ => {}
+
+                        return EventFlow::Consumed;
                     }
+                    crossterm::event::KeyCode::Enter => {
+                        if let Some(item) = state.game.player.inventory.selected() {
+                            let item_id = item.id.clone();
+                            state
+                                .game
+                                .overlays
+                                .open(Overlay::ItemActions(ItemActionsState::new(
+                                    item_id,
+                                    ItemLocation::Inventory,
+                                )));
+                            return EventFlow::Consumed;
+                        }
+                    }
+                    _ => {}
                 }
             }
         }
-        false
+        EventFlow::Ignored
     }
 }

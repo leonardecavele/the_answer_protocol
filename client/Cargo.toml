@@ -2,5 +2,9 @@
 members = [
     "api-client",
     "tui",
+    "gui",
 ]
 resolver = "3"
+
+[profile.release]
+overflow-checks = true

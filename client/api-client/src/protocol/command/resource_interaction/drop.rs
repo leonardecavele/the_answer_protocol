@@ -20,14 +20,16 @@ impl Command for DropCommand {
     }
 
     fn parse_response(&self, response: ServerResponse) -> Result<Self::ResponseData, CommandError> {
-        if response.arguments.len() != 1 {
+        if response.arguments.is_empty() {
             return Err(CommandError {
                 code: None,
-                message: "invalid arguments".to_string(),
+                message: "missing item id".to_string(),
             });
         }
 
-        let item_identifier = match response.arguments[0].strip_prefix("dropped=") {
+        let argument = response.arguments.join(" ");
+
+        let item_identifier = match argument.strip_prefix("dropped=") {
             Some(id) => id.to_string(),
             None => {
                 return Err(CommandError {

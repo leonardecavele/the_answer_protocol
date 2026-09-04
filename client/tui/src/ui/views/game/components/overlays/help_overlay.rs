@@ -1,8 +1,7 @@
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
-use crate::states::game::OverlayKind;
-use crate::ui::components::Lifecycle;
-use crate::ui::components::scrollable::ScrollableComponent;
+use crate::states::game::HelpState;
+use crate::ui::components::{EventFlow, Lifecycle, ScrollableComponent};
 use crate::ui::theme::overlay_block;
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
 use mpsc::Sender;
@@ -14,10 +13,16 @@ use ratatui::{
 };
 use tokio::sync::mpsc;
 
-const HELP_WIDTH: u16 = 60;
+const HELP_WIDTH: u16 = 64;
 const HELP_HEIGHT: u16 = 20;
 
 pub struct HelpOverlay;
+
+impl Default for HelpOverlay {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl HelpOverlay {
     pub fn new() -> Self {
@@ -27,7 +32,7 @@ impl HelpOverlay {
 
 impl ScrollableComponent for HelpOverlay {
     fn get_area(&self, state: &AppState, max_area: Rect) -> Rect {
-        if !state.game.overlays.is_open(OverlayKind::Help) {
+        if !state.game.overlays.is_open::<HelpState>() {
             return Rect::default();
         }
 
@@ -113,25 +118,28 @@ impl ScrollableComponent for HelpOverlay {
                     .fg(Color::Yellow)
                     .add_modifier(Modifier::BOLD),
             )]),
-            Line::from("  connect : connect to server"),
+            Line::from("  connect <name> : connect to server"),
             Line::from("  quit : disconnect and close the game"),
             Line::from("  look : look around the room"),
             Line::from("  move <NORTH|SOUTH|EAST|WEST> : move to direction"),
             Line::from("  who : see online players"),
-            Line::from("  say <msg> : send a global message"),
-            Line::from("  msg <name> <msg> : send a private message"),
+            Line::from("  chat global <msg> (say) : send a global message"),
+            Line::from("  chat room <msg> (cr) : send a message to your room"),
+            Line::from("  chat group <msg> (cg) : send a message to your group"),
+            Line::from("  chat private <name> <msg> (msg) : send a private message"),
             Line::from("  take <item> : take an item"),
             Line::from("  drop <item> : drop an item"),
-            Line::from("  inv : view inventory"),
+            Line::from("  inventory (inv) : view inventory"),
             Line::from("  status : view status"),
             Line::from("  talk <npc> : talk to npc"),
             Line::from("  attack <npc> : attack npc"),
-            Line::from("  quest : view active quest details"),
+            Line::from("  fight create <npc> (fc) : duel an npc in the code editor"),
+            Line::from("  quest <npc> : ask an npc for a quest"),
             Line::from("  quests : list all active quests"),
-            Line::from("  group_create : create a new group"),
-            Line::from("  group_join <name> : join a player's group"),
-            Line::from("  group_invite <name> : invite a player to your group"),
-            Line::from("  group_leave : leave your current group"),
+            Line::from("  group create (gc) : create a new group"),
+            Line::from("  group join <name> (gj) : join a player's group"),
+            Line::from("  group invite <name> (gi) : invite a player to your group"),
+            Line::from("  group leave (gl) : leave your current group"),
             Line::from(""),
             Line::from(vec![Span::styled(
                 "Hud & status",
@@ -152,25 +160,24 @@ impl Lifecycle for HelpOverlay {
         state: &mut AppState,
         event: &CrosstermEvent,
         _sender: &Sender<ApplicationEvent>,
-    ) -> bool {
+    ) -> EventFlow {
         if let CrosstermEvent::Key(key) = event {
             match key.code {
                 KeyCode::Esc | KeyCode::Char('q') => {
-                    state.game.overlays.close(OverlayKind::Help);
-                    return true;
+                    state.game.overlays.close::<HelpState>();
+                    return EventFlow::Consumed;
                 }
-                KeyCode::Char('h') => {
+                KeyCode::Char('h')
                     if key
                         .modifiers
-                        .contains(crossterm::event::KeyModifiers::CONTROL)
-                    {
-                        state.game.overlays.close(OverlayKind::Help);
-                        return true;
-                    }
+                        .contains(crossterm::event::KeyModifiers::CONTROL) =>
+                {
+                    state.game.overlays.close::<HelpState>();
+                    return EventFlow::Consumed;
                 }
                 _ => {}
             }
         }
-        false
+        EventFlow::Ignored
     }
 }

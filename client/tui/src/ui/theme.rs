@@ -1,3 +1,4 @@
+use api_client::commands::QuestStatus;
 use ratatui::{
     layout::Alignment,
     style::{Color, Modifier, Style},
@@ -10,6 +11,23 @@ pub const FOCUS_BORDER_COLOR: Color = Color::Yellow;
 
 pub fn dim_style() -> Style {
     Style::default().add_modifier(Modifier::DIM)
+}
+
+pub fn selection_style(color: Color, selected: bool) -> Style {
+    let style = Style::default().fg(color);
+
+    if selected {
+        style.add_modifier(Modifier::REVERSED)
+    } else {
+        style
+    }
+}
+
+pub fn quest_status(status: &QuestStatus) -> (&'static str, Color) {
+    match status {
+        QuestStatus::InProgress => ("in progress", Color::Yellow),
+        QuestStatus::Completed => ("completed", Color::Green),
+    }
 }
 
 pub fn default_block<'a>() -> Block<'a> {
@@ -49,4 +67,13 @@ pub fn close_hint<'a>() -> Paragraph<'a> {
 
 pub fn help_hint<'a>() -> Line<'a> {
     Line::from(" Press Ctrl + H to open help ").alignment(Alignment::Center)
+}
+
+pub fn too_small_hint<'a>(columns: u16, rows: u16) -> Paragraph<'a> {
+    Paragraph::new(format!(
+        "This window is too small.\nEnlarge it to at least {} x {} characters.",
+        columns, rows
+    ))
+    .alignment(Alignment::Center)
+    .style(Style::default().fg(Color::Yellow))
 }

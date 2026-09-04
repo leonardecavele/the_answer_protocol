@@ -1,21 +1,21 @@
-pub(crate) mod api;
 pub(crate) mod bridge;
+pub(crate) mod config;
 pub(crate) mod connect;
 pub(crate) mod event;
 
-use crate::client::event::ServerEvent;
-use crate::error::{CommandError, InternalError, TapError};
-use crate::protocol::command::Command;
-use crate::protocol::command::enums::{ApiRequest, ApiResponse};
+use crate::commands::{ConnectCommand, ConnectResponse};
+use crate::events::ServerEvent;
 use crate::protocol::request::Request;
-use crate::protocol::response::Opcode;
+use crate::{
+    ApiRequest, ApiResponse, Command, CommandError, Frame, InternalError, Opcode, TapError,
+};
 use std::time::Duration;
 use tokio::sync::mpsc::Sender;
 use tokio::sync::{broadcast, watch};
 use tokio::task::JoinHandle;
 use tokio::time::timeout;
 use tokio_util::sync::CancellationToken;
-use tracing::{info, warn};
+use tracing::{debug, info, warn};
 
 #[derive(Debug, Clone)]
 pub enum ConnectionState {
@@ -27,6 +27,7 @@ pub enum ConnectionState {
 struct BridgeHandle {
     task: JoinHandle<()>,
     request_sender: Sender<Request>,
+    frame_sender: broadcast::Sender<Frame>,
     event_sender: broadcast::Sender<ServerEvent>,
     cancellation: CancellationToken,
 }
@@ -42,30 +43,6 @@ pub struct Client {
     state: watch::Receiver<ConnectionState>,
 }
 
-pub struct ClientConfig {
-    pub connect_timeout: Duration,
-    pub handshake_timeout: Duration,
-    pub request_timeout: Duration,
-    pub close_timeout: Duration,
-    pub max_frame_length: usize,
-    pub command_channel_capacity: usize,
-    pub event_channel_capacity: usize,
-}
-
-impl Default for ClientConfig {
-    fn default() -> Self {
-        ClientConfig {
-            connect_timeout: Duration::from_secs(5),
-            handshake_timeout: Duration::from_secs(2),
-            request_timeout: Duration::from_secs(10),
-            close_timeout: Duration::from_secs(2),
-            max_frame_length: 65536,
-            command_channel_capacity: 2048,
-            event_channel_capacity: 2048,
-        }
-    }
-}
-
 impl Client {
     pub fn state(&self) -> watch::Receiver<ConnectionState> {
         self.state.clone()
@@ -73,6 +50,10 @@ impl Client {
 
     pub fn subscribe(&self) -> broadcast::Receiver<ServerEvent> {
         self.bridge.event_sender.subscribe()
+    }
+
+    pub fn subscribe_frames(&self) -> broadcast::Receiver<Frame> {
+        self.bridge.frame_sender.subscribe()
     }
 
     async fn request<C: Command>(
@@ -114,6 +95,14 @@ impl Client {
         }
     }
 
+    pub async fn login(
+        &mut self,
+        player_name: String,
+    ) -> Result<Result<ConnectResponse, CommandError>, TapError> {
+        debug!("sending connect request for player: {}", player_name);
+        self.request(ConnectCommand { player_name }).await
+    }
+
     pub async fn execute_request(&self, request: ApiRequest) -> Result<ApiResponse, TapError> {
         match request {
             ApiRequest::Connect(cmd) => Ok(ApiResponse::Connect(self.request(cmd).await?)),
@@ -124,6 +113,8 @@ impl Client {
             ApiRequest::FightCreate(cmd) => Ok(ApiResponse::FightCreate(self.request(cmd).await?)),
             ApiRequest::FightAttack(cmd) => Ok(ApiResponse::FightAttack(self.request(cmd).await?)),
             ApiRequest::GlobalChat(cmd) => Ok(ApiResponse::GlobalChat(self.request(cmd).await?)),
+            ApiRequest::RoomChat(cmd) => Ok(ApiResponse::RoomChat(self.request(cmd).await?)),
+            ApiRequest::GroupChat(cmd) => Ok(ApiResponse::GroupChat(self.request(cmd).await?)),
             ApiRequest::PrivateChat(cmd) => Ok(ApiResponse::PrivateChat(self.request(cmd).await?)),
             ApiRequest::Take(cmd) => Ok(ApiResponse::Take(self.request(cmd).await?)),
             ApiRequest::Drop(cmd) => Ok(ApiResponse::Drop(self.request(cmd).await?)),
@@ -164,4 +155,10 @@ impl Drop for Client {
         self.bridge.task.abort();
         info!("Api client dropped :: background tasks properly stopped.");
     }
+}
+
+pub struct Connection {
+    pub client: Client,
+    pub events: broadcast::Receiver<ServerEvent>,
+    pub frames: broadcast::Receiver<Frame>,
 }

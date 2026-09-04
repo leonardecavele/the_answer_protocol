@@ -1,5 +1,7 @@
 use crate::data::manifest::Manifest;
 
+pub const DIRECTION_COUNT: usize = 4;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum Direction {
     #[default]
@@ -10,7 +12,7 @@ pub enum Direction {
 }
 
 impl Direction {
-    pub const CLOCKWISE: [Direction; 4] = [
+    pub const CLOCKWISE: [Direction; DIRECTION_COUNT] = [
         Direction::North,
         Direction::East,
         Direction::South,
@@ -27,7 +29,7 @@ impl Direction {
     }
 
     pub fn from_quarter_turns(turns: usize) -> Direction {
-        Direction::CLOCKWISE[turns % 4]
+        Direction::CLOCKWISE[turns % DIRECTION_COUNT]
     }
 
     pub fn key(self) -> &'static str {
@@ -37,6 +39,12 @@ impl Direction {
             Direction::South => "SOUTH",
             Direction::West => "WEST",
         }
+    }
+
+    pub fn from_key(key: &str) -> Option<Direction> {
+        Direction::CLOCKWISE
+            .into_iter()
+            .find(|direction| direction.key().eq_ignore_ascii_case(key))
     }
 
     fn from_code(code: char) -> Option<Direction> {

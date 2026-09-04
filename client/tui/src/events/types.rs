@@ -1,6 +1,6 @@
-use crate::network::envelopes::{RequestEnvelope, ResponseEnvelope};
-use api_client::ApiRequest;
+use crate::network::envelopes::ResponseEnvelope;
 use api_client::events::ServerEvent;
+use api_client::{ApiRequest, Frame};
 use crossterm::event::Event as CrosstermEvent;
 
 /// The main event enum that encapsulates all possible events in the application.
@@ -12,13 +12,15 @@ pub enum ApplicationEvent {
     SendRequest(ApiRequest),
     SendRawCommand(String),
     Api(ApiEvent),
+    FightTimedOut,
 }
 
 #[derive(Debug, Clone)]
 pub enum ApiEvent {
-    LogApiRequest(RequestEnvelope),
     ApiResponse(ResponseEnvelope),
     Server(ServerEvent),
+    Frame(Frame),
+    Lagged { stream: &'static str, count: usize },
 }
 
 /// Events strictly related to the network layer status and data.

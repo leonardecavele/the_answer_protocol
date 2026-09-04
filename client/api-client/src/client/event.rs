@@ -55,6 +55,7 @@ pub enum RoomEvent {
 #[derive(Debug, Clone)]
 pub enum GroupEvent {
     Invite(String),
+    InviteRemoved(String),
     Join(String),
     Leave(String),
     Chat(ChatMessage),
@@ -214,6 +215,9 @@ impl From<ServerResponse> for ServerEvent {
             }),
 
             // Group events
+            ["GROUP", "INVITE", leader, "REMOVED"] => {
+                ServerEvent::Group(GroupEvent::InviteRemoved(leader.to_string()))
+            }
             ["GROUP", "INVITE", leader] => {
                 ServerEvent::Group(GroupEvent::Invite(leader.to_string()))
             }

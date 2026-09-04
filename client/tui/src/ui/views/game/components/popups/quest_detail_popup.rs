@@ -1,9 +1,10 @@
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
-use crate::states::game::OverlayKind;
-use crate::ui::components::{Component, Lifecycle};
-use crate::ui::theme::{close_hint, popup_block};
-use crate::ui::utils::{centered_rect_percent, wrap_str_to_lines};
+use crate::states::game::QuestDetailState;
+use crate::ui::components::{Component, EventFlow, Lifecycle};
+use crate::ui::layout::centered_rect_percent;
+use crate::ui::text::wrap_str_to_lines;
+use crate::ui::theme::{close_hint, popup_block, quest_status};
 use api_client::commands::QuestData;
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
 use ratatui::widgets::Padding;
@@ -20,23 +21,23 @@ const POPUP_WIDTH_PERCENT: u16 = 60;
 const POPUP_HEIGHT_PERCENT: u16 = 60;
 const FOOTER_HEIGHT: u16 = 2;
 
-pub struct QuestDetailPopup;
+#[derive(Default)]
+pub struct QuestDetailPopup {
+    area: Option<Rect>,
+}
 
 impl QuestDetailPopup {
     pub fn new() -> Self {
-        Self
+        Self::default()
     }
 
     fn body(&self, quest: &QuestData, max_width: usize) -> Vec<Line<'static>> {
-        let is_done = quest.status.eq_ignore_ascii_case("completed");
-        let status_color = if is_done { Color::Green } else { Color::Yellow };
+        let (label, color) = quest_status(&quest.status);
 
         let mut lines = vec![
             Line::from(Span::styled(
-                format!("Status: {}", quest.status.to_lowercase()),
-                Style::default()
-                    .fg(status_color)
-                    .add_modifier(Modifier::BOLD),
+                format!("Status: {}", label),
+                Style::default().fg(color).add_modifier(Modifier::BOLD),
             )),
             Line::from(""),
         ];
@@ -67,9 +68,13 @@ impl QuestDetailPopup {
 }
 
 impl Component for QuestDetailPopup {
+    fn drawn_area(&self) -> Option<Rect> {
+        self.area
+    }
+
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
-        let quest_id = match state.game.overlays.target_of(OverlayKind::QuestDetail) {
-            Some(id) => id,
+        let quest_name = match state.game.overlays.get::<QuestDetailState>() {
+            Some(overlay) => overlay.name.as_str(),
             None => return,
         };
 
@@ -78,17 +83,18 @@ impl Component for QuestDetailPopup {
             .player
             .quests
             .iter()
-            .find(|q| q.quest_id == quest_id)
+            .find(|q| q.name == quest_name)
         {
             Some(quest) => quest,
             None => return,
         };
 
         let popup_area = centered_rect_percent(area, POPUP_WIDTH_PERCENT, POPUP_HEIGHT_PERCENT);
+        self.area = Some(popup_area);
 
         frame.render_widget(Clear, popup_area);
 
-        let block = popup_block(format!(" {} ", quest.quest_id)).padding(Padding::uniform(1));
+        let block = popup_block(format!(" {} ", quest.name)).padding(Padding::uniform(1));
 
         let inner_area = block.inner(popup_area);
         frame.render_widget(block, popup_area);
@@ -111,20 +117,21 @@ impl Lifecycle for QuestDetailPopup {
         state: &mut AppState,
         event: &CrosstermEvent,
         _event_sender: &Sender<ApplicationEvent>,
-    ) -> bool {
-        if !state.game.overlays.is_open(OverlayKind::QuestDetail) {
-            return false;
+    ) -> EventFlow {
+        if !state.game.overlays.is_open::<QuestDetailState>() {
+            return EventFlow::Ignored;
         }
 
-        if let CrosstermEvent::Key(key) = event {
-            match key.code {
-                KeyCode::Esc | KeyCode::Enter | KeyCode::Char('q') => {
-                    state.game.overlays.close_top();
-                }
-                _ => {}
+        let CrosstermEvent::Key(key) = event else {
+            return EventFlow::Ignored;
+        };
+
+        match key.code {
+            KeyCode::Esc | KeyCode::Enter | KeyCode::Char('q') => {
+                state.game.close_top_overlay();
+                EventFlow::Consumed
             }
+            _ => EventFlow::Ignored,
         }
-
-        true
     }
 }

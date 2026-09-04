@@ -1,7 +1,12 @@
-mod dialogue;
 mod focus;
+mod overlay;
 mod overlays;
 
-pub use dialogue::{DialogueState, END_OF_DIALOGUE_TAG};
 pub use focus::GameFocus;
-pub use overlays::{Overlay, OverlayKind, Overlays};
+pub use overlay::{
+    ChatState, DialogueState, END_OF_DIALOGUE_TAG, HelpState, InvitationAction,
+    InvitationActionsState, ItemActionsState, ItemDetailState, ItemLocation, NpcAction,
+    NpcActionsState, Overlay, OverlayKind, OverlayPayload, PlayerAction, PlayerActionsState,
+    QuestDetailState,
+};
+pub use overlays::Overlays;

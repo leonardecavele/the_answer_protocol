@@ -43,7 +43,7 @@ impl Command for MoveCommand {
 
     fn refine_error(&self, error: &mut CommandError) {
         error.with_message(match error.code {
-            Some(405) => Some(format!("No exit in direction: {}", self.direction)),
+            Some(301) => Some(format!("there is no exit to the {}", self.direction)),
             _ => None,
         })
     }

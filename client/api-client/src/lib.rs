@@ -2,16 +2,18 @@ mod client;
 mod error;
 mod protocol;
 
-pub use client::{Client, ClientConfig, ConnectionState, ServerInfo};
+pub use client::config::ClientConfig;
+pub use client::{Client, Connection, ConnectionState};
 pub use error::{CommandError, InternalError, NetworkError, ProtocolError, TapError};
 pub use protocol::command::{ApiRequest, ApiResponse, Command};
 
+pub use protocol::frame::{Frame, FrameDirection};
 pub use protocol::response::{Opcode, ServerResponse};
 
 pub mod events {
     pub use crate::client::event::{
-        ChatMessage, FightResultData, FightStartData, GameServerEvent, GroupEvent, KillData,
-        RoomEvent, ServerEvent, SpawnData,
+        ChatMessage, DeathData, FightResultData, FightStartData, GameServerEvent, GroupEvent,
+        KillData, RoomEvent, ServerEvent, SpawnData,
     };
 }
 
@@ -19,8 +21,14 @@ pub mod commands {
     pub use crate::protocol::command::communication::global_chat::{
         GlobalChatCommand, GlobalChatResponse,
     };
+    pub use crate::protocol::command::communication::group_chat::{
+        GroupChatCommand, GroupChatResponse,
+    };
     pub use crate::protocol::command::communication::private_chat::{
         PrivateChatCommand, PrivateChatResponse,
+    };
+    pub use crate::protocol::command::communication::room_chat::{
+        RoomChatCommand, RoomChatResponse,
     };
     pub use crate::protocol::command::core::connect::{ConnectCommand, ConnectResponse};
     pub use crate::protocol::command::core::fight_attack::{
@@ -30,8 +38,8 @@ pub mod commands {
         FightCreateCommand, FightCreateResponse,
     };
     pub use crate::protocol::command::core::look::{LookCommand, LookResponse, LookRoom};
-    pub use crate::protocol::command::core::quit::{QuitCommand, QuitResponse};
     pub use crate::protocol::command::core::r#move::{MoveCommand, MoveResponse};
+    pub use crate::protocol::command::core::quit::{QuitCommand, QuitResponse};
     pub use crate::protocol::command::core::who::{WhoCommand, WhoResponse};
     pub use crate::protocol::command::group::create::{GroupCreateCommand, GroupCreateResponse};
     pub use crate::protocol::command::group::invite::{GroupInviteCommand, GroupInviteResponse};
@@ -45,7 +53,8 @@ pub mod commands {
         InventoryCommand, InventoryResponse,
     };
     pub use crate::protocol::command::resource_interaction::quest::{
-        QuestCommand, QuestData, QuestResponse, QuestReward, QuestsCommand, QuestsResponse,
+        QuestCommand, QuestData, QuestResponse, QuestReward, QuestStatus, QuestsCommand,
+        QuestsResponse,
     };
     pub use crate::protocol::command::resource_interaction::status::{
         PlayerStatus, StatusCommand, StatusResponse,

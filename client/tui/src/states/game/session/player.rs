@@ -21,8 +21,23 @@ impl PlayerState {
         }
     }
 
-    pub fn heal(&mut self, amount: u32) {
-        self.hp = (self.hp + amount).min(self.max_hp);
+    pub fn set_name(&mut self, name: String) {
+        self.name = Some(name.to_uppercase());
+    }
+
+    pub fn is_me(&self, player_name: &str) -> bool {
+        self.name
+            .as_deref()
+            .is_some_and(|name| name.eq_ignore_ascii_case(player_name))
+    }
+
+    pub fn set_vitals(&mut self, hp: u32, max_hp: u32) {
+        self.max_hp = max_hp;
+        self.hp = hp.min(max_hp);
+    }
+
+    pub fn set_hp(&mut self, hp: u32) {
+        self.hp = hp.min(self.max_hp);
     }
 
     pub fn take_damage(&mut self, amount: u32) {

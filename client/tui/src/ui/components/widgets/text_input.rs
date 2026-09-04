@@ -1,7 +1,6 @@
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
-use crate::ui::components::Lifecycle;
-use crate::ui::components::interactive::InteractiveComponent;
+use crate::ui::components::{EventFlow, InteractiveComponent, Lifecycle};
 use crate::ui::theme::{default_block, dim_style};
 use crossterm::event::{Event as CrosstermEvent, KeyCode, KeyEvent};
 use ratatui::Frame;
@@ -10,6 +9,7 @@ use ratatui::style::{Color, Style};
 use ratatui::widgets::Paragraph;
 use tokio::sync::mpsc::Sender;
 
+#[derive(Default)]
 pub struct TextInput {
     pub label: String,
     pub value: String,
@@ -54,25 +54,25 @@ impl InteractiveComponent for TextInput {
         event: &CrosstermEvent,
         _event_sender: &Sender<ApplicationEvent>,
         _is_hovered: bool,
-    ) -> bool {
+    ) -> EventFlow {
         if !self.is_focused {
-            return false;
+            return EventFlow::Ignored;
         }
 
         if let CrosstermEvent::Key(KeyEvent { code, .. }) = event {
             match code {
                 KeyCode::Char(c) => {
                     self.value.push(*c);
-                    true
+                    EventFlow::Consumed
                 }
                 KeyCode::Backspace => {
                     self.value.pop();
-                    true
+                    EventFlow::Consumed
                 }
-                _ => false,
+                _ => EventFlow::Ignored,
             }
         } else {
-            false
+            EventFlow::Ignored
         }
     }
 }
