@@ -1,7 +1,7 @@
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
 use crate::states::game::{GameFocus, ItemActionsState, ItemLocation, Overlay};
-use crate::ui::components::{Component, EventFlow, Lifecycle, is_mouse_in_rect};
+use crate::ui::components::{CommandButton, Component, EventFlow, Lifecycle, is_mouse_in_rect};
 use crate::ui::theme::{panel_block, selection_style};
 use ratatui::layout::Alignment;
 use ratatui::widgets::Paragraph;
@@ -16,10 +16,16 @@ pub enum InventoryPanelHit {
     None,
 }
 
-#[derive(Default)]
 pub struct InventoryPanel {
     cols: usize,
     area: Option<Rect>,
+    refresh_button: CommandButton,
+}
+
+impl Default for InventoryPanel {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl InventoryPanel {
@@ -27,6 +33,7 @@ impl InventoryPanel {
         Self {
             cols: 1,
             area: None,
+            refresh_button: CommandButton::new("INVENTORY", "INVENTORY"),
         }
     }
 
@@ -60,6 +67,15 @@ impl Component for InventoryPanel {
 
         let inv_inner = inv_block.inner(area);
         frame.render_widget(inv_block, area);
+
+        let button_width = self.refresh_button.width();
+
+        if area.width > button_width + 2 {
+            let button_area = Rect::new(area.right() - button_width - 1, area.y, button_width, 1);
+            self.refresh_button.draw(frame, button_area);
+        } else {
+            self.refresh_button.hide();
+        }
 
         if state.game.player.inventory.is_empty() {
             let p = Paragraph::new(" Your inventory is empty. ").alignment(Alignment::Center);
@@ -113,8 +129,17 @@ impl Lifecycle for InventoryPanel {
         &mut self,
         state: &mut AppState,
         event: &crossterm::event::Event,
-        _event_sender: &Sender<ApplicationEvent>,
+        event_sender: &Sender<ApplicationEvent>,
     ) -> EventFlow {
+        if let crossterm::event::Event::Mouse(mouse) = event
+            && mouse.kind
+                == crossterm::event::MouseEventKind::Down(crossterm::event::MouseButton::Left)
+            && let Some(command) = self.refresh_button.hit(mouse.column, mouse.row)
+        {
+            let _ = event_sender.try_send(ApplicationEvent::SendRawCommand(command.to_string()));
+            return EventFlow::Consumed;
+        }
+
         if state.game.focus() == GameFocus::InventoryGrid
             && let crossterm::event::Event::Key(key) = event
         {

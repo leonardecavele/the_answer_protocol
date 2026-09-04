@@ -1,7 +1,9 @@
+use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
-use crate::ui::components::{Component, Lifecycle};
+use crate::ui::components::{CommandButton, Component, EventFlow, Lifecycle};
 use crate::ui::text::wrap_str_to_lines;
 use crate::ui::theme::default_block;
+use crossterm::event::{Event as CrosstermEvent, MouseButton, MouseEventKind};
 use ratatui::widgets::Paragraph;
 use ratatui::{
     Frame,
@@ -9,8 +11,11 @@ use ratatui::{
     style::{Color, Modifier, Style},
     text::{Line, Span},
 };
+use tokio::sync::mpsc::Sender;
 
-pub struct Header;
+pub struct Header {
+    buttons: [CommandButton; 3],
+}
 
 impl Default for Header {
     fn default() -> Self {
@@ -20,7 +25,30 @@ impl Default for Header {
 
 impl Header {
     pub fn new() -> Self {
-        Self
+        Self {
+            buttons: [
+                CommandButton::new("WHO", "WHO"),
+                CommandButton::new("STATUS", "STATUS"),
+                CommandButton::new("QUIT", "QUIT"),
+            ],
+        }
+    }
+
+    fn draw_buttons(&mut self, frame: &mut Frame, area: Rect) {
+        let mut x = area.x + 1;
+        let y = area.bottom().saturating_sub(1);
+
+        for button in &mut self.buttons {
+            let width = button.width();
+
+            if x + width >= area.right() {
+                button.hide();
+                continue;
+            }
+
+            button.draw(frame, Rect::new(x, y, width, 1));
+            x += width;
+        }
     }
 }
 
@@ -126,7 +154,36 @@ impl Component for Header {
         let paragraph = Paragraph::new(visual_lines).block(block);
 
         frame.render_widget(paragraph, area);
+
+        self.draw_buttons(frame, area);
     }
 }
 
-impl Lifecycle for Header {}
+impl Lifecycle for Header {
+    fn handle_terminal_event(
+        &mut self,
+        _state: &mut AppState,
+        event: &CrosstermEvent,
+        event_sender: &Sender<ApplicationEvent>,
+    ) -> EventFlow {
+        let CrosstermEvent::Mouse(mouse) = event else {
+            return EventFlow::Ignored;
+        };
+
+        if mouse.kind != MouseEventKind::Down(MouseButton::Left) {
+            return EventFlow::Ignored;
+        }
+
+        let Some(command) = self
+            .buttons
+            .iter()
+            .find_map(|button| button.hit(mouse.column, mouse.row))
+        else {
+            return EventFlow::Ignored;
+        };
+
+        let _ = event_sender.try_send(ApplicationEvent::SendRawCommand(command.to_string()));
+
+        EventFlow::Consumed
+    }
+}

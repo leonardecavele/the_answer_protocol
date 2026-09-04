@@ -98,6 +98,14 @@ impl GameView {
         sender: &mpsc::Sender<ApplicationEvent>,
     ) -> EventFlow {
         if self
+            .header
+            .handle_terminal_event(state, event, sender)
+            .is_consumed()
+        {
+            return EventFlow::Consumed;
+        }
+
+        if self
             .footer
             .handle_terminal_event(state, event, sender)
             .is_consumed()

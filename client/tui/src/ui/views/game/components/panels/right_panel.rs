@@ -1,7 +1,7 @@
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
 use crate::states::game::{Direction, GameFocus, Sprite};
-use crate::ui::components::{Component, EventFlow, Lifecycle, is_mouse_in_rect};
+use crate::ui::components::{CommandButton, Component, EventFlow, Lifecycle, is_mouse_in_rect};
 use crate::ui::image::ImageRenderer;
 use crate::ui::text::wrap_str_to_lines;
 use crossterm::event::{Event as CrosstermEvent, KeyCode, MouseButton, MouseEventKind};
@@ -83,6 +83,7 @@ pub struct RightPanel {
     shown_npc: Option<String>,
     area: Option<Rect>,
     exits: Vec<(Direction, Rect)>,
+    look_button: CommandButton,
     image_renderer: ImageRenderer,
 }
 
@@ -99,6 +100,7 @@ impl RightPanel {
             shown_npc: None,
             area: None,
             exits: Vec::new(),
+            look_button: CommandButton::new("LOOK", "LOOK"),
             image_renderer: ImageRenderer::new(),
         }
     }
@@ -113,7 +115,7 @@ impl RightPanel {
         RightPanelHit::None
     }
 
-    pub fn exit_at(&self, column: u16, row: u16) -> Option<Direction> {
+    pub fn hit_exit(&self, column: u16, row: u16) -> Option<Direction> {
         self.exits
             .iter()
             .find(|(_, area)| is_mouse_in_rect(column, row, *area))
@@ -282,6 +284,7 @@ impl Component for RightPanel {
 
         let image_area = match self.content(state) {
             Content::Disconnected => {
+                self.look_button.hide();
                 self.draw_disconnected(frame, area);
                 return;
             }
@@ -291,6 +294,15 @@ impl Component for RightPanel {
                 area
             }
         };
+
+        let look_width = self.look_button.width();
+
+        if area.width > look_width {
+            self.look_button
+                .draw(frame, Rect::new(area.x, area.y, look_width, 1));
+        } else {
+            self.look_button.hide();
+        }
 
         if !state
             .game
@@ -315,6 +327,14 @@ impl Lifecycle for RightPanel {
         event: &CrosstermEvent,
         event_sender: &Sender<ApplicationEvent>,
     ) -> EventFlow {
+        if let CrosstermEvent::Mouse(mouse) = event
+            && mouse.kind == MouseEventKind::Down(MouseButton::Left)
+            && let Some(command) = self.look_button.hit(mouse.column, mouse.row)
+        {
+            let _ = event_sender.try_send(ApplicationEvent::SendRawCommand(command.to_string()));
+            return EventFlow::Consumed;
+        }
+
         if !state
             .game
             .group
@@ -327,7 +347,7 @@ impl Lifecycle for RightPanel {
             CrosstermEvent::Mouse(mouse)
                 if mouse.kind == MouseEventKind::Down(MouseButton::Left) =>
             {
-                let Some(direction) = self.exit_at(mouse.column, mouse.row) else {
+                let Some(direction) = self.hit_exit(mouse.column, mouse.row) else {
                     return EventFlow::Ignored;
                 };
 

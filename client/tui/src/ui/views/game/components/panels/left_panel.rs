@@ -6,7 +6,7 @@ use crate::states::game::GameFocus;
 use crate::states::game::{
     ItemActionsState, ItemLocation, NpcActionsState, Overlay, QuestDetailState, Room,
 };
-use crate::ui::components::{Component, EventFlow, Lifecycle, is_mouse_in_rect};
+use crate::ui::components::{CommandButton, Component, EventFlow, Lifecycle, is_mouse_in_rect};
 use crate::ui::theme::{default_block, panel_block, quest_status, selection_style};
 use ratatui::{
     Frame,
@@ -24,11 +24,17 @@ pub enum LeftPanelHit {
     None,
 }
 
-#[derive(Default)]
 pub struct LeftPanel {
     npcs_area: Option<Rect>,
     items_area: Option<Rect>,
     quests_area: Option<Rect>,
+    quests_button: CommandButton,
+}
+
+impl Default for LeftPanel {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl LeftPanel {
@@ -37,26 +43,35 @@ impl LeftPanel {
             npcs_area: None,
             items_area: None,
             quests_area: None,
+            quests_button: CommandButton::new("QUESTS", "QUESTS"),
         }
+    }
+
+    fn hit_entry(area: Rect, column: u16, row: u16) -> Option<usize> {
+        if !is_mouse_in_rect(column, row, area) || row <= area.y || row + 1 >= area.bottom() {
+            return None;
+        }
+
+        Some((row - area.y - 1) as usize)
     }
 
     pub fn hit(&self, column: u16, row: u16) -> LeftPanelHit {
         if let Some(area) = self.npcs_area
-            && is_mouse_in_rect(column, row, area)
+            && let Some(index) = Self::hit_entry(area, column, row)
         {
-            return LeftPanelHit::Npc(row.saturating_sub(area.y).saturating_sub(1) as usize);
+            return LeftPanelHit::Npc(index);
         }
 
         if let Some(area) = self.items_area
-            && is_mouse_in_rect(column, row, area)
+            && let Some(index) = Self::hit_entry(area, column, row)
         {
-            return LeftPanelHit::Item(row.saturating_sub(area.y).saturating_sub(1) as usize);
+            return LeftPanelHit::Item(index);
         }
 
         if let Some(area) = self.quests_area
-            && is_mouse_in_rect(column, row, area)
+            && let Some(index) = Self::hit_entry(area, column, row)
         {
-            return LeftPanelHit::Quest(row.saturating_sub(area.y).saturating_sub(1) as usize);
+            return LeftPanelHit::Quest(index);
         }
 
         LeftPanelHit::None
@@ -144,6 +159,15 @@ impl LeftPanel {
         let list = List::new(items).block(panel_block(" Quests ", focused));
         frame.render_widget(list, area);
         self.quests_area = Some(area);
+
+        let width = self.quests_button.width();
+
+        if area.width > width + 2 {
+            let button_area = Rect::new(area.right() - width - 1, area.y, width, 1);
+            self.quests_button.draw(frame, button_area);
+        } else {
+            self.quests_button.hide();
+        }
     }
 }
 
@@ -175,8 +199,17 @@ impl Lifecycle for LeftPanel {
         &mut self,
         state: &mut AppState,
         event: &crossterm::event::Event,
-        _event_sender: &Sender<ApplicationEvent>,
+        event_sender: &Sender<ApplicationEvent>,
     ) -> EventFlow {
+        if let crossterm::event::Event::Mouse(mouse) = event
+            && mouse.kind
+                == crossterm::event::MouseEventKind::Down(crossterm::event::MouseButton::Left)
+            && let Some(command) = self.quests_button.hit(mouse.column, mouse.row)
+        {
+            let _ = event_sender.try_send(ApplicationEvent::SendRawCommand(command.to_string()));
+            return EventFlow::Consumed;
+        }
+
         let key = match event {
             crossterm::event::Event::Key(key) => key,
             _ => return EventFlow::Ignored,
