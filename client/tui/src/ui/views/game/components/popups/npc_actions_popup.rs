@@ -2,10 +2,10 @@ use crate::collections::Step;
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
 use crate::states::game::NpcActionsState;
-use crate::ui::components::{Component, EventFlow, Lifecycle};
+use crate::ui::components::{Component, EventFlow, Lifecycle, is_mouse_in_rect};
 use crate::ui::layout::centered_rect;
 use crate::ui::theme::{popup_block, selection_style};
-use crossterm::event::{Event as CrosstermEvent, KeyCode};
+use crossterm::event::{Event as CrosstermEvent, KeyCode, MouseButton, MouseEventKind};
 use mpsc::Sender;
 use ratatui::{
     Frame,
@@ -19,11 +19,49 @@ use tokio::sync::mpsc;
 const POPUP_WIDTH: u16 = 30;
 
 #[derive(Default)]
-pub struct NpcActionsPopup;
+pub struct NpcActionsPopup {
+    list_area: Option<Rect>,
+}
 
 impl NpcActionsPopup {
     pub fn new() -> Self {
-        Self
+        Self::default()
+    }
+
+    pub fn hit(&self, column: u16, row: u16) -> Option<usize> {
+        let area = self.list_area?;
+
+        if !is_mouse_in_rect(column, row, area) {
+            return None;
+        }
+
+        Some(row.saturating_sub(area.y) as usize)
+    }
+
+    fn activate(
+        &self,
+        state: &mut AppState,
+        npc_id: &str,
+        event_sender: &Sender<ApplicationEvent>,
+    ) -> EventFlow {
+        let command = state
+            .game
+            .overlays
+            .get::<NpcActionsState>()
+            .and_then(|overlay| overlay.selected_command());
+
+        if let Some(command) = command {
+            let raw_command = format!("{} {}", command, npc_id);
+            let _ = event_sender.try_send(ApplicationEvent::SendRawCommand(raw_command));
+        }
+
+        Self::close(state)
+    }
+
+    fn close(state: &mut AppState) -> EventFlow {
+        state.game.overlays.close_top();
+        state.game.clear_selections();
+        EventFlow::Consumed
     }
 }
 
@@ -53,7 +91,10 @@ impl Component for NpcActionsPopup {
             })
             .collect();
 
-        let list = List::new(items).block(popup_block(title));
+        let block = popup_block(title);
+        self.list_area = Some(block.inner(popup_area));
+
+        let list = List::new(items).block(block);
 
         frame.render_widget(list, popup_area);
     }
@@ -66,48 +107,48 @@ impl Lifecycle for NpcActionsPopup {
         event: &CrosstermEvent,
         event_sender: &Sender<ApplicationEvent>,
     ) -> EventFlow {
-        let CrosstermEvent::Key(key) = event else {
-            return EventFlow::Ignored;
-        };
-
         let Some(overlay) = state.game.overlays.get::<NpcActionsState>() else {
             return EventFlow::Ignored;
         };
 
         let npc_id = overlay.npc_id.clone();
-        let command = overlay.selected_command();
 
         if state.game.find_npc(&npc_id).is_none() {
             state.game.overlays.close::<NpcActionsState>();
             return EventFlow::Consumed;
         }
 
-        match key.code {
-            KeyCode::Up | KeyCode::Down => {
-                let step = if key.code == KeyCode::Up {
-                    Step::Previous
-                } else {
-                    Step::Next
+        match event {
+            CrosstermEvent::Key(key) => match key.code {
+                KeyCode::Up | KeyCode::Down => {
+                    let step = if key.code == KeyCode::Up {
+                        Step::Previous
+                    } else {
+                        Step::Next
+                    };
+
+                    if let Some(overlay) = state.game.overlays.get_mut::<NpcActionsState>() {
+                        overlay.actions.move_selection(step);
+                    }
+
+                    EventFlow::Consumed
+                }
+                KeyCode::Esc => Self::close(state),
+                KeyCode::Enter => self.activate(state, &npc_id, event_sender),
+                _ => EventFlow::Ignored,
+            },
+            CrosstermEvent::Mouse(mouse)
+                if mouse.kind == MouseEventKind::Down(MouseButton::Left) =>
+            {
+                let Some(index) = self.hit(mouse.column, mouse.row) else {
+                    return EventFlow::Ignored;
                 };
 
                 if let Some(overlay) = state.game.overlays.get_mut::<NpcActionsState>() {
-                    overlay.actions.move_selection(step);
+                    overlay.actions.select_index(index);
                 }
 
-                EventFlow::Consumed
-            }
-            KeyCode::Esc => {
-                state.game.overlays.close_top();
-                EventFlow::Consumed
-            }
-            KeyCode::Enter => {
-                if let Some(command) = command {
-                    let raw_command = format!("{} {}", command, npc_id);
-                    let _ = event_sender.try_send(ApplicationEvent::SendRawCommand(raw_command));
-                }
-
-                state.game.overlays.close_top();
-                EventFlow::Consumed
+                self.activate(state, &npc_id, event_sender)
             }
             _ => EventFlow::Ignored,
         }
