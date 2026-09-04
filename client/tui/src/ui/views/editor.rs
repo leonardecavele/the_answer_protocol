@@ -3,6 +3,7 @@ use crate::states::app::AppState;
 use crate::states::game::{FightPhase, Sprite};
 use crate::ui::components::{Component, EventFlow, Lifecycle};
 use crate::ui::image::ImageRenderer;
+use crate::ui::layout::percent_of;
 use crate::ui::theme::{default_block, dim_style};
 use api_client::ApiRequest;
 use api_client::commands::FightAttackCommand;
@@ -13,7 +14,7 @@ use ratatui::Frame;
 use ratatui::layout::{Alignment, Constraint, Direction, Layout, Position, Rect};
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::Span;
-use ratatui::widgets::{Block, Gauge, Paragraph};
+use ratatui::widgets::{Block, Paragraph};
 use ratatui_code_editor::editor::Editor;
 use ratatui_code_editor::theme::vesper;
 use ratatui_image::Resize;
@@ -121,12 +122,21 @@ impl EditorView {
             return;
         };
 
-        let gauge = Gauge::default()
-            .gauge_style(Style::default().fg(Color::Red))
-            .label(format!("{} / {}", health.current, health.max))
-            .percent(health.percent());
+        let filled_area = Rect {
+            width: percent_of(area.width, health.percent()),
+            ..area
+        };
 
-        frame.render_widget(gauge, area);
+        frame.render_widget(
+            Block::default().style(Style::default().bg(Color::Red)),
+            filled_area,
+        );
+
+        frame.render_widget(
+            Paragraph::new(format!("{} / {}", health.current, health.max))
+                .alignment(Alignment::Center),
+            area,
+        );
     }
 
     fn header(&self, state: &AppState) -> Paragraph<'static> {

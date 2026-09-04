@@ -53,6 +53,15 @@ fn push_crossterm_events(
                 events.push(to_mouse_event(kind, cell, *modifiers));
             }
         }
+        Event::PointerMoved(position) => {
+            if let Some(cell) = grid.and_then(|grid| grid.cell_at(*position)) {
+                events.push(to_mouse_event(
+                    MouseEventKind::Moved,
+                    cell,
+                    Modifiers::default(),
+                ));
+            }
+        }
         Event::MouseWheel {
             delta, modifiers, ..
         } if !modifiers.ctrl && delta.y != 0.0 => {

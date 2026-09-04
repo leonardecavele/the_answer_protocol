@@ -2,13 +2,14 @@ use crate::events::ApplicationEvent;
 use crate::events::types::NotificationType;
 use crate::states::app::AppState;
 use crate::ui::components::{Component, EventFlow, Lifecycle, is_mouse_in_rect};
+use crate::ui::layout::percent_of;
 use crate::ui::text::wrap_str_to_lines;
 use crate::ui::theme::default_block;
 use crossterm::event::{Event as CrosstermEvent, MouseButton, MouseEvent, MouseEventKind};
 use ratatui::Frame;
 use ratatui::layout::{Alignment, Rect};
 use ratatui::style::{Color, Modifier, Style};
-use ratatui::widgets::{Clear, Gauge, Paragraph};
+use ratatui::widgets::{Block, Clear, Paragraph};
 use tokio::sync::mpsc::Sender;
 
 const MAX_VISIBLE_NOTIFICATIONS: usize = 5;
@@ -130,12 +131,15 @@ impl Component for NotificationsOverlay {
                     height: 1,
                 };
 
-                let gauge = Gauge::default()
-                    .gauge_style(Style::default().fg(color))
-                    .label("")
-                    .percent(notif.remaining_percent() as u16);
+                let filled_area = Rect {
+                    width: percent_of(gauge_area.width, notif.remaining_percent() as u16),
+                    ..gauge_area
+                };
 
-                frame.render_widget(gauge, gauge_area);
+                frame.render_widget(
+                    Block::default().style(Style::default().bg(color)),
+                    filled_area,
+                );
 
                 frame.render_widget(
                     Paragraph::new(remaining_fmt).style(Style::default().fg(color)),
