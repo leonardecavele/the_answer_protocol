@@ -4,7 +4,7 @@ use crate::states::game::{Direction, GameFocus, Sprite};
 use crate::ui::components::{Component, EventFlow, Lifecycle, is_mouse_in_rect};
 use crate::ui::image::ImageRenderer;
 use crate::ui::text::wrap_str_to_lines;
-use crossterm::event::{Event as CrosstermEvent, KeyCode};
+use crossterm::event::{Event as CrosstermEvent, KeyCode, MouseButton, MouseEventKind};
 use ratatui::style::Stylize;
 use ratatui::widgets::{Block, BorderType, Borders};
 use ratatui::{
@@ -82,6 +82,7 @@ pub struct RightPanel {
     animation_start: Instant,
     shown_npc: Option<String>,
     area: Option<Rect>,
+    exits: Vec<(Direction, Rect)>,
     image_renderer: ImageRenderer,
 }
 
@@ -97,6 +98,7 @@ impl RightPanel {
             animation_start: Instant::now(),
             shown_npc: None,
             area: None,
+            exits: Vec::new(),
             image_renderer: ImageRenderer::new(),
         }
     }
@@ -109,6 +111,20 @@ impl RightPanel {
         }
 
         RightPanelHit::None
+    }
+
+    pub fn exit_at(&self, column: u16, row: u16) -> Option<Direction> {
+        self.exits
+            .iter()
+            .find(|(_, area)| is_mouse_in_rect(column, row, *area))
+            .map(|(direction, _)| *direction)
+    }
+
+    fn send_move(direction: Direction, event_sender: &Sender<ApplicationEvent>) {
+        let _ = event_sender.try_send(ApplicationEvent::SendRawCommand(format!(
+            "MOVE {}",
+            direction.key()
+        )));
     }
 
     fn room_facing(&self, state: &AppState) -> Direction {
@@ -218,7 +234,7 @@ impl RightPanel {
         );
     }
 
-    fn draw_exits(&self, state: &AppState, frame: &mut Frame, image_area: Rect) {
+    fn draw_exits(&mut self, state: &AppState, frame: &mut Frame, image_area: Rect) {
         let style = Style::default()
             .fg(Color::Yellow)
             .add_modifier(Modifier::BOLD);
@@ -238,6 +254,8 @@ impl RightPanel {
 
             frame.render_widget(Clear, exit_area);
             frame.render_widget(Paragraph::new(label).style(style), exit_area);
+
+            self.exits.push((direction, exit_area));
         }
     }
 
@@ -259,6 +277,7 @@ impl RightPanel {
 impl Component for RightPanel {
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
         self.area = Some(area);
+        self.exits.clear();
         self.sync_animation(state);
 
         let image_area = match self.content(state) {
@@ -273,14 +292,18 @@ impl Component for RightPanel {
             }
         };
 
-        if state
+        if !state
             .game
             .group
             .allows_move_by(state.game.player.name.as_deref())
-            && state.game.focus() == GameFocus::RightPanel
         {
+            return;
+        }
+
+        self.draw_exits(state, frame, image_area);
+
+        if state.game.focus() == GameFocus::RightPanel {
             self.draw_focus_badge(frame, area);
-            self.draw_exits(state, frame, image_area);
         }
     }
 }
@@ -296,46 +319,56 @@ impl Lifecycle for RightPanel {
             .game
             .group
             .allows_move_by(state.game.player.name.as_deref())
-            || state.game.focus() != GameFocus::RightPanel
         {
             return EventFlow::Ignored;
         }
 
-        let CrosstermEvent::Key(key) = event else {
-            return EventFlow::Ignored;
-        };
+        match event {
+            CrosstermEvent::Mouse(mouse)
+                if mouse.kind == MouseEventKind::Down(MouseButton::Left) =>
+            {
+                let Some(direction) = self.exit_at(mouse.column, mouse.row) else {
+                    return EventFlow::Ignored;
+                };
 
-        if key.code == KeyCode::Enter {
-            state.game.set_focus(GameFocus::NpcList);
-            return EventFlow::Consumed;
+                Self::send_move(direction, event_sender);
+                EventFlow::Consumed
+            }
+            CrosstermEvent::Key(key) => {
+                if state.game.focus() != GameFocus::RightPanel {
+                    return EventFlow::Ignored;
+                }
+
+                if key.code == KeyCode::Enter {
+                    state.game.set_focus(GameFocus::NpcList);
+                    return EventFlow::Consumed;
+                }
+
+                let slot = match key.code {
+                    KeyCode::Up => 0,
+                    KeyCode::Right => 1,
+                    KeyCode::Down => 2,
+                    KeyCode::Left => 3,
+                    _ => return EventFlow::Ignored,
+                };
+
+                let facing = self.room_facing(state);
+                let direction = Direction::from_quarter_turns(slot + facing.quarter_turns());
+
+                let has_exit = state
+                    .game
+                    .room
+                    .as_ref()
+                    .is_some_and(|room| room.has_exit(direction));
+
+                if !has_exit {
+                    return EventFlow::Ignored;
+                }
+
+                Self::send_move(direction, event_sender);
+                EventFlow::Consumed
+            }
+            _ => EventFlow::Ignored,
         }
-
-        let slot = match key.code {
-            KeyCode::Up => 0,
-            KeyCode::Right => 1,
-            KeyCode::Down => 2,
-            KeyCode::Left => 3,
-            _ => return EventFlow::Ignored,
-        };
-
-        let facing = self.room_facing(state);
-        let direction = Direction::from_quarter_turns(slot + facing.quarter_turns());
-
-        let has_exit = state
-            .game
-            .room
-            .as_ref()
-            .is_some_and(|room| room.has_exit(direction));
-
-        if !has_exit {
-            return EventFlow::Ignored;
-        }
-
-        let _ = event_sender.try_send(ApplicationEvent::SendRawCommand(format!(
-            "MOVE {}",
-            direction.key()
-        )));
-
-        EventFlow::Consumed
     }
 }
