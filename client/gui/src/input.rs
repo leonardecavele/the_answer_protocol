@@ -12,14 +12,14 @@ pub fn to_crossterm_events(ctx: &Context, grid: Option<&Grid>) -> Vec<CrosstermE
         let pointer = input.pointer.latest_pos();
 
         for event in &input.events {
-            push_translated(event, grid, pointer, &mut events);
+            push_crossterm_events(event, grid, pointer, &mut events);
         }
     });
 
     events
 }
 
-fn push_translated(
+fn push_crossterm_events(
     event: &Event,
     grid: Option<&Grid>,
     pointer: Option<Pos2>,
@@ -28,7 +28,7 @@ fn push_translated(
     match event {
         Event::Text(text) => {
             for character in text.chars() {
-                events.push(key_event(KeyCode::Char(character), KeyModifiers::NONE));
+                events.push(to_key_event(KeyCode::Char(character), KeyModifiers::NONE));
             }
         }
         Event::Key {
@@ -37,11 +37,11 @@ fn push_translated(
             modifiers,
             ..
         } => {
-            if let Some(code) = key_code(*key, *modifiers) {
-                events.push(key_event(code, key_modifiers(*modifiers)));
+            if let Some(code) = to_key_code(*key, *modifiers) {
+                events.push(to_key_event(code, to_key_modifiers(*modifiers)));
             }
         }
-        Event::Copy => events.push(key_event(KeyCode::Char('c'), KeyModifiers::CONTROL)),
+        Event::Copy => events.push(to_key_event(KeyCode::Char('c'), KeyModifiers::CONTROL)),
         Event::PointerButton {
             pos,
             button: PointerButton::Primary,
@@ -50,7 +50,7 @@ fn push_translated(
         } => {
             if let Some(cell) = grid.and_then(|grid| grid.cell_at(*pos)) {
                 let kind = MouseEventKind::Down(MouseButton::Left);
-                events.push(mouse_event(kind, cell, *modifiers));
+                events.push(to_mouse_event(kind, cell, *modifiers));
             }
         }
         Event::MouseWheel {
@@ -65,14 +65,14 @@ fn push_translated(
                     MouseEventKind::ScrollDown
                 };
 
-                events.push(mouse_event(kind, cell, *modifiers));
+                events.push(to_mouse_event(kind, cell, *modifiers));
             }
         }
         _ => {}
     }
 }
 
-fn key_code(key: Key, modifiers: Modifiers) -> Option<KeyCode> {
+fn to_key_code(key: Key, modifiers: Modifiers) -> Option<KeyCode> {
     let code = match key {
         Key::ArrowUp => KeyCode::Up,
         Key::ArrowDown => KeyCode::Down,
@@ -86,14 +86,14 @@ fn key_code(key: Key, modifiers: Modifiers) -> Option<KeyCode> {
         Key::F1 => KeyCode::F(1),
         Key::Tab if modifiers.shift => KeyCode::BackTab,
         Key::Tab => KeyCode::Tab,
-        _ if modifiers.ctrl => KeyCode::Char(control_letter(key)?),
+        _ if modifiers.ctrl => KeyCode::Char(to_control_letter(key)?),
         _ => return None,
     };
 
     Some(code)
 }
 
-fn control_letter(key: Key) -> Option<char> {
+fn to_control_letter(key: Key) -> Option<char> {
     let mut characters = key.name().chars();
 
     match (characters.next(), characters.next()) {
@@ -102,7 +102,7 @@ fn control_letter(key: Key) -> Option<char> {
     }
 }
 
-fn key_modifiers(modifiers: Modifiers) -> KeyModifiers {
+fn to_key_modifiers(modifiers: Modifiers) -> KeyModifiers {
     let mut translated = KeyModifiers::NONE;
 
     if modifiers.ctrl {
@@ -120,15 +120,15 @@ fn key_modifiers(modifiers: Modifiers) -> KeyModifiers {
     translated
 }
 
-fn key_event(code: KeyCode, modifiers: KeyModifiers) -> CrosstermEvent {
+fn to_key_event(code: KeyCode, modifiers: KeyModifiers) -> CrosstermEvent {
     CrosstermEvent::Key(KeyEvent::new(code, modifiers))
 }
 
-fn mouse_event(kind: MouseEventKind, cell: (u16, u16), modifiers: Modifiers) -> CrosstermEvent {
+fn to_mouse_event(kind: MouseEventKind, cell: (u16, u16), modifiers: Modifiers) -> CrosstermEvent {
     CrosstermEvent::Mouse(MouseEvent {
         kind,
         column: cell.0,
         row: cell.1,
-        modifiers: key_modifiers(modifiers),
+        modifiers: to_key_modifiers(modifiers),
     })
 }
