@@ -5,6 +5,7 @@ use ratatui::Terminal;
 use ratatui::style::Color;
 use soft_ratatui::embedded_graphics_unicodefonts::{mono_9x18_atlas, mono_9x18_bold_atlas};
 use soft_ratatui::{EmbeddedGraphics, SoftBackend};
+use tui::ui::{MIN_COLUMNS, MIN_ROWS};
 
 const TEXTURE_NAME: &str = "client_screen";
 const BACKGROUND: Color = Color::Rgb(0x00, 0x00, 0x00);
@@ -56,6 +57,17 @@ pub fn build() -> Screen {
 
     Terminal::new(RataguiBackend::new(TEXTURE_NAME, soft_backend))
         .expect("a software backend cannot fail to initialise")
+}
+
+pub fn max_zoom_factor(screen: &Screen, ctx: &egui::Context) -> f32 {
+    let cell = cell_size(screen);
+    let native = ctx.native_pixels_per_point().unwrap_or(1.0);
+    let physical = ctx.content_rect().size() * ctx.pixels_per_point();
+
+    let columns = physical.x / (native * cell.x * MIN_COLUMNS as f32);
+    let rows = physical.y / (native * cell.y * MIN_ROWS as f32);
+
+    columns.min(rows).max(1.0)
 }
 
 pub fn grid_size(screen: &Screen, columns: u16, rows: u16) -> egui::Vec2 {
