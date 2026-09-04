@@ -1,7 +1,5 @@
 _This project has been created as part of the 42 curriculum by cobussie, nlallema and ldecavel._
 
-# The Answer Protocol
-
 ## Description
 
 The Answer Protocol is a multiplayer text adventure inspired by 1970s MUDs.
