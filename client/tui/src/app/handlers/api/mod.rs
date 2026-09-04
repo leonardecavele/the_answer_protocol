@@ -188,6 +188,9 @@ impl App {
                 GroupEvent::Invite(leader) => {
                     self.on_group_invited_by(leader);
                 }
+                GroupEvent::InviteRemoved(leader) => {
+                    self.on_group_invite_removed(leader);
+                }
                 GroupEvent::Join(user) => {
                     self.on_group_member_joined(user);
                 }

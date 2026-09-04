@@ -38,6 +38,15 @@ impl App {
             "You are invited to a group by {}.",
             leader
         )));
+
+        self.state.game.group.invited_by(leader);
+    }
+
+    pub(crate) fn on_group_invite_removed(&mut self, leader: String) {
+        self.state.game.group.remove_invitation(&leader);
+        self.state
+            .game
+            .log_action(format!("The invitation from {} was withdrawn.", leader));
     }
 
     pub(crate) fn on_group_member_joined(&mut self, user: String) {

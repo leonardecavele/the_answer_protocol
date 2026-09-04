@@ -78,6 +78,7 @@ impl GameState {
 
         self.player.inventory.clear_selection();
         self.player.quests.clear_selection();
+        self.group.invitations.clear_selection();
     }
 
     pub fn open_dialogue(&mut self, dialogue: DialogueState) {
