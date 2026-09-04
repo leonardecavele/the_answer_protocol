@@ -1,10 +1,8 @@
 use egui_ratatui::RataguiBackend;
-use ratatui::style::Color;
 use ratatui::Frame;
 use ratatui::Terminal;
-use soft_ratatui::embedded_graphics_unicodefonts::{
-    mono_8x13_atlas, mono_8x13_bold_atlas, mono_8x13_italic_atlas,
-};
+use ratatui::style::Color;
+use soft_ratatui::embedded_graphics_unicodefonts::{mono_9x18_atlas, mono_9x18_bold_atlas};
 use soft_ratatui::{EmbeddedGraphics, SoftBackend};
 
 const TEXTURE_NAME: &str = "client_terminal";
@@ -18,9 +16,9 @@ pub fn build() -> ClientTerminal {
     let soft_backend = SoftBackend::<EmbeddedGraphics>::new(
         INITIAL_COLUMNS,
         INITIAL_ROWS,
-        mono_8x13_atlas(),
-        Some(mono_8x13_bold_atlas()),
-        Some(mono_8x13_italic_atlas()),
+        mono_9x18_atlas(),
+        Some(mono_9x18_bold_atlas()),
+        None,
     );
 
     Terminal::new(RataguiBackend::new(TEXTURE_NAME, soft_backend))
