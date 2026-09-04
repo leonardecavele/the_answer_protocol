@@ -543,7 +543,7 @@ impl GameManager {
                 return already_in_instance.dump();
             }
         }
-        match command_name {
+        match command_name.to_uppercase().as_str() {
             "CONNECT" => {
                 if self.get_players_by_names().contains_key(player_name) {
                     self.disconnect_player(player_name.to_owned());

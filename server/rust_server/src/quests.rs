@@ -36,8 +36,11 @@ impl Quest {
         if json["loots"].is_object() {
             for (key, val) in json["loots"].entries() {
                 let loot_type = LOOT::from_string(key)?;
-                let qty = val["qty"].as_u32().unwrap_or(1);
-                let chance = val["chance"].as_f64().unwrap_or(100.0) as f32;
+                let qty = val["qty"].as_u32()?;
+                let chance = val["chance"].as_f64()? as f32;
+                if qty == 0 || !(0.0..=100.0).contains(&chance) {
+                    return None;
+                }
                 loots.push(Loot {
                     qty,
                     chance,

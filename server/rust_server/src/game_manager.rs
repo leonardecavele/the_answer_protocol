@@ -32,6 +32,7 @@ pub struct GameManager {
     players_by_name: HashMap<String, PlayerId>,
     next_player_id: PlayerCount,
     pub nb_models: u64,
+    max_item_id_used: ItemId,
     free_item_ids: BinaryHeap<Reverse<ItemId>>,
     pub all_items: HashMap<ItemId, Item>,
     pub all_rooms: HashMap<RoomId, Room>,
@@ -56,11 +57,14 @@ impl GameManager {
         parser: Parser,
         command_receiver: mpsc::Receiver<String>,
     ) -> Self {
+        let nb_models = parser.get_items().len() as u64;
+        let max_item_id_used = parser.get_items().keys().max().copied().unwrap_or(0);
         let mut manager = Self {
             players: HashMap::new(),
             players_by_name: HashMap::new(),
             next_player_id: 0,
-            nb_models: parser.get_items().len() as u64,
+            nb_models,
+            max_item_id_used,
             free_item_ids: BinaryHeap::new(),
             all_items: parser.get_items().clone(),
             all_rooms: parser.get_rooms().clone(),
@@ -168,15 +172,16 @@ impl GameManager {
 
     pub fn instantiate_item(&mut self, item_id: ItemId) -> ItemId {
         //the lost item only exists in one example so
-        // return directly the model instead of instanciating a new one
+        // return directly the model instead of instantiating a new one
         if item_id == LOST_ITEM {
             return LOST_ITEM;
         }
-        let new_id = self
-            .free_item_ids
-            .pop()
-            .map(|rev| rev.0)
-            .unwrap_or(self.all_items.len() as u64);
+        let new_id = if let Some(rev) = self.free_item_ids.pop() {
+            rev.0
+        } else {
+            self.max_item_id_used += 1;
+            self.max_item_id_used
+        };
 
         let new_item = if let Some(item) = self.get_item(item_id) {
             item.clone_as_instance(new_id)
@@ -190,9 +195,8 @@ impl GameManager {
     }
 
     pub fn recycle_item_id(&mut self, item_id: ItemId) {
-        if item_id != LOST_ITEM {
-            self.all_items.remove(&item_id);
-            if item_id < self.all_items.len() as ItemId {
+        if item_id != LOST_ITEM && item_id >= self.nb_models {
+            if self.all_items.remove(&item_id).is_some() {
                 self.free_item_ids.push(Reverse(item_id));
             }
         }
@@ -1158,6 +1162,39 @@ impl GameManager {
             let _ = sender.send(response.dump());
         });
     }
+
+    pub fn spawn_items(&mut self) {
+        //this function checks if the 
+        // spawn cooldown of each item has elapsed
+        // and if so, spawns it in the room
+        let mut to_spawn = Vec::new();
+
+        for id in 0..self.nb_models {
+            if let Some(item) = self.all_items.get_mut(&id) {
+                if let Some(spawn_info) = item.get_spawn_info_mut() {
+                    if spawn_info.timer.elapsed().as_secs() >= spawn_info.cooldown {
+                        spawn_info.reset_timer();
+                        to_spawn.push((id, spawn_info.room.clone()));
+                    }
+                }
+            }
+        }
+
+        for (model_id, room_name) in to_spawn {
+            let new_item_id = self.instantiate_item(model_id);
+            self.add_item_to_room(&room_name, new_item_id);
+            debug!("spawning item {} in room {}", new_item_id, room_name);
+            self.start_dropped_at_for_item(new_item_id);
+
+            let players = self.get_all_players_at_room(&room_name);
+            if let Some(item) = self.get_item(new_item_id) {
+                let data = format!("type=ITEM id={}", item.get_protocol_representation());
+                let event = GameManager::generate_no_player_event_json(&players, "SPAWN", &data);
+                self.add_diff_to_tick(event);
+            }
+        }
+    }
+
     pub fn get_nb_players_in_player_instance(&self, player_id: PlayerId) -> Option<u32> {
         self.combat_instances
             .instances

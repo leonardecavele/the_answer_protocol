@@ -54,7 +54,20 @@ where
     P: ExternalPrinter + Send + 'static,
 {
     thread::spawn(move || {
+        let mut file = std::fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open("app.log")
+            .ok();
+
         log_receiver.into_iter().for_each(|msg| {
+            if msg == "FLUSH_EXIT" {
+                std::process::exit(1);
+            }
+            if let Some(f) = file.as_mut() {
+                use std::io::Write;
+                let _ = write!(f, "{}", msg);
+            }
             printer.print(msg).ok();
         });
     });
@@ -75,31 +88,33 @@ fn main() -> std::io::Result<()> {
     let printer = rustyline.create_external_printer()
         .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
 
-    // this channel is used to send logs to 
     let (log_sender, log_receiver) = mpsc::channel::<String>();
-
     start_log_printer_thread(printer, log_receiver);
     
-    //this channel is for receiving commands from the thread that reads the admin input
     let (command_sender, command_receiver) = mpsc::channel::<String>();
-    start_input_reader_thread(rustyline, command_sender);
     
     let time_format = format_description!("[hour]:[minute]:[second].[subsecond digits:6]");
     let timer = LocalTime::new(time_format);
+    let log_sender_for_writer = log_sender.clone();
     tracing_subscriber::fmt()
-        .with_writer(move || ChannelWriter{ sender: log_sender.clone()} )
+        .with_writer(move || ChannelWriter{ sender: log_sender_for_writer.clone()} )
         .with_env_filter(
             EnvFilter::try_from_default_env()
                 .unwrap_or_else(|_| EnvFilter::new("info"))
                 .add_directive("rustyline=warn".parse().unwrap()),
         )
-        
         .with_timer(timer)
         .init();
     
     let mut parser = Parser::new("npcs.json", "items.json", "rooms.json", "quests.json");
+    if let Err(e) = parser.parse_all() {
+        error!("Parser error: {}", e);
+        let _ = log_sender.send("FLUSH_EXIT".to_string());
+        loop { std::thread::sleep(std::time::Duration::from_secs(1)); }
+    }
 
-    parser.parse_all();
+    start_input_reader_thread(rustyline, command_sender);
+
 
     let listener = TcpListener::bind(format!("0.0.0.0:{}", args.rust_server_port))?;
     let port = listener.local_addr()?.port();
@@ -156,7 +171,7 @@ fn main() -> std::io::Result<()> {
         let start = Instant::now(); // this tick time start
         game_manager.update_game_state()?;
 
-        match game_manager.apply_players_changes(start)? {
+        match game_manager.process_incoming_events(start)? {
             TickResult::TickEnd => {
                 game_manager.send_diff_to_players()?;
                 game_manager.clear_diff();
