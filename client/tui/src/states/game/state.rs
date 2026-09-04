@@ -1,6 +1,6 @@
 use crate::collections::BoundedLog;
 use crate::data::manifest::Manifest;
-use crate::states::game::interaction::{DialogueState, GameFocus, Overlay, Overlays};
+use crate::states::game::interaction::{DialogueState, GameFocus, Overlay, OverlayKind, Overlays};
 use crate::states::game::session::{
     ChatMessage, FightState, GroupState, PlayerState, Room, ServerState,
 };
@@ -82,6 +82,21 @@ impl GameState {
 
     pub fn open_dialogue(&mut self, dialogue: DialogueState) {
         self.overlays.open(Overlay::Dialogue(dialogue));
+    }
+
+    pub fn close_top_overlay(&mut self) {
+        let Some(kind) = self.overlays.top_kind() else {
+            return;
+        };
+
+        match kind {
+            OverlayKind::Dialogue => self.close_dialogue(),
+            OverlayKind::NpcActions | OverlayKind::ItemActions | OverlayKind::QuestDetail => {
+                self.overlays.close_top();
+                self.clear_selections();
+            }
+            _ => self.overlays.close_top(),
+        }
     }
 
     pub fn close_dialogue(&mut self) {

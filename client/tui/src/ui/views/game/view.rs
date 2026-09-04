@@ -1,6 +1,8 @@
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
-use crate::ui::components::{Component, EventFlow, Lifecycle, Scrollable, ScrollableHit};
+use crate::ui::components::{
+    CloseButton, Component, EventFlow, Lifecycle, Scrollable, ScrollableHit, is_mouse_in_rect,
+};
 use crate::ui::layout::percent_of;
 
 use crate::states::game::{
@@ -31,6 +33,7 @@ pub struct GameView {
     quest_detail: QuestDetailPopup,
     dialogue: Scrollable<DialoguePopup>,
     help: Scrollable<HelpOverlay>,
+    close_button: CloseButton,
 }
 
 impl Default for GameView {
@@ -55,6 +58,19 @@ impl GameView {
             quest_detail: QuestDetailPopup::new(),
             dialogue: Scrollable::new(DialoguePopup::new()),
             help: Scrollable::new(HelpOverlay::new()),
+            close_button: CloseButton::new(),
+        }
+    }
+
+    fn overlay(&mut self, kind: OverlayKind) -> &mut dyn Component {
+        match kind {
+            OverlayKind::Help => &mut self.help,
+            OverlayKind::Chat => &mut self.chat,
+            OverlayKind::NpcActions => &mut self.npc_actions,
+            OverlayKind::ItemActions => &mut self.item_actions,
+            OverlayKind::ItemDetail => &mut self.item_detail,
+            OverlayKind::QuestDetail => &mut self.quest_detail,
+            OverlayKind::Dialogue => &mut self.dialogue,
         }
     }
 
@@ -65,23 +81,24 @@ impl GameView {
         sender: &mpsc::Sender<ApplicationEvent>,
     ) -> EventFlow {
         if let Some(kind) = state.game.overlays.top_kind() {
-            let flow = match kind {
-                OverlayKind::Help => self.help.handle_terminal_event(state, event, sender),
-                OverlayKind::Chat => self.chat.handle_terminal_event(state, event, sender),
-                OverlayKind::NpcActions => {
-                    self.npc_actions.handle_terminal_event(state, event, sender)
+            if let CrosstermEvent::Mouse(mouse) = event
+                && mouse.kind
+                    == crossterm::event::MouseEventKind::Down(crossterm::event::MouseButton::Left)
+            {
+                let outside = self
+                    .overlay(kind)
+                    .drawn_area()
+                    .is_some_and(|area| !is_mouse_in_rect(mouse.column, mouse.row, area));
+
+                if self.close_button.hit(mouse.column, mouse.row) || (kind.is_modal() && outside) {
+                    state.game.close_top_overlay();
+                    return EventFlow::Consumed;
                 }
-                OverlayKind::ItemActions => self
-                    .item_actions
-                    .handle_terminal_event(state, event, sender),
-                OverlayKind::ItemDetail => {
-                    self.item_detail.handle_terminal_event(state, event, sender)
-                }
-                OverlayKind::QuestDetail => self
-                    .quest_detail
-                    .handle_terminal_event(state, event, sender),
-                OverlayKind::Dialogue => self.dialogue.handle_terminal_event(state, event, sender),
-            };
+            }
+
+            let flow = self
+                .overlay(kind)
+                .handle_terminal_event(state, event, sender);
 
             if flow.is_consumed() || kind.is_modal() {
                 return EventFlow::Consumed;
@@ -334,15 +351,22 @@ impl Component for GameView {
             state.game.overlays.iter().map(Overlay::kind).collect();
 
         for kind in overlay_kinds {
-            match kind {
-                OverlayKind::Help => self.help.draw(state, frame, area),
-                OverlayKind::Chat => self.chat.draw(state, frame, center_area),
-                OverlayKind::NpcActions => self.npc_actions.draw(state, frame, area),
-                OverlayKind::ItemActions => self.item_actions.draw(state, frame, area),
-                OverlayKind::ItemDetail => self.item_detail.draw(state, frame, area),
-                OverlayKind::QuestDetail => self.quest_detail.draw(state, frame, area),
-                OverlayKind::Dialogue => self.dialogue.draw(state, frame, area),
-            }
+            let max_area = match kind {
+                OverlayKind::Chat => center_area,
+                _ => area,
+            };
+
+            self.overlay(kind).draw(state, frame, max_area);
+        }
+
+        match state
+            .game
+            .overlays
+            .top_kind()
+            .and_then(|kind| self.overlay(kind).drawn_area())
+        {
+            Some(overlay_area) => self.close_button.draw(frame, overlay_area),
+            None => self.close_button.hide(),
         }
     }
 }

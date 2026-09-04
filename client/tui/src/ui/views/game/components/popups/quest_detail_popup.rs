@@ -21,17 +21,14 @@ const POPUP_WIDTH_PERCENT: u16 = 60;
 const POPUP_HEIGHT_PERCENT: u16 = 60;
 const FOOTER_HEIGHT: u16 = 2;
 
-pub struct QuestDetailPopup;
-
-impl Default for QuestDetailPopup {
-    fn default() -> Self {
-        Self::new()
-    }
+#[derive(Default)]
+pub struct QuestDetailPopup {
+    area: Option<Rect>,
 }
 
 impl QuestDetailPopup {
     pub fn new() -> Self {
-        Self
+        Self::default()
     }
 
     fn body(&self, quest: &QuestData, max_width: usize) -> Vec<Line<'static>> {
@@ -71,6 +68,10 @@ impl QuestDetailPopup {
 }
 
 impl Component for QuestDetailPopup {
+    fn drawn_area(&self) -> Option<Rect> {
+        self.area
+    }
+
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
         let quest_name = match state.game.overlays.get::<QuestDetailState>() {
             Some(overlay) => overlay.name.as_str(),
@@ -89,6 +90,7 @@ impl Component for QuestDetailPopup {
         };
 
         let popup_area = centered_rect_percent(area, POPUP_WIDTH_PERCENT, POPUP_HEIGHT_PERCENT);
+        self.area = Some(popup_area);
 
         frame.render_widget(Clear, popup_area);
 
@@ -126,7 +128,7 @@ impl Lifecycle for QuestDetailPopup {
 
         match key.code {
             KeyCode::Esc | KeyCode::Enter | KeyCode::Char('q') => {
-                state.game.overlays.close_top();
+                state.game.close_top_overlay();
                 EventFlow::Consumed
             }
             _ => EventFlow::Ignored,

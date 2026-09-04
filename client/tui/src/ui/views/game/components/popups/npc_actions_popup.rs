@@ -20,6 +20,7 @@ const POPUP_WIDTH: u16 = 30;
 
 #[derive(Default)]
 pub struct NpcActionsPopup {
+    area: Option<Rect>,
     list_area: Option<Rect>,
 }
 
@@ -55,17 +56,16 @@ impl NpcActionsPopup {
             let _ = event_sender.try_send(ApplicationEvent::SendRawCommand(raw_command));
         }
 
-        Self::close(state)
-    }
-
-    fn close(state: &mut AppState) -> EventFlow {
-        state.game.overlays.close_top();
-        state.game.clear_selections();
+        state.game.close_top_overlay();
         EventFlow::Consumed
     }
 }
 
 impl Component for NpcActionsPopup {
+    fn drawn_area(&self) -> Option<Rect> {
+        self.area
+    }
+
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
         let Some(overlay) = state.game.overlays.get::<NpcActionsState>() else {
             return;
@@ -92,6 +92,7 @@ impl Component for NpcActionsPopup {
             .collect();
 
         let block = popup_block(title);
+        self.area = Some(popup_area);
         self.list_area = Some(block.inner(popup_area));
 
         let list = List::new(items).block(block);
@@ -133,7 +134,10 @@ impl Lifecycle for NpcActionsPopup {
 
                     EventFlow::Consumed
                 }
-                KeyCode::Esc => Self::close(state),
+                KeyCode::Esc => {
+                    state.game.close_top_overlay();
+                    EventFlow::Consumed
+                }
                 KeyCode::Enter => self.activate(state, &npc_id, event_sender),
                 _ => EventFlow::Ignored,
             },

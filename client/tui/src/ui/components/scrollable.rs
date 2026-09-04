@@ -60,6 +60,10 @@ impl<T: ScrollableComponent> Scrollable<T> {
 }
 
 impl<T: ScrollableComponent> Component for Scrollable<T> {
+    fn drawn_area(&self) -> Option<Rect> {
+        self.area
+    }
+
     fn draw(&mut self, state: &AppState, frame: &mut Frame, max_area: Rect) {
         let final_area = self.inner.get_area(state, max_area);
         self.area = Some(final_area);

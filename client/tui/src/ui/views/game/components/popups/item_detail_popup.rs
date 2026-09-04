@@ -25,18 +25,24 @@ const FOOTER_HEIGHT: u16 = 2;
 
 #[derive(Default)]
 pub struct ItemDetailPopup {
+    area: Option<Rect>,
     image_renderer: ImageRenderer,
 }
 
 impl ItemDetailPopup {
     pub fn new() -> Self {
         Self {
+            area: None,
             image_renderer: ImageRenderer::new(),
         }
     }
 }
 
 impl Component for ItemDetailPopup {
+    fn drawn_area(&self) -> Option<Rect> {
+        self.area
+    }
+
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
         let item_id = match state.game.overlays.get::<ItemDetailState>() {
             Some(overlay) => overlay.item_id.as_str(),
@@ -48,6 +54,7 @@ impl Component for ItemDetailPopup {
         };
 
         let popup_area = centered_rect_percent(area, POPUP_WIDTH_PERCENT, POPUP_HEIGHT_PERCENT);
+        self.area = Some(popup_area);
 
         frame.render_widget(Clear, popup_area);
 
@@ -111,7 +118,7 @@ impl Lifecycle for ItemDetailPopup {
 
         match key.code {
             KeyCode::Esc | KeyCode::Enter | KeyCode::Char('q') => {
-                state.game.overlays.close_top();
+                state.game.close_top_overlay();
                 EventFlow::Consumed
             }
             _ => EventFlow::Ignored,
