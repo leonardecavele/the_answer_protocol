@@ -1,6 +1,7 @@
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
 use crate::ui::components::{EventFlow, Lifecycle, ScrollableComponent};
+use crate::ui::layout::percent_of;
 use crate::ui::text::wrap_slice_to_lines;
 use crate::ui::theme::overlay_block;
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
@@ -30,8 +31,8 @@ impl TraceOverlay {
 
 impl ScrollableComponent for TraceOverlay {
     fn get_area(&self, _state: &AppState, max_area: Rect) -> Rect {
-        let overlay_width = max_area.width * OVERLAY_WIDTH_PERCENTAGE / 100;
-        let overlay_height = max_area.height * OVERLAY_HEIGHT_PERCENTAGE / 100;
+        let overlay_width = percent_of(max_area.width, OVERLAY_WIDTH_PERCENTAGE);
+        let overlay_height = percent_of(max_area.height, OVERLAY_HEIGHT_PERCENTAGE);
 
         Rect {
             x: max_area.x + (max_area.width - overlay_width) / 2,

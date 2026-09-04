@@ -1,6 +1,7 @@
 use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
 use crate::ui::components::{Component, EventFlow, Lifecycle, Scrollable, ScrollableHit};
+use crate::ui::layout::percent_of;
 
 use crate::states::game::{ChatState, GameFocus, HelpState, Overlay, OverlayKind};
 use crate::ui::views::game::components::{
@@ -244,8 +245,8 @@ impl Component for GameView {
         let mut right_width_constraint = Constraint::Percentage(40);
 
         if let Some(desired_width) = self.right_panel.get_desired_width(state, available_height) {
-            let max_width = (area.width * 40) / 100;
-            let min_width = (area.width * 20) / 100;
+            let max_width = percent_of(area.width, 40);
+            let min_width = percent_of(area.width, 20);
             let final_width = desired_width.clamp(min_width, max_width);
             right_width_constraint = Constraint::Length(final_width);
         }

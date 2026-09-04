@@ -1,4 +1,4 @@
-use crate::ui::layout::fit_area;
+use crate::ui::layout::{centered_rect, fit_area};
 use ratatui::Frame;
 use ratatui::layout::Rect;
 use ratatui_image::picker::Picker;
@@ -8,6 +8,7 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 
 const CELL_HEIGHT_OVER_WIDTH: f32 = 2.0;
+const MAX_IMAGE_CELLS: u32 = u16::MAX as u32;
 
 struct CachedImage {
     protocol: StatefulProtocol,
@@ -49,7 +50,25 @@ impl ImageRenderer {
         Some(cached.width as f32 / (cached.height as f32 / CELL_HEIGHT_OVER_WIDTH))
     }
 
+    fn bounded_area(area: Rect) -> Rect {
+        let cells = u32::from(area.width) * u32::from(area.height);
+
+        if cells <= MAX_IMAGE_CELLS {
+            return area;
+        }
+
+        let scale = (MAX_IMAGE_CELLS as f32 / cells as f32).sqrt();
+
+        centered_rect(
+            area,
+            (area.width as f32 * scale) as u16,
+            (area.height as f32 * scale) as u16,
+        )
+    }
+
     pub fn draw_fitted(&self, frame: &mut Frame, area: Rect, path: &str, resize: Resize) -> Rect {
+        let area = Self::bounded_area(area);
+
         let image_area = match self.aspect_ratio(path) {
             Some(aspect) => fit_area(area, aspect),
             None => area,

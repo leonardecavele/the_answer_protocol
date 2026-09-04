@@ -5,3 +5,6 @@ members = [
     "gui",
 ]
 resolver = "3"
+
+[profile.release]
+overflow-checks = true

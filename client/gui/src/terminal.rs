@@ -1,3 +1,4 @@
+use eframe::egui::{Ui, Vec2};
 use egui_ratatui::RataguiBackend;
 use ratatui::Frame;
 use ratatui::Terminal;
@@ -23,6 +24,14 @@ pub fn build() -> ClientTerminal {
 
     Terminal::new(RataguiBackend::new(TEXTURE_NAME, soft_backend))
         .expect("a software backend cannot fail to initialise")
+}
+
+pub fn drawable_size(terminal: &ClientTerminal, ui: &Ui) -> Vec2 {
+    let backend = &terminal.backend().soft_backend;
+    let cell = Vec2::new(backend.char_width as f32, backend.char_height as f32);
+    let limit = Vec2::splat(ui.ctx().input(|input| input.max_texture_side) as f32);
+
+    ui.available_size().clamp(cell, limit)
 }
 
 pub fn apply_background(frame: &mut Frame) {

@@ -53,7 +53,11 @@ impl eframe::App for GuiApp {
         egui::CentralPanel::default()
             .frame(egui::Frame::NONE)
             .show_inside(ui, |ui| {
-                ui.add(self.terminal.backend_mut());
+                let size = terminal::drawable_size(&self.terminal, ui);
+
+                ui.allocate_ui(size, |ui| {
+                    ui.add(self.terminal.backend_mut());
+                });
             });
     }
 }

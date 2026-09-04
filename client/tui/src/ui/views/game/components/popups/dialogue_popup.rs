@@ -2,6 +2,7 @@ use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
 use crate::states::game::DialogueState;
 use crate::ui::components::{EventFlow, Lifecycle, ScrollableComponent};
+use crate::ui::layout::percent_of;
 use crate::ui::text::wrap_str_to_lines;
 use crate::ui::theme::{overlay_block, popup_block};
 use api_client::ApiRequest;
@@ -53,7 +54,7 @@ impl ScrollableComponent for DialoguePopup {
         let total_needed_height = content_height + 4; // 2 borders, 2 padding
 
         let min_height = 6;
-        let max_height = max_area.height * MAX_HEIGHT_PERCENTAGE / 100;
+        let max_height = percent_of(max_area.height, MAX_HEIGHT_PERCENTAGE).max(min_height);
         let popup_height = total_needed_height.clamp(min_height, max_height);
 
         let y = max_area.y + max_area.height.saturating_sub(popup_height);

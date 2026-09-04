@@ -10,12 +10,17 @@ pub fn centered_rect(outer_area: Rect, width: u16, height: u16) -> Rect {
     }
 }
 
+/// Helper to compute a percentage of a terminal dimension without overflowing `u16`.
+pub fn percent_of(value: u16, percent: u16) -> u16 {
+    (u32::from(value) * u32::from(percent) / 100) as u16
+}
+
 /// Helper to compute a centered sub-area sized as a percentage of `outer_area`.
 pub fn centered_rect_percent(outer_area: Rect, width_percent: u16, height_percent: u16) -> Rect {
     centered_rect(
         outer_area,
-        outer_area.width * width_percent / 100,
-        outer_area.height * height_percent / 100,
+        percent_of(outer_area.width, width_percent),
+        percent_of(outer_area.height, height_percent),
     )
 }
 

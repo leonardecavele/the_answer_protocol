@@ -1,6 +1,7 @@
 use crate::states::app::AppState;
 use crate::states::game::{ChatChannel, ChatSender};
 use crate::ui::components::{Lifecycle, ScrollableComponent};
+use crate::ui::layout::percent_of;
 use crate::ui::text::wrap_str_to_lines;
 use crate::ui::theme::overlay_block;
 use ratatui::layout::Rect;
@@ -27,8 +28,8 @@ impl ChatOverlay {
 
 impl ScrollableComponent for ChatOverlay {
     fn get_area(&self, _state: &AppState, max_area: Rect) -> Rect {
-        let chat_width = (max_area.width * CHAT_WIDTH_PERCENTAGE) / 100;
-        let chat_height = (max_area.height * CHAT_HEIGHT_PERCENTAGE) / 100;
+        let chat_width = percent_of(max_area.width, CHAT_WIDTH_PERCENTAGE);
+        let chat_height = percent_of(max_area.height, CHAT_HEIGHT_PERCENTAGE);
         Rect {
             x: max_area.x + max_area.width.saturating_sub(chat_width),
             y: max_area.y + max_area.height.saturating_sub(chat_height),
