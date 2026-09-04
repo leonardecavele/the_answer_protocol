@@ -1,6 +1,6 @@
 mod app;
 mod input;
-mod terminal;
+mod screen;
 
 use crate::app::GuiApp;
 use tokio::runtime::Handle;

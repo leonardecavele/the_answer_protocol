@@ -1,6 +1,5 @@
 use crate::input;
-use crate::terminal;
-use crate::terminal::{ClientTerminal, Grid};
+use crate::screen::{self, Grid, Screen};
 use eframe::egui;
 use tokio::runtime::Handle;
 use tui::app::App;
@@ -11,7 +10,7 @@ const DEFAULT_PORT: &str = "38800";
 
 pub struct GuiApp {
     app: App,
-    terminal: ClientTerminal,
+    screen: Screen,
     runtime: Handle,
     grid: Option<Grid>,
 }
@@ -20,7 +19,7 @@ impl GuiApp {
     pub fn new(runtime: Handle) -> Self {
         Self {
             app: App::new(DEFAULT_IP.to_string(), DEFAULT_PORT.to_string()),
-            terminal: terminal::build(),
+            screen: screen::build(),
             runtime,
             grid: None,
         }
@@ -31,7 +30,7 @@ impl eframe::App for GuiApp {
     fn logic(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         let _guard = self.runtime.enter();
 
-        for event in input::terminal_events(ctx, self.grid.as_ref()) {
+        for event in input::to_crossterm_events(ctx, self.grid.as_ref()) {
             self.app.update(ApplicationEvent::Terminal(event));
         }
 
@@ -43,9 +42,9 @@ impl eframe::App for GuiApp {
             ctx.send_viewport_cmd(egui::ViewportCommand::Close);
         }
 
-        let _ = self.terminal.draw(|frame| {
+        let _ = self.screen.draw(|frame| {
             self.app.draw(frame);
-            terminal::apply_background(frame);
+            screen::apply_background(frame);
         });
 
         ctx.request_repaint_after(TICK_RATE);
@@ -55,11 +54,11 @@ impl eframe::App for GuiApp {
         egui::CentralPanel::default()
             .frame(egui::Frame::NONE)
             .show_inside(ui, |ui| {
-                let size = terminal::drawable_size(&self.terminal, ui);
+                let size = screen::drawable_size(&self.screen, ui);
 
-                let response = ui.allocate_ui(size, |ui| ui.add(self.terminal.backend_mut()));
+                let response = ui.allocate_ui(size, |ui| ui.add(self.screen.backend_mut()));
 
-                self.grid = Some(terminal::grid(&self.terminal, response.inner.rect));
+                self.grid = Some(Grid::new(&self.screen, response.inner.rect));
             });
     }
 }

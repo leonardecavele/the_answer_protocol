@@ -1,11 +1,11 @@
-use crate::terminal::Grid;
+use crate::screen::Grid;
 use crossterm::event::{
     Event as CrosstermEvent, KeyCode, KeyEvent, KeyModifiers, MouseButton, MouseEvent,
     MouseEventKind,
 };
 use eframe::egui::{Context, Event, Key, Modifiers, PointerButton, Pos2};
 
-pub fn terminal_events(ctx: &Context, grid: Option<&Grid>) -> Vec<CrosstermEvent> {
+pub fn to_crossterm_events(ctx: &Context, grid: Option<&Grid>) -> Vec<CrosstermEvent> {
     let mut events = Vec::new();
 
     ctx.input(|input| {
