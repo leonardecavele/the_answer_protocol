@@ -3,6 +3,8 @@ use crate::states::app::AppState;
 use crate::ui::components::{
     Component, EventFlow, Lifecycle, NotificationsOverlay, Scrollable, TraceOverlay,
 };
+use crate::ui::layout::{MIN_COLUMNS, MIN_ROWS, interface_area};
+use crate::ui::theme::too_small_hint;
 use crate::ui::views::login::LoginView;
 use crossterm::event::Event as CrosstermEvent;
 use ratatui::Frame;
@@ -31,6 +33,11 @@ impl ViewManager {
 
 impl Component for ViewManager {
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
+        let Some(area) = interface_area(area) else {
+            frame.render_widget(too_small_hint(MIN_COLUMNS, MIN_ROWS), area);
+            return;
+        };
+
         self.active_view.draw(state, frame, area);
 
         if state.ui.show_trace_log {

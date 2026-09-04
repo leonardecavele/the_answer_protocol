@@ -1,5 +1,23 @@
 use ratatui::layout::Rect;
 
+pub const MIN_COLUMNS: u16 = 80;
+pub const MIN_ROWS: u16 = 24;
+pub const MAX_COLUMNS: u16 = 200;
+pub const MAX_ROWS: u16 = 60;
+
+/// Helper to compute the area the interface may use, or `None` when it would be too cramped.
+pub fn interface_area(outer_area: Rect) -> Option<Rect> {
+    if outer_area.width < MIN_COLUMNS || outer_area.height < MIN_ROWS {
+        return None;
+    }
+
+    Some(centered_rect(
+        outer_area,
+        outer_area.width.min(MAX_COLUMNS),
+        outer_area.height.min(MAX_ROWS),
+    ))
+}
+
 /// Helper to compute a sub-area of the given size, centered inside `outer_area`.
 pub fn centered_rect(outer_area: Rect, width: u16, height: u16) -> Rect {
     Rect {

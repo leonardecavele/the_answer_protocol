@@ -5,9 +5,6 @@ use tokio::runtime::Handle;
 use tui::app::App;
 use tui::events::{ApplicationEvent, TICK_RATE};
 
-const DEFAULT_IP: &str = "127.0.0.1";
-const DEFAULT_PORT: &str = "38800";
-
 pub struct GuiApp {
     app: App,
     screen: Screen,
@@ -16,10 +13,10 @@ pub struct GuiApp {
 }
 
 impl GuiApp {
-    pub fn new(runtime: Handle) -> Self {
+    pub fn new(runtime: Handle, screen: Screen, ip: String, port: String) -> Self {
         Self {
-            app: App::new(DEFAULT_IP.to_string(), DEFAULT_PORT.to_string()),
-            screen: screen::build(),
+            app: App::new(ip, port),
+            screen,
             runtime,
             grid: None,
         }

@@ -6,3 +6,5 @@ mod image;
 mod layout;
 mod text;
 mod theme;
+
+pub use layout::{MIN_COLUMNS, MIN_ROWS};

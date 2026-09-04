@@ -7,18 +7,11 @@ use crossterm::terminal::{
 use ratatui::Terminal;
 use ratatui::backend::CrosstermBackend;
 use std::{io, panic};
-use tracing_subscriber::EnvFilter;
 use tui::app::App;
+use tui::cli::Cli;
+use tui::logging;
 
-#[derive(Parser, Debug)]
-#[command(author, version, about, long_about = None)]
-struct Cli {
-    #[arg(long, default_value = "127.0.0.1")]
-    ip: String,
-
-    #[arg(long, default_value = "38800")]
-    port: String,
-}
+const LOG_FILE: &str = "tui.log";
 
 fn terminal_setup() -> io::Result<Terminal<CrosstermBackend<io::Stdout>>> {
     enable_raw_mode()?;
@@ -48,27 +41,10 @@ fn setup_panic_hook() {
     }));
 }
 
-fn setup_logging() -> Result<(), Box<dyn std::error::Error>> {
-    let file = std::fs::OpenOptions::new()
-        .create(true)
-        .append(true)
-        .open("app.log")?;
-
-    tracing_subscriber::fmt()
-        .with_env_filter(
-            EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("debug")),
-        )
-        .with_writer(file)
-        .with_ansi(false)
-        .init();
-
-    Ok(())
-}
-
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     setup_panic_hook();
-    setup_logging()?;
+    logging::setup(LOG_FILE)?;
 
     let cli = Cli::parse();
 

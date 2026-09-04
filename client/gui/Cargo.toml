@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 tui = { path = "../tui" }
+clap = "4.6.1"
 crossterm = "0.29.0"
 eframe = "~0.34.0"
 egui_ratatui = "2.2.0"

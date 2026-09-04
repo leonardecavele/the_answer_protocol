@@ -7,9 +7,10 @@ use soft_ratatui::embedded_graphics_unicodefonts::{mono_9x18_atlas, mono_9x18_bo
 use soft_ratatui::{EmbeddedGraphics, SoftBackend};
 
 const TEXTURE_NAME: &str = "client_screen";
-const INITIAL_COLUMNS: u16 = 120;
-const INITIAL_ROWS: u16 = 40;
 const BACKGROUND: Color = Color::Rgb(0x00, 0x00, 0x00);
+
+pub const INITIAL_COLUMNS: u16 = 120;
+pub const INITIAL_ROWS: u16 = 40;
 
 pub type Screen = Terminal<RataguiBackend<EmbeddedGraphics>>;
 
@@ -55,6 +56,10 @@ pub fn build() -> Screen {
 
     Terminal::new(RataguiBackend::new(TEXTURE_NAME, soft_backend))
         .expect("a software backend cannot fail to initialise")
+}
+
+pub fn grid_size(screen: &Screen, columns: u16, rows: u16) -> egui::Vec2 {
+    cell_size(screen) * egui::Vec2::new(columns as f32, rows as f32)
 }
 
 pub fn drawable_size(screen: &Screen, ui: &egui::Ui) -> egui::Vec2 {

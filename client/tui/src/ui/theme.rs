@@ -68,3 +68,12 @@ pub fn close_hint<'a>() -> Paragraph<'a> {
 pub fn help_hint<'a>() -> Line<'a> {
     Line::from(" Press Ctrl + H to open help ").alignment(Alignment::Center)
 }
+
+pub fn too_small_hint<'a>(columns: u16, rows: u16) -> Paragraph<'a> {
+    Paragraph::new(format!(
+        "This window is too small.\nEnlarge it to at least {} x {} characters.",
+        columns, rows
+    ))
+    .alignment(Alignment::Center)
+    .style(Style::default().fg(Color::Yellow))
+}
