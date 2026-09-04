@@ -2166,6 +2166,7 @@ dependencies = [
 name = "gui"
 version = "0.1.0"
 dependencies = [
+ "clap",
  "crossterm",
  "eframe",
  "egui_ratatui",
