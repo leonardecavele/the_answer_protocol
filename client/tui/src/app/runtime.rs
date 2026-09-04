@@ -11,6 +11,7 @@ use api_client::ApiRequest;
 use api_client::commands::{
     InventoryCommand, LookCommand, QuestsCommand, StatusCommand, WhoCommand,
 };
+use ratatui::Frame;
 use ratatui::Terminal;
 use ratatui::backend::CrosstermBackend;
 use std::io;
@@ -56,6 +57,11 @@ impl App {
 
     pub fn try_next_event(&mut self) -> Result<ApplicationEvent, ApplicationError> {
         self.event_broker.try_next_event()
+    }
+
+    pub fn draw(&mut self, frame: &mut Frame) {
+        let area = frame.area();
+        self.view_manager.draw(&self.state, frame, area);
     }
 
     pub(super) fn send(&mut self, request: ApiRequest) {
@@ -123,10 +129,7 @@ impl App {
         terminal: &mut Terminal<CrosstermBackend<io::Stdout>>,
     ) -> Result<(), ApplicationError> {
         if !self.state.should_quit {
-            terminal.draw(|frame| {
-                let area = frame.area();
-                self.view_manager.draw(&self.state, frame, area);
-            })?;
+            terminal.draw(|frame| self.draw(frame))?;
         }
 
         Ok(())
