@@ -1,19 +1,30 @@
-use crossterm::event::{Event as CrosstermEvent, KeyCode, KeyEvent, KeyModifiers};
-use eframe::egui::{Context, Event, Key, Modifiers};
+use crate::terminal::Grid;
+use crossterm::event::{
+    Event as CrosstermEvent, KeyCode, KeyEvent, KeyModifiers, MouseButton, MouseEvent,
+    MouseEventKind,
+};
+use eframe::egui::{Context, Event, Key, Modifiers, PointerButton, Pos2};
 
-pub fn terminal_events(ctx: &Context) -> Vec<CrosstermEvent> {
+pub fn terminal_events(ctx: &Context, grid: Option<&Grid>) -> Vec<CrosstermEvent> {
     let mut events = Vec::new();
 
     ctx.input(|input| {
+        let pointer = input.pointer.latest_pos();
+
         for event in &input.events {
-            push_translated(event, &mut events);
+            push_translated(event, grid, pointer, &mut events);
         }
     });
 
     events
 }
 
-fn push_translated(event: &Event, events: &mut Vec<CrosstermEvent>) {
+fn push_translated(
+    event: &Event,
+    grid: Option<&Grid>,
+    pointer: Option<Pos2>,
+    events: &mut Vec<CrosstermEvent>,
+) {
     match event {
         Event::Text(text) => {
             for character in text.chars() {
@@ -31,6 +42,32 @@ fn push_translated(event: &Event, events: &mut Vec<CrosstermEvent>) {
             }
         }
         Event::Copy => events.push(key_event(KeyCode::Char('c'), KeyModifiers::CONTROL)),
+        Event::PointerButton {
+            pos,
+            button: PointerButton::Primary,
+            pressed: true,
+            modifiers,
+        } => {
+            if let Some(cell) = grid.and_then(|grid| grid.cell_at(*pos)) {
+                let kind = MouseEventKind::Down(MouseButton::Left);
+                events.push(mouse_event(kind, cell, *modifiers));
+            }
+        }
+        Event::MouseWheel {
+            delta, modifiers, ..
+        } if !modifiers.ctrl && delta.y != 0.0 => {
+            let cell = pointer.and_then(|position| grid.and_then(|grid| grid.cell_at(position)));
+
+            if let Some(cell) = cell {
+                let kind = if delta.y > 0.0 {
+                    MouseEventKind::ScrollUp
+                } else {
+                    MouseEventKind::ScrollDown
+                };
+
+                events.push(mouse_event(kind, cell, *modifiers));
+            }
+        }
         _ => {}
     }
 }
@@ -85,4 +122,13 @@ fn key_modifiers(modifiers: Modifiers) -> KeyModifiers {
 
 fn key_event(code: KeyCode, modifiers: KeyModifiers) -> CrosstermEvent {
     CrosstermEvent::Key(KeyEvent::new(code, modifiers))
+}
+
+fn mouse_event(kind: MouseEventKind, cell: (u16, u16), modifiers: Modifiers) -> CrosstermEvent {
+    CrosstermEvent::Mouse(MouseEvent {
+        kind,
+        column: cell.0,
+        row: cell.1,
+        modifiers: key_modifiers(modifiers),
+    })
 }

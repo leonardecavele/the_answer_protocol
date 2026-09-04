@@ -1,6 +1,6 @@
 use crate::input;
 use crate::terminal;
-use crate::terminal::ClientTerminal;
+use crate::terminal::{ClientTerminal, Grid};
 use eframe::egui;
 use tokio::runtime::Handle;
 use tui::app::App;
@@ -13,6 +13,7 @@ pub struct GuiApp {
     app: App,
     terminal: ClientTerminal,
     runtime: Handle,
+    grid: Option<Grid>,
 }
 
 impl GuiApp {
@@ -21,6 +22,7 @@ impl GuiApp {
             app: App::new(DEFAULT_IP.to_string(), DEFAULT_PORT.to_string()),
             terminal: terminal::build(),
             runtime,
+            grid: None,
         }
     }
 }
@@ -29,7 +31,7 @@ impl eframe::App for GuiApp {
     fn logic(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         let _guard = self.runtime.enter();
 
-        for event in input::terminal_events(ctx) {
+        for event in input::terminal_events(ctx, self.grid.as_ref()) {
             self.app.update(ApplicationEvent::Terminal(event));
         }
 
@@ -55,9 +57,9 @@ impl eframe::App for GuiApp {
             .show_inside(ui, |ui| {
                 let size = terminal::drawable_size(&self.terminal, ui);
 
-                ui.allocate_ui(size, |ui| {
-                    ui.add(self.terminal.backend_mut());
-                });
+                let response = ui.allocate_ui(size, |ui| ui.add(self.terminal.backend_mut()));
+
+                self.grid = Some(terminal::grid(&self.terminal, response.inner.rect));
             });
     }
 }

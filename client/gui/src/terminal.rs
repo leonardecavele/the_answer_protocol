@@ -1,4 +1,4 @@
-use eframe::egui::{Ui, Vec2};
+use eframe::egui::{Pos2, Rect, Ui, Vec2};
 use egui_ratatui::RataguiBackend;
 use ratatui::Frame;
 use ratatui::Terminal;
@@ -12,6 +12,39 @@ const INITIAL_ROWS: u16 = 40;
 const BACKGROUND: Color = Color::Rgb(0x00, 0x00, 0x00);
 
 pub type ClientTerminal = Terminal<RataguiBackend<EmbeddedGraphics>>;
+
+pub struct Grid {
+    area: Rect,
+    cell: Vec2,
+}
+
+impl Grid {
+    pub fn cell_at(&self, position: Pos2) -> Option<(u16, u16)> {
+        let offset = position - self.area.min;
+
+        if offset.x < 0.0
+            || offset.y < 0.0
+            || offset.x >= self.area.width()
+            || offset.y >= self.area.height()
+        {
+            return None;
+        }
+
+        Some((
+            (offset.x / self.cell.x) as u16,
+            (offset.y / self.cell.y) as u16,
+        ))
+    }
+}
+
+pub fn grid(terminal: &ClientTerminal, area: Rect) -> Grid {
+    let backend = &terminal.backend().soft_backend;
+
+    Grid {
+        area,
+        cell: Vec2::new(backend.char_width as f32, backend.char_height as f32),
+    }
+}
 
 pub fn build() -> ClientTerminal {
     let soft_backend = SoftBackend::<EmbeddedGraphics>::new(
