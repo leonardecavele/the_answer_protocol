@@ -7,12 +7,12 @@ use crate::ui::layout::percent_of;
 
 use crate::states::game::{
     ChatState, GameFocus, HelpState, ItemActionsState, ItemLocation, NpcActionsState, Overlay,
-    OverlayKind, QuestDetailState,
+    OverlayKind, PlayerActionsState, QuestDetailState,
 };
 use crate::ui::views::game::components::{
     ActionHistoryPanel, ChatOverlay, DialoguePopup, Footer, FooterHit, Header, HelpOverlay,
     InventoryPanel, InventoryPanelHit, ItemActionsPopup, ItemDetailPopup, LeftPanel, LeftPanelHit,
-    NpcActionsPopup, QuestDetailPopup, RightPanel, RightPanelHit,
+    NpcActionsPopup, PlayerActionsPopup, QuestDetailPopup, RightPanel, RightPanelHit,
 };
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
 use ratatui::Frame;
@@ -28,6 +28,7 @@ pub struct GameView {
     right_panel: RightPanel,
     chat: Scrollable<ChatOverlay>,
     npc_actions: NpcActionsPopup,
+    player_actions: PlayerActionsPopup,
     item_actions: ItemActionsPopup,
     item_detail: ItemDetailPopup,
     quest_detail: QuestDetailPopup,
@@ -53,6 +54,7 @@ impl GameView {
             right_panel: RightPanel::new(),
             chat: Scrollable::new(ChatOverlay::new()),
             npc_actions: NpcActionsPopup::new(),
+            player_actions: PlayerActionsPopup::new(),
             item_actions: ItemActionsPopup::new(),
             item_detail: ItemDetailPopup::new(),
             quest_detail: QuestDetailPopup::new(),
@@ -67,6 +69,7 @@ impl GameView {
             OverlayKind::Help => &mut self.help,
             OverlayKind::Chat => &mut self.chat,
             OverlayKind::NpcActions => &mut self.npc_actions,
+            OverlayKind::PlayerActions => &mut self.player_actions,
             OverlayKind::ItemActions => &mut self.item_actions,
             OverlayKind::ItemDetail => &mut self.item_detail,
             OverlayKind::QuestDetail => &mut self.quest_detail,
@@ -209,6 +212,7 @@ impl GameView {
             let inventory_hit = self.inventory.hit(mouse.column, mouse.row);
 
             match left_hit {
+                LeftPanelHit::Player(_) => state.game.set_focus(GameFocus::PlayerList),
                 LeftPanelHit::Npc(_) => state.game.set_focus(GameFocus::NpcList),
                 LeftPanelHit::Item(_) => state.game.set_focus(GameFocus::RoomItemsList),
                 LeftPanelHit::Quest(_) => state.game.set_focus(GameFocus::QuestList),
@@ -245,6 +249,23 @@ impl GameView {
 
         if let Some(room) = state.game.room.as_mut() {
             match left_hit {
+                LeftPanelHit::Player(index) => {
+                    if room.players.is_selected(index) {
+                        let can_invite = state
+                            .game
+                            .group
+                            .is_leader(state.game.player.name.as_deref());
+
+                        requested = room.players.selected().map(|player_name| {
+                            Overlay::PlayerActions(PlayerActionsState::new(
+                                player_name.clone(),
+                                can_invite,
+                            ))
+                        });
+                    } else {
+                        room.players.select_index(index);
+                    }
+                }
                 LeftPanelHit::Npc(index) => {
                     if room.npcs.is_selected(index) && dialogue_ready {
                         requested = room.npcs.selected().map(|npc| {

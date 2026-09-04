@@ -4,6 +4,7 @@ mod help;
 mod item_actions;
 mod item_detail;
 mod npc_actions;
+mod player_actions;
 mod quest_detail;
 
 pub use chat::ChatState;
@@ -12,6 +13,7 @@ pub use help::HelpState;
 pub use item_actions::{ItemActionsState, ItemLocation};
 pub use item_detail::ItemDetailState;
 pub use npc_actions::{NpcAction, NpcActionsState};
+pub use player_actions::{PlayerAction, PlayerActionsState};
 pub use quest_detail::QuestDetailState;
 
 use std::mem;
@@ -24,6 +26,7 @@ pub enum Overlay {
     ItemActions(ItemActionsState),
     ItemDetail(ItemDetailState),
     QuestDetail(QuestDetailState),
+    PlayerActions(PlayerActionsState),
     Dialogue(DialogueState),
 }
 
@@ -35,6 +38,7 @@ pub enum OverlayKind {
     ItemActions,
     ItemDetail,
     QuestDetail,
+    PlayerActions,
     Dialogue,
 }
 
@@ -57,6 +61,7 @@ impl Overlay {
             Overlay::ItemActions(_) => OverlayKind::ItemActions,
             Overlay::ItemDetail(_) => OverlayKind::ItemDetail,
             Overlay::QuestDetail(_) => OverlayKind::QuestDetail,
+            Overlay::PlayerActions(_) => OverlayKind::PlayerActions,
             Overlay::Dialogue(_) => OverlayKind::Dialogue,
         }
     }

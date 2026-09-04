@@ -4,20 +4,22 @@ use crate::events::ApplicationEvent;
 use crate::states::app::AppState;
 use crate::states::game::GameFocus;
 use crate::states::game::{
-    ItemActionsState, ItemLocation, NpcActionsState, Overlay, QuestDetailState, Room,
+    ItemActionsState, ItemLocation, NpcActionsState, Overlay, PlayerActionsState, QuestDetailState,
+    Room,
 };
 use crate::ui::components::{CommandButton, Component, EventFlow, Lifecycle, is_mouse_in_rect};
-use crate::ui::theme::{default_block, panel_block, quest_status, selection_style};
+use crate::ui::theme::{panel_block, quest_status, selection_style};
 use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect},
-    style::{Color, Modifier, Style},
+    style::Color,
     text::Span,
     widgets::{List, ListItem},
 };
 use tokio::sync::mpsc::Sender;
 
 pub enum LeftPanelHit {
+    Player(usize),
     Npc(usize),
     Item(usize),
     Quest(usize),
@@ -25,6 +27,7 @@ pub enum LeftPanelHit {
 }
 
 pub struct LeftPanel {
+    players_area: Option<Rect>,
     npcs_area: Option<Rect>,
     items_area: Option<Rect>,
     quests_area: Option<Rect>,
@@ -40,6 +43,7 @@ impl Default for LeftPanel {
 impl LeftPanel {
     pub fn new() -> Self {
         Self {
+            players_area: None,
             npcs_area: None,
             items_area: None,
             quests_area: None,
@@ -56,6 +60,12 @@ impl LeftPanel {
     }
 
     pub fn hit(&self, column: u16, row: u16) -> LeftPanelHit {
+        if let Some(area) = self.players_area
+            && let Some(index) = Self::hit_entry(area, column, row)
+        {
+            return LeftPanelHit::Player(index);
+        }
+
         if let Some(area) = self.npcs_area
             && let Some(index) = Self::hit_entry(area, column, row)
         {
@@ -77,21 +87,29 @@ impl LeftPanel {
         LeftPanelHit::None
     }
 
-    fn draw_players(state: &AppState, room: &Room, frame: &mut Frame, area: Rect) {
+    fn draw_players(&mut self, state: &AppState, room: &Room, frame: &mut Frame, area: Rect) {
+        let focused = state.game.focus() == GameFocus::PlayerList;
+
         let items: Vec<ListItem> = room
             .players
             .iter()
-            .map(|name| {
-                let mut style = Style::default();
-                if Some(name) == state.game.player.name.as_ref() {
-                    style = style.fg(Color::Yellow).add_modifier(Modifier::BOLD);
-                }
+            .enumerate()
+            .map(|(index, name)| {
+                let color = if Some(name) == state.game.player.name.as_ref() {
+                    Color::Yellow
+                } else {
+                    Color::Reset
+                };
+
+                let style = selection_style(color, focused && room.players.is_selected(index));
+
                 ListItem::new(Span::styled(format!("• {}", name), style))
             })
             .collect();
 
-        let list = List::new(items).block(default_block().title(" Room Players "));
+        let list = List::new(items).block(panel_block(" Room Players ", focused));
         frame.render_widget(list, area);
+        self.players_area = Some(area);
     }
 
     fn draw_npcs(&mut self, state: &AppState, room: &Room, frame: &mut Frame, area: Rect) {
@@ -187,7 +205,7 @@ impl Component for LeftPanel {
             ])
             .split(area);
 
-        Self::draw_players(state, room, frame, chunks[0]);
+        self.draw_players(state, room, frame, chunks[0]);
         self.draw_npcs(state, room, frame, chunks[1]);
         self.draw_items(state, room, frame, chunks[2]);
         self.draw_quests(state, frame, chunks[3]);
@@ -216,6 +234,44 @@ impl Lifecycle for LeftPanel {
         };
 
         match state.game.focus() {
+            GameFocus::PlayerList => match key.code {
+                crossterm::event::KeyCode::Up => {
+                    if let Some(room) = &mut state.game.room {
+                        room.players.move_selection(Step::Previous);
+                    }
+                    EventFlow::Consumed
+                }
+                crossterm::event::KeyCode::Down => {
+                    if let Some(room) = &mut state.game.room {
+                        room.players.move_selection(Step::Next);
+                    }
+                    EventFlow::Consumed
+                }
+                crossterm::event::KeyCode::Enter => {
+                    let selected = state
+                        .game
+                        .room
+                        .as_ref()
+                        .and_then(|room| room.players.selected())
+                        .cloned();
+
+                    match selected {
+                        Some(player_name) => {
+                            let can_invite = state
+                                .game
+                                .group
+                                .is_leader(state.game.player.name.as_deref());
+
+                            state.game.overlays.open(Overlay::PlayerActions(
+                                PlayerActionsState::new(player_name, can_invite),
+                            ));
+                            EventFlow::Consumed
+                        }
+                        None => EventFlow::Ignored,
+                    }
+                }
+                _ => EventFlow::Ignored,
+            },
             GameFocus::NpcList => match key.code {
                 crossterm::event::KeyCode::Up => {
                     if let Some(room) = &mut state.game.room {

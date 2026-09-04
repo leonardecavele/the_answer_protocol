@@ -92,7 +92,10 @@ impl GameState {
 
         match kind {
             OverlayKind::Dialogue => self.close_dialogue(),
-            OverlayKind::NpcActions | OverlayKind::ItemActions | OverlayKind::QuestDetail => {
+            OverlayKind::NpcActions
+            | OverlayKind::ItemActions
+            | OverlayKind::QuestDetail
+            | OverlayKind::PlayerActions => {
                 self.overlays.close_top();
                 self.clear_selections();
             }

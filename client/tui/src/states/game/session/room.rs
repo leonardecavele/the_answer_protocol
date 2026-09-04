@@ -40,7 +40,7 @@ pub struct Room {
     pub name: String,
     pub description: String,
     pub exits: Exits,
-    pub players: Vec<String>,
+    pub players: SelectableList<String>,
     pub npcs: SelectableList<Npc>,
     pub items: SelectableList<Item>,
 }

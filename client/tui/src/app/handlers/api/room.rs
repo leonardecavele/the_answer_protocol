@@ -1,4 +1,5 @@
 use crate::app::runtime::App;
+use crate::collections::SelectableList;
 use crate::states::game::{Item, Npc, Room};
 use api_client::ApiRequest;
 use api_client::commands::{LookCommand, LookResponse, StatusCommand};
@@ -17,7 +18,7 @@ impl App {
             name: response.room.name,
             description: response.room.description,
             exits: response.room.exits.into(),
-            players,
+            players: SelectableList::with_items(players),
             npcs: response
                 .npcs
                 .into_iter()
