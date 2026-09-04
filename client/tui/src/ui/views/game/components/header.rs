@@ -14,7 +14,11 @@ use ratatui::{
 use tokio::sync::mpsc::Sender;
 
 pub struct Header {
-    buttons: [CommandButton; 3],
+    who: CommandButton,
+    status: CommandButton,
+    quit: CommandButton,
+    group_create: CommandButton,
+    group_leave: CommandButton,
 }
 
 impl Default for Header {
@@ -26,19 +30,29 @@ impl Default for Header {
 impl Header {
     pub fn new() -> Self {
         Self {
-            buttons: [
-                CommandButton::new("WHO", "WHO"),
-                CommandButton::new("STATUS", "STATUS"),
-                CommandButton::new("QUIT", "QUIT"),
-            ],
+            who: CommandButton::new("WHO", "WHO"),
+            status: CommandButton::new("STATUS", "STATUS"),
+            quit: CommandButton::new("QUIT", "QUIT"),
+            group_create: CommandButton::new("CREATE GROUP", "GROUP CREATE"),
+            group_leave: CommandButton::new("LEAVE GROUP", "GROUP LEAVE"),
         }
     }
 
-    fn draw_buttons(&mut self, frame: &mut Frame, area: Rect) {
+    fn draw_buttons(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
+        let group = if state.game.group.is_in_group() {
+            self.group_create.hide();
+            &mut self.group_leave
+        } else {
+            self.group_leave.hide();
+            &mut self.group_create
+        };
+
+        let buttons = [&mut self.who, &mut self.status, &mut self.quit, group];
+
         let mut x = area.x + 1;
         let y = area.bottom().saturating_sub(1);
 
-        for button in &mut self.buttons {
+        for button in buttons {
             let width = button.width();
 
             if x + width >= area.right() {
@@ -155,7 +169,7 @@ impl Component for Header {
 
         frame.render_widget(paragraph, area);
 
-        self.draw_buttons(frame, area);
+        self.draw_buttons(state, frame, area);
     }
 }
 
@@ -174,8 +188,15 @@ impl Lifecycle for Header {
             return EventFlow::Ignored;
         }
 
-        let Some(command) = self
-            .buttons
+        let buttons = [
+            &self.who,
+            &self.status,
+            &self.quit,
+            &self.group_create,
+            &self.group_leave,
+        ];
+
+        let Some(command) = buttons
             .iter()
             .find_map(|button| button.hit(mouse.column, mouse.row))
         else {
