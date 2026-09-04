@@ -3,7 +3,10 @@ use crate::states::app::AppState;
 use crate::ui::components::{Component, EventFlow, Lifecycle, Scrollable, ScrollableHit};
 use crate::ui::layout::percent_of;
 
-use crate::states::game::{ChatState, GameFocus, HelpState, Overlay, OverlayKind};
+use crate::states::game::{
+    ChatState, GameFocus, HelpState, ItemActionsState, ItemLocation, NpcActionsState, Overlay,
+    OverlayKind, QuestDetailState,
+};
 use crate::ui::views::game::components::{
     ActionHistoryPanel, ChatOverlay, DialoguePopup, Footer, FooterHit, Header, HelpOverlay,
     InventoryPanel, InventoryPanelHit, ItemActionsPopup, ItemDetailPopup, LeftPanel, LeftPanelHit,
@@ -160,11 +163,11 @@ impl GameView {
     fn handle_focus_keys(state: &mut AppState, event: &CrosstermEvent) -> EventFlow {
         if let CrosstermEvent::Key(key) = event {
             if key.code == KeyCode::Tab {
-                state.game.focus.next();
+                state.game.focus_next();
                 return EventFlow::Consumed;
             }
             if key.code == KeyCode::BackTab {
-                state.game.focus.prev();
+                state.game.focus_prev();
                 return EventFlow::Consumed;
             }
         }
@@ -177,55 +180,97 @@ impl GameView {
             && mouse.kind
                 == crossterm::event::MouseEventKind::Down(crossterm::event::MouseButton::Left)
         {
-            if let Some(room) = state.game.room.as_mut() {
-                match self.left_panel.hit(mouse.column, mouse.row) {
-                    LeftPanelHit::Npc(index) => {
-                        state.game.focus = GameFocus::NpcList;
-                        room.npcs.select_index(index)
+            let left_hit = self.left_panel.hit(mouse.column, mouse.row);
+            let inventory_hit = self.inventory.hit(mouse.column, mouse.row);
+
+            match left_hit {
+                LeftPanelHit::Npc(_) => state.game.set_focus(GameFocus::NpcList),
+                LeftPanelHit::Item(_) => state.game.set_focus(GameFocus::RoomItemsList),
+                LeftPanelHit::Quest(_) => state.game.set_focus(GameFocus::QuestList),
+                LeftPanelHit::None => {}
+            }
+
+            if let ScrollableHit::Box = self.action_history.hit(mouse.column, mouse.row) {
+                state.game.set_focus(GameFocus::ActionHistory);
+            }
+
+            if let InventoryPanelHit::Item(_) = inventory_hit {
+                state.game.set_focus(GameFocus::InventoryGrid);
+            }
+
+            if let RightPanelHit::Image = self.right_panel.hit(mouse.column, mouse.row) {
+                state.game.set_focus(GameFocus::RightPanel);
+            }
+
+            if let FooterHit::CommandInput = self.footer.hit(mouse.column, mouse.row) {
+                state.game.set_focus(GameFocus::Input);
+            }
+
+            Self::request_overlay(state, left_hit, inventory_hit);
+        }
+    }
+
+    fn request_overlay(
+        state: &mut AppState,
+        left_hit: LeftPanelHit,
+        inventory_hit: InventoryPanelHit,
+    ) {
+        let dialogue_ready = state.game.dialogue_cooldown_elapsed();
+        let mut requested = None;
+
+        if let Some(room) = state.game.room.as_mut() {
+            match left_hit {
+                LeftPanelHit::Npc(index) => {
+                    if room.npcs.is_selected(index) && dialogue_ready {
+                        requested = room.npcs.selected().map(|npc| {
+                            Overlay::NpcActions(NpcActionsState::new(npc.id.clone(), &npc.kind))
+                        });
+                    } else {
+                        room.npcs.select_index(index);
                     }
-                    LeftPanelHit::Item(index) => {
-                        state.game.focus = GameFocus::RoomItemsList;
-                        room.items.select_index(index)
-                    }
-                    LeftPanelHit::Quest(index) => {
-                        state.game.focus = GameFocus::QuestList;
-                        state.game.player.quests.select_index(index)
-                    }
-                    LeftPanelHit::None => {}
                 }
-            }
-
-            match self.action_history.hit(mouse.column, mouse.row) {
-                ScrollableHit::Box => {
-                    state.game.focus = GameFocus::ActionHistory;
-                }
-                ScrollableHit::None => {}
-            }
-
-            match self.inventory.hit(mouse.column, mouse.row) {
-                InventoryPanelHit::Item(index_opt) => {
-                    state.game.focus = GameFocus::InventoryGrid;
-
-                    if let Some(index) = index_opt {
-                        state.game.player.inventory.select_index(index);
+                LeftPanelHit::Item(index) => {
+                    if room.items.is_selected(index) {
+                        requested = room.items.selected().map(|item| {
+                            Overlay::ItemActions(ItemActionsState::new(
+                                item.id.clone(),
+                                ItemLocation::Room,
+                            ))
+                        });
+                    } else {
+                        room.items.select_index(index);
                     }
                 }
-                InventoryPanelHit::None => {}
-            }
-
-            match self.right_panel.hit(mouse.column, mouse.row) {
-                RightPanelHit::Image => {
-                    state.game.focus = GameFocus::RightPanel;
+                LeftPanelHit::Quest(index) => {
+                    if state.game.player.quests.is_selected(index) {
+                        requested = state.game.player.quests.selected().map(|quest| {
+                            Overlay::QuestDetail(QuestDetailState::new(quest.name.clone()))
+                        });
+                    } else {
+                        state.game.player.quests.select_index(index);
+                    }
                 }
-                RightPanelHit::None => {}
+                LeftPanelHit::None => {}
             }
+        }
 
-            match self.footer.hit(mouse.column, mouse.row) {
-                FooterHit::CommandInput => {
-                    state.game.focus = GameFocus::Input;
-                }
-                FooterHit::None => {}
+        if let InventoryPanelHit::Item(Some(index)) = inventory_hit {
+            if state.game.player.inventory.is_selected(index) {
+                requested = state.game.player.inventory.selected().map(|item| {
+                    Overlay::ItemActions(ItemActionsState::new(
+                        item.id.clone(),
+                        ItemLocation::Inventory,
+                    ))
+                });
+            } else {
+                state.game.player.inventory.select_index(index);
             }
+        }
+
+        if let Some(overlay) = requested
+            && state.game.overlays.top_kind().is_none()
+        {
+            state.game.overlays.open(overlay);
         }
     }
 }

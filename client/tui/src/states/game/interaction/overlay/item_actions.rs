@@ -29,10 +29,10 @@ impl ItemActionsState {
             Self::CANCEL.to_string(),
         ];
 
-        Self {
-            item_id,
-            actions: SelectableList::with_items(actions),
-        }
+        let mut actions = SelectableList::with_items(actions);
+        actions.select_index(0);
+
+        Self { item_id, actions }
     }
 }
 

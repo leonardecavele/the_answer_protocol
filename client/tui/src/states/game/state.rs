@@ -22,8 +22,8 @@ pub struct GameState {
     pub chat_log: BoundedLog<ChatMessage>,
     pub action_log: BoundedLog<String>,
 
-    pub focus: GameFocus,
     pub inspected_npc: Option<String>,
+    focus: GameFocus,
     dialogue_closed_at: Option<Instant>,
 }
 
@@ -43,6 +43,41 @@ impl GameState {
             inspected_npc: None,
             dialogue_closed_at: None,
         }
+    }
+
+    pub fn focus(&self) -> GameFocus {
+        self.focus
+    }
+
+    pub fn set_focus(&mut self, focus: GameFocus) {
+        if self.focus == focus {
+            return;
+        }
+
+        self.focus = focus;
+        self.clear_selections();
+    }
+
+    pub fn focus_next(&mut self) {
+        let mut focus = self.focus;
+        focus.next();
+        self.set_focus(focus);
+    }
+
+    pub fn focus_prev(&mut self) {
+        let mut focus = self.focus;
+        focus.prev();
+        self.set_focus(focus);
+    }
+
+    pub fn clear_selections(&mut self) {
+        if let Some(room) = self.room.as_mut() {
+            room.npcs.clear_selection();
+            room.items.clear_selection();
+        }
+
+        self.player.inventory.clear_selection();
+        self.player.quests.clear_selection();
     }
 
     pub fn open_dialogue(&mut self, dialogue: DialogueState) {

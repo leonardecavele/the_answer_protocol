@@ -277,7 +277,7 @@ impl Component for RightPanel {
             .game
             .group
             .allows_move_by(state.game.player.name.as_deref())
-            && state.game.focus == GameFocus::RightPanel
+            && state.game.focus() == GameFocus::RightPanel
         {
             self.draw_focus_badge(frame, area);
             self.draw_exits(state, frame, image_area);
@@ -296,7 +296,7 @@ impl Lifecycle for RightPanel {
             .game
             .group
             .allows_move_by(state.game.player.name.as_deref())
-            || state.game.focus != GameFocus::RightPanel
+            || state.game.focus() != GameFocus::RightPanel
         {
             return EventFlow::Ignored;
         }
@@ -306,7 +306,7 @@ impl Lifecycle for RightPanel {
         };
 
         if key.code == KeyCode::Enter {
-            state.game.focus = GameFocus::NpcList;
+            state.game.set_focus(GameFocus::NpcList);
             return EventFlow::Consumed;
         }
 

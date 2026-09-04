@@ -39,7 +39,7 @@ impl Footer {
 impl Component for Footer {
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
         self.area = Some(area);
-        self.input.inner.is_focused = state.game.focus == GameFocus::Input;
+        self.input.inner.is_focused = state.game.focus() == GameFocus::Input;
         self.input.draw(state, frame, area);
     }
 }
@@ -51,7 +51,7 @@ impl Lifecycle for Footer {
         event: &CrosstermEvent,
         event_sender: &tokio::sync::mpsc::Sender<ApplicationEvent>,
     ) -> EventFlow {
-        if state.game.focus == GameFocus::Input
+        if state.game.focus() == GameFocus::Input
             && let CrosstermEvent::Key(KeyEvent {
                 code: KeyCode::Enter,
                 ..
@@ -62,12 +62,12 @@ impl Lifecycle for Footer {
                 self.input.inner.value.clear();
                 let _ = event_sender.try_send(ApplicationEvent::SendRawCommand(command));
             } else {
-                state.game.focus = GameFocus::RightPanel;
+                state.game.set_focus(GameFocus::RightPanel);
             }
             return EventFlow::Consumed;
         }
 
-        if state.game.focus == GameFocus::Input {
+        if state.game.focus() == GameFocus::Input {
             self.input.handle_terminal_event(state, event, event_sender)
         } else {
             EventFlow::Ignored

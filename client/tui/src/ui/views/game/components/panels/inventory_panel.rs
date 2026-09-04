@@ -55,7 +55,7 @@ impl Component for InventoryPanel {
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
         self.area = Some(area);
 
-        let focused = state.game.focus == GameFocus::InventoryGrid;
+        let focused = state.game.focus() == GameFocus::InventoryGrid;
         let inv_block = panel_block(" Inventory ", focused);
 
         let inv_inner = inv_block.inner(area);
@@ -115,33 +115,39 @@ impl Lifecycle for InventoryPanel {
         event: &crossterm::event::Event,
         _event_sender: &Sender<ApplicationEvent>,
     ) -> EventFlow {
-        if state.game.focus == GameFocus::InventoryGrid
+        if state.game.focus() == GameFocus::InventoryGrid
             && let crossterm::event::Event::Key(key) = event
         {
             let inv_count = state.game.player.inventory.len();
             if inv_count > 0 {
                 let cols = self.cols.max(1);
-                let current = state.game.player.inventory.selected_index();
 
                 match key.code {
-                    crossterm::event::KeyCode::Up => {
-                        if current >= cols {
-                            state.game.player.inventory.select_index(current - cols);
+                    crossterm::event::KeyCode::Up
+                    | crossterm::event::KeyCode::Down
+                    | crossterm::event::KeyCode::Left
+                    | crossterm::event::KeyCode::Right => {
+                        let inventory = &mut state.game.player.inventory;
+
+                        match inventory.selected_index() {
+                            None => inventory.select_index(0),
+                            Some(current) => match key.code {
+                                crossterm::event::KeyCode::Up if current >= cols => {
+                                    inventory.select_index(current - cols)
+                                }
+                                crossterm::event::KeyCode::Down => {
+                                    inventory.select_index(current + cols)
+                                }
+                                crossterm::event::KeyCode::Left if current > 0 => {
+                                    inventory.select_index(current - 1)
+                                }
+                                crossterm::event::KeyCode::Right => {
+                                    inventory.select_index(current + 1)
+                                }
+                                _ => {}
+                            },
                         }
-                        return EventFlow::Consumed;
-                    }
-                    crossterm::event::KeyCode::Down => {
-                        state.game.player.inventory.select_index(current + cols);
-                        return EventFlow::Consumed;
-                    }
-                    crossterm::event::KeyCode::Left => {
-                        if current > 0 {
-                            state.game.player.inventory.select_index(current - 1);
-                        }
-                        return EventFlow::Consumed;
-                    }
-                    crossterm::event::KeyCode::Right => {
-                        state.game.player.inventory.select_index(current + 1);
+
                         return EventFlow::Consumed;
                     }
                     crossterm::event::KeyCode::Enter => {

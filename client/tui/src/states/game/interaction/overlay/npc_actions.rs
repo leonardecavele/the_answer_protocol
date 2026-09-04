@@ -48,10 +48,10 @@ impl NpcActionsState {
 
         actions.push(NpcAction::Cancel);
 
-        Self {
-            npc_id,
-            actions: SelectableList::with_items(actions),
-        }
+        let mut actions = SelectableList::with_items(actions);
+        actions.select_index(0);
+
+        Self { npc_id, actions }
     }
 
     pub fn selected_command(&self) -> Option<&'static str> {

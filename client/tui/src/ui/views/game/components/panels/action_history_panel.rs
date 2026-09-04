@@ -19,13 +19,13 @@ impl Lifecycle for ActionHistoryPanel {}
 
 impl ScrollableComponent for ActionHistoryPanel {
     fn is_scrollable(&self, state: &AppState) -> bool {
-        state.game.focus == GameFocus::ActionHistory
+        state.game.focus() == GameFocus::ActionHistory
     }
 
     fn get_block<'a>(&self, state: &AppState) -> Block<'a> {
         panel_block(
             " Action History ",
-            state.game.focus == GameFocus::ActionHistory,
+            state.game.focus() == GameFocus::ActionHistory,
         )
         .title_bottom(help_hint())
     }

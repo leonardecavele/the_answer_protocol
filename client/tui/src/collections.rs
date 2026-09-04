@@ -33,19 +33,22 @@ pub fn move_index(current: usize, count: usize, step: Step) -> usize {
 #[derive(Debug, Clone)]
 pub struct SelectableList<T> {
     items: Vec<T>,
-    selected: usize,
+    selected: Option<usize>,
 }
 
 impl<T> SelectableList<T> {
     pub fn new() -> Self {
         Self {
             items: Vec::new(),
-            selected: 0,
+            selected: None,
         }
     }
 
     pub fn with_items(items: Vec<T>) -> Self {
-        Self { items, selected: 0 }
+        Self {
+            items,
+            selected: None,
+        }
     }
 
     pub fn set_items(&mut self, items: Vec<T>) {
@@ -64,33 +67,55 @@ impl<T> SelectableList<T> {
 
     pub fn clear(&mut self) {
         self.items.clear();
-        self.selected = 0;
+        self.selected = None;
     }
 
     pub fn selected(&self) -> Option<&T> {
-        self.items.get(self.selected)
+        self.selected.and_then(|index| self.items.get(index))
     }
 
-    pub fn selected_index(&self) -> usize {
+    pub fn selected_index(&self) -> Option<usize> {
         self.selected
     }
 
     pub fn is_selected(&self, index: usize) -> bool {
-        !self.items.is_empty() && self.selected == index
+        self.selected == Some(index)
     }
 
     pub fn select_index(&mut self, index: usize) {
         if index < self.items.len() {
-            self.selected = index;
+            self.selected = Some(index);
         }
     }
 
+    pub fn clear_selection(&mut self) {
+        self.selected = None;
+    }
+
     pub fn move_selection(&mut self, step: Step) {
-        self.selected = move_index(self.selected, self.items.len(), step);
+        if self.items.is_empty() {
+            self.selected = None;
+            return;
+        }
+
+        self.selected = Some(match self.selected {
+            Some(current) => move_index(current, self.items.len(), step),
+            None => match step {
+                Step::Next => 0,
+                Step::Previous => self.items.len() - 1,
+            },
+        });
     }
 
     fn clamp_selection(&mut self) {
-        self.selected = self.selected.min(self.items.len().saturating_sub(1));
+        if self.items.is_empty() {
+            self.selected = None;
+            return;
+        }
+
+        if let Some(selected) = self.selected {
+            self.selected = Some(selected.min(self.items.len() - 1));
+        }
     }
 
     pub fn remove(&mut self, index: usize) -> Option<T> {

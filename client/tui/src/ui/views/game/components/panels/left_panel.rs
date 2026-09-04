@@ -80,7 +80,7 @@ impl LeftPanel {
     }
 
     fn draw_npcs(&mut self, state: &AppState, room: &Room, frame: &mut Frame, area: Rect) {
-        let focused = state.game.focus == GameFocus::NpcList;
+        let focused = state.game.focus() == GameFocus::NpcList;
 
         let items: Vec<ListItem> = room
             .npcs
@@ -105,7 +105,7 @@ impl LeftPanel {
     }
 
     fn draw_items(&mut self, state: &AppState, room: &Room, frame: &mut Frame, area: Rect) {
-        let focused = state.game.focus == GameFocus::RoomItemsList;
+        let focused = state.game.focus() == GameFocus::RoomItemsList;
 
         let items: Vec<ListItem> = room
             .items
@@ -127,7 +127,7 @@ impl LeftPanel {
     }
 
     fn draw_quests(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
-        let focused = state.game.focus == GameFocus::QuestList;
+        let focused = state.game.focus() == GameFocus::QuestList;
         let quests = &state.game.player.quests;
 
         let items: Vec<ListItem> = quests
@@ -182,7 +182,7 @@ impl Lifecycle for LeftPanel {
             _ => return EventFlow::Ignored,
         };
 
-        match state.game.focus {
+        match state.game.focus() {
             GameFocus::NpcList => match key.code {
                 crossterm::event::KeyCode::Up => {
                     if let Some(room) = &mut state.game.room {
