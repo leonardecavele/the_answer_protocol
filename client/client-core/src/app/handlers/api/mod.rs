@@ -7,23 +7,23 @@ mod room;
 mod server;
 
 use crate::app::App;
-use crate::events::ProtocolEvent;
+use crate::events::ApiEvent;
 use crate::notification::{Notification, NotificationTopic};
 use crate::states::game::ChatChannel;
 use client_api::events::{GameServerEvent, GroupEvent, RoomEvent, ServerEvent};
 use client_api::{ApiRequest, ApiResponse, FrameDirection};
 
 impl App {
-    pub fn handle_protocol_event(&mut self, event: ProtocolEvent) {
+    pub fn handle_api_event(&mut self, event: ApiEvent) {
         match event {
-            ProtocolEvent::Server(server_event) => {
+            ApiEvent::Server(server_event) => {
                 self.handle_server_event(server_event);
             }
-            ProtocolEvent::Lagged { stream, count } => {
+            ApiEvent::Lagged { stream, count } => {
                 let message = format!("{} {}(s) lost", count, stream);
                 self.record_trace("lag", message);
             }
-            ProtocolEvent::RequestFailed {
+            ApiEvent::RequestFailed {
                 request,
                 error_message,
             } => {
@@ -37,13 +37,13 @@ impl App {
                         .with_topic(NotificationTopic::Protocol),
                 );
             }
-            ProtocolEvent::ApiResponse {
+            ApiEvent::ApiResponse {
                 response,
                 original_request,
             } => {
                 self.handle_api_response(response, original_request);
             }
-            ProtocolEvent::Frame(frame) => match frame.direction {
+            ApiEvent::Frame(frame) => match frame.direction {
                 FrameDirection::Received => self.record_trace("frame recv", frame.line),
                 FrameDirection::Sent => self.record_trace("frame sent", frame.line),
             },

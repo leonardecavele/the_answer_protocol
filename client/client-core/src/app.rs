@@ -96,7 +96,7 @@ impl App {
             ApplicationEvent::Connection(event) => {
                 self.handle_connection_event(event);
             }
-            ApplicationEvent::Protocol(event) => self.handle_protocol_event(event),
+            ApplicationEvent::Api(event) => self.handle_api_event(event),
             ApplicationEvent::Send(event) => self.handle_send_event(event),
             ApplicationEvent::FightTimedOut => self.on_fight_timed_out(),
         }

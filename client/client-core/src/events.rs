@@ -15,7 +15,7 @@ pub enum ApplicationEvent {
     DeviceEvent(CrosstermEvent),
     Tick,
     Connection(ConnectionEvent),
-    Protocol(ProtocolEvent),
+    Api(ApiEvent),
     Send(SendEvent),
     FightTimedOut,
 }
@@ -27,7 +27,7 @@ pub enum SendEvent {
 }
 
 #[derive(Debug, Clone)]
-pub enum ProtocolEvent {
+pub enum ApiEvent {
     ApiResponse {
         response: ApiResponse,
         original_request: ApiRequest,
