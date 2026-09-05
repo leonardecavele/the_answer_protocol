@@ -1,6 +1,13 @@
-use crate::events::NotificationType;
 use std::time::{Duration, Instant};
 use uuid::Uuid;
+
+#[derive(Debug, Clone, Copy)]
+pub enum NotificationType {
+    Information,
+    Warning,
+    Error,
+    Success,
+}
 
 #[derive(PartialEq, Eq)]
 pub enum NotificationDuration {

@@ -1,6 +1,6 @@
 use crate::app::runtime::App;
+use crate::notification::Notification;
 use crate::renderer::views::{EditorView, GameView};
-use crate::states::Notification;
 use crate::states::game::DialogueState;
 use api_client::commands::AttackResponse;
 use api_client::events::{FightResultData, FightStartData, KillData};

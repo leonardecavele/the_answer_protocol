@@ -8,6 +8,7 @@ mod errors;
 mod events;
 mod manifest;
 mod network;
+mod notification;
 mod renderer;
 mod states;
 

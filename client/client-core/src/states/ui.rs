@@ -1,5 +1,5 @@
 use crate::collections::BoundedLog;
-use crate::states::Notifications;
+use crate::notification::Notifications;
 
 pub struct UiState {
     pub notifications: Notifications,

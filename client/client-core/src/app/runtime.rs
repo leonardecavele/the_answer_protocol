@@ -1,9 +1,10 @@
 use crate::events::{ApplicationEvent, EventBroker};
 use crate::manifest::Manifest;
 use crate::network::{NetworkManager, RequestEnvelope};
+use crate::notification::Notification;
 use crate::renderer::ViewManager;
 use crate::renderer::components::{Component, Lifecycle};
-use crate::states::{AppState, Notification};
+use crate::states::AppState;
 use crate::{Assets, ClientError};
 use api_client::ApiRequest;
 use api_client::commands::{

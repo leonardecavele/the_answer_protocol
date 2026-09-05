@@ -1,6 +1,6 @@
 use crate::app::runtime::App;
+use crate::notification::Notification;
 use crate::renderer::views::GameView;
-use crate::states::Notification;
 use api_client::commands::{ConnectResponse, WhoResponse};
 
 impl App {
