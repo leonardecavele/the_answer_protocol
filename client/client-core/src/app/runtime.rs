@@ -1,13 +1,10 @@
-use crate::Assets;
-use crate::ClientError;
 use crate::events::{ApplicationEvent, EventBroker};
 use crate::manifest::Manifest;
-use crate::network::NetworkManager;
-use crate::network::RequestEnvelope;
+use crate::network::{NetworkManager, RequestEnvelope};
 use crate::renderer::ViewManager;
 use crate::renderer::components::{Component, Lifecycle};
-use crate::states::AppState;
-use crate::states::Notification;
+use crate::states::{AppState, Notification};
+use crate::{Assets, ClientError};
 use api_client::ApiRequest;
 use api_client::commands::{
     InventoryCommand, LookCommand, QuestsCommand, StatusCommand, WhoCommand,

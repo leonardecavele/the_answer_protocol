@@ -1,5 +1,4 @@
-use crate::events::ApplicationEvent;
-use crate::events::NotificationType;
+use crate::events::{ApplicationEvent, NotificationType};
 use crate::renderer::components::{Component, EventFlow, Lifecycle, is_mouse_in_rect};
 use crate::renderer::layout::percent_of;
 use crate::renderer::text::wrap_str_to_lines;

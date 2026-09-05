@@ -1,11 +1,8 @@
 use crate::app::runtime::App;
 use crate::events::NetworkEvent;
-use crate::network::NOTIF_ID_CONNECTION_ATTEMPT;
-use crate::network::NetworkManager;
-use crate::renderer::views::GameView;
-use crate::renderer::views::LoginView;
-use crate::states::AppState;
-use crate::states::Notification;
+use crate::network::{NOTIF_ID_CONNECTION_ATTEMPT, NetworkManager};
+use crate::renderer::views::{GameView, LoginView};
+use crate::states::{AppState, Notification};
 
 impl App {
     pub fn handle_network_event(&mut self, event: NetworkEvent) {

@@ -5,8 +5,7 @@ use crate::renderer::components::{
     Button, Component, EventFlow, Interactive, Lifecycle, TextInput,
 };
 use crate::renderer::views::login::focus::LoginFocus;
-use crate::states::AppState;
-use crate::states::Notification;
+use crate::states::{AppState, Notification};
 use crossterm::event::{Event as CrosstermEvent, KeyCode, KeyEvent, MouseEvent, MouseEventKind};
 use mpsc::Sender;
 use ratatui::Frame;
