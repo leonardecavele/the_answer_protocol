@@ -194,10 +194,24 @@ impl GameView {
         if let CrosstermEvent::Key(key) = event {
             if key.code == KeyCode::Tab {
                 state.game.focus_next();
+
+                if state.game.focus() == GameFocus::InvitationList
+                    && state.game.group.invitations.is_empty()
+                {
+                    state.game.focus_next();
+                }
+
                 return EventFlow::Consumed;
             }
             if key.code == KeyCode::BackTab {
                 state.game.focus_prev();
+
+                if state.game.focus() == GameFocus::InvitationList
+                    && state.game.group.invitations.is_empty()
+                {
+                    state.game.focus_prev();
+                }
+
                 return EventFlow::Consumed;
             }
         }
