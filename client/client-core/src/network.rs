@@ -1,4 +1,4 @@
-use crate::events::{ApplicationEvent, NetworkConnectionEvent, ProtocolEvent};
+use crate::events::{ApplicationEvent, ConnectionEvent, ProtocolEvent};
 use client_api::{ApiRequest, Client, Connection, ConnectionState};
 use mpsc::Sender;
 use tokio::sync::broadcast::error::{RecvError, TryRecvError};
@@ -53,13 +53,11 @@ impl NetworkManager {
                     match login_result {
                         Ok(Ok(_)) => {
                             let _ = event_sender
-                                .send(ApplicationEvent::Network(
-                                    NetworkConnectionEvent::Established {
-                                        server_ip,
-                                        server_port,
-                                        player_name,
-                                    },
-                                ))
+                                .send(ApplicationEvent::Connection(ConnectionEvent::Established {
+                                    server_ip,
+                                    server_port,
+                                    player_name,
+                                }))
                                 .await;
 
                             let sender = event_sender.clone();
@@ -119,7 +117,7 @@ impl NetworkManager {
                                                 match state {
                                                     ConnectionState::Lost(reason) => {
                                                         let _ = sender
-                                                            .send(ApplicationEvent::Network(NetworkConnectionEvent::Lost {
+                                                            .send(ApplicationEvent::Connection(ConnectionEvent::Lost {
                                                                 reason,
                                                             })).await;
                                                     },
@@ -163,14 +161,14 @@ impl NetworkManager {
                         }
                         Ok(Err(command_error)) => {
                             let _ = event_sender
-                                .send(ApplicationEvent::Network(NetworkConnectionEvent::Failed {
+                                .send(ApplicationEvent::Connection(ConnectionEvent::Failed {
                                     error_message: command_error.message,
                                 }))
                                 .await;
                         }
                         Err(tap_error) => {
                             let _ = event_sender
-                                .send(ApplicationEvent::Network(NetworkConnectionEvent::Failed {
+                                .send(ApplicationEvent::Connection(ConnectionEvent::Failed {
                                     error_message: tap_error.to_string(),
                                 }))
                                 .await;
@@ -179,7 +177,7 @@ impl NetworkManager {
                 }
                 Err(e) => {
                     let _ = event_sender
-                        .send(ApplicationEvent::Network(NetworkConnectionEvent::Failed {
+                        .send(ApplicationEvent::Connection(ConnectionEvent::Failed {
                             error_message: e.to_string(),
                         }))
                         .await;

@@ -91,8 +91,8 @@ impl App {
             ApplicationEvent::DeviceEvent(crossterm_event) => {
                 self.handle_device_event(crossterm_event);
             }
-            ApplicationEvent::Network(network_event) => {
-                self.handle_network_event(network_event);
+            ApplicationEvent::Connection(event) => {
+                self.handle_connection_event(event);
             }
             ApplicationEvent::Protocol(event) => self.handle_protocol_event(event),
             ApplicationEvent::SendRequest(request) => self.send(request),

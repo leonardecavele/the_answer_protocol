@@ -1,5 +1,5 @@
 use crate::collections::Step;
-use crate::events::{ApplicationEvent, NetworkConnectionEvent};
+use crate::events::{ApplicationEvent, ConnectionEvent};
 use crate::notification::{Notification, NotificationTopic};
 use crate::renderer::components::{
     Button, Component, EventFlow, Interactive, Lifecycle, TextInput,
@@ -183,8 +183,8 @@ impl Lifecycle for LoginView {
                                 .with_topic(NotificationTopic::Connection)
                                 .with_ms(60_000),
                         );
-                        let _ = event_sender.try_send(ApplicationEvent::Network(
-                            NetworkConnectionEvent::AttemptStarted {
+                        let _ = event_sender.try_send(ApplicationEvent::Connection(
+                            ConnectionEvent::AttemptStarted {
                                 server_ip: ip,
                                 server_port: port,
                                 player_name: name,

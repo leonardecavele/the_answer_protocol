@@ -7,7 +7,7 @@ use crossterm::event::Event as CrosstermEvent;
 pub enum ApplicationEvent {
     DeviceEvent(CrosstermEvent),
     Tick,
-    Network(NetworkConnectionEvent),
+    Connection(ConnectionEvent),
     SendRequest(ApiRequest),
     SendRawCommand(String),
     Protocol(ProtocolEvent),
@@ -34,7 +34,7 @@ pub enum ProtocolEvent {
 
 /// Events strictly related to the network layer status and data.
 #[derive(Debug, Clone)]
-pub enum NetworkConnectionEvent {
+pub enum ConnectionEvent {
     AttemptStarted {
         server_ip: String,
         server_port: String,
