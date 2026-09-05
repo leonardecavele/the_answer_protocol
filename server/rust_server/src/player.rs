@@ -4,6 +4,7 @@ use crate::constants::{
 use crate::inventory::Inventory;
 use crate::items::ItemId;
 use crate::npc::Npc;
+use crate::quests::Questid;
 use crate::room::RoomName;
 use crate::save::Save;
 use rand::RngExt;
@@ -20,6 +21,7 @@ pub struct Player {
     inventory: Inventory,
     current_room: String,
     dialogs_index: HashMap<String, (usize, usize)>,
+    completed_quests: HashMap<Questid, u32>,
 }
 
 impl Player {
@@ -32,6 +34,7 @@ impl Player {
             inventory: Inventory::new(),
             current_room: PLAYER_ROOM_SPAWN.to_owned(),
             dialogs_index: HashMap::new(),
+            completed_quests: HashMap::new(),
         }
     }
     pub fn reset(&mut self) {
@@ -40,6 +43,7 @@ impl Player {
         self.inventory = Inventory::new();
         self.current_room = PLAYER_ROOM_SPAWN.to_owned();
         self.dialogs_index.clear();
+        self.completed_quests.clear();
     }
 
     pub fn from_save(save: Save) -> Self {
@@ -51,6 +55,7 @@ impl Player {
             inventory: save.inventory,
             current_room: save.current_room,
             dialogs_index: HashMap::new(),
+            completed_quests: save.completed_quests,
         }
     }
     pub fn set_name(&mut self, new_name: String) {
@@ -129,5 +134,20 @@ impl Player {
     }
     pub fn has_item(&self, item_id: ItemId) -> bool {
         self.inventory.contains_item(item_id)
+    }
+    pub fn get_completed_quests(&self) -> &HashMap<Questid, u32> {
+        &self.completed_quests
+    }
+    pub fn get_completed_quests_mut(&mut self) -> &mut HashMap<Questid, u32> {
+        &mut self.completed_quests
+    }
+    pub fn get_completed_quest_count(&self, quest_name: &str) -> u32 {
+        self.completed_quests.get(quest_name).copied().unwrap_or(0)
+    }
+    pub fn add_completed_quest(&mut self, quest_name: Questid) {
+        *self.completed_quests.entry(quest_name).or_insert(0) += 1;
+    }
+    pub fn set_completed_quests(&mut self, completed_quests: HashMap<Questid, u32>) {
+        self.completed_quests = completed_quests;
     }
 }

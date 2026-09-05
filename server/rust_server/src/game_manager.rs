@@ -18,8 +18,8 @@ use crate::room::{Room, RoomId, RoomName};
 use crate::save::{Save, ServerSave};
 use crate::tester::test;
 use json::{JsonValue, object};
-use std::collections::{HashMap, BinaryHeap};
 use std::cmp::Reverse;
+use std::collections::{BinaryHeap, HashMap};
 use std::io::Write;
 use std::net::TcpStream;
 use std::sync::mpsc;
@@ -54,7 +54,7 @@ impl GameManager {
         tester_receiver: mpsc::Receiver<String>,
         tester_sender: mpsc::Sender<String>,
         writer_stream: TcpStream,
-        parser: Parser,
+        parser: &Parser,
         command_receiver: mpsc::Receiver<String>,
     ) -> Self {
         let nb_models = parser.get_items().len() as u64;
@@ -83,6 +83,32 @@ impl GameManager {
         manager.restore_server_state();
         manager.ensure_lost_item_exists();
         manager
+    }
+
+    pub fn reset_for_reconnect(
+        &mut self,
+        writer_stream: TcpStream,
+        mpsc_receiver: mpsc::Receiver<String>,
+        parser: &Parser,
+    ) {
+        self.players.clear();
+        self.players_by_name.clear();
+        self.next_player_id = 0;
+        self.nb_models = parser.get_items().len() as u64;
+        self.max_item_id_used = parser.get_items().keys().max().copied().unwrap_or(0);
+        self.free_item_ids.clear();
+        self.all_items = parser.get_items().clone();
+        self.all_rooms = parser.get_rooms().clone();
+        self.all_npcs = parser.get_npcs().clone();
+        self.all_quests = parser.get_quests().clone();
+        self.combat_instances = CombatInstanceManager::new();
+        self.quest_instances.clear();
+        self.writer_stream = writer_stream;
+        self.mpsc_receiver = mpsc_receiver;
+        self.tick_diff.clear();
+
+        self.restore_server_state();
+        self.ensure_lost_item_exists();
     }
 
     pub fn get_players(&self) -> &HashMap<PlayerId, Player> {
@@ -119,6 +145,7 @@ impl GameManager {
                 inventory,
                 current_room: player.get_current_room().to_owned(),
                 quests: player_quests,
+                completed_quests: player.get_completed_quests().clone(),
             };
             if let Err(e) =
                 confy::store_path(format!("saves/{}.toml", player.get_name()), save_data)
@@ -321,20 +348,31 @@ impl GameManager {
         if !std::path::Path::new(&path).exists() {
             return None;
         }
-        let Ok(mut save_data) = confy::load_path::<Save>(&path) else {
-            return None;
+        let mut save_data = match confy::load_path::<Save>(&path) {
+            Ok(data) => data,
+            Err(e) => {
+                warn!(
+                    "Failed to load save file '{}' (invalid format): {}",
+                    path, e
+                );
+                return None;
+            }
         };
 
         if save_data.name != name {
+            warn!("Save file '{}' does not match player name '{}'", path, name);
             return None;
         }
 
         if !self.room_exists(&save_data.current_room) {
-            warn!("Room '{}' does not exist, falling back to default spawn room", save_data.current_room);
+            warn!(
+                "Room '{}' does not exist, falling back to default spawn room",
+                save_data.current_room
+            );
             save_data.current_room = PLAYER_ROOM_SPAWN.to_string();
         }
 
-        // Filter out nonexistent items from player's inventory
+        // remove nonexistent items from player's inventory
         let items_to_check: Vec<ItemId> = save_data.inventory.get_items().iter().cloned().collect();
         save_data.inventory.get_items_mut().clear();
         for item_id in items_to_check {
@@ -369,7 +407,53 @@ impl GameManager {
             }
         });
 
+        save_data.completed_quests.retain(|quest_id, count| {
+            if quest_id.trim().is_empty() {
+                warn!(
+                    "Removing invalid completed quest with empty name from player {}",
+                    save_data.name
+                );
+                false
+            } else if *count == 0 {
+                warn!(
+                    "Removing completed quest '{}' with count 0 from player {}",
+                    quest_id, save_data.name
+                );
+                false
+            } else if self.get_quest(quest_id).is_none() {
+                warn!(
+                    "Removing invalid completed quest '{}' from player {}: quest does not exist",
+                    quest_id, save_data.name
+                );
+                false
+            } else {
+                true
+            }
+        });
+
+        if save_data.hp < 1 || save_data.max_hp < 1 {
+            warn!(
+                "Player {} has invalid hp/max_hp, setting to 100",
+                save_data.name
+            );
+            save_data.hp = 100;
+            save_data.max_hp = 100;
+        }
+        if save_data.hp > save_data.max_hp {
+            warn!(
+                "Player {} has more hp than max_hp, clipping hp to max_hp",
+                save_data.name
+            );
+            save_data.hp = save_data.max_hp;
+        }
         let player_id = save_data.id;
+        if self.get_player(player_id).is_some() {
+            warn!(
+                "Player with id {} already exists, skipping restore",
+                save_data.id
+            );
+            return None;
+        }
         for (quest_id, state) in save_data.quests.iter() {
             let quest_instance = QuestInstance::new(player_id, quest_id.clone(), state.clone());
             self.quest_instances.push(quest_instance);
@@ -410,7 +494,12 @@ impl GameManager {
         };
 
         if self.player_has_item(player_id, LOST_ITEM) {
-            let player_name = self.players.get(&player_id).unwrap().get_name().to_string();
+            let player_name = if let Some(player) = self.players.get(&player_id) {
+                player.get_name().to_string()
+            } else {
+                warn!("tried to get name of non-existent player: {}", player_id);
+                return;
+            };
             let mut players = self.get_all_players_at_room(LOST_ITEM_SPAWN);
             let lost_item_name = self.get_item_name(LOST_ITEM);
             let event = self.generate_event_json(
@@ -427,7 +516,7 @@ impl GameManager {
         }
 
         self.save_player(player_id);
-        
+
         if let Some(player) = self.players.remove(&player_id) {
             for item_id in player.get_items().iter().rev() {
                 self.recycle_item_id(*item_id);
@@ -435,7 +524,7 @@ impl GameManager {
         }
 
         self.players_by_name.remove(&name);
-        
+
         self.quest_instances.retain(|q| q.get_player() != player_id);
     }
 
@@ -444,29 +533,49 @@ impl GameManager {
     }
 
     pub fn get_item_name(&self, item_id: ItemId) -> String {
-        self.get_item(item_id).unwrap().get_name().to_owned()
+        if let Some(item) = self.get_item(item_id) {
+            item.get_name().to_owned()
+        } else {
+            warn!("tried to get name of non-existent item: {}", item_id);
+            "error".to_owned()
+        }
     }
 
     pub fn remove_item_from_player(&mut self, player_id: PlayerId, item_id: ItemId) {
-        let player = self.players.get_mut(&player_id).unwrap();
-        player.remove_item(item_id);
+        if let Some(player) = self.players.get_mut(&player_id) {
+            player.remove_item(item_id);
+        } else {
+            warn!(
+                "tried to remove item from non-existent player: {}",
+                player_id
+            );
+        }
     }
 
     pub fn add_item_to_player(&mut self, player_id: PlayerId, item_id: ItemId) {
-        let player = self.players.get_mut(&player_id).unwrap();
-        player.add_item(item_id);
+        if let Some(player) = self.players.get_mut(&player_id) {
+            player.add_item(item_id);
+        } else {
+            warn!("tried to add item to non-existent player: {}", player_id);
+        }
     }
 
     pub fn get_player_inventory_as_string(&self, player_name: &str) -> String {
-        let player = self.get_player_from_name(player_name).unwrap();
+        if let Some(player) = self.get_player_from_name(player_name) {
+            let items: Vec<String> = player
+                .get_items()
+                .iter()
+                .map(|item_id| format!("{}.{}", item_id, self.get_item_name(*item_id)))
+                .collect();
 
-        let items: Vec<String> = player
-            .get_items()
-            .iter()
-            .map(|item_id| format!("{}.{}", item_id, self.get_item_name(*item_id)))
-            .collect();
-
-        format!("{:?}", items)
+            format!("{:?}", items)
+        } else {
+            warn!(
+                "tried to get inventory of non-existent player: {}",
+                player_name
+            );
+            "[]".to_owned()
+        }
     }
 
     pub fn get_room_by_name(&self, room_name: &str) -> Option<&Room> {
@@ -486,13 +595,19 @@ impl GameManager {
     }
 
     pub fn remove_item_from_room(&mut self, room_name: &str, item_id: ItemId) {
-        let room = self.get_mut_room_by_name(room_name).unwrap();
-        room.remove_item(item_id);
+        if let Some(room) = self.get_mut_room_by_name(room_name) {
+            room.remove_item(item_id);
+        } else {
+            warn!("tried to remove item from non-existent room: {}", room_name);
+        }
     }
 
     pub fn add_item_to_room(&mut self, room_name: &str, item_id: ItemId) {
-        let room = self.get_mut_room_by_name(room_name).unwrap();
-        room.add_item(item_id);
+        if let Some(room) = self.get_mut_room_by_name(room_name) {
+            room.add_item(item_id);
+        } else {
+            warn!("tried to add item to non-existent room: {}", room_name);
+        }
     }
 
     pub fn send_msg_to_client(&mut self, msg: String) -> std::io::Result<()> {
@@ -582,10 +697,16 @@ impl GameManager {
         let mut filtered = diff.clone();
         filtered.remove("players");
         for player in players {
-            let key = player.as_str().unwrap().to_owned();
-            let entry = self.tick_diff.entry(key).or_insert(JsonValue::new_array());
+            if let Some(player_name) = player.as_str() {
+                let key = player_name.to_owned();
+                let entry = self.tick_diff.entry(key).or_insert(JsonValue::new_array());
 
-            entry.push(filtered.clone()).unwrap();
+                if let Err(e) = entry.push(filtered.clone()) {
+                    warn!("failed to push diff to player entry: {}", e);
+                }
+            } else {
+                warn!("diff players array contains non-string entry");
+            }
         }
     }
     pub fn clear_diff(&mut self) {
@@ -608,7 +729,7 @@ impl GameManager {
     }
 
     pub fn move_player_to_room(&mut self, player_name: &str, room_name: &str) {
-        if let Some(player) = self.get_mut_player_from_name(player_name){
+        if let Some(player) = self.get_mut_player_from_name(player_name) {
             player.move_to_room(&room_name.to_owned());
         }
     }
@@ -617,19 +738,14 @@ impl GameManager {
         let mut npcs: Vec<_> = self
             .all_npcs
             .values()
-            .filter(|npc| {
-                npc.get_spawn_room() == room_name
-                    && npc.get_death().is_none()
-            })
+            .filter(|npc| npc.get_spawn_room() == room_name && npc.get_death().is_none())
             .collect();
-    
+
         npcs.sort_by_key(|npc| npc.get_id());
         // sort by id to ensure consistent order
-        npcs
-            .into_iter()
+        npcs.into_iter()
             .map(|npc| npc.get_protocol_representation())
             .collect()
-
     }
 
     pub fn punish_inactive_players_in_combat(&mut self) {
@@ -675,13 +791,15 @@ impl GameManager {
         }
 
         for npc_id in npcs_to_revive {
-            let (room_name, ncp_rep) = {
-                let ncp = self.all_npcs.get_mut(&npc_id).unwrap();
+            let (room_name, ncp_rep) = if let Some(ncp) = self.all_npcs.get_mut(&npc_id) {
                 ncp.revive();
                 (
                     ncp.get_spawn_room().to_owned(),
                     ncp.get_protocol_representation(),
                 )
+            } else {
+                warn!("tried to revive non-existent npc: {}", npc_id);
+                continue;
             };
             let players_to_send_event = self.get_all_players_at_room(&room_name);
             let data = format!("type=NPC id={}", ncp_rep);
@@ -745,14 +863,10 @@ impl GameManager {
     }
 
     pub fn convert_items_to_string(&self, inventory: &Inventory) -> Vec<String> {
-        let mut item_ids: Vec<_> = inventory
-            .get_items()
-            .iter()
-            .copied()
-            .collect();
-        
+        let mut item_ids: Vec<_> = inventory.get_items().iter().copied().collect();
+
         item_ids.sort_unstable();
-        
+
         item_ids
             .into_iter()
             .map(|item_id| format!("{}.{}", item_id, self.get_item_name(item_id)))
@@ -789,10 +903,15 @@ impl GameManager {
         }
     }
     pub fn get_player_status_as_string(&self, player_name: &str) -> String {
-        let player = self.get_player_from_name(player_name).unwrap();
+        let player = if let Some(player) = self.get_player_from_name(player_name) {
+            player
+        } else {
+            warn!("tried to get status of non-existent player: {}", player_name);
+            return "{\"hp\":0, \"max_hp\":0, \"status\":\"dead\"}".to_string();
+        };
         let hp = player.get_hp();
         let max_hp = player.get_max_hp();
-        let percentage_hp = hp as f64 / max_hp as f64 * 100.0;
+        let percentage_hp = if max_hp > 0 { hp as f64 / max_hp as f64 * 100.0 } else { 0.0 };
         let status = if percentage_hp >= 80.0 {
             "healthy"
         } else if percentage_hp >= 30.0 {
@@ -814,10 +933,12 @@ impl GameManager {
     }
 
     pub fn get_npc_type(&self, npc_id: NpcId) -> u8 {
-        self.all_npcs
-            .get(&npc_id)
-            .map(|npc| npc.get_npc_type())
-            .unwrap()
+        if let Some(npc) = self.all_npcs.get(&npc_id) {
+            npc.get_npc_type()
+        } else {
+            warn!("tried to get type of non-existent npc: {}", npc_id);
+            0
+        }
     }
 
     pub fn get_npc_max_hp(&self, npc_id: NpcId) -> Option<u32> {
@@ -839,18 +960,26 @@ impl GameManager {
 
     pub fn kill_player(&mut self, player_id: PlayerId) {
         let (mut players_to_send_death_info, player_name) = {
-            let player = self.get_player(player_id).unwrap();
-            let mut players = self.get_all_players_at_room(player.get_current_room());
-            players.extend(self.get_all_players_at_room(PLAYER_ROOM_SPAWN));
+            if let Some(player) = self.get_player(player_id) {
+                let mut players = self.get_all_players_at_room(player.get_current_room());
+                players.extend(self.get_all_players_at_room(PLAYER_ROOM_SPAWN));
 
-            (players, player.get_name().to_owned())
+                (players, player.get_name().to_owned())
+            } else {
+                warn!("tried to kill non-existent player: {}", player_id);
+                return;
+            }
         };
         let path = format!("saves/{}.toml", player_name);
         let _ = std::fs::remove_file(path);
         // ignore error because the save may not exist yet
         // (in which case we do not need to delete the save)
         info!("deleted player {} save", player_name);
-        self.get_mut_player(player_id).unwrap().reset();
+        if let Some(player) = self.get_mut_player(player_id) {
+            player.reset();
+        } else {
+            warn!("tried to reset non-existent player: {}", player_id);
+        }
         let event = self.generate_event_json(
             &mut players_to_send_death_info,
             player_name.as_str(),
@@ -895,16 +1024,28 @@ impl GameManager {
         player_id: NpcId,
         npc_id: PlayerId,
     ) -> String {
-        let npc = self.get_mut_npc(npc_id).unwrap();
+        let error_return = "{{\"attacker_hp\":error, \"target_hp\":error, \"damage\":0, \"status\":\"combat\"}}".to_string();
+        let npc_hp = if let Some(npc) = self.get_mut_npc(npc_id) {
+            debug!(
+                "npc: {}, npc_id_received: {}",
+                npc.get_protocol_representation(),
+                npc_id
+            );
+            if let Some(hp) = npc.get_hp() {
+                hp
+            } else {
+                return error_return;
+            }
+        } else {
+            return error_return;
+        };
 
-        debug!(
-            "npc: {}, npc_id_received: {}",
-            npc.get_protocol_representation(),
-            npc_id
-        );
-        let npc_hp = npc.get_hp().unwrap();
         let mut dealt_damage = damage;
-        let player = self.get_mut_player(player_id).unwrap();
+        let player = if let Some(player) = self.get_mut_player(player_id) {
+            player
+        } else {
+            return error_return;
+        };
         let _player_name = player.get_name().to_owned();
         let player_hp = player.get_hp();
         let new_player_hp = if player_hp > damage {
@@ -961,14 +1102,32 @@ impl GameManager {
         player_id: PlayerId,
         npc_id: NpcId,
     ) -> String {
-        let player = self.get_player(player_id).unwrap();
-        let npc_room = self.get_npc(npc_id).unwrap().get_spawn_room().to_owned();
+        let error_return =
+            "{{\"attacker_hp\":error, \"target_hp\":error, \"damage\":0, \"status\":\"combat\"}}"
+                .to_string();
+        let (player_name, player_hp) = if let Some(player) = self.get_player(player_id) {
+            (player.get_name().to_owned(), player.get_hp())
+        } else {
+            return error_return;
+        };
+
+        let npc_room = if let Some(npc) = self.get_npc(npc_id) {
+            npc.get_spawn_room().to_owned()
+        } else {
+            return error_return;
+        };
         let mut players_in_room = self.get_all_players_at_room(npc_room.as_str()).clone();
-        let player_name = player.get_name().to_owned();
-        let player_hp = player.get_hp();
-        let npc = self.get_mut_npc(npc_id).unwrap();
+        let npc = if let Some(npc) = self.get_mut_npc(npc_id) {
+            npc
+        } else {
+            return error_return;
+        };
         let npc_repr = npc.get_protocol_representation();
-        let hp = npc.get_hp().unwrap();
+        let hp = if let Some(hp) = npc.get_hp() {
+            hp
+        } else {
+            return error_return;
+        };
         let mut dealt_damage = damage;
         let new_npc_hp = if hp > damage {
             hp - damage
@@ -1038,7 +1197,11 @@ impl GameManager {
                             if path.is_file()
                                 && let Some(name) = path.file_name()
                             {
-                                all_files.push(name.to_str().unwrap().to_owned());
+                                if let Some(name) = name.to_str() {
+                                    all_files.push(name.to_owned());
+                                } else {
+                                    warn!("invalid file name found: {:?}", name);
+                                }
                             }
                         }
                         Err(e) => {
@@ -1076,7 +1239,9 @@ impl GameManager {
         fn can_send_teleport_event(instance: &CombatInstance, player: PlayerId) -> bool {
             let left_players = instance.get_left_players();
             let died_players = instance.get_died_players();
-            !died_players.is_empty() && !left_players.contains(&player) && !died_players.contains(&player)
+            !died_players.is_empty()
+                && !left_players.contains(&player)
+                && !died_players.contains(&player)
         }
 
         let mut vec: Vec<Vec<(PlayerId, bool)>> = Vec::new();
@@ -1085,11 +1250,11 @@ impl GameManager {
                 let mut players_info: Vec<(PlayerId, bool)> = Vec::new();
                 let mut all_players = instance.get_grouped_players().clone();
                 all_players.push(instance.get_leader());
-                
+
                 for player in all_players {
                     players_info.push((player, can_send_teleport_event(instance, player)));
                 }
-                
+
                 vec.push(players_info);
             }
         }
@@ -1121,10 +1286,9 @@ impl GameManager {
                 self.add_diff_to_tick(fight_end_event);
 
                 for player in &send_teleport_event_players {
-                    if let Some(player) = self.get_mut_player_from_name(player){
-                        player.move_to_room(&PLAYER_ROOM_SPAWN.to_owned());   
+                    if let Some(player) = self.get_mut_player_from_name(player) {
+                        player.move_to_room(&PLAYER_ROOM_SPAWN.to_owned());
                     }
-        
                 }
                 let teleport_event = GameManager::generate_no_player_event_json(
                     &send_teleport_event_players,
@@ -1132,7 +1296,6 @@ impl GameManager {
                     "",
                 );
                 self.add_diff_to_tick(teleport_event);
-                
             }
         }
         self.combat_instances.remove_finished_instances();
@@ -1149,10 +1312,12 @@ impl GameManager {
             .replace(CODE_SP_SEP, " ");
         // debug!("code sent to ldecavel: {}", sent_code_owned);
 
-        let instance = self
-            .combat_instances
-            .get_mut_instance_for_npc(npc_id)
-            .unwrap();
+        let instance = if let Some(instance) = self.combat_instances.get_mut_instance_for_npc(npc_id) {
+            instance
+        } else {
+            warn!("tried to test code for npc not in combat: {}", npc_id);
+            return;
+        };
         instance.evaluating_players_count += 1;
 
         debug!("started tester thread for player {}", player);
@@ -1164,7 +1329,7 @@ impl GameManager {
     }
 
     pub fn spawn_items(&mut self) {
-        //this function checks if the 
+        //this function checks if the
         // spawn cooldown of each item has elapsed
         // and if so, spawns it in the room
         let mut to_spawn = Vec::new();

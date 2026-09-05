@@ -11,9 +11,13 @@ pub struct Save {
     pub id: u32,
     pub hp: u32,
     pub max_hp: u32,
+    #[serde(default)]
     pub inventory: Inventory,
     pub current_room: String,
+    #[serde(default)]
     pub quests: Vec<(Questid, QuestState)>,
+    #[serde(default)]
+    pub completed_quests: HashMap<Questid, u32>,
 }
 
 impl Default for Save {
@@ -26,6 +30,7 @@ impl Default for Save {
             inventory: Inventory::new(),
             current_room: PLAYER_ROOM_SPAWN.to_string(),
             quests: Vec::new(),
+            completed_quests: HashMap::new(),
         }
     }
 }

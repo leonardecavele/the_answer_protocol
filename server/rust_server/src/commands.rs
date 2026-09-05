@@ -658,26 +658,24 @@ impl GameManager {
 
             "TALK" => {
                 let target_npc = data;
-                let player_room = {
-                    self.get_player_from_name(player_name)
-                        .unwrap()
-                        .get_current_room()
+                let player_room = if let Some(player) = self.get_player_from_name(player_name) {
+                    player.get_current_room()
+                } else {
+                    return generate_json(player_name, command_name, ErrorCode::PlayerNotFound, "")
+                        .dump();
                 };
-                let parsed_repr: Option<(NpcId, String)> =
-                    self.parse_npc(target_npc, player_room.to_owned());
-                if parsed_repr.is_none() {
+                let Some(parsed_repr) = self.parse_npc(target_npc, player_room.to_owned()) else {
                     return generate_json(player_name, command_name, ErrorCode::NpcNotFound, "")
                         .dump();
-                }
-                let (npc_id, npc_name) = parsed_repr.unwrap();
-                let npc = self.get_npc(npc_id);
-                if npc.is_none() {
+                };
+                let (npc_id, npc_name) = parsed_repr;
+                let Some(npc) = self.get_npc(npc_id) else {
                     return generate_json(player_name, command_name, ErrorCode::NpcNotFound, "")
                         .dump();
-                }
+                };
 
-                let npc_unwrap = npc.unwrap().clone();
-                if npc_unwrap.get_name() != npc_name || !self.npc_is_in_room(npc_id, player_room) {
+                let npc_clone = npc.clone();
+                if npc_clone.get_name() != npc_name || !self.npc_is_in_room(npc_id, player_room) {
                     return generate_json(player_name, command_name, ErrorCode::NpcNotFound, "")
                         .dump();
                 }
@@ -696,7 +694,7 @@ impl GameManager {
                             .dump();
                         }
                     };
-                    player.talk_with(&npc_unwrap)
+                    player.talk_with(&npc_clone)
                 };
                 generate_json(
                     player_name,
@@ -731,12 +729,11 @@ impl GameManager {
                 };
                 let item = data;
                 let room_name = room.get_name().to_owned();
-                let parsed_item: Option<(ItemId, String)> = self.parse_item(item, &room);
-                if parsed_item.is_none() {
+                let Some(parsed_item) = self.parse_item(item, &room) else {
                     return generate_json(player_name, command_name, ErrorCode::ItemNotFound, "")
                         .dump();
-                }
-                let (item_id, item_name) = parsed_item.unwrap();
+                };
+                let (item_id, item_name) = parsed_item;
 
                 if !self.item_exists_with_name(item_id, item_name.as_str())
                     || !room.contains_item(item_id)
@@ -780,14 +777,12 @@ impl GameManager {
                 let player_id = player.get_id();
                 let item = data;
                 let room_name = player.get_current_room().to_owned();
-                let item_tuple: Option<(ItemId, String)> =
-                    self.parse_item_from_player(item, &player);
-                if item_tuple.is_none() {
+                let Some(item_tuple) = self.parse_item_from_player(item, &player) else {
                     return generate_json(player_name, command_name, ErrorCode::ItemNotFound, "")
                         .dump();
-                }
+                };
 
-                let (item_id, item_name) = item_tuple.unwrap();
+                let (item_id, item_name) = item_tuple;
                 if !self.item_exists_with_name(item_id, item_name.as_str())
                     || !player.has_item(item_id)
                 {
@@ -832,7 +827,7 @@ impl GameManager {
                 self.fight_create_command(player_name, npc_id, Vec::new())
             }
             "FIGHT_ATTACK" => {
-                let file_and_npc_id = {
+                let Some(file_and_npc_id) = ({
                     let player_id = match self.get_player_id(player_name) {
                         Some(id) => *id,
                         None => {
@@ -863,8 +858,7 @@ impl GameManager {
                     } else {
                         None
                     }
-                };
-                if file_and_npc_id.is_none() {
+                }) else {
                     return generate_json(
                         player_name,
                         command_name,
@@ -872,8 +866,9 @@ impl GameManager {
                         "",
                     )
                     .dump();
-                }
-                let (file_name, npc_id) = file_and_npc_id.unwrap();
+                };
+
+                let (file_name, npc_id) = file_and_npc_id;
 
                 let sent_code = data;
 
@@ -928,20 +923,16 @@ impl GameManager {
                 };
                 let player_room = player.get_current_room();
                 // if player
-                let parsed_repr: Option<(NpcId, String)> =
-                    self.parse_npc(target_npc, player_room.to_owned());
-                if parsed_repr.is_none() {
+                let Some(parsed_repr) = self.parse_npc(target_npc, player_room.to_owned()) else {
                     return generate_json(player_name, command_name, ErrorCode::NpcNotFound, "")
                         .dump();
-                }
-                let (npc_id, npc_name) = parsed_repr.unwrap();
-                let npc = self.get_npc(npc_id);
-                if npc.is_none() {
+                };
+                let (npc_id, npc_name) = parsed_repr;
+                let Some(npc) = self.get_npc(npc_id) else {
                     return generate_json(player_name, command_name, ErrorCode::NpcNotFound, "")
                         .dump();
-                }
-
-                let npc_unwrap = npc.unwrap().clone();
+                };
+                let npc_unwrap = npc.clone();
                 if npc_unwrap.get_name() != npc_name {
                     return generate_json(player_name, command_name, ErrorCode::NpcNotFound, "")
                         .dump();

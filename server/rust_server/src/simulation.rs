@@ -45,9 +45,7 @@ impl GameManager {
                     && let Some(dropped_time) = item.get_dropped_at()
                         && current_time.duration_since(dropped_time) >= ITEM_DESPAWN_TIME {
                             let no_despawn_room = item.get_remove_despawn_in_room();
-                            if no_despawn_room.is_none()
-                                || no_despawn_room.unwrap() != room.get_id()
-                            {
+                            if no_despawn_room != Some(room.get_id()) {
                                 actions.push((
                                     room.get_name().to_owned(),
                                     *item_id,
