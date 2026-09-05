@@ -12,7 +12,6 @@ pub struct Button {
     pub label: String,
     pub is_focused: bool,
     pub is_pressed: bool,
-    pub last_area: Option<Rect>,
 }
 
 impl Button {
@@ -21,7 +20,6 @@ impl Button {
             label: label.to_string(),
             is_focused: false,
             is_pressed: false,
-            last_area: None,
         }
     }
 

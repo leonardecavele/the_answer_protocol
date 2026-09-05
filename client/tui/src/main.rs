@@ -2,9 +2,7 @@ mod app;
 
 use crate::app::TuiApp;
 use clap::Parser;
-use client_core::Assets;
-use client_core::Cli;
-use client_core::logging;
+use client_core::{Assets, Cli, logging};
 use crossterm::event::DisableMouseCapture;
 use crossterm::execute;
 use crossterm::terminal::{LeaveAlternateScreen, disable_raw_mode};

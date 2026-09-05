@@ -1,6 +1,4 @@
-use client_core::app::App;
-use client_core::events::ApplicationEvent;
-use client_core::{Assets, ClientError};
+use client_core::{App, ApplicationEvent, Assets, ClientError};
 use crossterm::event::{DisableMouseCapture, EnableMouseCapture, EventStream};
 use crossterm::execute;
 use crossterm::terminal::{

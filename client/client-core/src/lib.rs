@@ -1,15 +1,19 @@
-pub mod app;
+pub mod logging;
+
+mod app;
 mod assets;
 mod cli;
-pub mod collections;
+mod collections;
 mod errors;
-pub mod events;
-pub mod logging;
-pub mod manifest;
-pub mod network;
-pub mod renderer;
-pub mod states;
+mod events;
+mod manifest;
+mod network;
+mod renderer;
+mod states;
 
+pub use app::App;
 pub use assets::Assets;
 pub use cli::Cli;
 pub use errors::ClientError;
+pub use events::{ApplicationEvent, TICK_RATE};
+pub use renderer::{MIN_COLUMNS, MIN_ROWS};

@@ -4,10 +4,7 @@ mod screen;
 
 use crate::app::GuiApp;
 use clap::Parser;
-use client_core::Assets;
-use client_core::Cli;
-use client_core::logging;
-use client_core::renderer::{MIN_COLUMNS, MIN_ROWS};
+use client_core::{Assets, Cli, MIN_COLUMNS, MIN_ROWS, logging};
 use eframe::egui;
 use tokio::runtime::Handle;
 
