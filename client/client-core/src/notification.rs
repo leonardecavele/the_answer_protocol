@@ -2,7 +2,7 @@ use std::time::{Duration, Instant};
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Copy)]
-pub enum NotificationType {
+pub enum NotificationKind {
     Information,
     Warning,
     Error,
@@ -27,7 +27,7 @@ const NOTIF_DEFAULT_DURATION: NotificationDuration =
 pub struct Notification {
     pub id: String,
     pub message: String,
-    pub notification_type: NotificationType,
+    pub kind: NotificationKind,
     pub duration: NotificationDuration,
     pub created_at: Instant,
     pub paused_at: Option<Instant>,
@@ -38,13 +38,13 @@ impl Notification {
     pub fn new(
         id_opt: Option<String>,
         message: String,
-        notif_type: NotificationType,
+        kind: NotificationKind,
         duration: NotificationDuration,
     ) -> Self {
         Self {
             id: id_opt.unwrap_or_else(|| Uuid::new_v4().to_string()),
             message,
-            notification_type: notif_type,
+            kind,
             created_at: Instant::now(),
             duration,
             paused_at: None,
@@ -56,7 +56,7 @@ impl Notification {
         Self::new(
             None,
             message.into(),
-            NotificationType::Information,
+            NotificationKind::Information,
             NOTIF_DEFAULT_DURATION,
         )
     }
@@ -65,7 +65,7 @@ impl Notification {
         Self::new(
             None,
             message.into(),
-            NotificationType::Warning,
+            NotificationKind::Warning,
             NOTIF_DEFAULT_DURATION,
         )
     }
@@ -74,7 +74,7 @@ impl Notification {
         Self::new(
             None,
             message.into(),
-            NotificationType::Success,
+            NotificationKind::Success,
             NOTIF_DEFAULT_DURATION,
         )
     }
@@ -83,7 +83,7 @@ impl Notification {
         Self::new(
             None,
             message.into(),
-            NotificationType::Error,
+            NotificationKind::Error,
             NOTIF_DEFAULT_DURATION,
         )
     }

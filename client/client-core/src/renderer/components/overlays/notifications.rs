@@ -1,5 +1,5 @@
 use crate::events::ApplicationEvent;
-use crate::notification::NotificationType;
+use crate::notification::NotificationKind;
 use crate::renderer::components::{Component, EventFlow, Lifecycle, is_mouse_in_rect};
 use crate::renderer::layout::percent_of;
 use crate::renderer::text::wrap_str_to_lines;
@@ -49,11 +49,11 @@ impl Component for NotificationsOverlay {
         let width = max_width;
 
         for notif in notifs_to_draw {
-            let color = match notif.notification_type {
-                NotificationType::Information => Color::Blue,
-                NotificationType::Warning => Color::Yellow,
-                NotificationType::Error => Color::Red,
-                NotificationType::Success => Color::Green,
+            let color = match notif.kind {
+                NotificationKind::Information => Color::Blue,
+                NotificationKind::Warning => Color::Yellow,
+                NotificationKind::Error => Color::Red,
+                NotificationKind::Success => Color::Green,
             };
 
             let block =
