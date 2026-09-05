@@ -1,7 +1,3 @@
-pub mod app;
-pub mod collections;
-pub mod data;
-pub mod events;
-pub mod network;
-pub mod states;
-pub mod ui;
+mod app;
+
+pub use app::TuiApp;

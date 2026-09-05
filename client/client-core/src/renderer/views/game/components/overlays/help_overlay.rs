@@ -1,0 +1,183 @@
+use crate::events::ApplicationEvent;
+use crate::renderer::components::{EventFlow, Lifecycle, ScrollableComponent};
+use crate::renderer::theme::overlay_block;
+use crate::states::app::AppState;
+use crate::states::game::HelpState;
+use crossterm::event::{Event as CrosstermEvent, KeyCode};
+use mpsc::Sender;
+use ratatui::{
+    layout::{Alignment, Rect},
+    style::{Color, Modifier, Style},
+    text::{Line, Span},
+    widgets::Block,
+};
+use tokio::sync::mpsc;
+
+const HELP_WIDTH: u16 = 64;
+const HELP_HEIGHT: u16 = 20;
+
+pub struct HelpOverlay;
+
+impl Default for HelpOverlay {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl HelpOverlay {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
+impl ScrollableComponent for HelpOverlay {
+    fn get_area(&self, state: &AppState, max_area: Rect) -> Rect {
+        if !state.game.overlays.is_open::<HelpState>() {
+            return Rect::default();
+        }
+
+        let x = max_area.width.saturating_sub(HELP_WIDTH) / 2;
+        let y = max_area.height.saturating_sub(HELP_HEIGHT) / 2;
+
+        Rect {
+            x: max_area.x + x,
+            y: max_area.y + y,
+            width: HELP_WIDTH,
+            height: HELP_HEIGHT,
+        }
+    }
+
+    fn get_block<'a>(&self, _state: &AppState) -> Block<'a> {
+        overlay_block()
+            .title(Line::from(" Keyboard Shortcuts ").alignment(Alignment::Center))
+            .title_bottom(Line::from(" Press Ctrl+H to close ").alignment(Alignment::Center))
+    }
+
+    fn get_content<'a>(&self, _state: &'a AppState, _max_width: usize) -> Vec<Line<'a>> {
+        vec![
+            Line::from(vec![Span::styled(
+                "Global",
+                Style::default()
+                    .fg(Color::Yellow)
+                    .add_modifier(Modifier::BOLD),
+            )]),
+            Line::from("  ctrl+c: quit game"),
+            Line::from("  ctrl+h: toggle help"),
+            Line::from("  ctrl+e: toggle event overlay"),
+            Line::from("  f1: toggle chat overlay"),
+            Line::from("  mouse click: focus panels (input, room npcs, image)"),
+            Line::from(""),
+            Line::from(vec![Span::styled(
+                "Input panel",
+                Style::default()
+                    .fg(Color::Yellow)
+                    .add_modifier(Modifier::BOLD),
+            )]),
+            Line::from("  enter: send command / focus right panel"),
+            Line::from(""),
+            Line::from(vec![Span::styled(
+                "Right panel (details/movement)",
+                Style::default()
+                    .fg(Color::Yellow)
+                    .add_modifier(Modifier::BOLD),
+            )]),
+            Line::from("  up/down/left/right: move north/south/west/east"),
+            Line::from("  enter: focus room npcs list"),
+            Line::from(""),
+            Line::from(vec![Span::styled(
+                "Room npcs list",
+                Style::default()
+                    .fg(Color::Yellow)
+                    .add_modifier(Modifier::BOLD),
+            )]),
+            Line::from("  up/down: select npc"),
+            Line::from("  enter: open interaction menu"),
+            Line::from(""),
+            Line::from(vec![Span::styled(
+                "Quest list",
+                Style::default()
+                    .fg(Color::Yellow)
+                    .add_modifier(Modifier::BOLD),
+            )]),
+            Line::from("  up/down: select quest"),
+            Line::from("  enter: open quest details"),
+            Line::from(""),
+            Line::from(vec![Span::styled(
+                "Interaction menus & chat",
+                Style::default()
+                    .fg(Color::Yellow)
+                    .add_modifier(Modifier::BOLD),
+            )]),
+            Line::from("  esc: close menus"),
+            Line::from("  up/down: change action (talk/attack) / scroll chat"),
+            Line::from("  enter: execute action / next dialogue"),
+            Line::from(""),
+            Line::from(vec![Span::styled(
+                "Text commands (input)",
+                Style::default()
+                    .fg(Color::Yellow)
+                    .add_modifier(Modifier::BOLD),
+            )]),
+            Line::from("  connect <name> : connect to server"),
+            Line::from("  quit : disconnect and close the game"),
+            Line::from("  look : look around the room"),
+            Line::from("  move <NORTH|SOUTH|EAST|WEST> : move to direction"),
+            Line::from("  who : see online players"),
+            Line::from("  chat global <msg> (say) : send a global message"),
+            Line::from("  chat room <msg> (cr) : send a message to your room"),
+            Line::from("  chat group <msg> (cg) : send a message to your group"),
+            Line::from("  chat private <name> <msg> (msg) : send a private message"),
+            Line::from("  take <item> : take an item"),
+            Line::from("  drop <item> : drop an item"),
+            Line::from("  inventory (inv) : view inventory"),
+            Line::from("  status : view status"),
+            Line::from("  talk <npc> : talk to npc"),
+            Line::from("  attack <npc> : attack npc"),
+            Line::from("  fight create <npc> (fc) : duel an npc in the code editor"),
+            Line::from("  quest <npc> : ask an npc for a quest"),
+            Line::from("  quests : list all active quests"),
+            Line::from("  group create (gc) : create a new group"),
+            Line::from("  group join <name> (gj) : join a player's group"),
+            Line::from("  group invite <name> (gi) : invite a player to your group"),
+            Line::from("  group leave (gl) : leave your current group"),
+            Line::from(""),
+            Line::from(vec![Span::styled(
+                "Hud & status",
+                Style::default()
+                    .fg(Color::Yellow)
+                    .add_modifier(Modifier::BOLD),
+            )]),
+            Line::from("  top right : your hp and max hp"),
+            Line::from("  top right : online players count"),
+            Line::from("  bottom right : notifications (disappear after 5s)"),
+        ]
+    }
+}
+
+impl Lifecycle for HelpOverlay {
+    fn handle_device_event(
+        &mut self,
+        state: &mut AppState,
+        event: &CrosstermEvent,
+        _sender: &Sender<ApplicationEvent>,
+    ) -> EventFlow {
+        if let CrosstermEvent::Key(key) = event {
+            match key.code {
+                KeyCode::Esc | KeyCode::Char('q') => {
+                    state.game.overlays.close::<HelpState>();
+                    return EventFlow::Consumed;
+                }
+                KeyCode::Char('h')
+                    if key
+                        .modifiers
+                        .contains(crossterm::event::KeyModifiers::CONTROL) =>
+                {
+                    state.game.overlays.close::<HelpState>();
+                    return EventFlow::Consumed;
+                }
+                _ => {}
+            }
+        }
+        EventFlow::Ignored
+    }
+}

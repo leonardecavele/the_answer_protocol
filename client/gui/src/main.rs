@@ -7,9 +7,9 @@ use clap::Parser;
 use client_core::Assets;
 use client_core::Cli;
 use client_core::logging;
+use client_core::renderer::{MIN_COLUMNS, MIN_ROWS};
 use eframe::egui;
 use tokio::runtime::Handle;
-use tui::ui::{MIN_COLUMNS, MIN_ROWS};
 
 const LOG_FILE: &str = "gui.log";
 const WINDOW_TITLE: &str = "The Answer Protocol";

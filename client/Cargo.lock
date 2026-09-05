@@ -972,7 +972,6 @@ dependencies = [
  "chrono",
  "clap",
  "crossterm",
- "futures",
  "image",
  "include_dir",
  "ratatui",
@@ -2199,7 +2198,6 @@ dependencies = [
  "ratatui",
  "soft_ratatui",
  "tokio",
- "tui",
 ]
 
 [[package]]
@@ -5595,26 +5593,12 @@ checksum = "d2df906b07856748fa3f6e0ad0cbaa047052d4a7dd609e231c4f72cee8c36f31"
 name = "tui"
 version = "0.1.0"
 dependencies = [
- "api-client",
- "chrono",
  "clap",
  "client-core",
  "crossterm",
  "futures",
- "image",
- "include_dir",
  "ratatui",
- "ratatui-code-editor",
- "ratatui-image",
- "serde",
- "serde_json",
- "textwrap",
- "thiserror 2.0.18",
  "tokio",
- "tokio-util",
- "tracing",
- "tracing-subscriber",
- "uuid",
 ]
 
 [[package]]
