@@ -1,7 +1,7 @@
 use crate::events::{ApplicationEvent, EventBroker};
 use crate::manifest::Manifest;
 use crate::network::{NetworkManager, RequestEnvelope};
-use crate::notification::Notification;
+use crate::notification::{Notification, NotificationTopic};
 use crate::renderer::ViewManager;
 use crate::renderer::components::{Component, Lifecycle};
 use crate::renderer::views::LoginView;
@@ -129,7 +129,7 @@ impl App {
             self.state
                 .ui
                 .notifications
-                .push(Notification::warning(message));
+                .push(Notification::warning(message).with_topic(NotificationTopic::Protocol));
         }
     }
 }

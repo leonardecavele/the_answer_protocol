@@ -1,7 +1,6 @@
 use crate::collections::Step;
 use crate::events::{ApplicationEvent, NetworkConnectionEvent};
-use crate::network::NOTIF_ID_CONNECTION_ATTEMPT;
-use crate::notification::Notification;
+use crate::notification::{Notification, NotificationTopic};
 use crate::renderer::components::{
     Button, Component, EventFlow, Interactive, Lifecycle, TextInput,
 };
@@ -174,14 +173,14 @@ impl Lifecycle for LoginView {
                     let port = self.port_input.inner.value.clone();
 
                     if name.is_empty() || ip.is_empty() || port.is_empty() {
-                        state
-                            .ui
-                            .notifications
-                            .push(Notification::warning("All fields must be filled"));
+                        state.ui.notifications.push(
+                            Notification::warning("All fields must be filled")
+                                .with_topic(NotificationTopic::Connection),
+                        );
                     } else {
                         state.ui.notifications.push(
                             Notification::info("Connecting...")
-                                .with_id(NOTIF_ID_CONNECTION_ATTEMPT)
+                                .with_topic(NotificationTopic::Connection)
                                 .with_ms(60_000),
                         );
                         let _ = event_sender.try_send(ApplicationEvent::Network(

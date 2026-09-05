@@ -1,5 +1,5 @@
 use crate::app::runtime::App;
-use crate::notification::Notification;
+use crate::notification::{Notification, NotificationTopic};
 use crate::renderer::views::{EditorView, GameView};
 use crate::states::game::DialogueState;
 use client_api::commands::AttackResponse;
@@ -39,7 +39,10 @@ impl App {
                 self.view_manager.set_view(Box::new(view));
             }
             Err(error) => {
-                self.state.ui.notifications.push(Notification::error(error));
+                self.state
+                    .ui
+                    .notifications
+                    .push(Notification::error(error).with_topic(NotificationTopic::Fight));
             }
         }
     }
@@ -93,9 +96,10 @@ impl App {
     }
 
     pub fn on_fight_timed_out(&mut self) {
-        self.state.ui.notifications.push(Notification::warning(
-            "The server never ended the fight. Leaving the editor.",
-        ));
+        self.state.ui.notifications.push(
+            Notification::warning("The server never ended the fight. Leaving the editor.")
+                .with_topic(NotificationTopic::Fight),
+        );
 
         self.on_fight_end();
     }

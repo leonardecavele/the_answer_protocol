@@ -9,7 +9,7 @@ mod server;
 use crate::app::runtime::App;
 use crate::events::ApiEvent;
 use crate::network::ResponseEnvelope;
-use crate::notification::Notification;
+use crate::notification::{Notification, NotificationTopic};
 use crate::states::game::ChatChannel;
 use client_api::events::{GameServerEvent, GroupEvent, RoomEvent, ServerEvent};
 use client_api::{ApiRequest, ApiResponse, FrameDirection};
@@ -107,9 +107,10 @@ impl App {
             (ApiRequest::Quit(_), ApiResponse::Quit(Ok(_))) => {
                 self.disconnect();
 
-                self.state.ui.notifications.push(Notification::success(
-                    "Successfully disconnected".to_string(),
-                ));
+                self.state.ui.notifications.push(
+                    Notification::success("Successfully disconnected".to_string())
+                        .with_topic(NotificationTopic::Connection),
+                );
             }
             (request, response) => {
                 self.record_trace(
@@ -133,10 +134,10 @@ impl App {
                     self.on_item_spawned(spawn_data);
                 }
                 t => {
-                    self.state
-                        .ui
-                        .notifications
-                        .push(Notification::warning(format!("Unknown spawn event: {}", t)));
+                    self.state.ui.notifications.push(
+                        Notification::warning(format!("Unknown spawn event: {}", t))
+                            .with_topic(NotificationTopic::Protocol),
+                    );
                 }
             },
             ServerEvent::Despawn(spawn_data) => match spawn_data.r#type.as_str() {
@@ -144,13 +145,10 @@ impl App {
                     self.on_item_despawned(spawn_data);
                 }
                 t => {
-                    self.state
-                        .ui
-                        .notifications
-                        .push(Notification::warning(format!(
-                            "Unknown despawn event: {}",
-                            t
-                        )));
+                    self.state.ui.notifications.push(
+                        Notification::warning(format!("Unknown despawn event: {}", t))
+                            .with_topic(NotificationTopic::Protocol),
+                    );
                 }
             },
             ServerEvent::Kill(kill_data) => {

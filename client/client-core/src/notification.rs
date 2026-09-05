@@ -1,5 +1,14 @@
 use std::time::{Duration, Instant};
-use uuid::Uuid;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct NotificationId(u64);
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum NotificationTopic {
+    Connection,
+    Fight,
+    Protocol,
+}
 
 #[derive(Debug, Clone, Copy)]
 pub enum NotificationKind {
@@ -25,9 +34,9 @@ const NOTIF_DEFAULT_DURATION: NotificationDuration =
     NotificationDuration::Finite(Duration::from_millis(5000));
 
 pub struct Notification {
-    pub id: String,
     pub message: String,
     pub kind: NotificationKind,
+    pub topic: Option<NotificationTopic>,
     pub duration: NotificationDuration,
     pub created_at: Instant,
     pub paused_at: Option<Instant>,
@@ -35,16 +44,11 @@ pub struct Notification {
 }
 
 impl Notification {
-    pub fn new(
-        id_opt: Option<String>,
-        message: String,
-        kind: NotificationKind,
-        duration: NotificationDuration,
-    ) -> Self {
+    pub fn new(message: String, kind: NotificationKind, duration: NotificationDuration) -> Self {
         Self {
-            id: id_opt.unwrap_or_else(|| Uuid::new_v4().to_string()),
             message,
             kind,
+            topic: None,
             created_at: Instant::now(),
             duration,
             paused_at: None,
@@ -54,7 +58,6 @@ impl Notification {
 
     pub fn info(message: impl Into<String>) -> Self {
         Self::new(
-            None,
             message.into(),
             NotificationKind::Information,
             NOTIF_DEFAULT_DURATION,
@@ -63,7 +66,6 @@ impl Notification {
 
     pub fn warning(message: impl Into<String>) -> Self {
         Self::new(
-            None,
             message.into(),
             NotificationKind::Warning,
             NOTIF_DEFAULT_DURATION,
@@ -72,7 +74,6 @@ impl Notification {
 
     pub fn success(message: impl Into<String>) -> Self {
         Self::new(
-            None,
             message.into(),
             NotificationKind::Success,
             NOTIF_DEFAULT_DURATION,
@@ -81,15 +82,14 @@ impl Notification {
 
     pub fn error(message: impl Into<String>) -> Self {
         Self::new(
-            None,
             message.into(),
             NotificationKind::Error,
             NOTIF_DEFAULT_DURATION,
         )
     }
 
-    pub fn with_id(mut self, id: impl Into<String>) -> Self {
-        self.id = id.into();
+    pub fn with_topic(mut self, topic: NotificationTopic) -> Self {
+        self.topic = Some(topic);
         self
     }
 
@@ -160,37 +160,50 @@ impl Notification {
 }
 
 #[derive(Default)]
-pub struct Notifications(Vec<Notification>);
+pub struct Notifications {
+    entries: Vec<(NotificationId, Notification)>,
+    next_id: u64,
+}
 
 impl Notifications {
     pub fn is_empty(&self) -> bool {
-        self.0.is_empty()
+        self.entries.is_empty()
     }
 
-    pub fn get(&self, id: &str) -> Option<&Notification> {
-        self.0.iter().find(|n| n.id == id)
+    pub fn get_mut(&mut self, id: NotificationId) -> Option<&mut Notification> {
+        self.entries
+            .iter_mut()
+            .find(|(entry_id, _)| *entry_id == id)
+            .map(|(_, entry)| entry)
     }
 
-    pub fn get_mut(&mut self, id: &str) -> Option<&mut Notification> {
-        self.0.iter_mut().find(|n| n.id == id)
-    }
-
-    pub fn latest(&self, n: usize) -> Vec<&Notification> {
-        self.0.iter().rev().take(n).collect::<Vec<_>>()
+    pub fn latest(&self, count: usize) -> Vec<(NotificationId, &Notification)> {
+        self.entries
+            .iter()
+            .rev()
+            .take(count)
+            .map(|(id, entry)| (*id, entry))
+            .collect()
     }
 
     pub fn push(&mut self, notification: Notification) {
-        self.0.push(notification);
+        if let Some(topic) = notification.topic {
+            self.entries.retain(|(_, entry)| entry.topic != Some(topic));
+        }
+
+        self.next_id += 1;
+        self.entries
+            .push((NotificationId(self.next_id), notification));
     }
 
-    pub fn remove(&mut self, target_id: &str) {
-        self.0.retain(|n| n.id != target_id);
+    pub fn remove(&mut self, id: NotificationId) {
+        self.entries.retain(|(entry_id, _)| *entry_id != id);
     }
 
     pub fn retain_active(&mut self) {
-        self.0.retain(|n| match n.duration {
+        self.entries.retain(|(_, entry)| match entry.duration {
             NotificationDuration::Infinite => true,
-            NotificationDuration::Finite(total) => n.elapsed() < total,
+            NotificationDuration::Finite(total) => entry.elapsed() < total,
         });
     }
 }

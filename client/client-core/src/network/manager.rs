@@ -7,8 +7,6 @@ use tokio::sync::mpsc;
 use tokio_util::task::AbortOnDropHandle;
 use tracing::{info, warn};
 
-pub const NOTIF_ID_CONNECTION_ATTEMPT: &str = "notif_connection_attempt";
-
 pub struct NetworkManager {
     pub command_sender: Sender<RequestEnvelope>,
     _background_task: AbortOnDropHandle<()>,

@@ -1,5 +1,5 @@
 use crate::events::ApplicationEvent;
-use crate::notification::NotificationKind;
+use crate::notification::{NotificationId, NotificationKind};
 use crate::renderer::components::{Component, EventFlow, Lifecycle, is_mouse_in_rect};
 use crate::renderer::layout::percent_of;
 use crate::renderer::text::wrap_str_to_lines;
@@ -13,11 +13,10 @@ use ratatui::widgets::{Block, Clear, Paragraph};
 use tokio::sync::mpsc::Sender;
 
 const MAX_VISIBLE_NOTIFICATIONS: usize = 5;
-type NotificationID = String;
 
 #[derive(Default)]
 pub struct NotificationsOverlay {
-    pub visible_areas: Vec<(NotificationID, Rect)>,
+    pub visible_areas: Vec<(NotificationId, Rect)>,
 }
 
 impl NotificationsOverlay {
@@ -48,7 +47,7 @@ impl Component for NotificationsOverlay {
 
         let width = max_width;
 
-        for notif in notifs_to_draw {
+        for (id, notif) in notifs_to_draw {
             let color = match notif.kind {
                 NotificationKind::Information => Color::Blue,
                 NotificationKind::Warning => Color::Yellow,
@@ -94,7 +93,7 @@ impl Component for NotificationsOverlay {
                 height,
             };
 
-            self.visible_areas.push((notif.id.clone(), notif_area));
+            self.visible_areas.push((id, notif_area));
 
             frame.render_widget(Clear, notif_area);
             frame.render_widget(paragraph, notif_area);
@@ -165,11 +164,11 @@ impl Lifecycle for NotificationsOverlay {
                 let mouse_in_rect = is_mouse_in_rect(*column, *row, *area);
 
                 if mouse_in_rect && *kind == MouseEventKind::Down(MouseButton::Left) {
-                    state.ui.notifications.remove(notification_id);
+                    state.ui.notifications.remove(*notification_id);
                     return EventFlow::Consumed;
                 }
 
-                let Some(notification) = state.ui.notifications.get_mut(notification_id) else {
+                let Some(notification) = state.ui.notifications.get_mut(*notification_id) else {
                     continue;
                 };
 

@@ -1,5 +1,5 @@
 use crate::app::runtime::App;
-use crate::notification::Notification;
+use crate::notification::{Notification, NotificationTopic};
 use crate::renderer::views::GameView;
 use client_api::commands::{ConnectResponse, WhoResponse};
 
@@ -61,10 +61,10 @@ impl App {
     }
 
     pub fn on_unknown_event(&mut self, raw: String) {
-        self.state
-            .ui
-            .notifications
-            .push(Notification::warning(format!("Unknown event: {}", raw)));
+        self.state.ui.notifications.push(
+            Notification::warning(format!("Unknown event: {}", raw))
+                .with_topic(NotificationTopic::Protocol),
+        );
     }
 
     pub fn on_game_server_connected(&mut self) {

@@ -1,7 +1,7 @@
 use crate::app::runtime::App;
 use crate::events::NetworkConnectionEvent;
-use crate::network::{NOTIF_ID_CONNECTION_ATTEMPT, NetworkManager};
-use crate::notification::Notification;
+use crate::network::NetworkManager;
+use crate::notification::{Notification, NotificationTopic};
 use crate::renderer::views::GameView;
 
 impl App {
@@ -28,14 +28,10 @@ impl App {
                 server_port,
                 player_name,
             } => {
-                self.state
-                    .ui
-                    .notifications
-                    .remove(NOTIF_ID_CONNECTION_ATTEMPT);
-
-                self.state.ui.notifications.push(Notification::success(
-                    "Connected to the server successfully!",
-                ));
+                self.state.ui.notifications.push(
+                    Notification::success("Connected to the server successfully!")
+                        .with_topic(NotificationTopic::Connection),
+                );
 
                 self.state.network.server_ip = server_ip;
                 self.state.network.server_port = server_port;
@@ -47,26 +43,19 @@ impl App {
             }
             NetworkConnectionEvent::Failed { error_message } => {
                 self.network_manager = None;
-                self.state
-                    .ui
-                    .notifications
-                    .remove(NOTIF_ID_CONNECTION_ATTEMPT);
 
-                self.state
-                    .ui
-                    .notifications
-                    .push(Notification::error(format!(
-                        "Connection failed: {}",
-                        error_message
-                    )));
+                self.state.ui.notifications.push(
+                    Notification::error(format!("Connection failed: {}", error_message))
+                        .with_topic(NotificationTopic::Connection),
+                );
             }
             NetworkConnectionEvent::Lost { reason } => {
                 self.disconnect();
 
-                self.state
-                    .ui
-                    .notifications
-                    .push(Notification::error(format!("Connection lost: {}", reason)));
+                self.state.ui.notifications.push(
+                    Notification::error(format!("Connection lost: {}", reason))
+                        .with_topic(NotificationTopic::Connection),
+                );
             }
         }
     }
