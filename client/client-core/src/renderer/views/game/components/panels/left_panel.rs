@@ -1,6 +1,6 @@
 use crate::collections::Step;
-use crate::data::manifest::NpcKind;
 use crate::events::ApplicationEvent;
+use crate::manifest::NpcKind;
 use crate::renderer::components::{
     CommandButton, Component, EventFlow, Lifecycle, is_mouse_in_rect,
 };

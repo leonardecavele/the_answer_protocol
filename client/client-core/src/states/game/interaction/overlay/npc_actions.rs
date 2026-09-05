@@ -1,6 +1,6 @@
 use super::{Overlay, OverlayPayload};
 use crate::collections::SelectableList;
-use crate::data::manifest::NpcKind;
+use crate::manifest::NpcKind;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum NpcAction {

@@ -1,4 +1,4 @@
-use crate::data::manifest::{ItemEntry, Manifest, NpcEntry, RoomEntry};
+use crate::manifest::{ItemEntry, Manifest, NpcEntry, RoomEntry};
 use std::time::Duration;
 
 pub enum Sprite {

@@ -1,5 +1,5 @@
 use super::Sprite;
-use crate::data::manifest::Manifest;
+use crate::manifest::Manifest;
 
 pub struct Item {
     pub id: String,

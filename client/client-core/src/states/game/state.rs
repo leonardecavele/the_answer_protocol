@@ -1,6 +1,6 @@
 use crate::Assets;
 use crate::collections::BoundedLog;
-use crate::data::manifest::Manifest;
+use crate::manifest::Manifest;
 use crate::states::game::interaction::{DialogueState, GameFocus, Overlay, OverlayKind, Overlays};
 use crate::states::game::session::{
     ChatMessage, FightState, GroupState, PlayerState, Room, ServerState,

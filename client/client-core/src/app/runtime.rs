@@ -1,7 +1,7 @@
 use crate::Assets;
 use crate::ClientError;
-use crate::data::manifest::Manifest;
 use crate::events::{ApplicationEvent, EventBroker};
+use crate::manifest::Manifest;
 use crate::network::NetworkManager;
 use crate::network::envelopes::RequestEnvelope;
 use crate::renderer::components::{Component, Lifecycle};

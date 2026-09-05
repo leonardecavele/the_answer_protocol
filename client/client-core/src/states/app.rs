@@ -1,5 +1,5 @@
 use crate::Assets;
-use crate::data::manifest::Manifest;
+use crate::manifest::Manifest;
 use crate::states::game::GameState;
 use crate::states::network::NetworkState;
 use crate::states::ui::UiState;

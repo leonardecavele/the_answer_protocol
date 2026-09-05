@@ -1,4 +1,4 @@
-use crate::data::manifest::Manifest;
+use crate::manifest::Manifest;
 
 pub const DIRECTION_COUNT: usize = 4;
 
