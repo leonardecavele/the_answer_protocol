@@ -6,7 +6,7 @@ networking, focus model, commands, and widgets. Egui supplies the window and
 input events; a software Ratatui backend supplies the character-cell display.
 
 Public command behavior and server frames are defined in the root
-[TAP protocol reference](../../protocole.md). The transport layer is documented
+[TAP protocol reference](../../PROTOCOL.md). The transport layer is documented
 in the [API client README](../api-client/README.md).
 
 ## Rendering pipeline

@@ -15,7 +15,7 @@ and rendering boundaries.
   software Ratatui backend, desktop rendering, and controls.
 
 The public frames shared with the servers are specified in the root
-[TAP protocol reference](../protocole.md).
+[TAP protocol reference](../PROTOCOL.md).
 
 ## Shared application model
 

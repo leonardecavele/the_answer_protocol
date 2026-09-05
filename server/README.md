@@ -20,7 +20,7 @@ flowchart LR
   internal messages it accepts and emits.
 
 The public commands and frames shared with clients are specified separately in
-the root [TAP protocol reference](../protocole.md).
+the root [TAP protocol reference](../PROTOCOL.md).
 
 ## Process boundary
 

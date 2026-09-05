@@ -6,7 +6,7 @@ group state, applies connection limits, and translates game commands to the
 Rust engine's internal JSON protocol.
 
 Public command syntax, errors, and events are defined in the root
-[TAP protocol reference](../../protocole.md).
+[TAP protocol reference](../../PROTOCOL.md).
 
 ## Requirements
 

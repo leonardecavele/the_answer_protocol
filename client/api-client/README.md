@@ -6,7 +6,7 @@ decoding, typed requests and responses, asynchronous events, raw-frame
 inspection, connection state, timeouts, and shutdown.
 
 The wire grammar consumed and produced by this crate is defined in the root
-[TAP protocol reference](../../protocole.md).
+[TAP protocol reference](../../PROTOCOL.md).
 
 ## Add the crate
 

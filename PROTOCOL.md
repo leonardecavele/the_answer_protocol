@@ -1,5 +1,3 @@
-# The Answer Protocol reference
-
 This document is the wire-level reference for the public TAP endpoint exposed
 by the Go server. It consolidates the protocol grammar, commands, responses,
 errors, events, and the implementation choices permitted by RFC 42TAP.

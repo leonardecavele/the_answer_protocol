@@ -7,7 +7,7 @@ a Linux sandbox.
 
 It listens for one Go gateway connection and does not expose TAP directly. The
 public gameplay commands and frames are defined in the root
-[TAP protocol reference](../../protocole.md).
+[TAP protocol reference](../../PROTOCOL.md).
 
 ## Requirements
 

@@ -7,7 +7,7 @@ supplies native terminal events and Ratatui renders through its Crossterm
 backend.
 
 Public command behavior and server frames are defined in the root
-[TAP protocol reference](../../protocole.md). The transport API used by the
+[TAP protocol reference](../../PROTOCOL.md). The transport API used by the
 application is documented in the [API client README](../api-client/README.md).
 
 ## Rendering pipeline

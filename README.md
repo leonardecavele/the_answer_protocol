@@ -2,12 +2,11 @@ _This project has been created as part of the 42 curriculum by cobussie, nlallem
 
 ## Description
 
-The Answer Protocol is a multiplayer text adventure inspired by 1970s MUDs.
-Its world recreates life at 42: players explore rooms, meet NPCs, collect
-objects, form groups, complete quests, and fight through sandboxed C coding
-challenges.
+The Answer Protocol is a multiplayer text adventure inspired
+by 1970s MUDs. It recreates our school, with our friends as
+NPCs you can fight by completing sandboxed C coding challenges.
 
-The project implements RFC 42TAP as a line-oriented TCP protocol. The public
+The project implements RFC [42TAP](PROTOCOL.md) as a line-oriented TCP protocol. The public
 gateway, authoritative game engine, reusable client API, terminal interface,
 and graphical interface are separate components with clearly defined
 responsibilities.
@@ -17,7 +16,7 @@ responsibilities.
 This README introduces the complete project. Detailed documentation lives next
 to the component that owns it:
 
-- [TAP protocol](protocole.md): framing, commands, responses, errors, events,
+- [TAP protocol](PROTOCOL.md): framing, commands, responses, errors, events,
   and project-specific protocol choices.
 - [Server architecture](server/README.md): gateway/game-engine boundary and
   internal communication.
@@ -149,7 +148,7 @@ UTF-8, one `LF`-terminated frame per line, the `OK hello proto=1` handshake,
 request/response commands, and interleaved asynchronous events. Command names
 and subcommands are case-insensitive. The complete grammar, command catalog,
 error catalog, event catalog, and examples are maintained in
-[protocole.md](protocole.md).
+[PROTOCOLE.md](PROTOCOL.md).
 
 The project makes the following documented implementation choices:
 
