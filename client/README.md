@@ -1,5 +1,5 @@
 The client workspace provides [terminal](tui/README.md) and [graphical](gui/README.md) entry points to the same
-game. Both use one Rust application core, the same Ratatui views and widgets,
+game. Both use one Rust [application core](client-core), the same Ratatui views and widgets,
 and the same [asynchronous TAP library](client-api/README.md). The frontends differ only at the event
 and rendering boundaries.
 
@@ -7,6 +7,8 @@ and rendering boundaries.
 
 - [Client API](client-api/README.md) documents connection setup, typed
   requests, responses, events, configuration, and errors.
+- [`client-core`](client-core) owns the shared application, state, networking,
+  assets, components, and Ratatui renderer.
 - [TUI](tui/README.md) documents the Crossterm event loop, terminal lifecycle,
   controls, commands, and Ratatui rendering.
 - [GUI](gui/README.md) documents Egui-to-Crossterm event translation, the
@@ -17,9 +19,9 @@ The public frames shared with the servers are specified in the root
 
 ## Shared application model
 
-The `tui` crate is also a reusable library. It owns `App`, network integration,
-screen states, focus, actions, overlays, and all Ratatui drawing code. Each
-frontend supplies compatible input events and a Ratatui backend.
+The `client-core` crate owns `App`, network integration, screen states, focus,
+actions, overlays, and all Ratatui drawing code. Each frontend supplies
+compatible device events and a Ratatui backend.
 
 ### Terminal pipeline
 
@@ -54,7 +56,6 @@ metadata:
 - NPC display names, roles, contextual actions, and sprites;
 - item display names, descriptions, and sprites;
 - room illustrations and navigation orientation;
-- quest descriptions shown by the interfaces.
 
 Static images use `image_path`. Animated NPCs use an ordered `image_paths`
 array and `frame_ms`. The referenced files live below
@@ -62,6 +63,9 @@ array and `frame_ms`. The referenced files live below
 
 Assets only affect presentation. The server remains authoritative for rooms,
 inventories, NPC state, quests, groups, fights, and every gameplay mutation.
+They are embedded in both client binaries by default. Passing
+`--assets <directory>` loads `manifest.json` and the referenced images from an
+external directory instead.
 
 ## Requirements
 
@@ -87,13 +91,15 @@ make run-client-tui
 make run-client-gui
 ```
 
-The TUI accepts another endpoint through `CLIENT_ARGS`:
+Both clients share the `--ip`, `--port`, and `--assets` options through
+`CLIENT_ARGS`:
 
 ```bash
 make run-client-tui CLIENT_ARGS="--ip 192.0.2.10 --port 38800"
+make run-client-gui CLIENT_ARGS="--ip 192.0.2.10 --port 38800 --assets ./assets"
 ```
 
-The GUI connects to `127.0.0.1:38800` by default.
+Both connect to `127.0.0.1:38800` and use their embedded assets by default.
 
 Run client-wide formatting and static analysis with:
 

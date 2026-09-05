@@ -1,8 +1,8 @@
 The `tui` crate provides the complete terminal interface for The Answer
-Protocol. It owns the shared `App`, application state, network integration,
-views, widgets, overlays, focus system, and MUD-style command input. Crossterm
-supplies native terminal events and Ratatui renders through its Crossterm
-backend.
+Protocol. It is a binary frontend around `client_core::App`: `client-core`
+owns the application state, network integration, views, widgets, overlays,
+focus system, and MUD-style command input. Crossterm supplies native terminal
+events and Ratatui renders through its Crossterm backend.
 
 Public command behavior and server frames are defined in the root
 [TAP protocol reference](../../PROTOCOL.md). The transport API used by the
@@ -22,9 +22,9 @@ The application accepts Crossterm keyboard and mouse events, mutates its
 central state, draws Ratatui widgets, and flushes the resulting cells to the
 terminal through `CrosstermBackend`.
 
-The crate also exports its modules as a library. This lets another frontend
-reuse the same `App` and drawing code with a different event source and
-Ratatui backend.
+The shared `App` and drawing code live in `client-core`; the `tui` crate owns
+only the terminal lifecycle, Crossterm event stream, and terminal rendering
+loop.
 
 ## Requirements
 
@@ -45,6 +45,7 @@ make run-client-tui
 | --- | --- | --- |
 | `--ip` | `127.0.0.1` | Go TAP server IP address or hostname. |
 | `--port` | `38800` | Public TAP server port. |
+| `--assets` | Embedded assets | Optional directory containing `manifest.json` and pictures. |
 
 Example with another endpoint:
 
@@ -63,9 +64,11 @@ At startup, the binary:
 5. creates `Terminal<CrosstermBackend<Stdout>>`;
 6. runs the shared application asynchronously.
 
-The event broker combines Crossterm input with a 33 ms UI tick on a bounded
-Tokio channel. Normal shutdown restores the cursor, disables mouse capture,
-leaves the alternate screen, and disables raw mode.
+The frontend waits with `tokio::select!` for either a Crossterm device event or
+an application event from `client-core`. The shared event broker produces the
+33 ms UI tick and carries network, API, request, and fight-timeout events on a
+bounded Tokio channel. Normal shutdown restores the cursor, disables mouse
+capture, leaves the alternate screen, and disables raw mode.
 
 ## Application lifecycle
 
@@ -116,7 +119,6 @@ sensitivity:
 | `take <item>` | `TAKE` |
 | `drop <item>` | `DROP` |
 | `inventory` / `inv` | `INVENTORY` |
-| `use <item>` | `USE` |
 | `status` | `STATUS` |
 | `talk <npc>` | `TALK` |
 | `attack <npc>` | `ATTACK` |
@@ -130,24 +132,21 @@ sensitivity:
 | `fight attack <code>` / `fa <code>` | `FIGHT ATTACK` |
 
 Contextual panels expose the same operations without requiring command entry,
-including take, drop, use, talk, quest, direct attack, and code-fight actions.
+including take, drop, talk, quest, direct attack, and code-fight actions.
 
-## Module layout
+## Source layout
 
-| Module | Responsibility                                                     |
-| --- |--------------------------------------------------------------------|
-| `app` | Main loop and centralized input, network, API, and event handling. |
-| `network` | Client-Api ownership and request/response envelopes.               |
-| `events` | Crossterm input, ticks, application events, and broker.            |
-| `states` | Network, player, room, group, fight, overlay, and UI state.        |
-| `ui` | Screens, panels, widgets, popups, focus, themes, and images.       |
-| `data` | Presentation manifest loading and asset lookup.                    |
-| `collections` | Selectable lists and bounded interface histories.                  |
-| `errors` | Terminal, network, channel, and application errors.                |
+| File | Responsibility |
+| --- | --- |
+| `src/main.rs` | Shared CLI parsing, asset selection, logging, and process lifecycle. |
+| `src/app.rs` | Crossterm setup, device-event stream, application loop, drawing, and restoration. |
+
+Application state, networking, events, components, views, assets, and errors
+are implemented by the sibling `client-core` crate.
 
 ## Logging
 
-The client appends structured tracing records to `app.log`. The default filter
+The client appends structured tracing records to `tui.log`. The default filter
 is `debug`; override it with `RUST_LOG`:
 
 ```bash

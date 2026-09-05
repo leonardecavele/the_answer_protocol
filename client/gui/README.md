@@ -1,5 +1,5 @@
 The `gui` crate provides the native graphical interface for The Answer
-Protocol. It reuses the complete Ratatui `App`, including its screens, state,
+Protocol. It reuses `client_core::App`, including its screens, state,
 networking, focus model, commands, and widgets. Egui supplies the window and
 input events; a software Ratatui backend supplies the character-cell display.
 
@@ -34,7 +34,7 @@ pseudo-terminal or a second set of screens.
 
 - Rust toolchain with Cargo and Rust 2024 edition support
 - A native desktop environment supported by Eframe
-- A [TAP gateway](../../server/go_server/README.md) on `127.0.0.1:38800`
+- A [TAP gateway](../../server/go_server/README.md), normally on `127.0.0.1:38800`
 
 ## Build and run
 
@@ -48,12 +48,24 @@ make run-client-gui
 The native window is titled `The Answer Protocol` and connects to the default
 gateway at `127.0.0.1:38800`.
 
+| Flag | Default | Purpose |
+| --- | --- | --- |
+| `--ip` | `127.0.0.1` | Go TAP server IP address or hostname. |
+| `--port` | `38800` | Public TAP server port. |
+| `--assets` | Embedded assets | Optional directory containing `manifest.json` and pictures. |
+
+Example with another endpoint and an external asset directory:
+
+```bash
+make run-client-gui CLIENT_ARGS="--ip 192.0.2.10 --port 38800 --assets ./assets"
+```
+
 The GUI crate uses these frontend dependencies:
 
 | Crate | Responsibility |
 | --- | --- |
 | `eframe` / `egui` | Native application lifecycle, window, and input. |
-| `tui` | Shared `App`, state, events, views, and widgets. |
+| `client-core` | Shared `App`, state, events, views, widgets, and assets. |
 | `ratatui` | Backend-independent terminal UI drawing. |
 | `soft_ratatui` | In-memory character-cell renderer and font atlases. |
 | `egui_ratatui` | Egui widget that paints the software terminal. |
@@ -64,7 +76,7 @@ The GUI crate uses these frontend dependencies:
 
 `GuiApp` owns four long-lived values:
 
-- the shared `tui::app::App`;
+- the shared `client_core::App`;
 - a software `ratatui::Terminal`;
 - the active Tokio runtime handle;
 - the current Egui-to-terminal cell grid.
@@ -75,9 +87,11 @@ Ratatui frame, and schedules the next repaint after the standard 33 ms tick.
 When `App` requests shutdown, the GUI closes the native viewport.
 
 The software terminal starts at 120 columns by 40 rows and uses 9-by-18 regular
-and bold monospace atlases. Cells with an unset background are normalized to
-black before display. The drawable area is clamped to the current Egui window
-and graphics texture limit.
+and bold monospace atlases. The native window cannot shrink below the 80-by-24
+application minimum, and the zoom factor is capped so that minimum grid remains
+visible. The shared renderer centers and limits the interface to 200 columns by
+60 rows. Cells with an unset background are normalized to black before display.
+The drawable area is also clamped to the graphics texture limit.
 
 ## Input translation
 
@@ -93,6 +107,7 @@ The input adapter converts these Egui events:
 | `Ctrl` plus a letter | Control-modified character event. |
 | Copy request | `Ctrl+C`. |
 | Primary pointer press | Left-button event at the corresponding cell. |
+| Pointer movement | `Moved` event at the corresponding cell. |
 | Mouse wheel | `ScrollUp` or `ScrollDown` at the pointed cell. |
 
 Ctrl, Alt, and Shift modifiers are preserved. Pointer coordinates are mapped
@@ -121,9 +136,18 @@ TUI controls:
 
 The command input accepts the same full commands and aliases as the terminal
 client. Contextual room, inventory, NPC, quest, group, chat, and navigation
-panels expose `LOOK`, `MOVE`, `TAKE`, `DROP`, `USE`, `TALK`, `ATTACK`,
+panels expose `LOOK`, `MOVE`, `TAKE`, `DROP`, `TALK`, `ATTACK`,
 `STATUS`, `QUEST`, `QUESTS`, `WHO`, `GROUP`, and `QUIT` actions. Room state and
 server/player counters update from command responses and asynchronous events.
+
+## Logging
+
+The GUI appends structured tracing records to `gui.log`. The default filter is
+`debug`; override it with `RUST_LOG`:
+
+```bash
+RUST_LOG=info make run-client-gui
+```
 
 ## Source layout
 

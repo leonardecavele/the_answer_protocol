@@ -7,7 +7,7 @@ by 1970s MUDs. It recreates our school, with our friends as
 NPCs you can fight by completing sandboxed C coding challenges.
 
 The project implements RFC [42TAP](PROTOCOL.md) as a line-oriented TCP protocol. The public
-[gateway](server/go_server/README.md), authoritative [game engine](server/rust_server/README.md), reusable [client API](client/client-api/README.md), [terminal interface](client/tui/README.md),
+[gateway](server/go_server/README.md), authoritative [game engine](server/rust_server/README.md), shared [client core](client/client-core), reusable [client API](client/client-api/README.md), [terminal interface](client/tui/README.md),
 and [graphical interface](client/gui/README.md) are separate components with clearly defined responsibilities.
 
 ## Documentation
@@ -25,6 +25,8 @@ to the component that owns it:
     quests, persistence, and C sandbox.
 - [Client architecture](client/README.md): shared application and rendering
   model.
+  - [Client core](client/client-core): shared application state, networking,
+    widgets, and Ratatui rendering.
   - [Client API](client/client-api/README.md): reusable asynchronous TAP
     transport.
   - [TUI](client/tui/README.md): Ratatui interface in a terminal.
@@ -35,7 +37,8 @@ to the component that owns it:
 
 ```mermaid
 flowchart LR
-    Clients["TUI or GUI"] --> API["Rust API client"]
+    Clients["TUI or GUI"] --> Core["Rust client core"]
+    Core --> API["Rust API client"]
     API -->|"TAP over TCP :38800"| Go["Go gateway"]
     Go -->|"Internal JSON over TCP :38801"| Rust["Rust game engine"]
 ```
@@ -53,8 +56,9 @@ evaluation runs on bounded worker threads and returns results to that loop.
 This model keeps network clients responsive without introducing concurrent
 writes to the world.
 
-The TUI and GUI share the same `App`, state machine, widgets, networking code,
-and key bindings. Only the event source and rendering backend change:
+The `client-core` crate owns the `App`, state machine, widgets, networking code,
+and key bindings shared by the TUI and GUI. Only the event source and rendering
+backend change:
 
 ```mermaid
 flowchart LR
@@ -106,6 +110,9 @@ make run \
   GO_SERVER_ARGS="--go-server-port 38800 --rust-server-ip 127.0.0.1 --rust-server-port 38801" \
   RUST_SERVER_ARGS="--rust-server-port 38801"
 ```
+
+Both clients accept `--ip`, `--port`, and an optional `--assets <directory>`
+through `CLIENT_ARGS`.
 
 Run one component at a time:
 
@@ -233,7 +240,8 @@ owns the detailed asset schema and timing rules.
 ├── protocole.md              TAP wire reference
 ├── client/
 │   ├── client-api/           reusable asynchronous TAP client
-│   ├── tui/                  shared application and terminal frontend
+│   ├── client-core/          shared application, state, and Ratatui renderer
+│   ├── tui/                  Crossterm terminal frontend
 │   └── gui/                  Egui frontend and software terminal backend
 └── server/
     ├── go_server/            public TAP gateway

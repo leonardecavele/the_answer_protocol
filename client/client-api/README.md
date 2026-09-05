@@ -88,7 +88,7 @@ case sensitivity:
 | Core | `connect`, `quit`, `look`, `move`, `who` |
 | Fight | `fight create` / `fc`, `fight attack` / `fa` |
 | Chat | `chat global` / `say`, `chat room` / `cr`, `chat group` / `cg`, `chat private` / `msg` |
-| Resources | `take`, `drop`, `inventory` / `inv`, `use`, `status`, `talk`, `attack` |
+| Resources | `take`, `drop`, `inventory` / `inv`, `status`, `talk`, `attack` |
 | Quests | `quest`, `quests` |
 | Groups | `group create` / `gc`, `group join` / `gj`, `group leave` / `gl`, `group invite` / `gi` |
 
