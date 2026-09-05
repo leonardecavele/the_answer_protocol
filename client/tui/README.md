@@ -6,7 +6,7 @@ backend.
 
 Public command behavior and server frames are defined in the root
 [TAP protocol reference](../../PROTOCOL.md). The transport API used by the
-application is documented in the [API client README](../client-api/README.md).
+application is documented in the [Client API README](../client-api/README.md).
 
 ## Rendering pipeline
 

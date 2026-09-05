@@ -1,4 +1,4 @@
-`api-client` is the reusable asynchronous Rust client for The Answer Protocol.
+`client-api` is the reusable asynchronous Rust client for The Answer Protocol.
 It owns TCP connection setup, the version-1 handshake, TAP encoding and
 decoding, typed requests and responses, asynchronous events, raw-frame
 inspection, connection state, timeouts, and shutdown.
@@ -19,7 +19,7 @@ tokio = { version = "1", features = ["full"] }
 ## Minimal example
 
 ```rust
-use api_client::{ApiRequest, Client, Connection};
+use client_api::{ApiRequest, Client, Connection};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -94,7 +94,7 @@ case sensitivity:
 
 `Client::execute_request` returns the matching `ApiResponse` variant. Typed
 command structures and response data are re-exported from
-`api_client::commands` for callers that do not parse textual input.
+`client_api::commands` for callers that do not parse textual input.
 
 Command execution uses two error layers:
 

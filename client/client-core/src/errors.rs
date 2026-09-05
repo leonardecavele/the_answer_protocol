@@ -7,7 +7,7 @@ pub enum ClientError {
     #[error("I/O Error: {0}")]
     Io(#[from] io::Error),
 
-    /// Errors originating from the network layer or API client.
+    /// Errors originating from the network layer or Client API.
     #[error("Network Error: {0}")]
     Network(String),
 

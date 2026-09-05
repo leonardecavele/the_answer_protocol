@@ -5,7 +5,7 @@ input events; a software Ratatui backend supplies the character-cell display.
 
 Public command behavior and server frames are defined in the root
 [TAP protocol reference](../../PROTOCOL.md). The transport layer is documented
-in the [API client README](../api-client/README.md).
+in the [Client API README](../client-api/README.md).
 
 ## Rendering pipeline
 

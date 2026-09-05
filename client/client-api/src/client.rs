@@ -153,7 +153,7 @@ impl Client {
 impl Drop for Client {
     fn drop(&mut self) {
         self.bridge.task.abort();
-        info!("Api client dropped :: background tasks properly stopped.");
+        info!("Client API dropped :: background tasks properly stopped.");
     }
 }
 

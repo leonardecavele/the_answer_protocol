@@ -5,7 +5,7 @@ and rendering boundaries.
 
 ## Components
 
-- [API client](client-api/README.md) documents connection setup, typed
+- [Client API](client-api/README.md) documents connection setup, typed
   requests, responses, events, configuration, and errors.
 - [TUI](tui/README.md) documents the Crossterm event loop, terminal lifecycle,
   controls, commands, and Ratatui rendering.

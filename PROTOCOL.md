@@ -395,7 +395,7 @@ client retains both the number and symbolic name.
 
 Malformed frames, authentication timeout, read timeout, rate-limit abuse, and
 socket failure may close the connection. `NetworkError`, `ProtocolError`, and
-`InternalError` exposed by the [Rust API client](client/api-client/README.md) are local library errors rather
+`InternalError` exposed by the [Rust client API](client/client-api/README.md) are local library errors rather
 than TAP `ERR` frames.
 
 ## Events

@@ -7,7 +7,7 @@ by 1970s MUDs. It recreates our school, with our friends as
 NPCs you can fight by completing sandboxed C coding challenges.
 
 The project implements RFC [42TAP](PROTOCOL.md) as a line-oriented TCP protocol. The public
-[gateway](server/go_server/README.md), authoritative [game engine](server/rust_server/README.md), reusable [client API](client/api-client/README.md), [terminal interface](client/tui/README.md),
+[gateway](server/go_server/README.md), authoritative [game engine](server/rust_server/README.md), reusable [client API](client/client-api/README.md), [terminal interface](client/tui/README.md),
 and [graphical interface](client/gui/README.md) are separate components with clearly defined responsibilities.
 
 ## Documentation
@@ -25,7 +25,7 @@ to the component that owns it:
     quests, persistence, and C sandbox.
 - [Client architecture](client/README.md): shared application and rendering
   model.
-  - [API client](client/api-client/README.md): reusable asynchronous TAP
+  - [Client API](client/client-api/README.md): reusable asynchronous TAP
     transport.
   - [TUI](client/tui/README.md): Ratatui interface in a terminal.
   - [GUI](client/gui/README.md): the same interface rendered in an Egui
@@ -232,7 +232,7 @@ owns the detailed asset schema and timing rules.
 .
 ├── protocole.md              TAP wire reference
 ├── client/
-│   ├── api-client/           reusable asynchronous TAP client
+│   ├── client-api/           reusable asynchronous TAP client
 │   ├── tui/                  shared application and terminal frontend
 │   └── gui/                  Egui frontend and software terminal backend
 └── server/
