@@ -72,9 +72,10 @@ impl App {
             .game
             .log_action("Game server online.".to_string());
 
-        self.state.ui.notifications.push(Notification::info(
-            "Game server is online. Session restarted.",
-        ));
+        self.state.ui.notifications.push(
+            Notification::info("Game server is online. Session restarted.")
+                .with_topic(NotificationTopic::GameServer),
+        );
 
         self.state.network.is_connected = true;
 
@@ -85,6 +86,11 @@ impl App {
         self.state
             .game
             .log_action("Game server offline.".to_string());
+
+        self.state.ui.notifications.push(
+            Notification::warning("Game server is offline. Actions are unavailable.")
+                .with_topic(NotificationTopic::GameServer),
+        );
 
         if self.state.network.is_connected {
             self.view_manager.set_view(Box::new(GameView::new()));

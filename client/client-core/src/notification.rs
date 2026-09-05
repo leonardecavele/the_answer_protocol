@@ -7,6 +7,7 @@ pub struct NotificationId(u64);
 pub enum NotificationTopic {
     Connection,
     Fight,
+    GameServer,
     Protocol,
 }
 
