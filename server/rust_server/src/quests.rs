@@ -1,5 +1,6 @@
-use crate::{constants::LOOT, player::PlayerId};
+use crate::{constants::LootType, player::PlayerId};
 use json::JsonValue;
+use tracing::warn;
 
 pub type Questid = String;
 
@@ -7,7 +8,7 @@ pub type Questid = String;
 pub struct Loot {
     pub qty: u32,
     pub chance: f32,
-    pub loot_type: LOOT,
+    pub loot_type: LootType,
 }
 
 impl Loot {
@@ -25,6 +26,7 @@ pub struct Quest {
     name: String,
     description: String,
     loots: Vec<Loot>,
+    nb_steps: u32,
 }
 
 impl Quest {
@@ -32,10 +34,16 @@ impl Quest {
         let name = json["name"].as_str()?;
         let description = json["description"].as_str()?;
 
+        let nb_steps = json["nb_steps"].as_u32()?;
+        if nb_steps == 0 {
+            warn!("Quest '{}' has invalid nb_steps: cannot be 0", name);
+            return None;
+        }
+
         let mut loots = Vec::new();
         if json["loots"].is_object() {
             for (key, val) in json["loots"].entries() {
-                let loot_type = LOOT::from_string(key)?;
+                let loot_type = LootType::from_string(key)?;
                 let qty = val["qty"].as_u32()?;
                 let chance = val["chance"].as_f64()? as f32;
                 if qty == 0 || !(0.0..=100.0).contains(&chance) {
@@ -53,6 +61,7 @@ impl Quest {
             name: name.to_string(),
             description: description.to_string(),
             loots,
+            nb_steps,
         })
     }
 
@@ -62,6 +71,10 @@ impl Quest {
 
     pub fn get_description(&self) -> &str {
         &self.description
+    }
+
+    pub fn get_nb_steps(&self) -> u32 {
+        self.nb_steps
     }
 
     pub fn get_json_loots(&self) -> JsonValue {
@@ -74,38 +87,31 @@ impl Quest {
     }
 }
 
-use serde::{Deserialize, Serialize};
-
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-pub enum QuestState {
-    InProgress,
-    Completed,
-    Failed,
-}
-
-impl QuestState {
-    pub fn to_str(&self) -> &str {
-        match self {
-            QuestState::InProgress => "in progress",
-            QuestState::Completed => "completed",
-            QuestState::Failed => "failed",
-        }
-    }
-}
-
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct QuestInstance {
     player: PlayerId,
     quest: Questid,
-    state: QuestState,
+    current_step: u32,
 }
 
 impl QuestInstance {
-    pub fn new(player: PlayerId, quest: Questid, state: QuestState) -> Self {
+    pub fn new(player: PlayerId, quest: Questid) -> Self {
         Self {
             player,
             quest,
-            state,
+            current_step: 0,
+        }
+    }
+
+    pub fn new_with_step(
+        player: PlayerId,
+        quest: Questid,
+        current_step: u32,
+    ) -> Self {
+        Self {
+            player,
+            quest,
+            current_step,
         }
     }
 
@@ -117,7 +123,15 @@ impl QuestInstance {
         self.quest.clone()
     }
 
-    pub fn get_state(&self) -> QuestState {
-        self.state.clone()
+    pub fn get_state(&self) -> &str {
+        "in progress"
+    }
+
+    pub fn get_current_step(&self) -> u32 {
+        self.current_step
+    }
+
+    pub fn set_current_step(&mut self, current_step: u32) {
+        self.current_step = current_step;
     }
 }

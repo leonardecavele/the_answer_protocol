@@ -1,6 +1,4 @@
-use tracing::error;
-
-use crate::constants::{LOST_ITEM, LOST_ITEM_SPAWN, PLAYER_ROOM_SPAWN};
+use crate::constants::{LOST_ITEM, LOST_ITEM_SPAWN, LootType, PLAYER_ROOM_SPAWN};
 use crate::items::{Item, ItemId, SpawnInfo};
 use crate::npc::{Npc, NpcId};
 use crate::quests::{Quest, Questid};
@@ -8,6 +6,7 @@ use crate::room::{Room, RoomId};
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::fs;
+use strum::IntoEnumIterator;
 
 pub struct Parser {
     npcs: HashMap<NpcId, Npc>,
@@ -40,6 +39,21 @@ impl Parser {
         self.parse_rooms()?;
         self.parse_items()?;
         self.check_good_ids()?;
+        self.check_loots_exists()?;
+        Ok(())
+    }
+
+    pub fn check_loots_exists(&self) -> Result<(), String> {
+        for loot in LootType::iter() {
+            if !self.items.values().any(|item| item.get_name() == loot.to_string()) {
+                return Err(format!(
+                    "Loot type '{:?}' ('{}') does not exist as an item",
+                    loot,
+                    loot.to_string()
+                ));
+            }
+        }
+
         Ok(())
     }
 
