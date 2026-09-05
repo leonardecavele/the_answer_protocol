@@ -5,7 +5,6 @@ use crate::constants::{
 use crate::game_manager::GameManager;
 use crate::items::ItemId;
 use crate::npc::NpcId;
-use crate::quests::QuestState;
 use crate::room::Room;
 use json::{JsonValue, object};
 use rand::RngExt;
@@ -978,7 +977,7 @@ impl GameManager {
                                 "name" => quest.get_name().to_string(),
                                 "description" => quest.get_description(),
                                 "reward" => reward,
-                                "status" => QuestState::InProgress.to_str()
+                                "status" => "in progress"
                             }
                             .dump();
                         } else {
@@ -1007,7 +1006,6 @@ impl GameManager {
                         let quest_instance = crate::quests::QuestInstance::new(
                             player_id,
                             quest_id.clone(),
-                            crate::quests::QuestState::InProgress,
                         );
                         self.quest_instances.push(quest_instance);
 
@@ -1037,7 +1035,7 @@ impl GameManager {
                     }
                 };
 
-                let quests = self
+                let mut quests = self
                     .quest_instances
                     .iter()
                     .filter(|q| q.get_player() == player_id)
@@ -1048,13 +1046,29 @@ impl GameManager {
                             "name" => quest.get_name().to_string(),
                             "description" => quest.get_description(),
                             "reward" => quest.get_json_loots(),
-                            "status" => q.get_state().to_str() })
+                            "status" => q.get_state() })
                         } else {
                             warn!("quest not found: {}", q.get_quest_name());
                             None
                         }
                     })
                     .collect::<Vec<_>>();
+
+                if let Some(player) = self.get_player(player_id) {
+                    for quest_name in player.get_completed_quests().keys() {
+                        if let Some(quest) = self.get_quest(quest_name) {
+                            quests.push(json::object! {
+                                "name" => quest.get_name().to_string(),
+                                "description" => quest.get_description(),
+                                "reward" => quest.get_json_loots(),
+                                "status" => "completed"
+                            });
+                        } else {
+                            warn!("completed quest not found: {}", quest_name);
+                        }
+                    }
+                }
+
                 let quests_json: JsonValue = JsonValue::Array(quests);
 
                 generate_json(

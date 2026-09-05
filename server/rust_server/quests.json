@@ -4,92 +4,105 @@
     {
       "name": "Kaizen",
       "description": "Réussissez une fois l'épreuve is_sorted_ascending.c en moins de 55 secondes.",
+      "nb_steps": 1,
       "loots": {
-        "MERCI": { "qty": 3, "chance": 100.0 }
+        "merci": { "qty": 3, "chance": 100.0 }
       }
     },
     {
       "name": "Tu peux le faire",
       "description": "Réussissez une fois l'épreuve string_equals.c en moins de 50 secondes.",
+      "nb_steps": 1,
       "loots": {
-        "MERCI": { "qty": 3, "chance": 100.0 }
+        "merci": { "qty": 3, "chance": 100.0 }
       }
     },
     {
       "name": "Entrequote",
       "description": "Réussissez une fois l'épreuve middle_of_three.c en moins de 45 secondes.",
+      "nb_steps": 1,
       "loots": {
-        "MERCI": { "qty": 3, "chance": 100.0 }
+        "merci": { "qty": 3, "chance": 100.0 }
       }
     },
     {
       "name": "AEIOU",
       "description": "Réussissez une fois l'épreuve count_vowels.c en moins de 45 secondes.",
+      "nb_steps": 1,
       "loots": {
-        "MERCI": { "qty": 3, "chance": 100.0 }
+        "merci": { "qty": 3, "chance": 100.0 }
       }
     },
     {
       "name": "OG",
       "description": "Réussissez une fois l'épreuve first_index_of.c en moins de 40 secondes.",
+      "nb_steps": 1,
       "loots": {
-        "MERCI": { "qty": 4, "chance": 100.0 }
+        "merci": { "qty": 4, "chance": 100.0 }
       }
     },
     {
       "name": "Vers l'infini et l'haut-dela",
       "description": "Réussissez une fois l'épreuve find_max_index.c en moins de 40 secondes.",
+      "nb_steps": 1,
       "loots": {
-        "MERCI": { "qty": 3, "chance": 100.0 }
+        "merci": { "qty": 3, "chance": 100.0 }
       }
     },
     {
       "name": "Quel est-t-il ?",
       "description": "Réussissez une fois l'épreuve find_min_index.c en moins de 40 secondes.",
+      "nb_steps": 1,
       "loots": {
-        "MERCI": { "qty": 3, "chance": 100.0 }
+        "merci": { "qty": 3, "chance": 100.0 }
       }
     },
     {
       "name": "Au plus...",
       "description": "Réussissez une fois l'épreuve array_max.c en moins de 35 secondes.",
+      "nb_steps": 1,
       "loots": {
-        "MERCI": { "qty": 3, "chance": 100.0 }
+        "merci": { "qty": 3, "chance": 100.0 }
       }
     },
     {
       "name": "MINIMUM",
       "description": "Réussissez une fois l'épreuve array_min.c en moins de 35 secondes.",
+      "nb_steps": 1,
       "loots": {
-        "MERCI": { "qty": 3, "chance": 100.0 }
+        "merci": { "qty": 3, "chance": 100.0 }
       }
     },
     {
       "name": "Mais que contient-elle ?",
       "description": "Réussissez une fois l'épreuve array_contains.c en moins de 35 secondes.",
+      "nb_steps": 1,
       "loots": {
-        "MERCI": { "qty": 3, "chance": 100.0 }
+        "merci": { "qty": 3, "chance": 100.0 }
       }
     },
     {
       "name": "SIX ! SEVEN !",
       "description": "Parlez 50 fois avec mphippen. Peut-être finira-t-il par révéler pourquoi 67 est la véritable origine de l'univers.",
+      "nb_steps": 50,
       "loots": {
-        "MERCI": { "qty": 10, "chance": 100.0 }
+        "merci": { "qty": 10, "chance": 100.0 }
       }
     },
     {
       "name": "Une marche s'impose.",
       "description": "Faites 5 fois le tour complet de la map. Courage.",
+      "nb_steps": 5,
       "loots": {
-        "MERCI": { "qty": 8, "chance": 100.0 }
+        "merci": { "qty": 8, "chance": 100.0 }
       }
     },
     {
       "name": "Tunnel",
       "description": "Parlez à Vquetier si vous osez.",
+      "nb_steps": 1,
       "loots": {
-        "MERCI": { "qty": 8, "chance": 100.0 }
+        "merci": { "qty": 8, "chance": 100.0 }
       }
     }
   ]

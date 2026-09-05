@@ -1,11 +1,11 @@
 use crate::combat_instances::{CombatInstance, CombatInstanceManager};
 use crate::commands::generate_json;
-use crate::constants::LOOT::TShirt;
 use crate::constants::{
     CODE_NL_SEP, CODE_SP_SEP, Direction, LOST_ITEM, LOST_ITEM_SPAWN, MAX_DMG_DEALT,
     MAX_TIME_FOR_COMBAT, MIN_DMG_DEALT, NPC_MAX_DMG, NPC_MIN_DMG, NPC_RESPAWN_TIME,
     PLAYER_ROOM_SPAWN, TEST_FILES_DIR,
 };
+use rand::RngExt;
 
 use crate::constants::ErrorCode;
 use crate::inventory::Inventory;
@@ -13,7 +13,7 @@ use crate::items::{Item, ItemId};
 use crate::npc::{Npc, NpcId};
 use crate::parser::Parser;
 use crate::player::{Player, PlayerCount, PlayerId};
-use crate::quests::{Quest, QuestInstance, QuestState, Questid};
+use crate::quests::{Quest, QuestInstance, Questid};
 use crate::room::{Room, RoomId, RoomName};
 use crate::save::{Save, ServerSave};
 use crate::tester::test;
@@ -135,7 +135,7 @@ impl GameManager {
                 .quest_instances
                 .iter()
                 .filter(|q| q.get_player() == player_id)
-                .map(|q| (q.get_quest_name(), q.get_state()))
+                .map(|q| (q.get_quest_name(), q.get_state().to_string(), q.get_current_step()))
                 .collect();
             let save_data = Save {
                 name: player.get_name().to_owned(),
@@ -342,6 +342,98 @@ impl GameManager {
         &mut self.all_quests
     }
 
+    pub fn give_quest_rewards(&mut self, quest_name: &str, player_id: &PlayerId) {
+        if !self.players.contains_key(player_id) {
+            warn!(
+                "tried to give quest rewards but player does not exist! (id {})",
+                player_id
+            );
+            return;
+        }
+
+        let quest = match self.all_quests.get(quest_name) {
+            Some(q) => q,
+            None => {
+                warn!("Quest '{}' does not exist!", quest_name);
+                return;
+            }
+        };
+
+        let mut rng = rand::rng();
+        let mut loots_to_give = Vec::new();
+        let mut given_items_vec = Vec::new();
+        for possible_loot in quest.get_loots() {
+            let float_generated: f32 = rng.random_range(0.0..100.0);
+            if float_generated <= possible_loot.chance {
+                let item_name = possible_loot.loot_type.to_string();
+                loots_to_give.push((item_name, possible_loot.qty));
+            }
+        }
+
+        for (item_name, qty) in loots_to_give {
+            let model_id = (0..self.nb_models).find(|&i| {
+                self.get_item(i)
+                    .is_some_and(|item| item.get_name() == item_name)
+            });
+
+            if let Some(item_id) = model_id {
+                for _ in 0..qty {
+                    let new_item_id = self.instantiate_item(item_id);
+                    let item_repr = Item::protocol_representation(new_item_id, &item_name);
+                    given_items_vec.push(item_repr);
+                    self.add_item_to_player(*player_id, new_item_id);
+                }
+            } else {
+                warn!("Item '{}' not found!", item_name);
+            }
+        }
+
+        let Some(player) = self.players.get_mut(player_id) else {
+            return;
+        };
+        player.add_completed_quest(quest_name.to_string());
+        let event = GameManager::generate_no_player_event_json(
+            &vec![player.get_name().to_string()],
+            "QUEST_COMPLETE",
+            format!("{:?}", given_items_vec).as_str(),
+        );
+        self.add_diff_to_tick(event);
+    }
+
+    pub fn check_finished_quests(&mut self) {
+        let mut finished_quests = Vec::new();
+        for instance in &self.quest_instances {
+            let instance_step = instance.get_current_step();
+            if let Some(quest) = self.get_quest(&instance.get_quest_name()) {
+                if instance_step >= quest.get_nb_steps() {
+                    finished_quests.push((instance.get_quest_name(), instance.get_player()));
+                }
+            } else {
+                warn!(
+                    "Quest '{}' found in quest instance but does not exist!",
+                    instance.get_quest_name()
+                );
+            }
+        }
+
+        for (quest_name, player_id) in &finished_quests {
+            self.give_quest_rewards(quest_name, player_id);
+        }
+
+        let all_quests = &self.all_quests;
+        self.quest_instances.retain(|instance| {
+            if let Some(quest) = all_quests.get(&instance.get_quest_name()) {
+                instance.get_current_step() < quest.get_nb_steps()
+            } else {
+                warn!(
+                    "Quest '{}' found in quest instance but does not exist!",
+                    instance.get_quest_name()
+                );
+                false
+            }
+        });
+    }
+
     fn try_restore_player_save(&mut self, name: &str) -> Option<Player> {
         let path = format!("saves/{}.toml", name);
 
@@ -389,21 +481,32 @@ impl GameManager {
         }
 
         let mut seen_quests = std::collections::HashSet::new();
-        save_data.quests.retain(|(quest_id, _)| {
-            if self.get_quest(quest_id).is_none() {
+        save_data.quests.retain(|(quest_id, _, current_step)| {
+            if let Some(quest) = self.get_quest(quest_id) {
+                if !seen_quests.insert(quest_id.clone()) {
+                    warn!(
+                        "Removing duplicate quest {} from player {}",
+                        quest_id, save_data.name
+                    );
+                    false
+                } else if *current_step >= quest.get_nb_steps() {
+                    warn!(
+                        "Removing quest {} from player {}: current_step ({}) >= nb_steps ({})",
+                        quest_id,
+                        save_data.name,
+                        current_step,
+                        quest.get_nb_steps()
+                    );
+                    false
+                } else {
+                    true
+                }
+            } else {
                 warn!(
                     "Removing invalid quest {} from player {}",
                     quest_id, save_data.name
                 );
                 false
-            } else if !seen_quests.insert(quest_id.clone()) {
-                warn!(
-                    "Removing duplicate quest {} from player {}",
-                    quest_id, save_data.name
-                );
-                false
-            } else {
-                true
             }
         });
 
@@ -454,8 +557,12 @@ impl GameManager {
             );
             return None;
         }
-        for (quest_id, state) in save_data.quests.iter() {
-            let quest_instance = QuestInstance::new(player_id, quest_id.clone(), state.clone());
+        for (quest_id, _, current_step) in save_data.quests.iter() {
+            let quest_instance = QuestInstance::new_with_step(
+                player_id,
+                quest_id.clone(),
+                *current_step,
+            );
             self.quest_instances.push(quest_instance);
         }
 
@@ -906,12 +1013,19 @@ impl GameManager {
         let player = if let Some(player) = self.get_player_from_name(player_name) {
             player
         } else {
-            warn!("tried to get status of non-existent player: {}", player_name);
+            warn!(
+                "tried to get status of non-existent player: {}",
+                player_name
+            );
             return "{\"hp\":0, \"max_hp\":0, \"status\":\"dead\"}".to_string();
         };
         let hp = player.get_hp();
         let max_hp = player.get_max_hp();
-        let percentage_hp = if max_hp > 0 { hp as f64 / max_hp as f64 * 100.0 } else { 0.0 };
+        let percentage_hp = if max_hp > 0 {
+            hp as f64 / max_hp as f64 * 100.0
+        } else {
+            0.0
+        };
         let status = if percentage_hp >= 80.0 {
             "healthy"
         } else if percentage_hp >= 30.0 {
@@ -1024,7 +1138,9 @@ impl GameManager {
         player_id: NpcId,
         npc_id: PlayerId,
     ) -> String {
-        let error_return = "{{\"attacker_hp\":error, \"target_hp\":error, \"damage\":0, \"status\":\"combat\"}}".to_string();
+        let error_return =
+            "{{\"attacker_hp\":error, \"target_hp\":error, \"damage\":0, \"status\":\"combat\"}}"
+                .to_string();
         let npc_hp = if let Some(npc) = self.get_mut_npc(npc_id) {
             debug!(
                 "npc: {}, npc_id_received: {}",
@@ -1174,7 +1290,7 @@ impl GameManager {
         self.quest_instances.iter().any(|quest_instance| {
             quest_instance.get_player() == player_id
                 && quest_instance.get_quest_name() == quest_id
-                && quest_instance.get_state() == QuestState::InProgress
+                && quest_instance.get_state() == "in progress"
         })
     }
 
@@ -1219,7 +1335,6 @@ impl GameManager {
             return String::new();
         }
 
-        use rand::RngExt;
         let mut rng = rand::rng();
         let idx = rng.random_range(0..all_files.len());
         all_files[idx].clone()
@@ -1312,12 +1427,13 @@ impl GameManager {
             .replace(CODE_SP_SEP, " ");
         // debug!("code sent to ldecavel: {}", sent_code_owned);
 
-        let instance = if let Some(instance) = self.combat_instances.get_mut_instance_for_npc(npc_id) {
-            instance
-        } else {
-            warn!("tried to test code for npc not in combat: {}", npc_id);
-            return;
-        };
+        let instance =
+            if let Some(instance) = self.combat_instances.get_mut_instance_for_npc(npc_id) {
+                instance
+            } else {
+                warn!("tried to test code for npc not in combat: {}", npc_id);
+                return;
+            };
         instance.evaluating_players_count += 1;
 
         debug!("started tester thread for player {}", player);

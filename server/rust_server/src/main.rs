@@ -1,4 +1,4 @@
-use rust_server::constants::{AUTO_SAVE_INTERVAL, TickResult};
+ use rust_server::constants::{AUTO_SAVE_INTERVAL, TickResult};
 use rust_server::game_manager::GameManager;
 use rust_server::logs::ChannelWriter;
 use rust_server::parser::Parser;

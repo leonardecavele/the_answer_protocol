@@ -1,5 +1,5 @@
 use std::time::Duration;
-
+use strum::EnumIter;
 
 pub const TEST_FILES_DIR: &str = "assets/code";
 
@@ -103,28 +103,28 @@ impl ErrorCode {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
-pub enum LOOT {
+#[derive(Clone, Copy, Debug, EnumIter)]
+pub enum LootType {
     Merci,
     TShirt,
     Wrap,
 }
 
-impl LOOT {
+impl LootType {
     pub fn from_string(s: &str) -> Option<Self> {
-        match s.to_uppercase().as_str() {
-            "MERCI" => Some(Self::Merci),
-            "TSHIRT" => Some(Self::TShirt),
-            "WRAP" => Some(Self::Wrap),
+        match s.to_lowercase().as_str() {
+            "merci" => Some(Self::Merci),
+            "t_shirt_bde" | "tshirt" | "t_shirt" => Some(Self::TShirt),
+            "wrap_du_foyer" | "wrap" => Some(Self::Wrap),
             _ => None,
         }
     }
 
     pub fn to_string(&self) -> String {
         match self {
-            Self::Merci => "MERCI".to_owned(),
-            Self::TShirt => "TSHIRT".to_owned(),
-            Self::Wrap => "WRAP".to_owned(),
+            Self::Merci => "merci".to_owned(),
+            Self::TShirt => "t_shirt_bde".to_owned(),
+            Self::Wrap => "wrap_du_foyer".to_owned(),
         }
     }
 }
