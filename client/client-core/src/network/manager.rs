@@ -1,5 +1,5 @@
-use super::envelopes::{RequestEnvelope, ResponseEnvelope};
 use crate::events::{ApiEvent, ApplicationEvent, NetworkConnectionEvent};
+use client_api::ApiRequest;
 use client_api::{Client, Connection, ConnectionState};
 use mpsc::Sender;
 use tokio::sync::broadcast::error::{RecvError, TryRecvError};
@@ -8,7 +8,7 @@ use tokio_util::task::AbortOnDropHandle;
 use tracing::info;
 
 pub struct NetworkManager {
-    pub command_sender: Sender<RequestEnvelope>,
+    pub command_sender: Sender<ApiRequest>,
     _background_task: AbortOnDropHandle<()>,
 }
 
@@ -19,7 +19,7 @@ impl NetworkManager {
         server_port: String,
         player_name: String,
     ) -> Self {
-        let (command_tx, mut command_rx) = mpsc::channel::<RequestEnvelope>(128);
+        let (command_tx, mut command_rx) = mpsc::channel::<ApiRequest>(128);
 
         let _background_task = AbortOnDropHandle::new(tokio::spawn(async move {
             let server_address = format!("{}:{}", server_ip, server_port);
@@ -135,19 +135,16 @@ impl NetworkManager {
                                 },
                             ));
 
-                            while let Some(envelope) = command_rx.recv().await {
-                                let original_request = envelope.request.clone();
+                            while let Some(request) = command_rx.recv().await {
+                                let original_request = request.clone();
 
-                                match client.execute_request(envelope.request).await {
-                                    Ok(api_response) => {
+                                match client.execute_request(request).await {
+                                    Ok(response) => {
                                         let _ = event_sender
-                                            .send(ApplicationEvent::Api(ApiEvent::ApiResponse(
-                                                ResponseEnvelope {
-                                                    id: envelope.id,
-                                                    response: api_response,
-                                                    original_request,
-                                                },
-                                            )))
+                                            .send(ApplicationEvent::Api(ApiEvent::ApiResponse {
+                                                response,
+                                                original_request,
+                                            }))
                                             .await;
                                     }
                                     Err(tap_error) => {
@@ -193,7 +190,7 @@ impl NetworkManager {
         }
     }
 
-    pub fn send_command(&self, cmd: RequestEnvelope) {
-        let _ = self.command_sender.try_send(cmd);
+    pub fn send_command(&self, request: ApiRequest) {
+        let _ = self.command_sender.try_send(request);
     }
 }

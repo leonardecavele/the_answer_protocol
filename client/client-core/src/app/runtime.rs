@@ -1,6 +1,6 @@
 use crate::events::{ApplicationEvent, EventBroker};
 use crate::manifest::Manifest;
-use crate::network::{NetworkManager, RequestEnvelope};
+use crate::network::NetworkManager;
 use crate::notification::{Notification, NotificationTopic};
 use crate::renderer::ViewManager;
 use crate::renderer::components::{Component, Lifecycle};
@@ -55,8 +55,7 @@ impl App {
 
     pub fn send(&mut self, request: ApiRequest) {
         if let Some(network_manager) = &self.network_manager {
-            let envelope = RequestEnvelope::new(request);
-            network_manager.send_command(envelope);
+            network_manager.send_command(request);
         }
     }
 

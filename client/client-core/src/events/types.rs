@@ -1,6 +1,5 @@
-use crate::network::ResponseEnvelope;
 use client_api::events::ServerEvent;
-use client_api::{ApiRequest, Frame};
+use client_api::{ApiRequest, ApiResponse, Frame};
 use crossterm::event::Event as CrosstermEvent;
 
 /// The main event enum that encapsulates all possible events in the application.
@@ -17,7 +16,10 @@ pub enum ApplicationEvent {
 
 #[derive(Debug, Clone)]
 pub enum ApiEvent {
-    ApiResponse(ResponseEnvelope),
+    ApiResponse {
+        response: ApiResponse,
+        original_request: ApiRequest,
+    },
     Server(ServerEvent),
     Frame(Frame),
     Lagged {

@@ -8,7 +8,6 @@ mod server;
 
 use crate::app::runtime::App;
 use crate::events::ApiEvent;
-use crate::network::ResponseEnvelope;
 use crate::notification::{Notification, NotificationTopic};
 use crate::states::game::ChatChannel;
 use client_api::events::{GameServerEvent, GroupEvent, RoomEvent, ServerEvent};
@@ -38,8 +37,11 @@ impl App {
                         .with_topic(NotificationTopic::Protocol),
                 );
             }
-            ApiEvent::ApiResponse(envelope) => {
-                self.handle_api_response(envelope);
+            ApiEvent::ApiResponse {
+                response,
+                original_request,
+            } => {
+                self.handle_api_response(response, original_request);
             }
             ApiEvent::Frame(frame) => match frame.direction {
                 FrameDirection::Received => self.record_trace("frame recv", frame.line),
@@ -48,8 +50,8 @@ impl App {
         }
     }
 
-    pub fn handle_api_response(&mut self, envelope: ResponseEnvelope) {
-        if let Some(error) = envelope.response.get_error() {
+    pub fn handle_api_response(&mut self, response: ApiResponse, original_request: ApiRequest) {
+        if let Some(error) = response.get_error() {
             self.state
                 .ui
                 .notifications
@@ -58,7 +60,7 @@ impl App {
             return;
         }
 
-        match (envelope.original_request, envelope.response) {
+        match (original_request, response) {
             (ApiRequest::Connect(_), ApiResponse::Connect(Ok(response))) => {
                 self.on_connected(response);
             }
