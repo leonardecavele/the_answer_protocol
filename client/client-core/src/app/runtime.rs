@@ -4,6 +4,7 @@ use crate::network::{NetworkManager, RequestEnvelope};
 use crate::notification::Notification;
 use crate::renderer::ViewManager;
 use crate::renderer::components::{Component, Lifecycle};
+use crate::renderer::views::LoginView;
 use crate::states::AppState;
 use crate::{Assets, ClientError};
 use client_api::ApiRequest;
@@ -22,10 +23,6 @@ pub struct App {
 
 impl App {
     pub fn new(ip: String, port: String, assets: Assets) -> Self {
-        Self::with_broker(ip, port, assets, EventBroker::new())
-    }
-
-    fn with_broker(ip: String, port: String, assets: Assets, event_broker: EventBroker) -> Self {
         let (manifest, err) = match Manifest::load(&assets) {
             Ok(manifest) => (manifest, None),
             Err(error) => (Manifest::default(), Some(error)),
@@ -41,7 +38,7 @@ impl App {
 
         Self {
             state,
-            event_broker,
+            event_broker: EventBroker::new(),
             network_manager: None,
             view_manager: ViewManager::new(ip, port),
         }
@@ -95,6 +92,22 @@ impl App {
             ApplicationEvent::SendRawCommand(command) => self.handle_raw_command(command),
             ApplicationEvent::FightTimedOut => self.on_fight_timed_out(),
         }
+    }
+
+    pub fn disconnect(&mut self) {
+        self.network_manager = None;
+
+        self.view_manager.set_view(Box::new(LoginView::new(
+            self.state.network.server_ip.clone(),
+            self.state.network.server_port.clone(),
+        )));
+
+        self.state = AppState::new(
+            self.state.network.server_ip.clone(),
+            self.state.network.server_port.clone(),
+            self.state.game.manifest.clone(),
+            self.state.game.assets.clone(),
+        );
     }
 
     fn handle_tick(&mut self) {
