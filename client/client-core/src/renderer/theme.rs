@@ -1,4 +1,4 @@
-use api_client::commands::QuestStatus;
+use client_api::commands::QuestStatus;
 use ratatui::{
     layout::Alignment,
     style::{Color, Modifier, Style},

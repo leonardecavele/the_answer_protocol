@@ -1,6 +1,6 @@
 use super::envelopes::{RequestEnvelope, ResponseEnvelope};
 use crate::events::{ApiEvent, ApplicationEvent, NetworkConnectionEvent};
-use api_client::{Client, Connection, ConnectionState};
+use client_api::{Client, Connection, ConnectionState};
 use mpsc::Sender;
 use tokio::sync::broadcast::error::{RecvError, TryRecvError};
 use tokio::sync::mpsc;

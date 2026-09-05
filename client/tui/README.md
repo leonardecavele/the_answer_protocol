@@ -1,6 +1,6 @@
 The `tui` crate is the terminal interface for The Answer Protocol. Built with
 Ratatui and Crossterm, it provides the complete MUD-style game experience while
-the shared `api-client` crate handles TAP framing, requests, responses, events,
+the shared `client-api` crate handles TAP framing, requests, responses, events,
 and connection lifecycle.
 
 See the [client overview](../README.md) for the shared client architecture, API
@@ -109,7 +109,7 @@ syntax, responses, errors, and server behavior.
 | Module | Responsibility |
 | --- | --- |
 | `app` | Main loop and centralized terminal, network, API, and event handlers. |
-| `network` | `api-client` task ownership and request/response envelopes. |
+| `network` | `client-api` task ownership and request/response envelopes. |
 | `events` | Terminal ticks, application events, and the event broker. |
 | `states` | Network, player, room, group, fight, overlay, and UI state. |
 | `ui` | Views, panels, widgets, popups, focus, themes, and image rendering. |

@@ -8,7 +8,7 @@ stack.
 ```mermaid
 flowchart LR
     GUI[GUI desktop shell] -->|embeds through a PTY library| TUI[Ratatui TUI]
-    TUI --> API[api-client]
+    TUI --> API[client-api]
     API -->|TAP v1 over TCP| GO[Go server]
 ```
 
@@ -21,7 +21,7 @@ modern desktop frame while keeping the same terminal rendering, interaction
 model, and game experience. Embedding the existing interface also avoids
 maintaining a second set of screens or a second protocol implementation.
 
-The shared `api-client` crate owns all communication with the Go server :
+The shared `client-api` crate owns all communication with the Go server :
 connection setup, the TAP v1 handshake, command encoding, response parsing,
 asynchronous event decoding, errors, and connection lifecycle.
 
@@ -29,7 +29,7 @@ asynchronous event decoding, errors, and connection lifecycle.
 | --- | --- | --- |
 | `gui` | Desktop application that embeds and presents the TUI. | [GUI README](gui/README.md) |
 | `tui` | Ratatui game interface and direct terminal client. | [TUI README](tui/README.md) |
-| `api-client` | Reusable asynchronous TAP client library. | This document |
+| `client-api` | Reusable asynchronous TAP client library. | This document |
 | `assets` | Shared manifest, names, images, and presentation metadata. | This document |
 
 The server remains authoritative for world state. Both client entry points
@@ -105,9 +105,9 @@ Check formatting and Clippy diagnostics across the client workspace with:
 make lint-client
 ```
 
-## Shared `api-client`
+## Shared `client-api`
 
-`api-client` provides a typed asynchronous API over TAP. Applications use Rust
+`client-api` provides a typed asynchronous API over TAP. Applications use Rust
 requests, responses, and events rather than parsing raw protocol frames.
 
 ### Connection model
@@ -130,12 +130,12 @@ Add the local crate to another client package:
 
 ```toml
 [dependencies]
-api-client = { path = "../api-client" }
+client-api = { path = "../client-api" }
 tokio = { version = "1", features = ["full"] }
 ```
 
 ```rust
-use api_client::Client;
+use client_api::Client;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {

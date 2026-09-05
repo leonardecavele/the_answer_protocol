@@ -1,7 +1,7 @@
 use crate::app::runtime::App;
 use crate::notification::Notification;
-use api_client::ApiRequest;
-use api_client::commands::{GroupCreateResponse, GroupJoinResponse, LookCommand};
+use client_api::ApiRequest;
+use client_api::commands::{GroupCreateResponse, GroupJoinResponse, LookCommand};
 
 impl App {
     pub fn on_group_created(&mut self, response: GroupCreateResponse) {

@@ -5,7 +5,7 @@ use crate::renderer::text::wrap_str_to_lines;
 use crate::renderer::theme::{close_hint, popup_block, quest_status};
 use crate::states::AppState;
 use crate::states::game::QuestDetailState;
-use api_client::commands::QuestData;
+use client_api::commands::QuestData;
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
 use ratatui::widgets::Padding;
 use ratatui::{

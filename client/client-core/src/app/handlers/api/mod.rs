@@ -11,8 +11,8 @@ use crate::events::ApiEvent;
 use crate::network::ResponseEnvelope;
 use crate::notification::Notification;
 use crate::states::game::ChatChannel;
-use api_client::events::{GameServerEvent, GroupEvent, RoomEvent, ServerEvent};
-use api_client::{ApiRequest, ApiResponse, FrameDirection};
+use client_api::events::{GameServerEvent, GroupEvent, RoomEvent, ServerEvent};
+use client_api::{ApiRequest, ApiResponse, FrameDirection};
 
 impl App {
     pub fn handle_api_event(&mut self, api_event: ApiEvent) {
