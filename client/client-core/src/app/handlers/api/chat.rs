@@ -1,4 +1,4 @@
-use crate::app::runtime::App;
+use crate::app::App;
 use crate::notification::Notification;
 use crate::states::game::{ChatChannel, ChatMessage, ChatSender};
 

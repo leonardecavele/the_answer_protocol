@@ -1,4 +1,4 @@
-use crate::app::runtime::App;
+use crate::app::App;
 use crate::events::SendEvent;
 use crate::notification::{Notification, NotificationTopic};
 use client_api::ApiRequest;

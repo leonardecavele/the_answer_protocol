@@ -1,4 +1,4 @@
-use crate::app::runtime::App;
+use crate::app::App;
 use crate::notification::Notification;
 use client_api::ApiRequest;
 use client_api::commands::{GroupCreateResponse, GroupJoinResponse, LookCommand};

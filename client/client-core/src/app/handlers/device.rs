@@ -1,4 +1,4 @@
-use crate::app::runtime::App;
+use crate::app::App;
 use crate::renderer::components::Lifecycle;
 use crossterm::event::{Event as CrosstermEvent, KeyCode, KeyModifiers};
 

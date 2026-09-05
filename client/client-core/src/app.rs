@@ -1,9 +1,11 @@
+mod handlers;
+
 use crate::events::{ApplicationEvent, EventBroker};
 use crate::manifest::Manifest;
 use crate::network::NetworkManager;
 use crate::notification::Notification;
 use crate::renderer::ViewManager;
-use crate::renderer::components::{Component, Lifecycle};
+use crate::renderer::components::Component;
 use crate::renderer::views::LoginView;
 use crate::states::AppState;
 use crate::{Assets, ClientError};
@@ -114,12 +116,5 @@ impl App {
             self.state.game.manifest.clone(),
             self.state.game.assets.clone(),
         );
-    }
-
-    fn handle_tick(&mut self) {
-        self.state.ui.notifications.retain_active();
-
-        let sender = self.event_broker.sender();
-        self.view_manager.on_tick(&mut self.state, &sender);
     }
 }

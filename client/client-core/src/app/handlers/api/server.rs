@@ -1,4 +1,4 @@
-use crate::app::runtime::App;
+use crate::app::App;
 use crate::notification::{Notification, NotificationTopic};
 use crate::renderer::views::GameView;
 use client_api::commands::{ConnectResponse, WhoResponse};

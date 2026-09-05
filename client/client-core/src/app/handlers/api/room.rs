@@ -1,4 +1,4 @@
-use crate::app::runtime::App;
+use crate::app::App;
 use crate::collections::SelectableList;
 use crate::states::game::{Item, Npc, Room};
 use client_api::ApiRequest;

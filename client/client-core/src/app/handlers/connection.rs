@@ -1,4 +1,4 @@
-use crate::app::runtime::App;
+use crate::app::App;
 use crate::events::ConnectionEvent;
 use crate::network::NetworkManager;
 use crate::notification::{Notification, NotificationTopic};

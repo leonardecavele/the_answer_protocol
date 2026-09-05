@@ -6,7 +6,7 @@ mod player;
 mod room;
 mod server;
 
-use crate::app::runtime::App;
+use crate::app::App;
 use crate::events::ProtocolEvent;
 use crate::notification::{Notification, NotificationTopic};
 use crate::states::game::ChatChannel;
