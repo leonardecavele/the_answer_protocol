@@ -1,11 +1,10 @@
+use client_core::{MIN_COLUMNS, MIN_ROWS};
 use eframe::egui;
 use egui_ratatui::RataguiBackend;
-use ratatui::Frame;
-use ratatui::Terminal;
 use ratatui::style::Color;
+use ratatui::{Frame, Terminal};
 use soft_ratatui::embedded_graphics_unicodefonts::{mono_9x18_atlas, mono_9x18_bold_atlas};
 use soft_ratatui::{EmbeddedGraphics, SoftBackend};
-use tui::ui::{MIN_COLUMNS, MIN_ROWS};
 
 const TEXTURE_NAME: &str = "client_screen";
 const BACKGROUND: Color = Color::Rgb(0x00, 0x00, 0x00);

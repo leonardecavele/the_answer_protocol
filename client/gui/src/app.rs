@@ -1,10 +1,8 @@
 use crate::input;
 use crate::screen::{self, Grid, Screen};
+use client_core::{App, ApplicationEvent, Assets, TICK_RATE};
 use eframe::egui;
 use tokio::runtime::Handle;
-use tui::app::App;
-use tui::data::assets::Assets;
-use tui::events::{ApplicationEvent, TICK_RATE};
 
 pub struct GuiApp {
     app: App,
@@ -29,7 +27,7 @@ impl eframe::App for GuiApp {
         let _guard = self.runtime.enter();
 
         for event in input::to_crossterm_events(ctx, self.grid.as_ref()) {
-            self.app.update(ApplicationEvent::Terminal(event));
+            self.app.update(ApplicationEvent::DeviceEvent(event));
         }
 
         while let Ok(event) = self.app.try_next_event() {

@@ -4,12 +4,9 @@ mod screen;
 
 use crate::app::GuiApp;
 use clap::Parser;
+use client_core::{Assets, Cli, MIN_COLUMNS, MIN_ROWS, logging};
 use eframe::egui;
 use tokio::runtime::Handle;
-use tui::cli::Cli;
-use tui::data::assets::Assets;
-use tui::logging;
-use tui::ui::{MIN_COLUMNS, MIN_ROWS};
 
 const LOG_FILE: &str = "gui.log";
 const WINDOW_TITLE: &str = "The Answer Protocol";
