@@ -86,7 +86,7 @@ impl App {
             ApplicationEvent::Network(network_event) => {
                 self.handle_network_event(network_event);
             }
-            ApplicationEvent::Api(api_event) => self.handle_api_event(api_event),
+            ApplicationEvent::Protocol(event) => self.handle_protocol_event(event),
             ApplicationEvent::SendRequest(request) => self.send(request),
             ApplicationEvent::SendRawCommand(command) => self.handle_raw_command(command),
             ApplicationEvent::FightTimedOut => self.on_fight_timed_out(),

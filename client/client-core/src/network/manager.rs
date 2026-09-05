@@ -1,6 +1,5 @@
-use crate::events::{ApiEvent, ApplicationEvent, NetworkConnectionEvent};
-use client_api::ApiRequest;
-use client_api::{Client, Connection, ConnectionState};
+use crate::events::{ApplicationEvent, NetworkConnectionEvent, ProtocolEvent};
+use client_api::{ApiRequest, Client, Connection, ConnectionState};
 use mpsc::Sender;
 use tokio::sync::broadcast::error::{RecvError, TryRecvError};
 use tokio::sync::mpsc;
@@ -36,12 +35,12 @@ impl NetworkManager {
                         match frames.try_recv() {
                             Ok(frame) => {
                                 let _ = event_sender
-                                    .send(ApplicationEvent::Api(ApiEvent::Frame(frame)))
+                                    .send(ApplicationEvent::Protocol(ProtocolEvent::Frame(frame)))
                                     .await;
                             }
                             Err(TryRecvError::Lagged(count)) => {
                                 let _ = event_sender
-                                    .send(ApplicationEvent::Api(ApiEvent::Lagged {
+                                    .send(ApplicationEvent::Protocol(ProtocolEvent::Lagged {
                                         stream: "frame",
                                         count: count as usize,
                                     }))
@@ -73,12 +72,12 @@ impl NetworkManager {
                                                 match frame_recv {
                                                     Ok(frame) => {
                                                         let _ = sender
-                                                            .send(ApplicationEvent::Api(ApiEvent::Frame(frame)))
+                                                            .send(ApplicationEvent::Protocol(ProtocolEvent::Frame(frame)))
                                                             .await;
                                                     }
                                                     Err(RecvError::Lagged(count)) => {
                                                         let _ = sender
-                                                            .send(ApplicationEvent::Api(ApiEvent::Lagged {
+                                                            .send(ApplicationEvent::Protocol(ProtocolEvent::Lagged {
                                                             stream: "frame",
                                                             count: count as usize
                                                         }))
@@ -94,14 +93,14 @@ impl NetworkManager {
                                                 match event {
                                                     Ok(server_event) => {
                                                         let _ = sender
-                                                            .send(ApplicationEvent::Api(ApiEvent::Server(
+                                                            .send(ApplicationEvent::Protocol(ProtocolEvent::Server(
                                                                 server_event,
                                                             )))
                                                             .await;
                                                     }
                                                     Err(RecvError::Lagged(count)) => {
                                                         let _ = sender
-                                                            .send(ApplicationEvent::Api(ApiEvent::Lagged {
+                                                            .send(ApplicationEvent::Protocol(ProtocolEvent::Lagged {
                                                             stream: "event",
                                                             count: count as usize
                                                         }))
@@ -141,18 +140,22 @@ impl NetworkManager {
                                 match client.execute_request(request).await {
                                     Ok(response) => {
                                         let _ = event_sender
-                                            .send(ApplicationEvent::Api(ApiEvent::ApiResponse {
-                                                response,
-                                                original_request,
-                                            }))
+                                            .send(ApplicationEvent::Protocol(
+                                                ProtocolEvent::ApiResponse {
+                                                    response,
+                                                    original_request,
+                                                },
+                                            ))
                                             .await;
                                     }
                                     Err(tap_error) => {
                                         let _ = event_sender
-                                            .send(ApplicationEvent::Api(ApiEvent::RequestFailed {
-                                                request: original_request,
-                                                error_message: tap_error.to_string(),
-                                            }))
+                                            .send(ApplicationEvent::Protocol(
+                                                ProtocolEvent::RequestFailed {
+                                                    request: original_request,
+                                                    error_message: tap_error.to_string(),
+                                                },
+                                            ))
                                             .await;
                                     }
                                 }

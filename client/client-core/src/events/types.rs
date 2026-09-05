@@ -10,12 +10,12 @@ pub enum ApplicationEvent {
     Network(NetworkConnectionEvent),
     SendRequest(ApiRequest),
     SendRawCommand(String),
-    Api(ApiEvent),
+    Protocol(ProtocolEvent),
     FightTimedOut,
 }
 
 #[derive(Debug, Clone)]
-pub enum ApiEvent {
+pub enum ProtocolEvent {
     ApiResponse {
         response: ApiResponse,
         original_request: ApiRequest,
