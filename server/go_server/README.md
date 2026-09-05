@@ -3,7 +3,7 @@
 The Go server is the public endpoint for The Answer Protocol. It accepts TCP
 clients, performs the TAP handshake, authenticates usernames, owns chat and
 group state, applies connection limits, and translates game commands to the
-Rust engine's internal JSON protocol.
+[Rust engine's](../rust_server/README.md) internal JSON protocol.
 
 Public command syntax, errors, and events are defined in the root
 [TAP protocol reference](../../PROTOCOL.md).

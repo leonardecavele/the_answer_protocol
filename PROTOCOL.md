@@ -1,5 +1,5 @@
 This document is the wire-level reference for the public TAP endpoint exposed
-by the Go server. It consolidates the protocol grammar, commands, responses,
+by the [Go server](server/go_server/README.md). It consolidates the protocol grammar, commands, responses,
 errors, events, and the implementation choices permitted by RFC 42TAP.
 
 ## Transport and framing
@@ -373,7 +373,7 @@ client retains both the number and symbolic name.
 | `404` | `NPC_NOT_FOUND` | The NPC cannot be resolved. |
 | `404` | `GROUP_NOT_FOUND` | The referenced group no longer exists. |
 | `404` | `NO_SUCH_GROUP` | The requested group cannot be found. |
-| `405` | `PLAYER_NOT_FOUND` | The game engine cannot resolve the player. |
+| `405` | `PLAYER_NOT_FOUND` | The [game engine](server/rust_server/README.md) cannot resolve the player. |
 | `405` | `NPC_NOT_HOSTILE` | The selected NPC cannot be attacked. |
 | `406` | `NO_QUEST_AVAILABLE` | The NPC has no available quest. |
 | `407` | `NPC_NOT_IN_ROOM` | The selected NPC is not in the player's room. |
@@ -395,7 +395,7 @@ client retains both the number and symbolic name.
 
 Malformed frames, authentication timeout, read timeout, rate-limit abuse, and
 socket failure may close the connection. `NetworkError`, `ProtocolError`, and
-`InternalError` exposed by the Rust API client are local library errors rather
+`InternalError` exposed by the [Rust API client](client/api-client/README.md) are local library errors rather
 than TAP `ERR` frames.
 
 ## Events
@@ -411,7 +411,7 @@ wait for the pending `OK` or `ERR`.
 | `EVT CONNECT <username>` | A player authenticated. |
 | `EVT QUIT <username>` | A player disconnected or sent `QUIT`. |
 | `EVT STATS players=<count>` | The authenticated-player count changed. |
-| `EVT GAME SERVER CONNECTED` | The Go gateway connected to the game engine. |
+| `EVT GAME SERVER CONNECTED` | The [Go gateway](server/go_server/README.md) connected to the game engine. |
 | `EVT GAME SERVER DISCONNECTED` | The game-engine connection became unavailable. |
 
 ### Chat events

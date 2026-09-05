@@ -5,7 +5,7 @@ rooms, items, NPCs, and quests; tracks players and fights; applies timed world
 updates; persists state; emits targeted events; and evaluates C submissions in
 a Linux sandbox.
 
-It listens for one Go gateway connection and does not expose TAP directly. The
+It listens for one [Go gateway](../go_server/README.md) connection and does not expose TAP directly. The
 public gameplay commands and frames are defined in the root
 [TAP protocol reference](../../PROTOCOL.md).
 

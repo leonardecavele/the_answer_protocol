@@ -32,7 +32,7 @@ Ratatui backend.
 
 - Rust toolchain with Cargo and Rust 2024 edition support
 - A terminal supported by Crossterm
-- A TAP gateway, normally available at `127.0.0.1:38800`
+- A [TAP gateway](../../server/go_server/README.md), normally available at `127.0.0.1:38800`
 
 ## Build and run
 

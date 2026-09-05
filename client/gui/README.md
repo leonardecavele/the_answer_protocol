@@ -29,14 +29,14 @@ The GUI does not start or embed a terminal process. Instead:
 4. `soft_ratatui` renders the Ratatui cells into an in-memory grid.
 5. `egui_ratatui` displays that grid inside the Eframe window.
 
-This preserves identical client behavior across the GUI and TUI without a
+This preserves identical client behavior across the GUI and [TUI](../tui/README.md) without a
 pseudo-terminal or a second set of screens.
 
 ## Requirements
 
 - Rust toolchain with Cargo and Rust 2024 edition support
 - A native desktop environment supported by Eframe
-- A TAP gateway on `127.0.0.1:38800`
+- A [TAP gateway](../../server/go_server/README.md) on `127.0.0.1:38800`
 
 ## Build and run
 

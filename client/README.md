@@ -1,8 +1,8 @@
 # Clients
 
-The client workspace provides terminal and graphical entry points to the same
+The client workspace provides [terminal](tui/README.md) and [graphical](gui/README.md) entry points to the same
 game. Both use one Rust application core, the same Ratatui views and widgets,
-and the same asynchronous TAP library. The frontends differ only at the event
+and the same [asynchronous TAP library](api-client/README.md). The frontends differ only at the event
 and rendering boundaries.
 
 ## Components
@@ -70,7 +70,7 @@ inventories, NPC state, quests, groups, fights, and every gameplay mutation.
 - Rust toolchain with Cargo and Rust 2024 edition support
 - A Crossterm-compatible terminal for the TUI
 - A supported native desktop environment for Eframe/Egui
-- A TAP gateway, normally at `127.0.0.1:38800`
+- A [TAP gateway](../server/go_server/README.md), normally at `127.0.0.1:38800`
 
 ## Build and run
 

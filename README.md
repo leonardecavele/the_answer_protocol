@@ -7,9 +7,8 @@ by 1970s MUDs. It recreates our school, with our friends as
 NPCs you can fight by completing sandboxed C coding challenges.
 
 The project implements RFC [42TAP](PROTOCOL.md) as a line-oriented TCP protocol. The public
-gateway, authoritative game engine, reusable client API, terminal interface,
-and graphical interface are separate components with clearly defined
-responsibilities.
+[gateway](server/go_server/README.md), authoritative [game engine](server/rust_server/README.md), reusable [client API](client/api-client/README.md), [terminal interface](client/tui/README.md),
+and [graphical interface](client/gui/README.md) are separate components with clearly defined responsibilities.
 
 ## Documentation
 
