@@ -105,7 +105,11 @@ impl App {
                 self.on_attacked(response, cmd.npc_name);
             }
             (ApiRequest::Quit(_), ApiResponse::Quit(Ok(_))) => {
-                self.state.should_quit = true;
+                self.disconnect();
+
+                self.state.ui.notifications.push(Notification::success(
+                    "Successfully disconnected".to_string(),
+                ));
             }
             (request, response) => {
                 self.record_trace(

@@ -2,7 +2,7 @@ use crate::client::ConnectionState;
 use crate::client::event::ServerEvent;
 use crate::error::{NetworkError, TapError};
 use crate::protocol::frame::{Frame, FrameDirection};
-use crate::protocol::request::Request;
+use crate::protocol::request::{Request, RequestFlow};
 use crate::protocol::response::{Opcode, ServerResponse};
 use futures::SinkExt;
 use futures::stream::StreamExt;
@@ -18,6 +18,7 @@ use tracing::{debug, error, info, warn};
 
 enum Disconnection {
     ClosedByClient,
+    SessionEnded,
     ServerClosed,
     RequestTimedOut { command: String, timeout: Duration },
     Failed(TapError),
@@ -27,6 +28,7 @@ impl Disconnection {
     fn reason(self) -> Option<String> {
         match self {
             Disconnection::ClosedByClient => None,
+            Disconnection::SessionEnded => None,
             Disconnection::ServerClosed => Some("server closed the connection".to_string()),
             Disconnection::RequestTimedOut { command, timeout } => Some(format!(
                 "no answer to '{}' within {}s",
@@ -179,17 +181,19 @@ impl Bridge {
             }
         };
 
-        match response.opcode {
+        let flow = match response.opcode {
             Opcode::Empty => {
                 debug!("ignoring empty frame");
+                Flow::Continue
             }
             Opcode::Evt => {
                 let _ = self.channels.events.send(ServerEvent::from(response));
+                Flow::Continue
             }
             Opcode::Ok | Opcode::Err => self.answer_pending(response),
-        }
+        };
 
-        Ok(Flow::Continue)
+        Ok(flow)
     }
 
     async fn outgoing_request(&mut self, request_opt: Option<Request>) -> Result<Flow, TapError> {
@@ -228,21 +232,30 @@ impl Bridge {
         Ok(Flow::Continue)
     }
 
-    fn answer_pending(&mut self, response: ServerResponse) {
+    fn answer_pending(&mut self, response: ServerResponse) -> Flow {
         match self.pending_request.take() {
             Some(PendingRequest { request, .. }) => {
+                let flow = match (request.flow, &response.opcode) {
+                    (RequestFlow::End, Opcode::Ok) => Flow::Stop(Disconnection::SessionEnded),
+                    _ => Flow::Continue,
+                };
+
                 if request.reply_to.send(Ok(response)).is_err() {
                     warn!(
                         "nobody is waiting for the response to '{}' anymore, dropping it",
                         request.raw_command
                     );
                 }
+
+                flow
             }
             None => {
                 error!(
                     "protocol desync: server sent '{}' while no command was pending",
                     response.raw
                 );
+
+                Flow::Continue
             }
         }
     }

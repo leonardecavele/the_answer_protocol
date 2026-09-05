@@ -2,6 +2,7 @@ use crate::commands::{
     FightAttackCommand, FightAttackResponse, FightCreateCommand, FightCreateResponse,
 };
 use crate::error::CommandError;
+use crate::protocol::request::RequestFlow;
 
 // Command Imports
 use crate::protocol::command::communication::global_chat::GlobalChatCommand;
@@ -138,4 +139,13 @@ define_api_protocol! {
     GroupJoin(GroupJoinCommand, GroupJoinResponse) => ["group join", "gj"],
     GroupLeave(GroupLeaveCommand, GroupLeaveResponse) => ["group leave", "gl"],
     GroupInvite(GroupInviteCommand, GroupInviteResponse) => ["group invite", "gi"],
+}
+
+impl ApiRequest {
+    pub(crate) fn flow(&self) -> RequestFlow {
+        match self {
+            ApiRequest::Quit(_) => RequestFlow::End,
+            _ => RequestFlow::Continue,
+        }
+    }
 }

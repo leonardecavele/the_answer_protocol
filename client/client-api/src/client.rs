@@ -5,7 +5,7 @@ pub(crate) mod event;
 
 use crate::commands::{ConnectCommand, ConnectResponse};
 use crate::events::ServerEvent;
-use crate::protocol::request::Request;
+use crate::protocol::request::{Request, RequestFlow};
 use crate::{
     ApiRequest, ApiResponse, Command, CommandError, Frame, InternalError, Opcode, TapError,
 };
@@ -59,10 +59,11 @@ impl Client {
     async fn request<C: Command>(
         &self,
         command: C,
+        flow: RequestFlow,
     ) -> Result<Result<C::ResponseData, CommandError>, TapError> {
         let raw_command = command.encode();
 
-        let (request, response_receiver) = Request::new(raw_command.clone());
+        let (request, response_receiver) = Request::new(raw_command.clone(), flow);
 
         self.bridge
             .request_sender
@@ -100,34 +101,57 @@ impl Client {
         player_name: String,
     ) -> Result<Result<ConnectResponse, CommandError>, TapError> {
         debug!("sending connect request for player: {}", player_name);
-        self.request(ConnectCommand { player_name }).await
+        self.request(ConnectCommand { player_name }, RequestFlow::Continue)
+            .await
     }
 
     pub async fn execute_request(&self, request: ApiRequest) -> Result<ApiResponse, TapError> {
+        let flow = request.flow();
+
         match request {
-            ApiRequest::Connect(cmd) => Ok(ApiResponse::Connect(self.request(cmd).await?)),
-            ApiRequest::Quit(cmd) => Ok(ApiResponse::Quit(self.request(cmd).await?)),
-            ApiRequest::Look(cmd) => Ok(ApiResponse::Look(self.request(cmd).await?)),
-            ApiRequest::Move(cmd) => Ok(ApiResponse::Move(self.request(cmd).await?)),
-            ApiRequest::Who(cmd) => Ok(ApiResponse::Who(self.request(cmd).await?)),
-            ApiRequest::FightCreate(cmd) => Ok(ApiResponse::FightCreate(self.request(cmd).await?)),
-            ApiRequest::FightAttack(cmd) => Ok(ApiResponse::FightAttack(self.request(cmd).await?)),
-            ApiRequest::GlobalChat(cmd) => Ok(ApiResponse::GlobalChat(self.request(cmd).await?)),
-            ApiRequest::RoomChat(cmd) => Ok(ApiResponse::RoomChat(self.request(cmd).await?)),
-            ApiRequest::GroupChat(cmd) => Ok(ApiResponse::GroupChat(self.request(cmd).await?)),
-            ApiRequest::PrivateChat(cmd) => Ok(ApiResponse::PrivateChat(self.request(cmd).await?)),
-            ApiRequest::Take(cmd) => Ok(ApiResponse::Take(self.request(cmd).await?)),
-            ApiRequest::Drop(cmd) => Ok(ApiResponse::Drop(self.request(cmd).await?)),
-            ApiRequest::Inventory(cmd) => Ok(ApiResponse::Inventory(self.request(cmd).await?)),
-            ApiRequest::Status(cmd) => Ok(ApiResponse::Status(self.request(cmd).await?)),
-            ApiRequest::Talk(cmd) => Ok(ApiResponse::Talk(self.request(cmd).await?)),
-            ApiRequest::Attack(cmd) => Ok(ApiResponse::Attack(self.request(cmd).await?)),
-            ApiRequest::Quest(cmd) => Ok(ApiResponse::Quest(self.request(cmd).await?)),
-            ApiRequest::Quests(cmd) => Ok(ApiResponse::Quests(self.request(cmd).await?)),
-            ApiRequest::GroupCreate(cmd) => Ok(ApiResponse::GroupCreate(self.request(cmd).await?)),
-            ApiRequest::GroupJoin(cmd) => Ok(ApiResponse::GroupJoin(self.request(cmd).await?)),
-            ApiRequest::GroupLeave(cmd) => Ok(ApiResponse::GroupLeave(self.request(cmd).await?)),
-            ApiRequest::GroupInvite(cmd) => Ok(ApiResponse::GroupInvite(self.request(cmd).await?)),
+            ApiRequest::Connect(cmd) => Ok(ApiResponse::Connect(self.request(cmd, flow).await?)),
+            ApiRequest::Quit(cmd) => Ok(ApiResponse::Quit(self.request(cmd, flow).await?)),
+            ApiRequest::Look(cmd) => Ok(ApiResponse::Look(self.request(cmd, flow).await?)),
+            ApiRequest::Move(cmd) => Ok(ApiResponse::Move(self.request(cmd, flow).await?)),
+            ApiRequest::Who(cmd) => Ok(ApiResponse::Who(self.request(cmd, flow).await?)),
+            ApiRequest::FightCreate(cmd) => {
+                Ok(ApiResponse::FightCreate(self.request(cmd, flow).await?))
+            }
+            ApiRequest::FightAttack(cmd) => {
+                Ok(ApiResponse::FightAttack(self.request(cmd, flow).await?))
+            }
+            ApiRequest::GlobalChat(cmd) => {
+                Ok(ApiResponse::GlobalChat(self.request(cmd, flow).await?))
+            }
+            ApiRequest::RoomChat(cmd) => Ok(ApiResponse::RoomChat(self.request(cmd, flow).await?)),
+            ApiRequest::GroupChat(cmd) => {
+                Ok(ApiResponse::GroupChat(self.request(cmd, flow).await?))
+            }
+            ApiRequest::PrivateChat(cmd) => {
+                Ok(ApiResponse::PrivateChat(self.request(cmd, flow).await?))
+            }
+            ApiRequest::Take(cmd) => Ok(ApiResponse::Take(self.request(cmd, flow).await?)),
+            ApiRequest::Drop(cmd) => Ok(ApiResponse::Drop(self.request(cmd, flow).await?)),
+            ApiRequest::Inventory(cmd) => {
+                Ok(ApiResponse::Inventory(self.request(cmd, flow).await?))
+            }
+            ApiRequest::Status(cmd) => Ok(ApiResponse::Status(self.request(cmd, flow).await?)),
+            ApiRequest::Talk(cmd) => Ok(ApiResponse::Talk(self.request(cmd, flow).await?)),
+            ApiRequest::Attack(cmd) => Ok(ApiResponse::Attack(self.request(cmd, flow).await?)),
+            ApiRequest::Quest(cmd) => Ok(ApiResponse::Quest(self.request(cmd, flow).await?)),
+            ApiRequest::Quests(cmd) => Ok(ApiResponse::Quests(self.request(cmd, flow).await?)),
+            ApiRequest::GroupCreate(cmd) => {
+                Ok(ApiResponse::GroupCreate(self.request(cmd, flow).await?))
+            }
+            ApiRequest::GroupJoin(cmd) => {
+                Ok(ApiResponse::GroupJoin(self.request(cmd, flow).await?))
+            }
+            ApiRequest::GroupLeave(cmd) => {
+                Ok(ApiResponse::GroupLeave(self.request(cmd, flow).await?))
+            }
+            ApiRequest::GroupInvite(cmd) => {
+                Ok(ApiResponse::GroupInvite(self.request(cmd, flow).await?))
+            }
         }
     }
 

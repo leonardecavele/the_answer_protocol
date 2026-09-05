@@ -2,8 +2,7 @@ use crate::app::runtime::App;
 use crate::events::NetworkConnectionEvent;
 use crate::network::{NOTIF_ID_CONNECTION_ATTEMPT, NetworkManager};
 use crate::notification::Notification;
-use crate::renderer::views::{GameView, LoginView};
-use crate::states::AppState;
+use crate::renderer::views::GameView;
 
 impl App {
     pub fn handle_network_event(&mut self, event: NetworkConnectionEvent) {
@@ -62,19 +61,7 @@ impl App {
                     )));
             }
             NetworkConnectionEvent::Lost { reason } => {
-                self.network_manager = None;
-
-                self.view_manager.set_view(Box::new(LoginView::new(
-                    self.state.network.server_ip.clone(),
-                    self.state.network.server_port.clone(),
-                )));
-
-                self.state = AppState::new(
-                    self.state.network.server_ip.clone(),
-                    self.state.network.server_port.clone(),
-                    self.state.game.manifest.clone(),
-                    self.state.game.assets.clone(),
-                );
+                self.disconnect();
 
                 self.state
                     .ui
