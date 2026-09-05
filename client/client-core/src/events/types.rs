@@ -1,4 +1,4 @@
-use crate::network::envelopes::ResponseEnvelope;
+use crate::network::ResponseEnvelope;
 use api_client::events::ServerEvent;
 use api_client::{ApiRequest, Frame};
 use crossterm::event::Event as CrosstermEvent;

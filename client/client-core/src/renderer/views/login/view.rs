@@ -1,5 +1,6 @@
 use crate::collections::Step;
 use crate::events::{ApplicationEvent, NetworkEvent};
+use crate::network::NOTIF_ID_CONNECTION_ATTEMPT;
 use crate::renderer::components::{
     Button, Component, EventFlow, Interactive, Lifecycle, TextInput,
 };
@@ -180,7 +181,7 @@ impl Lifecycle for LoginView {
                     } else {
                         state.ui.notifications.push(
                             Notification::info("Connecting...")
-                                .with_id(crate::network::manager::NOTIF_ID_CONNECTION_ATTEMPT)
+                                .with_id(NOTIF_ID_CONNECTION_ATTEMPT)
                                 .with_ms(60_000),
                         );
                         let _ = event_sender.try_send(ApplicationEvent::Network(

@@ -1,7 +1,7 @@
 use crate::app::runtime::App;
 use crate::events::NetworkEvent;
+use crate::network::NOTIF_ID_CONNECTION_ATTEMPT;
 use crate::network::NetworkManager;
-use crate::network::manager::NOTIF_ID_CONNECTION_ATTEMPT;
 use crate::renderer::views::game::GameView;
 use crate::renderer::views::login::LoginView;
 use crate::states::app::AppState;
