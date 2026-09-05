@@ -5,7 +5,7 @@ use mpsc::Sender;
 use tokio::sync::broadcast::error::{RecvError, TryRecvError};
 use tokio::sync::mpsc;
 use tokio_util::task::AbortOnDropHandle;
-use tracing::{info, warn};
+use tracing::info;
 
 pub struct NetworkManager {
     pub command_sender: Sender<RequestEnvelope>,
@@ -151,7 +151,12 @@ impl NetworkManager {
                                             .await;
                                     }
                                     Err(tap_error) => {
-                                        warn!("command failed: {}", tap_error);
+                                        let _ = event_sender
+                                            .send(ApplicationEvent::Api(ApiEvent::RequestFailed {
+                                                request: original_request,
+                                                error_message: tap_error.to_string(),
+                                            }))
+                                            .await;
                                     }
                                 }
                             }

@@ -24,6 +24,20 @@ impl App {
                 let message = format!("{} {}(s) lost", count, stream);
                 self.record_trace("lag", message);
             }
+            ApiEvent::RequestFailed {
+                request,
+                error_message,
+            } => {
+                self.record_trace(
+                    "request failed",
+                    format!("{:?}: {}", request, error_message),
+                );
+
+                self.state.ui.notifications.push(
+                    Notification::error(format!("Command failed: {}", error_message))
+                        .with_topic(NotificationTopic::Protocol),
+                );
+            }
             ApiEvent::ApiResponse(envelope) => {
                 self.handle_api_response(envelope);
             }
@@ -64,6 +78,9 @@ impl App {
             }
             (ApiRequest::GroupLeave(_), ApiResponse::GroupLeave(Ok(_))) => {
                 self.on_group_left();
+            }
+            (ApiRequest::GroupInvite(cmd), ApiResponse::GroupInvite(Ok(_))) => {
+                self.on_group_invite_sent(cmd.username);
             }
             (ApiRequest::GlobalChat(cmd), ApiResponse::GlobalChat(Ok(_))) => {
                 self.on_global_chat_sent(cmd.message);

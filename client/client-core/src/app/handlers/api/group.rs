@@ -33,6 +33,17 @@ impl App {
             .log_action("You left the group.".to_string());
     }
 
+    pub fn on_group_invite_sent(&mut self, username: String) {
+        self.state.ui.notifications.push(Notification::info(format!(
+            "Invitation sent to {}.",
+            username
+        )));
+
+        self.state
+            .game
+            .log_action(format!("You invited {} to your group.", username));
+    }
+
     pub fn on_group_invited_by(&mut self, leader: String) {
         self.state.ui.notifications.push(Notification::info(format!(
             "You are invited to a group by {}.",
@@ -51,6 +62,11 @@ impl App {
 
     pub fn on_group_member_joined(&mut self, user: String) {
         self.state
+            .ui
+            .notifications
+            .push(Notification::info(format!("{} joined the group.", user)));
+
+        self.state
             .game
             .log_action(format!("{} joined the group.", user));
     }
@@ -58,14 +74,24 @@ impl App {
     pub fn on_group_member_left(&mut self, user: String) {
         if self.state.game.group.is_leader(Some(&user)) {
             self.state.game.group.leave();
-            self.state.game.log_action(format!(
-                "Leader {} left. The group has been disbanded.",
-                user
-            ));
-        } else {
+
+            let message = format!("Leader {} left. The group has been disbanded.", user);
+
             self.state
-                .game
-                .log_action(format!("{} left the group.", user));
+                .ui
+                .notifications
+                .push(Notification::warning(message.clone()));
+
+            self.state.game.log_action(message);
+        } else {
+            let message = format!("{} left the group.", user);
+
+            self.state
+                .ui
+                .notifications
+                .push(Notification::info(message.clone()));
+
+            self.state.game.log_action(message);
         }
     }
 

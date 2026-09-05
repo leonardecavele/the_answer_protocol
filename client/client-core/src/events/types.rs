@@ -20,7 +20,14 @@ pub enum ApiEvent {
     ApiResponse(ResponseEnvelope),
     Server(ServerEvent),
     Frame(Frame),
-    Lagged { stream: &'static str, count: usize },
+    Lagged {
+        stream: &'static str,
+        count: usize,
+    },
+    RequestFailed {
+        request: ApiRequest,
+        error_message: String,
+    },
 }
 
 /// Events strictly related to the network layer status and data.
