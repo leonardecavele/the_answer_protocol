@@ -4,8 +4,8 @@ use crate::renderer::components::{
 };
 use crate::renderer::layout::{MIN_COLUMNS, MIN_ROWS, interface_area};
 use crate::renderer::theme::too_small_hint;
-use crate::renderer::views::login::LoginView;
-use crate::states::app::AppState;
+use crate::renderer::views::LoginView;
+use crate::states::AppState;
 use crossterm::event::Event as CrosstermEvent;
 use ratatui::Frame;
 use ratatui::layout::Rect;
