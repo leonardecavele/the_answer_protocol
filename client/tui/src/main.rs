@@ -1,3 +1,6 @@
+mod app;
+
+use crate::app::TuiApp;
 use clap::Parser;
 use client_core::Assets;
 use client_core::Cli;
@@ -6,7 +9,6 @@ use crossterm::event::DisableMouseCapture;
 use crossterm::execute;
 use crossterm::terminal::{LeaveAlternateScreen, disable_raw_mode};
 use std::{io, panic};
-use tui::TuiApp;
 
 const LOG_FILE: &str = "tui.log";
 
