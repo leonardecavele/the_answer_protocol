@@ -7,7 +7,7 @@ use tokio_util::task::AbortOnDropHandle;
 use tracing::info;
 
 pub struct NetworkManager {
-    pub command_sender: Sender<ApiRequest>,
+    command_sender: Sender<ApiRequest>,
     _background_task: AbortOnDropHandle<()>,
 }
 
