@@ -136,6 +136,13 @@ impl App {
                     "unpaired response",
                     format!("request: {:?} -- response: {:?}", request, response),
                 );
+
+                self.state.ui.notifications.push(
+                    Notification::warning(
+                        "The server answered a command with an unrelated response.",
+                    )
+                    .with_topic(NotificationTopic::Protocol),
+                );
             }
         }
     }

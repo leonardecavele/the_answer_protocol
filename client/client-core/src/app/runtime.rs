@@ -54,8 +54,16 @@ impl App {
     }
 
     pub fn send(&mut self, request: ApiRequest) {
-        if let Some(network_manager) = &self.network_manager {
-            network_manager.send_command(request);
+        let Some(network_manager) = &self.network_manager else {
+            self.record_trace("dropped request", format!("{:?}: not connected", request));
+            return;
+        };
+
+        if let Err(request) = network_manager.send_command(request) {
+            self.record_trace(
+                "dropped request",
+                format!("{:?}: the command queue is full", request),
+            );
         }
     }
 

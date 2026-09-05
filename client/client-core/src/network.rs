@@ -193,7 +193,9 @@ impl NetworkManager {
         }
     }
 
-    pub fn send_command(&self, request: ApiRequest) {
-        let _ = self.command_sender.try_send(request);
+    pub fn send_command(&self, request: ApiRequest) -> Result<(), ApiRequest> {
+        self.command_sender
+            .try_send(request)
+            .map_err(|error| error.into_inner())
     }
 }
