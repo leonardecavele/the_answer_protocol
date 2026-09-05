@@ -1,7 +1,7 @@
 use crate::input;
 use crate::screen::{self, Grid, Screen};
+use client_core::Assets;
 use eframe::egui;
-use runtime::Assets;
 use tokio::runtime::Handle;
 use tui::app::App;
 use tui::events::{ApplicationEvent, TICK_RATE};

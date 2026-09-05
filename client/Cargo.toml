@@ -2,7 +2,7 @@
 members = [
     "api-client",
     "tui",
-    "gui", "runtime",
+    "gui", "client-core",
 ]
 resolver = "3"
 

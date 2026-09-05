@@ -1,4 +1,4 @@
-use runtime::Assets;
+use client_core::Assets;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 

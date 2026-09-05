@@ -5,7 +5,7 @@ edition = "2024"
 
 [dependencies]
 api-client = { path = "../api-client" }
-runtime = { path = "../runtime" }
+client-core = { path = "../client-core" }
 tokio = { version = "1.52.3", features = ["full"] }
 tracing = "0.1.44"
 ratatui = "0.30.1"

@@ -2,7 +2,7 @@ use crate::data::manifest::Manifest;
 use crate::states::game::GameState;
 use crate::states::network::NetworkState;
 use crate::states::ui::UiState;
-use runtime::Assets;
+use client_core::Assets;
 use std::sync::Arc;
 
 pub struct AppState {

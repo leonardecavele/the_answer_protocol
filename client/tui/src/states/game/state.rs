@@ -5,7 +5,7 @@ use crate::states::game::session::{
     ChatMessage, FightState, GroupState, PlayerState, Room, ServerState,
 };
 use crate::states::game::{Item, Npc};
-use runtime::Assets;
+use client_core::Assets;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 

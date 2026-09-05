@@ -11,10 +11,10 @@ use api_client::ApiRequest;
 use api_client::commands::{
     InventoryCommand, LookCommand, QuestsCommand, StatusCommand, WhoCommand,
 };
+use client_core::Assets;
 use ratatui::Frame;
 use ratatui::Terminal;
 use ratatui::backend::CrosstermBackend;
-use runtime::Assets;
 use std::io;
 use std::sync::Arc;
 

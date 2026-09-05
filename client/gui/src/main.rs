@@ -4,9 +4,9 @@ mod screen;
 
 use crate::app::GuiApp;
 use clap::Parser;
+use client_core::Assets;
+use client_core::Cli;
 use eframe::egui;
-use runtime::Assets;
-use runtime::Cli;
 use tokio::runtime::Handle;
 use tui::logging;
 use tui::ui::{MIN_COLUMNS, MIN_ROWS};
