@@ -1,5 +1,3 @@
-# Egui graphical client
-
 The `gui` crate provides the native graphical interface for The Answer
 Protocol. It reuses the complete Ratatui `App`, including its screens, state,
 networking, focus model, commands, and widgets. Egui supplies the window and

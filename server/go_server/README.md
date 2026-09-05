@@ -1,5 +1,3 @@
-# Go TAP gateway
-
 The Go server is the public endpoint for The Answer Protocol. It accepts TCP
 clients, performs the TAP handshake, authenticates usernames, owns chat and
 group state, applies connection limits, and translates game commands to the

@@ -1,5 +1,3 @@
-# Ratatui terminal client
-
 The `tui` crate provides the complete terminal interface for The Answer
 Protocol. It owns the shared `App`, application state, network integration,
 views, widgets, overlays, focus system, and MUD-style command input. Crossterm

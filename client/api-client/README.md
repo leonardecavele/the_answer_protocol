@@ -1,5 +1,3 @@
-# Rust TAP API client
-
 `api-client` is the reusable asynchronous Rust client for The Answer Protocol.
 It owns TCP connection setup, the version-1 handshake, TAP encoding and
 decoding, typed requests and responses, asynchronous events, raw-frame

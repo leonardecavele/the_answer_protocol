@@ -1,5 +1,3 @@
-# Servers
-
 The server side of The Answer Protocol is split into two cooperating
 processes. The split gives concurrent public networking and authoritative game
 simulation independent execution models.

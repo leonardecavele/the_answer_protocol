@@ -1,5 +1,3 @@
-# Rust game server
-
 The Rust server owns the authoritative world for The Answer Protocol. It loads
 rooms, items, NPCs, and quests; tracks players and fights; applies timed world
 updates; persists state; emits targeted events; and evaluates C submissions in
