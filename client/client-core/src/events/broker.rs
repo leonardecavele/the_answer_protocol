@@ -8,7 +8,7 @@ use tokio::task::JoinHandle;
 use tokio::time::{Instant, interval_at};
 
 pub const TICK_RATE: Duration = Duration::from_millis(33);
-pub const MAX_EVENTS_BUS: usize = 200;
+const MAX_EVENTS_BUS: usize = 200;
 
 pub struct EventBroker {
     receiver: mpsc::Receiver<ApplicationEvent>,

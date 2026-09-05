@@ -1,3 +1,3 @@
-pub mod api;
-pub mod network;
-pub mod terminal;
+mod api;
+mod network;
+mod terminal;
