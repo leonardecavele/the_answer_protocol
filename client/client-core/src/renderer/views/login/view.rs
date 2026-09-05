@@ -1,11 +1,12 @@
 use crate::collections::Step;
-use crate::events::{ApplicationEvent, NetworkEvent};
+use crate::events::{ApplicationEvent, NetworkConnectionEvent};
 use crate::network::NOTIF_ID_CONNECTION_ATTEMPT;
+use crate::notification::Notification;
 use crate::renderer::components::{
     Button, Component, EventFlow, Interactive, Lifecycle, TextInput,
 };
 use crate::renderer::views::login::focus::LoginFocus;
-use crate::states::{AppState, Notification};
+use crate::states::AppState;
 use crossterm::event::{Event as CrosstermEvent, KeyCode, KeyEvent, MouseEvent, MouseEventKind};
 use mpsc::Sender;
 use ratatui::Frame;
@@ -184,7 +185,7 @@ impl Lifecycle for LoginView {
                                 .with_ms(60_000),
                         );
                         let _ = event_sender.try_send(ApplicationEvent::Network(
-                            NetworkEvent::ConnectionAttemptStarted {
+                            NetworkConnectionEvent::AttemptStarted {
                                 server_ip: ip,
                                 server_port: port,
                                 player_name: name,

@@ -8,7 +8,7 @@ use crossterm::event::Event as CrosstermEvent;
 pub enum ApplicationEvent {
     DeviceEvent(CrosstermEvent),
     Tick,
-    Network(NetworkEvent),
+    Network(NetworkConnectionEvent),
     SendRequest(ApiRequest),
     SendRawCommand(String),
     Api(ApiEvent),
@@ -25,29 +25,21 @@ pub enum ApiEvent {
 
 /// Events strictly related to the network layer status and data.
 #[derive(Debug, Clone)]
-pub enum NetworkEvent {
-    ConnectionAttemptStarted {
+pub enum NetworkConnectionEvent {
+    AttemptStarted {
         server_ip: String,
         server_port: String,
         player_name: String,
     },
-    ConnectionEstablished {
+    Established {
         server_ip: String,
         server_port: String,
         player_name: String,
     },
-    ConnectionFailed {
+    Failed {
         error_message: String,
     },
-    ConnectionLost {
+    Lost {
         reason: String,
     },
-}
-
-#[derive(Debug, Clone, Copy)]
-pub enum NotificationType {
-    Information,
-    Warning,
-    Error,
-    Success,
 }

@@ -1,15 +1,16 @@
 use crate::app::runtime::App;
-use crate::events::NetworkEvent;
+use crate::events::NetworkConnectionEvent;
 use crate::network::{NOTIF_ID_CONNECTION_ATTEMPT, NetworkManager};
+use crate::notification::Notification;
 use crate::renderer::views::{GameView, LoginView};
-use crate::states::{AppState, Notification};
+use crate::states::AppState;
 
 impl App {
-    pub fn handle_network_event(&mut self, event: NetworkEvent) {
+    pub fn handle_network_event(&mut self, event: NetworkConnectionEvent) {
         self.record_trace("network", format!("{:?}", event));
 
         match event {
-            NetworkEvent::ConnectionAttemptStarted {
+            NetworkConnectionEvent::AttemptStarted {
                 server_ip,
                 server_port,
                 player_name,
@@ -23,7 +24,7 @@ impl App {
                     player_name.to_uppercase(),
                 ));
             }
-            NetworkEvent::ConnectionEstablished {
+            NetworkConnectionEvent::Established {
                 server_ip,
                 server_port,
                 player_name,
@@ -45,7 +46,7 @@ impl App {
                 self.load_state_from_server();
                 self.view_manager.set_view(Box::new(GameView::new()));
             }
-            NetworkEvent::ConnectionFailed { error_message } => {
+            NetworkConnectionEvent::Failed { error_message } => {
                 self.network_manager = None;
                 self.state
                     .ui
@@ -60,7 +61,7 @@ impl App {
                         error_message
                     )));
             }
-            NetworkEvent::ConnectionLost { reason } => {
+            NetworkConnectionEvent::Lost { reason } => {
                 self.network_manager = None;
 
                 self.view_manager.set_view(Box::new(LoginView::new(
