@@ -2171,6 +2171,7 @@ dependencies = [
  "eframe",
  "egui_ratatui",
  "ratatui",
+ "runtime",
  "soft_ratatui",
  "tokio",
  "tui",
@@ -4382,6 +4383,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "runtime"
+version = "0.1.0"
+dependencies = [
+ "api-client",
+ "chrono",
+ "clap",
+ "crossterm",
+ "futures",
+ "image",
+ "include_dir",
+ "ratatui",
+ "ratatui-code-editor",
+ "ratatui-image",
+ "serde",
+ "serde_json",
+ "textwrap",
+ "thiserror 2.0.18",
+ "tokio",
+ "tokio-util",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
+]
+
+[[package]]
 name = "rust-embed"
 version = "8.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5579,6 +5605,7 @@ dependencies = [
  "ratatui",
  "ratatui-code-editor",
  "ratatui-image",
+ "runtime",
  "serde",
  "serde_json",
  "textwrap",

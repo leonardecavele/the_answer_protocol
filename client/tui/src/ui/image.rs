@@ -1,10 +1,10 @@
-use crate::data::assets::Assets;
 use crate::ui::layout::{centered_rect, fit_area};
 use ratatui::Frame;
 use ratatui::layout::Rect;
 use ratatui_image::picker::Picker;
 use ratatui_image::protocol::StatefulProtocol;
 use ratatui_image::{Resize, StatefulImage};
+use runtime::Assets;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use tracing::warn;

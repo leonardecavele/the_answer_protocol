@@ -1,4 +1,4 @@
-use crate::data::assets::Assets;
+use runtime::Assets;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 

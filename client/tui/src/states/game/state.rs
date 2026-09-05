@@ -1,11 +1,11 @@
 use crate::collections::BoundedLog;
-use crate::data::assets::Assets;
 use crate::data::manifest::Manifest;
 use crate::states::game::interaction::{DialogueState, GameFocus, Overlay, OverlayKind, Overlays};
 use crate::states::game::session::{
     ChatMessage, FightState, GroupState, PlayerState, Room, ServerState,
 };
 use crate::states::game::{Item, Npc};
+use runtime::Assets;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 

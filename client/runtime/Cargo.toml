@@ -1,11 +1,10 @@
 [package]
-name = "tui"
+name = "runtime"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
 api-client = { path = "../api-client" }
-runtime = { path = "../runtime" }
 tokio = { version = "1.52.3", features = ["full"] }
 tracing = "0.1.44"
 ratatui = "0.30.1"

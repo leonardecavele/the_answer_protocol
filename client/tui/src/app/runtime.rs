@@ -1,4 +1,3 @@
-use crate::data::assets::Assets;
 use crate::data::manifest::Manifest;
 use crate::errors::ApplicationError;
 use crate::events::{ApplicationEvent, EventBroker};
@@ -15,6 +14,7 @@ use api_client::commands::{
 use ratatui::Frame;
 use ratatui::Terminal;
 use ratatui::backend::CrosstermBackend;
+use runtime::Assets;
 use std::io;
 use std::sync::Arc;
 

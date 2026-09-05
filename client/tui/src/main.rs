@@ -6,10 +6,10 @@ use crossterm::terminal::{
 };
 use ratatui::Terminal;
 use ratatui::backend::CrosstermBackend;
+use runtime::Assets;
+use runtime::Cli;
 use std::{io, panic};
 use tui::app::App;
-use tui::cli::Cli;
-use tui::data::assets::Assets;
 use tui::logging;
 
 const LOG_FILE: &str = "tui.log";

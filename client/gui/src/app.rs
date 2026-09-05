@@ -1,9 +1,9 @@
 use crate::input;
 use crate::screen::{self, Grid, Screen};
 use eframe::egui;
+use runtime::Assets;
 use tokio::runtime::Handle;
 use tui::app::App;
-use tui::data::assets::Assets;
 use tui::events::{ApplicationEvent, TICK_RATE};
 
 pub struct GuiApp {

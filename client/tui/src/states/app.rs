@@ -1,8 +1,8 @@
-use crate::data::assets::Assets;
 use crate::data::manifest::Manifest;
 use crate::states::game::GameState;
 use crate::states::network::NetworkState;
 use crate::states::ui::UiState;
+use runtime::Assets;
 use std::sync::Arc;
 
 pub struct AppState {
