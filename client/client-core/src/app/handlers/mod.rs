@@ -1,3 +1,3 @@
 mod api;
-mod network;
+mod connection;
 mod terminal;
