@@ -3,7 +3,7 @@ use crate::renderer::components::{Component, EventFlow, Lifecycle};
 use crate::renderer::layout::centered_rect_percent;
 use crate::renderer::text::wrap_str_to_lines;
 use crate::renderer::theme::{close_hint, popup_block, quest_status};
-use crate::states::app::AppState;
+use crate::states::AppState;
 use crate::states::game::QuestDetailState;
 use api_client::commands::QuestData;
 use crossterm::event::{Event as CrosstermEvent, KeyCode};

@@ -3,7 +3,7 @@ use crate::renderer::components::{EventFlow, Lifecycle, ScrollableComponent};
 use crate::renderer::layout::percent_of;
 use crate::renderer::text::wrap_str_to_lines;
 use crate::renderer::theme::{overlay_block, popup_block};
-use crate::states::app::AppState;
+use crate::states::AppState;
 use crate::states::game::DialogueState;
 use api_client::ApiRequest;
 use api_client::commands::TalkCommand;

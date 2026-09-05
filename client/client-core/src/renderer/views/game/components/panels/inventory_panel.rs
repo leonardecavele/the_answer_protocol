@@ -3,7 +3,7 @@ use crate::renderer::components::{
     CommandButton, Component, EventFlow, Lifecycle, is_mouse_in_rect,
 };
 use crate::renderer::theme::{panel_block, selection_style};
-use crate::states::app::AppState;
+use crate::states::AppState;
 use crate::states::game::{GameFocus, ItemActionsState, ItemLocation, Overlay};
 use ratatui::layout::Alignment;
 use ratatui::widgets::Paragraph;

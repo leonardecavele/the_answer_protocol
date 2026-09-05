@@ -3,7 +3,7 @@ use crate::events::ApplicationEvent;
 use crate::renderer::components::{Component, EventFlow, Lifecycle, is_mouse_in_rect};
 use crate::renderer::layout::centered_rect;
 use crate::renderer::theme::{popup_block, selection_style};
-use crate::states::app::AppState;
+use crate::states::AppState;
 use crate::states::game::PlayerActionsState;
 use crossterm::event::{Event as CrosstermEvent, KeyCode, MouseButton, MouseEventKind};
 use mpsc::Sender;

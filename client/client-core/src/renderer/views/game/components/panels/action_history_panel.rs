@@ -1,7 +1,7 @@
 use crate::renderer::components::{Lifecycle, ScrollableComponent};
 use crate::renderer::text::wrap_slice_to_lines;
 use crate::renderer::theme::{help_hint, panel_block};
-use crate::states::app::AppState;
+use crate::states::AppState;
 use crate::states::game::GameFocus;
 use ratatui::text::Line;
 use ratatui::widgets::Block;

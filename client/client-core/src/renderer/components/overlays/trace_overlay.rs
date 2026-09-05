@@ -3,7 +3,7 @@ use crate::renderer::components::{EventFlow, Lifecycle, ScrollableComponent};
 use crate::renderer::layout::percent_of;
 use crate::renderer::text::wrap_slice_to_lines;
 use crate::renderer::theme::overlay_block;
-use crate::states::app::AppState;
+use crate::states::AppState;
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
 use mpsc::Sender;
 use ratatui::layout::Rect;

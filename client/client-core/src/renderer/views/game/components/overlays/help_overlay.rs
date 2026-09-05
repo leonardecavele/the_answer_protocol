@@ -1,7 +1,7 @@
 use crate::events::ApplicationEvent;
 use crate::renderer::components::{EventFlow, Lifecycle, ScrollableComponent};
 use crate::renderer::theme::overlay_block;
-use crate::states::app::AppState;
+use crate::states::AppState;
 use crate::states::game::HelpState;
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
 use mpsc::Sender;

@@ -1,5 +1,5 @@
 use crate::events::ApplicationEvent;
-use crate::states::app::AppState;
+use crate::states::AppState;
 use crossterm::event::Event as CrosstermEvent;
 use mpsc::Sender;
 use tokio::sync::mpsc;

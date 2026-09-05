@@ -6,8 +6,8 @@ use crate::network::NetworkManager;
 use crate::network::RequestEnvelope;
 use crate::renderer::ViewManager;
 use crate::renderer::components::{Component, Lifecycle};
-use crate::states::app::AppState;
-use crate::states::notification::Notification;
+use crate::states::AppState;
+use crate::states::Notification;
 use api_client::ApiRequest;
 use api_client::commands::{
     InventoryCommand, LookCommand, QuestsCommand, StatusCommand, WhoCommand,

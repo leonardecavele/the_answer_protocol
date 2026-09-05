@@ -14,7 +14,7 @@ impl NotificationDuration {
     }
 }
 
-pub const NOTIF_DEFAULT_DURATION: NotificationDuration =
+const NOTIF_DEFAULT_DURATION: NotificationDuration =
     NotificationDuration::Finite(Duration::from_millis(5000));
 
 pub struct Notification {

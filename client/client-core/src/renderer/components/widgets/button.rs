@@ -1,6 +1,6 @@
 use crate::renderer::components::{EventFlow, InteractiveComponent, Lifecycle};
 use crate::renderer::theme::{default_block, dim_style};
-use crate::states::app::AppState;
+use crate::states::AppState;
 use crossterm::event::{Event as CrosstermEvent, KeyCode, KeyEvent};
 use ratatui::Frame;
 use ratatui::layout::{Alignment, Rect};

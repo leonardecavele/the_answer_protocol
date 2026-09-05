@@ -2,7 +2,7 @@ use crate::events::ApplicationEvent;
 use crate::renderer::components::{CommandButton, Component, EventFlow, Lifecycle};
 use crate::renderer::text::wrap_str_to_lines;
 use crate::renderer::theme::default_block;
-use crate::states::app::AppState;
+use crate::states::AppState;
 use crossterm::event::{Event as CrosstermEvent, MouseButton, MouseEventKind};
 use ratatui::widgets::Paragraph;
 use ratatui::{

@@ -2,7 +2,7 @@ use crate::renderer::components::{Lifecycle, ScrollableComponent};
 use crate::renderer::layout::percent_of;
 use crate::renderer::text::wrap_str_to_lines;
 use crate::renderer::theme::overlay_block;
-use crate::states::app::AppState;
+use crate::states::AppState;
 use crate::states::game::{ChatChannel, ChatSender};
 use ratatui::layout::Rect;
 use ratatui::style::Color;

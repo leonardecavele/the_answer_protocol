@@ -3,7 +3,7 @@ use crate::renderer::components::{Component, EventFlow, Lifecycle};
 use crate::renderer::image::ImageRenderer;
 use crate::renderer::layout::percent_of;
 use crate::renderer::theme::{default_block, dim_style};
-use crate::states::app::AppState;
+use crate::states::AppState;
 use crate::states::game::{FightPhase, Sprite};
 use api_client::ApiRequest;
 use api_client::commands::FightAttackCommand;

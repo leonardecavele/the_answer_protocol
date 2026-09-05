@@ -4,7 +4,7 @@ use crate::renderer::components::{
 };
 use crate::renderer::image::ImageRenderer;
 use crate::renderer::text::wrap_str_to_lines;
-use crate::states::app::AppState;
+use crate::states::AppState;
 use crate::states::game::{Direction, GameFocus, Sprite};
 use crossterm::event::{Event as CrosstermEvent, KeyCode, MouseButton, MouseEventKind};
 use ratatui::style::Stylize;

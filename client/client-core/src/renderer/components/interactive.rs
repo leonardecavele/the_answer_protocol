@@ -1,7 +1,7 @@
 use super::component::Component;
 use super::lifecycle::{EventFlow, Lifecycle};
 use crate::events::ApplicationEvent;
-use crate::states::app::AppState;
+use crate::states::AppState;
 use crossterm::event::{Event as CrosstermEvent, MouseEvent};
 use ratatui::Frame;
 use ratatui::layout::Rect;

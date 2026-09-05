@@ -5,7 +5,7 @@ use crate::renderer::components::{
     CommandButton, Component, EventFlow, Lifecycle, is_mouse_in_rect,
 };
 use crate::renderer::theme::{panel_block, quest_status, selection_style};
-use crate::states::app::AppState;
+use crate::states::AppState;
 use crate::states::game::GameFocus;
 use crate::states::game::{
     InvitationActionsState, ItemActionsState, ItemLocation, NpcActionsState, Overlay,

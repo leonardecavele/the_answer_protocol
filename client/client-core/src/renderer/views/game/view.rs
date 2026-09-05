@@ -3,7 +3,7 @@ use crate::renderer::components::{
     CloseButton, Component, EventFlow, Lifecycle, Scrollable, ScrollableHit, is_mouse_in_rect,
 };
 use crate::renderer::layout::percent_of;
-use crate::states::app::AppState;
+use crate::states::AppState;
 
 use crate::renderer::views::game::components::{
     ActionHistoryPanel, ChatOverlay, DialoguePopup, Footer, FooterHit, Header, HelpOverlay,

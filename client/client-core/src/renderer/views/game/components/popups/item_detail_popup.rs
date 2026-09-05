@@ -4,7 +4,7 @@ use crate::renderer::image::ImageRenderer;
 use crate::renderer::layout::centered_rect_percent;
 use crate::renderer::text::wrap_str_to_lines;
 use crate::renderer::theme::{close_hint, popup_block};
-use crate::states::app::AppState;
+use crate::states::AppState;
 use crate::states::game::ItemDetailState;
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
 use ratatui::{

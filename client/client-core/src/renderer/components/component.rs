@@ -1,5 +1,5 @@
 use super::lifecycle::Lifecycle;
-use crate::states::app::AppState;
+use crate::states::AppState;
 use ratatui::Frame;
 use ratatui::layout::Rect;
 

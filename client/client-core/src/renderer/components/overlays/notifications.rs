@@ -4,7 +4,7 @@ use crate::renderer::components::{Component, EventFlow, Lifecycle, is_mouse_in_r
 use crate::renderer::layout::percent_of;
 use crate::renderer::text::wrap_str_to_lines;
 use crate::renderer::theme::default_block;
-use crate::states::app::AppState;
+use crate::states::AppState;
 use crossterm::event::{Event as CrosstermEvent, MouseButton, MouseEvent, MouseEventKind};
 use ratatui::Frame;
 use ratatui::layout::{Alignment, Rect};

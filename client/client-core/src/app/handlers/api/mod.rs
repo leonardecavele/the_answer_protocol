@@ -9,8 +9,8 @@ mod server;
 use crate::app::runtime::App;
 use crate::events::ApiEvent;
 use crate::network::ResponseEnvelope;
+use crate::states::Notification;
 use crate::states::game::ChatChannel;
-use crate::states::notification::Notification;
 use api_client::events::{GameServerEvent, GroupEvent, RoomEvent, ServerEvent};
 use api_client::{ApiRequest, ApiResponse, FrameDirection};
 
