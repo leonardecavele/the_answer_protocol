@@ -8,10 +8,15 @@ pub enum ApplicationEvent {
     DeviceEvent(CrosstermEvent),
     Tick,
     Connection(ConnectionEvent),
-    SendRequest(ApiRequest),
-    SendRawCommand(String),
     Protocol(ProtocolEvent),
+    Send(SendEvent),
     FightTimedOut,
+}
+
+#[derive(Debug, Clone)]
+pub enum SendEvent {
+    ApiRequest(ApiRequest),
+    RawCommand(String),
 }
 
 #[derive(Debug, Clone)]

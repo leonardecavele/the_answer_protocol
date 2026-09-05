@@ -1,5 +1,5 @@
 use crate::collections::Step;
-use crate::events::ApplicationEvent;
+use crate::events::{ApplicationEvent, SendEvent};
 use crate::manifest::NpcKind;
 use crate::renderer::components::{
     CommandButton, Component, EventFlow, Lifecycle, is_mouse_in_rect,
@@ -265,7 +265,9 @@ impl Lifecycle for LeftPanel {
                 == crossterm::event::MouseEventKind::Down(crossterm::event::MouseButton::Left)
             && let Some(command) = self.quests_button.hit(mouse.column, mouse.row)
         {
-            let _ = event_sender.try_send(ApplicationEvent::SendRawCommand(command.to_string()));
+            let _ = event_sender.try_send(ApplicationEvent::Send(SendEvent::RawCommand(
+                command.to_string(),
+            )));
             return EventFlow::Consumed;
         }
 

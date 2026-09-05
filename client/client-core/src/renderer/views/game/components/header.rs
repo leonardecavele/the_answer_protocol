@@ -1,4 +1,4 @@
-use crate::events::ApplicationEvent;
+use crate::events::{ApplicationEvent, SendEvent};
 use crate::renderer::components::{CommandButton, Component, EventFlow, Lifecycle};
 use crate::renderer::text::wrap_str_to_lines;
 use crate::renderer::theme::default_block;
@@ -203,7 +203,9 @@ impl Lifecycle for Header {
             return EventFlow::Ignored;
         };
 
-        let _ = event_sender.try_send(ApplicationEvent::SendRawCommand(command.to_string()));
+        let _ = event_sender.try_send(ApplicationEvent::Send(SendEvent::RawCommand(
+            command.to_string(),
+        )));
 
         EventFlow::Consumed
     }

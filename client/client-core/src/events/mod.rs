@@ -2,4 +2,4 @@ mod broker;
 mod types;
 
 pub use broker::{EventBroker, TICK_RATE};
-pub use types::{ApplicationEvent, ConnectionEvent, ProtocolEvent};
+pub use types::{ApplicationEvent, ConnectionEvent, ProtocolEvent, SendEvent};

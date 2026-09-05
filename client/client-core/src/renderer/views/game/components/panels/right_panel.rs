@@ -1,4 +1,4 @@
-use crate::events::ApplicationEvent;
+use crate::events::{ApplicationEvent, SendEvent};
 use crate::renderer::components::{
     CommandButton, Component, EventFlow, Lifecycle, is_mouse_in_rect,
 };
@@ -125,10 +125,10 @@ impl RightPanel {
     }
 
     fn send_move(direction: Direction, event_sender: &Sender<ApplicationEvent>) {
-        let _ = event_sender.try_send(ApplicationEvent::SendRawCommand(format!(
+        let _ = event_sender.try_send(ApplicationEvent::Send(SendEvent::RawCommand(format!(
             "MOVE {}",
             direction.key()
-        )));
+        ))));
     }
 
     fn room_facing(&self, state: &AppState) -> Direction {
@@ -346,7 +346,9 @@ impl Lifecycle for RightPanel {
             && mouse.kind == MouseEventKind::Down(MouseButton::Left)
             && let Some(command) = self.look_button.hit(mouse.column, mouse.row)
         {
-            let _ = event_sender.try_send(ApplicationEvent::SendRawCommand(command.to_string()));
+            let _ = event_sender.try_send(ApplicationEvent::Send(SendEvent::RawCommand(
+                command.to_string(),
+            )));
             return EventFlow::Consumed;
         }
 

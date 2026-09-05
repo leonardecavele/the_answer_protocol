@@ -1,4 +1,4 @@
-use crate::events::ApplicationEvent;
+use crate::events::{ApplicationEvent, SendEvent};
 use crate::renderer::components::{
     Component, EventFlow, Interactive, Lifecycle, TextInput, is_mouse_in_rect,
 };
@@ -60,7 +60,8 @@ impl Lifecycle for Footer {
             let command = self.input.inner.value.trim().to_string();
             if !command.is_empty() {
                 self.input.inner.value.clear();
-                let _ = event_sender.try_send(ApplicationEvent::SendRawCommand(command));
+                let _ =
+                    event_sender.try_send(ApplicationEvent::Send(SendEvent::RawCommand(command)));
             } else {
                 state.game.set_focus(GameFocus::RightPanel);
             }

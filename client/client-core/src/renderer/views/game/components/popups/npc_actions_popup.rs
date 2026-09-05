@@ -1,5 +1,5 @@
 use crate::collections::Step;
-use crate::events::ApplicationEvent;
+use crate::events::{ApplicationEvent, SendEvent};
 use crate::renderer::components::{Component, EventFlow, Lifecycle, is_mouse_in_rect};
 use crate::renderer::layout::centered_rect;
 use crate::renderer::theme::{popup_block, selection_style};
@@ -53,7 +53,8 @@ impl NpcActionsPopup {
 
         if let Some(command) = command {
             let raw_command = format!("{} {}", command, npc_id);
-            let _ = event_sender.try_send(ApplicationEvent::SendRawCommand(raw_command));
+            let _ =
+                event_sender.try_send(ApplicationEvent::Send(SendEvent::RawCommand(raw_command)));
         }
 
         state.game.close_top_overlay();

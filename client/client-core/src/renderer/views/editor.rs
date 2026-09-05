@@ -1,4 +1,4 @@
-use crate::events::ApplicationEvent;
+use crate::events::{ApplicationEvent, SendEvent};
 use crate::renderer::components::{Component, EventFlow, Lifecycle};
 use crate::renderer::image::ImageRenderer;
 use crate::renderer::layout::percent_of;
@@ -257,7 +257,7 @@ impl Lifecycle for EditorView {
                 code: self.serialize_code(),
             });
 
-            let _ = event_sender.try_send(ApplicationEvent::SendRequest(request));
+            let _ = event_sender.try_send(ApplicationEvent::Send(SendEvent::ApiRequest(request)));
             state.game.fight.submit();
 
             return EventFlow::Consumed;

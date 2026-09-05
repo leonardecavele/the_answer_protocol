@@ -1,4 +1,4 @@
-use crate::events::ApplicationEvent;
+use crate::events::{ApplicationEvent, SendEvent};
 use crate::renderer::components::{EventFlow, Lifecycle, ScrollableComponent};
 use crate::renderer::layout::percent_of;
 use crate::renderer::text::wrap_str_to_lines;
@@ -123,7 +123,7 @@ impl Lifecycle for DialoguePopup {
                 npc_name: dialog.npc_id.clone(),
             });
 
-            let _ = sender.try_send(ApplicationEvent::SendRequest(request));
+            let _ = sender.try_send(ApplicationEvent::Send(SendEvent::ApiRequest(request)));
         }
 
         EventFlow::Consumed

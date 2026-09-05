@@ -1,7 +1,7 @@
 use crate::events::{ApplicationEvent, EventBroker};
 use crate::manifest::Manifest;
 use crate::network::NetworkManager;
-use crate::notification::{Notification, NotificationTopic};
+use crate::notification::Notification;
 use crate::renderer::ViewManager;
 use crate::renderer::components::{Component, Lifecycle};
 use crate::renderer::views::LoginView;
@@ -95,8 +95,7 @@ impl App {
                 self.handle_connection_event(event);
             }
             ApplicationEvent::Protocol(event) => self.handle_protocol_event(event),
-            ApplicationEvent::SendRequest(request) => self.send(request),
-            ApplicationEvent::SendRawCommand(command) => self.handle_raw_command(command),
+            ApplicationEvent::Send(event) => self.handle_send_event(event),
             ApplicationEvent::FightTimedOut => self.on_fight_timed_out(),
         }
     }
@@ -122,21 +121,5 @@ impl App {
 
         let sender = self.event_broker.sender();
         self.view_manager.on_tick(&mut self.state, &sender);
-    }
-
-    fn handle_raw_command(&mut self, command: String) {
-        if let Some(request) = ApiRequest::parse(&command) {
-            self.record_trace("user input", command);
-            self.send(request);
-        } else {
-            let message = format!("Unknown or invalid command: {}", command);
-
-            self.record_trace("user input", message.clone());
-
-            self.state
-                .ui
-                .notifications
-                .push(Notification::warning(message).with_topic(NotificationTopic::Protocol));
-        }
     }
 }
