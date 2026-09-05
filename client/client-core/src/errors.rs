@@ -2,7 +2,7 @@ use std::io;
 
 /// Centralized error type for the TUI application.
 #[derive(thiserror::Error, Debug)]
-pub enum ApplicationError {
+pub enum ClientError {
     /// Errors originating from standard I/O operations (e.g. terminal setup).
     #[error("I/O Error: {0}")]
     Io(#[from] io::Error),

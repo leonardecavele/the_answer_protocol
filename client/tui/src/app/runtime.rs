@@ -1,5 +1,4 @@
 use crate::data::manifest::Manifest;
-use crate::errors::ApplicationError;
 use crate::events::{ApplicationEvent, EventBroker};
 use crate::network::NetworkManager;
 use crate::network::envelopes::RequestEnvelope;
@@ -12,6 +11,7 @@ use api_client::commands::{
     InventoryCommand, LookCommand, QuestsCommand, StatusCommand, WhoCommand,
 };
 use client_core::Assets;
+use client_core::ClientError;
 use ratatui::Frame;
 use ratatui::Terminal;
 use ratatui::backend::CrosstermBackend;
@@ -56,7 +56,7 @@ impl App {
         }
     }
 
-    pub fn try_next_event(&mut self) -> Result<ApplicationEvent, ApplicationError> {
+    pub fn try_next_event(&mut self) -> Result<ApplicationEvent, ClientError> {
         self.event_broker.try_next_event()
     }
 
@@ -93,7 +93,7 @@ impl App {
     pub async fn run(
         &mut self,
         terminal: &mut Terminal<CrosstermBackend<io::Stdout>>,
-    ) -> Result<(), ApplicationError> {
+    ) -> Result<(), ClientError> {
         self.render(terminal)?;
 
         while !self.state.should_quit {
@@ -110,7 +110,7 @@ impl App {
                         }
                     }
                     Err(e) => match e {
-                        ApplicationError::EventChannelEmpty => break,
+                        ClientError::EventChannelEmpty => break,
                         _ => {
                             self.state.should_quit = true;
                             return Err(e);
@@ -128,7 +128,7 @@ impl App {
     fn render(
         &mut self,
         terminal: &mut Terminal<CrosstermBackend<io::Stdout>>,
-    ) -> Result<(), ApplicationError> {
+    ) -> Result<(), ClientError> {
         if !self.state.should_quit {
             terminal.draw(|frame| self.draw(frame))?;
         }

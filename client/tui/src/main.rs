@@ -1,6 +1,7 @@
 use clap::Parser;
 use client_core::Assets;
 use client_core::Cli;
+use client_core::logging;
 use crossterm::event::{DisableMouseCapture, EnableMouseCapture};
 use crossterm::execute;
 use crossterm::terminal::{
@@ -10,7 +11,6 @@ use ratatui::Terminal;
 use ratatui::backend::CrosstermBackend;
 use std::{io, panic};
 use tui::app::App;
-use tui::logging;
 
 const LOG_FILE: &str = "tui.log";
 

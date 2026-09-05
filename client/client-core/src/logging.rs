@@ -1,8 +1,8 @@
-use crate::errors::ApplicationError;
+use super::errors::ClientError;
 use std::fs::OpenOptions;
 use tracing_subscriber::EnvFilter;
 
-pub fn setup(path: &str) -> Result<(), ApplicationError> {
+pub fn setup(path: &str) -> Result<(), ClientError> {
     let file = OpenOptions::new().create(true).append(true).open(path)?;
 
     tracing_subscriber::fmt()

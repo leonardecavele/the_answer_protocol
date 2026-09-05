@@ -1,5 +1,5 @@
-use crate::errors::ApplicationError;
 use crate::events::types::ApplicationEvent;
+use client_core::ClientError;
 use crossterm::event::EventStream;
 use futures::StreamExt;
 use std::time::Duration;
@@ -81,17 +81,17 @@ impl EventBroker {
         }
     }
 
-    pub async fn next_event(&mut self) -> Result<ApplicationEvent, ApplicationError> {
+    pub async fn next_event(&mut self) -> Result<ApplicationEvent, ClientError> {
         self.receiver
             .recv()
             .await
-            .ok_or(ApplicationError::EventChannelClosed)
+            .ok_or(ClientError::EventChannelClosed)
     }
 
-    pub fn try_next_event(&mut self) -> Result<ApplicationEvent, ApplicationError> {
+    pub fn try_next_event(&mut self) -> Result<ApplicationEvent, ClientError> {
         self.receiver.try_recv().map_err(|e| match e {
-            TryRecvError::Empty => ApplicationError::EventChannelEmpty,
-            _ => ApplicationError::EventChannelClosed,
+            TryRecvError::Empty => ClientError::EventChannelEmpty,
+            _ => ClientError::EventChannelClosed,
         })
     }
 
