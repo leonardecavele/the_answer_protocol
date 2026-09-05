@@ -1,6 +1,6 @@
 use crate::collections::SelectableList;
 use crate::states::game::world::Item;
-use api_client::commands::QuestData;
+use client_api::commands::QuestData;
 
 pub struct PlayerState {
     pub name: Option<String>,

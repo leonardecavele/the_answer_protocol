@@ -1,4 +1,4 @@
-use api_client::{ApiRequest, ApiResponse};
+use client_api::{ApiRequest, ApiResponse};
 use std::fmt::Debug;
 use uuid::Uuid;
 

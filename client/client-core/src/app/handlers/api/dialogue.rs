@@ -1,6 +1,6 @@
 use crate::app::runtime::App;
 use crate::states::game::{DialogueState, END_OF_DIALOGUE_TAG};
-use api_client::commands::TalkResponse;
+use client_api::commands::TalkResponse;
 
 impl App {
     pub fn on_talked_to(&mut self, response: TalkResponse, npc_id: String) {

@@ -1,11 +1,11 @@
 The client workspace provides [terminal](tui/README.md) and [graphical](gui/README.md) entry points to the same
 game. Both use one Rust application core, the same Ratatui views and widgets,
-and the same [asynchronous TAP library](api-client/README.md). The frontends differ only at the event
+and the same [asynchronous TAP library](client-api/README.md). The frontends differ only at the event
 and rendering boundaries.
 
 ## Components
 
-- [API client](api-client/README.md) documents connection setup, typed
+- [API client](client-api/README.md) documents connection setup, typed
   requests, responses, events, configuration, and errors.
 - [TUI](tui/README.md) documents the Crossterm event loop, terminal lifecycle,
   controls, commands, and Ratatui rendering.

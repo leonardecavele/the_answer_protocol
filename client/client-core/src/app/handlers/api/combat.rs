@@ -2,8 +2,8 @@ use crate::app::runtime::App;
 use crate::notification::Notification;
 use crate::renderer::views::{EditorView, GameView};
 use crate::states::game::DialogueState;
-use api_client::commands::AttackResponse;
-use api_client::events::{FightResultData, FightStartData, KillData};
+use client_api::commands::AttackResponse;
+use client_api::events::{FightResultData, FightStartData, KillData};
 
 impl App {
     pub fn on_kill(&mut self, kill: KillData) {

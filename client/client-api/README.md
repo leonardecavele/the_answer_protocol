@@ -12,7 +12,7 @@ From another package in the client workspace:
 
 ```toml
 [dependencies]
-api-client = { path = "../api-client" }
+client-api = { path = "../client-api" }
 tokio = { version = "1", features = ["full"] }
 ```
 
@@ -160,6 +160,6 @@ cleanup deterministic when an owning application exits early.
 From the repository root:
 
 ```bash
-cargo test --manifest-path client/api-client/Cargo.toml
-cargo clippy --manifest-path client/api-client/Cargo.toml --all-targets -- -D warnings
+cargo test --manifest-path client/client-api/Cargo.toml
+cargo clippy --manifest-path client/client-api/Cargo.toml --all-targets -- -D warnings
 ```

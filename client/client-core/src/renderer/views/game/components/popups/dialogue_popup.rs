@@ -5,8 +5,8 @@ use crate::renderer::text::wrap_str_to_lines;
 use crate::renderer::theme::{overlay_block, popup_block};
 use crate::states::AppState;
 use crate::states::game::DialogueState;
-use api_client::ApiRequest;
-use api_client::commands::TalkCommand;
+use client_api::ApiRequest;
+use client_api::commands::TalkCommand;
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
 use mpsc::Sender;
 use ratatui::{

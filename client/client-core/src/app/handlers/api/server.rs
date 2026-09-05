@@ -1,7 +1,7 @@
 use crate::app::runtime::App;
 use crate::notification::Notification;
 use crate::renderer::views::GameView;
-use api_client::commands::{ConnectResponse, WhoResponse};
+use client_api::commands::{ConnectResponse, WhoResponse};
 
 impl App {
     pub fn on_connected(&mut self, response: ConnectResponse) {

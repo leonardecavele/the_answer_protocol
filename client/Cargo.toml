@@ -1,8 +1,9 @@
 [workspace]
 members = [
-    "api-client",
+    "client-api",
+    "client-core",
     "tui",
-    "gui", "client-core",
+    "gui",
 ]
 resolver = "3"
 

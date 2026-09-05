@@ -1,9 +1,9 @@
 use crate::app::runtime::App;
 use crate::collections::SelectableList;
 use crate::states::game::{Item, Npc, Room};
-use api_client::ApiRequest;
-use api_client::commands::{LookCommand, LookResponse, StatusCommand};
-use api_client::events::{DeathData, SpawnData};
+use client_api::ApiRequest;
+use client_api::commands::{LookCommand, LookResponse, StatusCommand};
+use client_api::events::{DeathData, SpawnData};
 
 impl App {
     pub fn on_look(&mut self, response: LookResponse) {

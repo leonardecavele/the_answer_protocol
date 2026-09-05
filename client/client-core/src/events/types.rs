@@ -1,6 +1,6 @@
 use crate::network::ResponseEnvelope;
-use api_client::events::ServerEvent;
-use api_client::{ApiRequest, Frame};
+use client_api::events::ServerEvent;
+use client_api::{ApiRequest, Frame};
 use crossterm::event::Event as CrosstermEvent;
 
 /// The main event enum that encapsulates all possible events in the application.

@@ -6,7 +6,7 @@ backend.
 
 Public command behavior and server frames are defined in the root
 [TAP protocol reference](../../PROTOCOL.md). The transport API used by the
-application is documented in the [API client README](../api-client/README.md).
+application is documented in the [API client README](../client-api/README.md).
 
 ## Rendering pipeline
 
@@ -134,16 +134,16 @@ including take, drop, use, talk, quest, direct attack, and code-fight actions.
 
 ## Module layout
 
-| Module | Responsibility |
-| --- | --- |
+| Module | Responsibility                                                     |
+| --- |--------------------------------------------------------------------|
 | `app` | Main loop and centralized input, network, API, and event handling. |
-| `network` | API-client ownership and request/response envelopes. |
-| `events` | Crossterm input, ticks, application events, and broker. |
-| `states` | Network, player, room, group, fight, overlay, and UI state. |
-| `ui` | Screens, panels, widgets, popups, focus, themes, and images. |
-| `data` | Presentation manifest loading and asset lookup. |
-| `collections` | Selectable lists and bounded interface histories. |
-| `errors` | Terminal, network, channel, and application errors. |
+| `network` | Client-Api ownership and request/response envelopes.               |
+| `events` | Crossterm input, ticks, application events, and broker.            |
+| `states` | Network, player, room, group, fight, overlay, and UI state.        |
+| `ui` | Screens, panels, widgets, popups, focus, themes, and images.       |
+| `data` | Presentation manifest loading and asset lookup.                    |
+| `collections` | Selectable lists and bounded interface histories.                  |
+| `errors` | Terminal, network, channel, and application errors.                |
 
 ## Logging
 

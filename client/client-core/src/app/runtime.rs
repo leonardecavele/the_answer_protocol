@@ -6,8 +6,8 @@ use crate::renderer::ViewManager;
 use crate::renderer::components::{Component, Lifecycle};
 use crate::states::AppState;
 use crate::{Assets, ClientError};
-use api_client::ApiRequest;
-use api_client::commands::{
+use client_api::ApiRequest;
+use client_api::commands::{
     InventoryCommand, LookCommand, QuestsCommand, StatusCommand, WhoCommand,
 };
 use ratatui::Frame;
