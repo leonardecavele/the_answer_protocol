@@ -7,7 +7,7 @@ use std::sync::mpsc;
 use std::time::Instant;
 
 impl GameManager {
-    pub fn apply_players_changes(&mut self, tick_timer: Instant) -> std::io::Result<TickResult> {
+    pub fn process_incoming_events(&mut self, tick_timer: Instant) -> std::io::Result<TickResult> {
         loop {
             // Process any pending responses from the code tester thread
             self.process_tester_responses()?;
@@ -33,12 +33,8 @@ impl GameManager {
         self.remove_finished_combat_instances();
         self.punish_inactive_players_in_combat();
         self.revive_dead_npcs();
-        for quest_instance in self.quest_instances.iter_mut() {
-            let _state = quest_instance.get_state();
-
-            if quest_instance.get_quest_name().as_str() == "Tunnel" {}
-        }
-
+        self.spawn_items();
+        
         let current_time = Instant::now();
 
         let mut actions: Vec<(String, ItemId, bool, String)> = Vec::new();
@@ -49,9 +45,7 @@ impl GameManager {
                     && let Some(dropped_time) = item.get_dropped_at()
                         && current_time.duration_since(dropped_time) >= ITEM_DESPAWN_TIME {
                             let no_despawn_room = item.get_remove_despawn_in_room();
-                            if no_despawn_room.is_none()
-                                || no_despawn_room.unwrap() != room.get_id()
-                            {
+                            if no_despawn_room != Some(room.get_id()) {
                                 actions.push((
                                     room.get_name().to_owned(),
                                     *item_id,

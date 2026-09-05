@@ -4,6 +4,31 @@ use crate::room::RoomId;
 
 pub type ItemId = u64;
 
+#[derive(Clone, Debug)]
+pub struct SpawnInfo {
+    pub room: String,
+    pub cooldown: u64,
+    pub timer: Instant,
+}
+
+impl SpawnInfo {
+    pub fn new(room: String, cooldown: u64) -> Self {
+        Self {
+            room,
+            cooldown,
+            timer: Instant::now(),
+        }
+    }
+
+    pub fn is_ready(&self) -> bool {
+        self.timer.elapsed().as_secs() >= self.cooldown
+    }
+
+    pub fn reset_timer(&mut self) {
+        self.timer = Instant::now();
+    }
+}
+
 #[derive(Clone)]
 pub struct Item {
     id: ItemId,
@@ -12,10 +37,11 @@ pub struct Item {
     description: String,
     dropped_at: Option<Instant>,
     remove_despawn_in_room: Option<RoomId>,
+    spawn_info: Option<SpawnInfo>,
 }
 
 impl Item {
-    pub fn new(id: ItemId, name: String, description: String) -> Self {
+    pub fn new(id: ItemId, name: String, description: String, spawn_info: Option<SpawnInfo>) -> Self {
         Self {
             id,
             model_id: id,
@@ -23,6 +49,7 @@ impl Item {
             description,
             dropped_at: None,
             remove_despawn_in_room: None,
+            spawn_info,
         }
     }
 
@@ -33,6 +60,7 @@ impl Item {
     pub fn clone_as_instance(&self, new_id: ItemId) -> Self {
         let mut new_item = self.clone();
         new_item.id = new_id;
+        new_item.spawn_info = None;
         // The model_id remains the same as the original base item
         new_item
     }
@@ -59,6 +87,24 @@ impl Item {
     }
     pub fn get_description(&self) -> &str {
         &self.description
+    }
+    
+    pub fn get_spawn_info(&self) -> Option<&SpawnInfo> {
+        self.spawn_info.as_ref()
+    }
+
+    pub fn get_spawn_info_mut(&mut self) -> Option<&mut SpawnInfo> {
+        self.spawn_info.as_mut()
+    }
+
+    pub fn can_spawn(&self) -> bool {
+        self.spawn_info.as_ref().map_or(false, |s| s.is_ready())
+    }
+
+    pub fn reset_spawn_timer(&mut self) {
+        if let Some(s) = self.spawn_info.as_mut() {
+            s.reset_timer();
+        }
     }
 
     pub fn parse_item(item: &str) -> Option<(ItemId, String)> {

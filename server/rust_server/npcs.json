@@ -2,8 +2,6 @@
   "npcs": [
     {
       "name": "vquetier",
-      "npc_type": 5,
-      "hp": null,
       "max_hp": null,
       "dialogs": [
         [
@@ -109,8 +107,6 @@
     },
     {
       "name": "faon",
-      "npc_type": 5,
-      "hp": null,
       "max_hp": null,
       "dialogs": [
         [
@@ -124,8 +120,6 @@
     },
     {
       "name": "smenard",
-      "npc_type": 5,
-      "hp": null,
       "max_hp": null,
       "dialogs": [["baaaakaaaa"]],
       "quests": [],
@@ -133,8 +127,6 @@
     },
     {
       "name": "mdourdoi",
-      "npc_type": 2,
-      "hp": 150,
       "max_hp": 150,
       "dialogs": [
         [
@@ -147,8 +139,6 @@
     },
     {
       "name": "gagulhon",
-      "npc_type": 5,
-      "hp": null,
       "max_hp": null,
       "dialogs": [
         [
@@ -168,8 +158,6 @@
     },
     {
       "name": "ndalailallema",
-      "npc_type": 5,
-      "hp": null,
       "max_hp": null,
       "dialogs": [
         [
@@ -200,8 +188,6 @@
     },
     {
       "name": "gabach",
-      "npc_type": 5,
-      "hp": null,
       "max_hp": null,
       "dialogs": [
         [
@@ -240,8 +226,6 @@
     },
     {
       "name": "enchevri",
-      "npc_type": 2,
-      "hp": 120,
       "max_hp": 120,
       "dialogs": [
         [
@@ -257,8 +241,6 @@
     },
     {
       "name": "acampion",
-      "npc_type": 2,
-      "hp": 100,
       "max_hp": 100,
       "dialogs": [
         [
@@ -273,8 +255,6 @@
     },
     {
       "name": "mphippen",
-      "npc_type": 5,
-      "hp": null,
       "max_hp": null,
       "dialogs": [
         [
@@ -294,8 +274,6 @@
     },
     {
       "name": "crappo",
-      "npc_type": 2,
-      "hp": 100,
       "max_hp": 100,
       "dialogs": [
         [
@@ -311,8 +289,6 @@
     },
     {
       "name": "ayteyssi",
-      "npc_type": 5,
-      "hp": null,
       "max_hp": null,
       "dialogs": [["... *aura*"]],
       "quests": [],
@@ -320,8 +296,6 @@
     },
     {
       "name": "ldecavel",
-      "npc_type": 2,
-      "hp": 100,
       "max_hp": 100,
       "dialogs": [
         [
@@ -336,8 +310,6 @@
     },
     {
       "name": "cobussie",
-      "npc_type": 5,
-      "hp": null,
       "max_hp": null,
       "dialogs": [
         ["mhhh mhh mh"],
@@ -350,8 +322,6 @@
     },
     {
       "name": "ibady",
-      "npc_type": 2,
-      "hp": 142,
       "max_hp": 142,
       "dialogs": [
         [
@@ -366,8 +336,6 @@
     },
     {
       "name": "bokim",
-      "npc_type": 5,
-      "hp": null,
       "max_hp": null,
       "dialogs": [
         [

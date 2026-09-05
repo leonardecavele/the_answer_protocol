@@ -1,6 +1,5 @@
 use std::time::Duration;
 
-use crate::room::RoomId;
 
 pub const TEST_FILES_DIR: &str = "assets/code";
 
@@ -15,14 +14,13 @@ pub const T_SHIRT: u64 = 2;
 pub const CODE_NL_SEP: &str = "<NL>";
 pub const CODE_SP_SEP: &str = "<SP>";
 pub const LOST_ITEM_SPAWN: &str = "pature";
-pub const LOST_ITEM_SPAWN_ID: RoomId = 2 as RoomId;
 pub const PLAYER_ROOM_SPAWN: &str = "devant_l'école";
 pub const AUTO_SAVE_INTERVAL: Duration = Duration::from_mins(2);
 pub const MAX_TIME_FOR_COMBAT: Duration = Duration::from_secs(3 * MINUTE + 42);
 pub const NPC_RESPAWN_TIME: Duration = Duration::from_secs(30);
 pub const ITEM_DESPAWN_TIME: Duration = Duration::from_mins(1);
 pub const TICK_TIME_AMPLIFICATION: u64 = 1;
-pub const TICK_RATE: u16 = 10; // 48
+pub const TICK_RATE: u16 = 10;
 pub const TICK_TIME: Duration =
     Duration::from_millis((1000 * TICK_TIME_AMPLIFICATION) / TICK_RATE as u64);
 pub const BASE_COMMAND_RESPONSE: &str = "Duly noted.";

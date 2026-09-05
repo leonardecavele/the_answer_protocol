@@ -1,7 +1,7 @@
 use tracing::error;
 
-use crate::constants::{LOST_ITEM, LOST_ITEM_SPAWN_ID, PLAYER_ROOM_SPAWN};
-use crate::items::{Item, ItemId};
+use crate::constants::{LOST_ITEM, LOST_ITEM_SPAWN, PLAYER_ROOM_SPAWN};
+use crate::items::{Item, ItemId, SpawnInfo};
 use crate::npc::{Npc, NpcId};
 use crate::quests::{Quest, Questid};
 use crate::room::{Room, RoomId};
@@ -34,33 +34,24 @@ impl Parser {
         }
     }
 
-    pub fn parse_all(&mut self) {
-        if let Err(e) = self.parse_quests() {
-            error!("{}", e);
-            std::process::exit(1);
-        }
-        if let Err(e) = self.parse_npcs() {
-            error!("{}", e);
-            std::process::exit(1);
-        }
-        if let Err(e) = self.parse_items() {
-            error!("{}", e);
-            std::process::exit(1);
-        }
-        if let Err(e) = self.parse_rooms() {
-            error!("{}", e);
-            std::process::exit(1);
-        }
-        if let Err(e) = self.check_good_ids() {
-            error!("{}", e);
-            std::process::exit(1);
-        }
+    pub fn parse_all(&mut self) -> Result<(), String> {
+        self.parse_quests()?;
+        self.parse_npcs()?;
+        self.parse_rooms()?;
+        self.parse_items()?;
+        self.check_good_ids()?;
+        Ok(())
     }
 
     pub fn check_good_ids(&self) -> Result<(), String> {
         let mut valid_room_names = HashSet::new();
         for room in self.rooms.values() {
-            valid_room_names.insert(room.get_name().to_string());
+            if !valid_room_names.insert(room.get_name().to_string()) {
+                return Err(format!(
+                    "Duplicate room name '{}' found in rooms",
+                    room.get_name()
+                ));
+            }
         }
 
         if !valid_room_names.contains(PLAYER_ROOM_SPAWN) {
@@ -70,6 +61,7 @@ impl Parser {
             ));
         }
 
+        let mut seen_items = HashSet::new();
         for (room_id, room) in &self.rooms {
             for item_id in room.get_inventory().get_items() {
                 if !self.items.contains_key(item_id) {
@@ -77,6 +69,12 @@ impl Parser {
                         "Room {} ({}) contains invalid item_id {}",
                         room_id,
                         room.get_name(),
+                        item_id
+                    ));
+                }
+                if !seen_items.insert(*item_id) {
+                    return Err(format!(
+                        "Item {} is present multiple times in rooms",
                         item_id
                     ));
                 }
@@ -98,6 +96,19 @@ impl Parser {
                         room_id,
                         room.get_name(),
                         dest
+                    ));
+                }
+            }
+        }
+
+        for (item_id, item) in &self.items {
+            if let Some(spawn_info) = item.get_spawn_info() {
+                if !valid_room_names.contains(&spawn_info.room) {
+                    return Err(format!(
+                        "Item {} ({}) has an invalid spawn room '{}'",
+                        item_id,
+                        item.get_name(),
+                        spawn_info.room
                     ));
                 }
             }
@@ -202,10 +213,28 @@ impl Parser {
                     .as_str()
                     .ok_or("item description must be a string")?;
 
-                let mut parsed_item = Item::new(id, name.to_string(), description.to_string());
+                let mut spawn_info = None;
+                if item.has_key("spawn_info") {
+                    let info = &item["spawn_info"];
+                    let room = info["room"].as_str().ok_or("spawn_info must have a string 'room'")?;
+                    let cooldown = info["cooldown"].as_u64().ok_or("spawn_info must have a number 'cooldown'")?;
+                    if cooldown < 1 {
+                        return Err(format!("spawn_info cooldown must be >= 1 for item '{}'", name));
+                    }
+                    spawn_info = Some(SpawnInfo::new(
+                        room.to_string(),
+                        cooldown,
+                    ));
+                }
+
+                let mut parsed_item = Item::new(id, name.to_string(), description.to_string(), spawn_info);
                 if parsed_item.get_id() == LOST_ITEM as ItemId {
-                    let room_id = LOST_ITEM_SPAWN_ID;
-                    parsed_item.remove_despawn_in_room(room_id);
+                    let lost_room = self
+                        .rooms
+                        .values()
+                        .find(|r| r.get_name() == LOST_ITEM_SPAWN)
+                        .ok_or_else(|| format!("Room '{}' not found for LOST_ITEM", LOST_ITEM_SPAWN))?;
+                    parsed_item.remove_despawn_in_room(lost_room.get_id());
                 }
 
                 items.insert(parsed_item.get_id(), parsed_item);

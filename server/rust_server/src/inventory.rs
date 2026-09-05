@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Inventory {
+    #[serde(default)]
     items: Vec<ItemId>,
 }
 

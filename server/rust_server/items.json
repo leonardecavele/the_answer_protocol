@@ -6,7 +6,11 @@
     },
     {
       "name": "wrap_du_foyer",
-      "description": "Un bon remontant pour réussir à continuer à faire ses heures."
+      "description": "Un bon remontant pour réussir à continuer à faire ses heures.",
+      "spawn_info": {
+        "room": "foyer",
+        "cooldown": 180
+      }
     },
     {
       "name": "t_shirt_bde",

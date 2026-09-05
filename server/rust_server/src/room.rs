@@ -34,14 +34,7 @@ impl Room {
             item_needed,
         }
     }
-    pub fn get_id_from_protocol_representation(protocol_representation: &str) -> RoomId {
-        protocol_representation
-            .split('.')
-            .next()
-            .unwrap()
-            .parse::<RoomId>()
-            .unwrap()
-    }
+
     pub fn get_protocol_representation(&self) -> &str {
         &self.protocol_representation
     }
