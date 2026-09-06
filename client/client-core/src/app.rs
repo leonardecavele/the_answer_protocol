@@ -3,16 +3,16 @@ mod handlers;
 use crate::events::{ApplicationEvent, EventBroker};
 use crate::manifest::Manifest;
 use crate::network::{NetworkManager, RequestChain};
-use crate::notification::Notification;
-use crate::renderer::ViewManager;
+use crate::notification::{Notification, NotificationTopic};
 use crate::renderer::components::Component;
 use crate::renderer::views::LoginView;
+use crate::renderer::ViewManager;
 use crate::states::AppState;
 use crate::{Assets, ClientError};
-use client_api::ApiRequest;
 use client_api::commands::{
     InventoryCommand, LookCommand, QuestsCommand, StatusCommand, WhoCommand,
 };
+use client_api::ApiRequest;
 use ratatui::Frame;
 use std::sync::Arc;
 
@@ -66,10 +66,14 @@ impl App {
         };
 
         if let Err(chain) = network_manager.send_command(chain) {
-            self.record_trace(
-                "dropped request",
-                format!("{:?}: the command queue is full", chain),
-            );
+            let message = format!("{:?}: the command queue is full", chain);
+
+            self.record_trace("dropped request", message.clone());
+
+            self.state
+                .ui
+                .notifications
+                .push(Notification::warning(message).with_topic(NotificationTopic::Protocol))
         }
     }
 
