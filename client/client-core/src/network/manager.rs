@@ -1,5 +1,6 @@
+use super::request::RequestChain;
 use crate::events::{ApiEvent, ApplicationEvent, ConnectionEvent};
-use client_api::{ApiRequest, Client, Connection, ConnectionState};
+use client_api::{Client, Connection, ConnectionState};
 use mpsc::Sender;
 use tokio::sync::broadcast::error::{RecvError, TryRecvError};
 use tokio::sync::mpsc;
@@ -7,7 +8,7 @@ use tokio_util::task::AbortOnDropHandle;
 use tracing::info;
 
 pub struct NetworkManager {
-    command_sender: Sender<ApiRequest>,
+    command_sender: Sender<RequestChain>,
     _background_task: AbortOnDropHandle<()>,
 }
 
@@ -18,7 +19,7 @@ impl NetworkManager {
         server_port: String,
         player_name: String,
     ) -> Self {
-        let (command_tx, mut command_rx) = mpsc::channel::<ApiRequest>(128);
+        let (command_tx, mut command_rx) = mpsc::channel::<RequestChain>(128);
 
         let _background_task = AbortOnDropHandle::new(tokio::spawn(async move {
             let server_address = format!("{}:{}", server_ip, server_port);
@@ -132,25 +133,39 @@ impl NetworkManager {
                                 },
                             ));
 
-                            while let Some(request) = command_rx.recv().await {
-                                let original_request = request.clone();
+                            while let Some(chain) = command_rx.recv().await {
+                                for request in chain {
+                                    let original_request = request.clone();
 
-                                match client.execute_request(request).await {
-                                    Ok(response) => {
-                                        let _ = event_sender
-                                            .send(ApplicationEvent::Api(ApiEvent::ApiResponse {
-                                                response,
-                                                original_request,
-                                            }))
-                                            .await;
-                                    }
-                                    Err(tap_error) => {
-                                        let _ = event_sender
-                                            .send(ApplicationEvent::Api(ApiEvent::RequestFailed {
-                                                request: original_request,
-                                                error_message: tap_error.to_string(),
-                                            }))
-                                            .await;
+                                    match client.execute_request(request).await {
+                                        Ok(response) => {
+                                            let is_failed = response.get_error().is_some();
+
+                                            let _ = event_sender
+                                                .send(ApplicationEvent::Api(
+                                                    ApiEvent::ApiResponse {
+                                                        response,
+                                                        original_request,
+                                                    },
+                                                ))
+                                                .await;
+
+                                            if is_failed {
+                                                break;
+                                            }
+                                        }
+                                        Err(tap_error) => {
+                                            let _ = event_sender
+                                                .send(ApplicationEvent::Api(
+                                                    ApiEvent::RequestFailed {
+                                                        request: original_request,
+                                                        error_message: tap_error.to_string(),
+                                                    },
+                                                ))
+                                                .await;
+
+                                            break;
+                                        }
                                     }
                                 }
                             }
@@ -187,9 +202,9 @@ impl NetworkManager {
         }
     }
 
-    pub fn send_command(&self, request: ApiRequest) -> Result<(), ApiRequest> {
+    pub fn send_command(&self, chain: RequestChain) -> Result<(), RequestChain> {
         self.command_sender
-            .try_send(request)
+            .try_send(chain)
             .map_err(|error| error.into_inner())
     }
 }

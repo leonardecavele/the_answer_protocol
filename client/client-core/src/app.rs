@@ -2,7 +2,7 @@ mod handlers;
 
 use crate::events::{ApplicationEvent, EventBroker};
 use crate::manifest::Manifest;
-use crate::network::NetworkManager;
+use crate::network::{NetworkManager, RequestChain};
 use crate::notification::Notification;
 use crate::renderer::ViewManager;
 use crate::renderer::components::Component;
@@ -56,15 +56,19 @@ impl App {
     }
 
     pub fn send(&mut self, request: ApiRequest) {
+        self.send_chain(RequestChain::build(request));
+    }
+
+    pub fn send_chain(&mut self, chain: RequestChain) {
         let Some(network_manager) = &self.network_manager else {
-            self.record_trace("dropped request", format!("{:?}: not connected", request));
+            self.record_trace("dropped request", format!("{:?}: not connected", chain));
             return;
         };
 
-        if let Err(request) = network_manager.send_command(request) {
+        if let Err(chain) = network_manager.send_command(chain) {
             self.record_trace(
                 "dropped request",
-                format!("{:?}: the command queue is full", request),
+                format!("{:?}: the command queue is full", chain),
             );
         }
     }
@@ -80,11 +84,13 @@ impl App {
     }
 
     pub fn load_state_from_server(&mut self) {
-        self.send(ApiRequest::Who(WhoCommand));
-        self.send(ApiRequest::Status(StatusCommand));
-        self.send(ApiRequest::Inventory(InventoryCommand));
-        self.send(ApiRequest::Quests(QuestsCommand));
-        self.send(ApiRequest::Look(LookCommand));
+        self.send_chain(RequestChain::new(vec![
+            ApiRequest::Who(WhoCommand),
+            ApiRequest::Status(StatusCommand),
+            ApiRequest::Inventory(InventoryCommand),
+            ApiRequest::Quests(QuestsCommand),
+            ApiRequest::Look(LookCommand),
+        ]));
     }
 
     pub fn update(&mut self, event: ApplicationEvent) {
