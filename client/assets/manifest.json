@@ -86,22 +86,22 @@
         }
     },
     "items": {
-        "0.objet_perdu": {
+        "objet_perdu": {
             "name": "objet_perdu",
             "description": "Il faudrait déposer cet objet quelque part où son propriétaire pourrait le retrouver...",
             "image_path": "pictures/items/lost_item.png"
         },
-        "1.wrap_du_foyer": {
+        "wrap_du_foyer": {
             "name": "wrap_du_foyer",
             "description": "un bon remontant pour réussir à continuer à faire ses heures",
             "image_path": "pictures/items/wrap.png"
         },
-        "2.t_shirt_bde": {
+        "t_shirt_bde": {
             "name": "t_shirt_bde",
             "description": "dans ce tissu on se sent solide comme un rock",
             "image_path": "pictures/items/t_shirt.png"
         },
-        "3.merci": {
+        "merci": {
             "name": "merci",
             "description": "Un concentré pur de la gratitude de Nathan.",
             "image_path": "pictures/items/merci.png"
