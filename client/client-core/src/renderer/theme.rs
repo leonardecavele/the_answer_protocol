@@ -1,6 +1,6 @@
 use client_api::commands::QuestStatus;
 use ratatui::{
-    layout::Alignment,
+    layout::{Alignment, Rect},
     style::{Color, Modifier, Style},
     text::Line,
     widgets::{Block, BorderType, Borders, Paragraph},
@@ -69,10 +69,10 @@ pub fn help_hint<'a>() -> Line<'a> {
     Line::from(" Press Ctrl + H to open help ").alignment(Alignment::Center)
 }
 
-pub fn too_small_hint<'a>(columns: u16, rows: u16) -> Paragraph<'a> {
+pub fn too_small_hint<'a>(area: Rect, columns: u16, rows: u16) -> Paragraph<'a> {
     Paragraph::new(format!(
-        "This window is too small.\nEnlarge it to at least {} x {} characters.",
-        columns, rows
+        "This window is too small.\n{} x {} — needs {} x {}",
+        area.width, area.height, columns, rows
     ))
     .alignment(Alignment::Center)
     .style(Style::default().fg(Color::Yellow))
