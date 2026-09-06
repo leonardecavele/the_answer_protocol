@@ -38,12 +38,6 @@ impl eframe::App for GuiApp {
             ctx.send_viewport_cmd(egui::ViewportCommand::Close);
         }
 
-        if let Some(max_zoom) = screen::max_zoom_factor(ctx, self.grid.as_ref())
-            && ctx.zoom_factor() > max_zoom
-        {
-            ctx.set_zoom_factor(max_zoom);
-        }
-
         let _ = self.screen.draw(|frame| {
             self.app.draw(frame);
             screen::apply_background(frame);

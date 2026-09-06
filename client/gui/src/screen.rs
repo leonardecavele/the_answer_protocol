@@ -1,4 +1,3 @@
-use client_core::{MIN_COLUMNS, MIN_ROWS};
 use eframe::egui;
 use egui_ratatui::RataguiBackend;
 use ratatui::style::Color;
@@ -25,13 +24,6 @@ impl Grid {
             area,
             cell_size: cell_size(screen),
         }
-    }
-
-    pub fn size(&self) -> (u16, u16) {
-        (
-            (self.area.width() / self.cell_size.x) as u16,
-            (self.area.height() / self.cell_size.y) as u16,
-        )
     }
 
     pub fn cell_at(&self, position: egui::Pos2) -> Option<(u16, u16)> {
@@ -63,15 +55,6 @@ pub fn build() -> Screen {
 
     Terminal::new(RataguiBackend::new(TEXTURE_NAME, soft_backend))
         .expect("a software backend cannot fail to initialise")
-}
-
-pub fn max_zoom_factor(ctx: &egui::Context, grid: Option<&Grid>) -> Option<f32> {
-    let (columns, rows) = grid?.size();
-
-    let columns = columns as f32 / MIN_COLUMNS as f32;
-    let rows = rows as f32 / MIN_ROWS as f32;
-
-    Some((ctx.zoom_factor() * columns.min(rows)).max(1.0))
 }
 
 pub fn grid_size(screen: &Screen, columns: u16, rows: u16) -> egui::Vec2 {
