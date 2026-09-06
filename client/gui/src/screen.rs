@@ -27,6 +27,13 @@ impl Grid {
         }
     }
 
+    pub fn size(&self) -> (u16, u16) {
+        (
+            (self.area.width() / self.cell_size.x) as u16,
+            (self.area.height() / self.cell_size.y) as u16,
+        )
+    }
+
     pub fn cell_at(&self, position: egui::Pos2) -> Option<(u16, u16)> {
         let offset = position - self.area.min;
 
@@ -58,15 +65,13 @@ pub fn build() -> Screen {
         .expect("a software backend cannot fail to initialise")
 }
 
-pub fn max_zoom_factor(screen: &Screen, ctx: &egui::Context) -> f32 {
-    let cell = cell_size(screen);
-    let native = ctx.native_pixels_per_point().unwrap_or(1.0);
-    let physical = ctx.content_rect().size() * ctx.pixels_per_point();
+pub fn max_zoom_factor(ctx: &egui::Context, grid: Option<&Grid>) -> Option<f32> {
+    let (columns, rows) = grid?.size();
 
-    let columns = physical.x / (native * cell.x * MIN_COLUMNS as f32);
-    let rows = physical.y / (native * cell.y * MIN_ROWS as f32);
+    let columns = columns as f32 / MIN_COLUMNS as f32;
+    let rows = rows as f32 / MIN_ROWS as f32;
 
-    columns.min(rows).max(1.0)
+    Some((ctx.zoom_factor() * columns.min(rows)).max(1.0))
 }
 
 pub fn grid_size(screen: &Screen, columns: u16, rows: u16) -> egui::Vec2 {
