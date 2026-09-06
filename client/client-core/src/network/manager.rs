@@ -1,8 +1,10 @@
 use super::request::RequestChain;
-use crate::events::{ApiEvent, ApplicationEvent, ConnectionEvent};
+use crate::events::{ApiEvent, ApplicationEvent, ConnectionEvent, CustomEvent};
 use client_api::events::ServerEvent;
 use client_api::{Client, Connection, ConnectionState, Frame};
 use mpsc::Sender;
+use std::collections::VecDeque;
+use std::time::Instant;
 use tokio::sync::broadcast::error::{RecvError, TryRecvError};
 use tokio::sync::{broadcast, mpsc, watch};
 use tokio_util::task::AbortOnDropHandle;
@@ -186,10 +188,15 @@ impl NetworkManager {
         command_rx: &mut mpsc::Receiver<RequestChain>,
         client: &Client,
     ) {
+        let mut timings = VecDeque::<u32>::new();
+        let mut lag_triggered = false;
+
         while let Some(chain) = command_rx.recv().await {
+            let mut chain_error = false;
+
             for request in chain {
                 let original_request = request.clone();
-
+                let start_time = Instant::now();
                 match client.execute_request(request).await {
                     Ok(response) => {
                         let is_failed = response.get_error().is_some();
@@ -202,7 +209,7 @@ impl NetworkManager {
                             .await;
 
                         if is_failed {
-                            break;
+                            chain_error = true;
                         }
                     }
                     Err(tap_error) => {
@@ -213,8 +220,27 @@ impl NetworkManager {
                             }))
                             .await;
 
-                        break;
+                        chain_error = true;
                     }
+                }
+
+                timings.push_back(start_time.elapsed().as_millis() as u32);
+                if timings.len() > 3 {
+                    timings.pop_front();
+                }
+
+                let average = timings.iter().sum::<u32>() as f32 / timings.len() as f32;
+                let has_lag = average >= 1000.0;
+
+                if has_lag != lag_triggered {
+                    let _ = event_sender
+                        .send(ApplicationEvent::Custom(CustomEvent::Lag(has_lag)))
+                        .await;
+                    lag_triggered = has_lag;
+                }
+
+                if chain_error {
+                    break;
                 }
             }
         }

@@ -1,4 +1,4 @@
-use crate::events::{ApplicationEvent, SendEvent};
+use crate::events::{ApplicationEvent, CustomEvent, SendEvent};
 use crate::renderer::components::{Component, EventFlow, Lifecycle};
 use crate::renderer::image::ImageRenderer;
 use crate::renderer::layout::percent_of;
@@ -235,7 +235,7 @@ impl Lifecycle for EditorView {
         }
 
         self.timed_out = true;
-        let _ = sender.try_send(ApplicationEvent::FightTimedOut);
+        let _ = sender.try_send(ApplicationEvent::Custom(CustomEvent::FightTimedOut));
     }
 
     fn handle_device_event(

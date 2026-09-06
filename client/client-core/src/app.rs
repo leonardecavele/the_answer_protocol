@@ -1,18 +1,18 @@
 mod handlers;
 
-use crate::events::{ApplicationEvent, EventBroker};
+use crate::events::{ApplicationEvent, CustomEvent, EventBroker};
 use crate::manifest::Manifest;
 use crate::network::{NetworkManager, RequestChain};
 use crate::notification::{Notification, NotificationTopic};
+use crate::renderer::ViewManager;
 use crate::renderer::components::Component;
 use crate::renderer::views::LoginView;
-use crate::renderer::ViewManager;
 use crate::states::AppState;
 use crate::{Assets, ClientError};
+use client_api::ApiRequest;
 use client_api::commands::{
     InventoryCommand, LookCommand, QuestsCommand, StatusCommand, WhoCommand,
 };
-use client_api::ApiRequest;
 use ratatui::Frame;
 use std::sync::Arc;
 
@@ -108,7 +108,12 @@ impl App {
             }
             ApplicationEvent::Api(event) => self.handle_api_event(event),
             ApplicationEvent::Send(event) => self.handle_send_event(event),
-            ApplicationEvent::FightTimedOut => self.on_fight_timed_out(),
+            ApplicationEvent::Custom(event) => match event {
+                CustomEvent::FightTimedOut => self.on_fight_timed_out(),
+                CustomEvent::Lag(has_lag) => {
+                    self.state.network.has_lag = has_lag;
+                }
+            },
         }
     }
 
