@@ -1,9 +1,9 @@
 mod handlers;
 
-use crate::events::{ApplicationEvent, EventBroker};
+use crate::events::{ApplicationEvent, CustomEvent, EventBroker};
 use crate::manifest::Manifest;
-use crate::network::NetworkManager;
-use crate::notification::Notification;
+use crate::network::{NetworkManager, RequestChain};
+use crate::notification::{Notification, NotificationTopic};
 use crate::renderer::ViewManager;
 use crate::renderer::components::Component;
 use crate::renderer::views::LoginView;
@@ -56,16 +56,24 @@ impl App {
     }
 
     pub fn send(&mut self, request: ApiRequest) {
+        self.send_chain(RequestChain::build(request));
+    }
+
+    pub fn send_chain(&mut self, chain: RequestChain) {
         let Some(network_manager) = &self.network_manager else {
-            self.record_trace("dropped request", format!("{:?}: not connected", request));
+            self.record_trace("dropped request", format!("{:?}: not connected", chain));
             return;
         };
 
-        if let Err(request) = network_manager.send_command(request) {
-            self.record_trace(
-                "dropped request",
-                format!("{:?}: the command queue is full", request),
-            );
+        if let Err(chain) = network_manager.send_command(chain) {
+            let message = format!("{:?}: the command queue is full", chain);
+
+            self.record_trace("dropped request", message.clone());
+
+            self.state
+                .ui
+                .notifications
+                .push(Notification::warning(message).with_topic(NotificationTopic::Protocol))
         }
     }
 
@@ -80,11 +88,13 @@ impl App {
     }
 
     pub fn load_state_from_server(&mut self) {
-        self.send(ApiRequest::Who(WhoCommand));
-        self.send(ApiRequest::Status(StatusCommand));
-        self.send(ApiRequest::Inventory(InventoryCommand));
-        self.send(ApiRequest::Quests(QuestsCommand));
-        self.send(ApiRequest::Look(LookCommand));
+        self.send_chain(RequestChain::new(vec![
+            ApiRequest::Who(WhoCommand),
+            ApiRequest::Status(StatusCommand),
+            ApiRequest::Inventory(InventoryCommand),
+            ApiRequest::Quests(QuestsCommand),
+            ApiRequest::Look(LookCommand),
+        ]));
     }
 
     pub fn update(&mut self, event: ApplicationEvent) {
@@ -98,7 +108,12 @@ impl App {
             }
             ApplicationEvent::Api(event) => self.handle_api_event(event),
             ApplicationEvent::Send(event) => self.handle_send_event(event),
-            ApplicationEvent::FightTimedOut => self.on_fight_timed_out(),
+            ApplicationEvent::Custom(event) => match event {
+                CustomEvent::FightTimedOut => self.on_fight_timed_out(),
+                CustomEvent::Lag(has_lag) => {
+                    self.state.network.has_lag = has_lag;
+                }
+            },
         }
     }
 

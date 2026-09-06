@@ -34,7 +34,7 @@ impl ViewManager {
 impl Component for ViewManager {
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
         let Some(area) = interface_area(area) else {
-            frame.render_widget(too_small_hint(MIN_COLUMNS, MIN_ROWS), area);
+            frame.render_widget(too_small_hint(area, MIN_COLUMNS, MIN_ROWS), area);
             return;
         };
 

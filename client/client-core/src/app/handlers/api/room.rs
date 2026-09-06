@@ -1,5 +1,6 @@
 use crate::app::App;
 use crate::collections::SelectableList;
+use crate::network::RequestChain;
 use crate::states::game::{Item, Npc, Room};
 use client_api::ApiRequest;
 use client_api::commands::{LookCommand, LookResponse, StatusCommand};
@@ -42,7 +43,6 @@ impl App {
         self.state
             .game
             .log_action(format!("You moved {}.", direction));
-        self.send(ApiRequest::Look(LookCommand));
     }
 
     pub fn on_npc_spawned(&mut self, spawn: SpawnData) {
@@ -170,8 +170,10 @@ impl App {
         };
 
         if is_me {
-            self.send(ApiRequest::Look(LookCommand));
-            self.send(ApiRequest::Status(StatusCommand));
+            self.send_chain(RequestChain::new(vec![
+                ApiRequest::Look(LookCommand),
+                ApiRequest::Status(StatusCommand),
+            ]));
         }
 
         self.state.game.log_action(message);
