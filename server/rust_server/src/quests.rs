@@ -85,6 +85,7 @@ impl Quest {
     pub fn get_loots(&self) -> &Vec<Loot> {
         &self.loots
     }
+
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -131,7 +132,11 @@ impl QuestInstance {
         self.current_step
     }
 
-    pub fn set_current_step(&mut self, current_step: u32) {
-        self.current_step = current_step;
+    pub fn add_one_step(&mut self) {
+        self.current_step += 1;
+    }
+    pub fn get_completion(&self, nb_steps: u32) -> String {
+        //return completion formatted as a string
+        format!("{}/{}", self.current_step, nb_steps)
     }
 }

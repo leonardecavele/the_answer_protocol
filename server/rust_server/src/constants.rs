@@ -20,7 +20,7 @@ pub const MAX_TIME_FOR_COMBAT: Duration = Duration::from_secs(3 * MINUTE + 42);
 pub const NPC_RESPAWN_TIME: Duration = Duration::from_secs(30);
 pub const ITEM_DESPAWN_TIME: Duration = Duration::from_mins(1);
 pub const TICK_TIME_AMPLIFICATION: u64 = 1;
-pub const TICK_RATE: u16 = 10;
+pub const TICK_RATE: u16 = 20;
 pub const TICK_TIME: Duration =
     Duration::from_millis((1000 * TICK_TIME_AMPLIFICATION) / TICK_RATE as u64);
 pub const BASE_COMMAND_RESPONSE: &str = "Duly noted.";

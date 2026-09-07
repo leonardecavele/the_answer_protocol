@@ -135,7 +135,13 @@ impl GameManager {
                 .quest_instances
                 .iter()
                 .filter(|q| q.get_player() == player_id)
-                .map(|q| (q.get_quest_name(), q.get_state().to_string(), q.get_current_step()))
+                .map(|q| {
+                    (
+                        q.get_quest_name(),
+                        q.get_state().to_string(),
+                        q.get_current_step(),
+                    )
+                })
                 .collect();
             let save_data = Save {
                 name: player.get_name().to_owned(),
@@ -558,11 +564,8 @@ impl GameManager {
             return None;
         }
         for (quest_id, _, current_step) in save_data.quests.iter() {
-            let quest_instance = QuestInstance::new_with_step(
-                player_id,
-                quest_id.clone(),
-                *current_step,
-            );
+            let quest_instance =
+                QuestInstance::new_with_step(player_id, quest_id.clone(), *current_step);
             self.quest_instances.push(quest_instance);
         }
 
@@ -1294,6 +1297,11 @@ impl GameManager {
         })
     }
 
+    pub fn create_quest_instance(&mut self, player_id: PlayerId, quest_id: Questid) {
+        let quest_instance = QuestInstance::new(player_id, quest_id);
+        self.quest_instances.push(quest_instance);
+    }
+
     pub fn player_has_item(&self, player_id: PlayerId, item_id: ItemId) -> bool {
         if let Some(player) = self.get_player(player_id) {
             player.has_item(item_id)
@@ -1375,6 +1383,53 @@ impl GameManager {
         }
         vec
     }
+    pub fn check_complete_code_quest(
+        &mut self,
+        player_name: &str,
+        assigned_file_name: &str,
+        time_took_in_seconds: u64,
+    ) {
+        let possibilities: HashMap<&str, (&str, u64)> = HashMap::from([
+            ("is_sorted_ascending.c", ("Kaizen", 55)),
+            ("string_equals.c", ("Tu peux le faire", 50)),
+            ("middle_of_three.c", ("Entrequote", 45)),
+            ("count_vowels.c", ("AEIOU", 45)),
+            ("first_index_of.c", ("OG", 40)),
+            ("find_max_index.c", ("Vers l'infini et l'haut-dela", 40)),
+            ("find_min_index.c", ("Quel est-t-il ?", 40)),
+            ("array_max.c", ("Au plus...", 35)),
+            ("array_min.c", ("MINIMUM", 35)),
+            ("array_contains.c", ("Mais que contient-elle ?", 35)),
+        ]);
+
+        let Some(&(quest_name, actual_time_allowed)) = possibilities.get(assigned_file_name) else {
+            // not an error just there is not a quest for each file name
+            return;
+        };
+        if time_took_in_seconds > actual_time_allowed {
+            return;
+        }
+        let Some(player_id) = self.get_player_id(player_name) else {
+            return;
+        };
+
+        let player_id_cloned = player_id.clone();
+        let Some(quest_instance) = self.quest_instances.iter_mut().find(|instance| {
+            instance.get_player() == player_id_cloned
+                && instance.get_quest_name() == quest_name
+        }) else {
+            return;
+        };
+
+        quest_instance.add_one_step();
+        let event = GameManager::generate_no_player_event_json(
+            &vec![player_name.to_string()],
+            "QUEST_STEP",
+            "",
+        );
+        self.add_diff_to_tick(event);
+    }
+
     pub fn remove_finished_combat_instances(&mut self) {
         let finished_instances_players = self.get_finished_instances_players();
         if finished_instances_players.is_empty() {

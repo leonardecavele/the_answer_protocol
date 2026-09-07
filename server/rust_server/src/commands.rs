@@ -4,7 +4,7 @@ use crate::constants::{
 };
 use crate::game_manager::GameManager;
 use crate::items::ItemId;
-use crate::npc::NpcId;
+use crate::npc::{Npc, NpcId};
 use crate::room::Room;
 use json::{JsonValue, object};
 use rand::RngExt;
@@ -408,11 +408,54 @@ impl GameManager {
         Ok(npc_id)
     }
 
+    pub fn verify_npc_target(
+        &self,
+        player_name: &str,
+        command_name: &str,
+        target_npc: &str,
+    ) -> Result<Npc, String> {
+        let player_room = match self.get_player_from_name(player_name) {
+            Some(p) => p.get_current_room(),
+            None => {
+                warn!("Player not found: {}", player_name);
+                return Err(generate_json(
+                    player_name,
+                    command_name,
+                    ErrorCode::PlayerNotFound,
+                    "",
+                )
+                .dump());
+            }
+        };
+        let Some((npc_id, npc_name)) = self.parse_npc(target_npc, player_room.to_owned()) else {
+            return Err(
+                generate_json(player_name, command_name, ErrorCode::NpcNotFound, "").dump(),
+            );
+        };
+        let Some(npc) = self.get_npc(npc_id) else {
+            return Err(
+                generate_json(player_name, command_name, ErrorCode::NpcNotFound, "").dump(),
+            );
+        };
+        if npc.get_name() != npc_name {
+            return Err(
+                generate_json(player_name, command_name, ErrorCode::NpcNotFound, "").dump(),
+            );
+        }
+        if !self.npc_is_in_room(npc_id, player_room) {
+            return Err(
+                generate_json(player_name, command_name, ErrorCode::NpcNotInRoom, "").dump(),
+            );
+        }
+        Ok(npc.clone())
+    }
+
     pub fn process_tester_responses(&mut self) -> std::io::Result<()> {
         while let Ok(response) = self.tester_receiver.try_recv() {
             debug!("received tester response: {}", response);
             let json = json::parse(&response).unwrap_or(json::JsonValue::Null);
             if json.is_null() {
+                warn!("json is null, continuing...");
                 continue;
             }
             let player = json["player"].as_str().unwrap_or("");
@@ -462,6 +505,15 @@ impl GameManager {
                     );
                     self.add_diff_to_tick(event);
                     self.player_attacks_npc(dmg, player_id, npc_id);
+
+                    let (time_took_to_succeed, assigned_file_name) = self.combat_instances.get_instance_for_npc(npc_id)
+                        .map(|instance| (instance.get_combat_duration_in_seconds(), instance.get_assigned_file_name().to_string()))
+                        .unwrap_or((0, "".to_string()));
+
+
+                    // Quest Completion part
+                    self.check_complete_code_quest(player, assigned_file_name.as_str(), time_took_to_succeed);
+
                 } else {
                     let players_in_instance = self
                         .get_player_instance_group(player_id)
@@ -656,28 +708,10 @@ impl GameManager {
             }
 
             "TALK" => {
-                let target_npc = data;
-                let player_room = if let Some(player) = self.get_player_from_name(player_name) {
-                    player.get_current_room()
-                } else {
-                    return generate_json(player_name, command_name, ErrorCode::PlayerNotFound, "")
-                        .dump();
+                let npc = match self.verify_npc_target(player_name, command_name, data) {
+                    Ok(npc) => npc,
+                    Err(err) => return err,
                 };
-                let Some(parsed_repr) = self.parse_npc(target_npc, player_room.to_owned()) else {
-                    return generate_json(player_name, command_name, ErrorCode::NpcNotFound, "")
-                        .dump();
-                };
-                let (npc_id, npc_name) = parsed_repr;
-                let Some(npc) = self.get_npc(npc_id) else {
-                    return generate_json(player_name, command_name, ErrorCode::NpcNotFound, "")
-                        .dump();
-                };
-
-                let npc_clone = npc.clone();
-                if npc_clone.get_name() != npc_name || !self.npc_is_in_room(npc_id, player_room) {
-                    return generate_json(player_name, command_name, ErrorCode::NpcNotFound, "")
-                        .dump();
-                }
 
                 let dialog = {
                     let player = match self.get_mut_player_from_name(player_name) {
@@ -693,7 +727,7 @@ impl GameManager {
                             .dump();
                         }
                     };
-                    player.talk_with(&npc_clone)
+                    player.talk_with(&npc)
                 };
                 generate_json(
                     player_name,
@@ -915,33 +949,12 @@ impl GameManager {
                 .dump()
             }
             "QUEST" => {
-                let target_npc = data;
-                let Some(player) = self.get_player_from_name(player_name) else {
-                    return generate_json(player_name, command_name, ErrorCode::PlayerNotFound, "")
-                        .dump();
+                let npc = match self.verify_npc_target(player_name, command_name, data) {
+                    Ok(npc) => npc,
+                    Err(err) => return err,
                 };
-                let player_room = player.get_current_room();
-                // if player
-                let Some(parsed_repr) = self.parse_npc(target_npc, player_room.to_owned()) else {
-                    return generate_json(player_name, command_name, ErrorCode::NpcNotFound, "")
-                        .dump();
-                };
-                let (npc_id, npc_name) = parsed_repr;
-                let Some(npc) = self.get_npc(npc_id) else {
-                    return generate_json(player_name, command_name, ErrorCode::NpcNotFound, "")
-                        .dump();
-                };
-                let npc_unwrap = npc.clone();
-                if npc_unwrap.get_name() != npc_name {
-                    return generate_json(player_name, command_name, ErrorCode::NpcNotFound, "")
-                        .dump();
-                }
-                if !self.npc_is_in_room(npc_id, player_room) {
-                    return generate_json(player_name, command_name, ErrorCode::NpcNotInRoom, "")
-                        .dump();
-                }
 
-                if let Some(mut quests) = npc_unwrap.get_quests().cloned() {
+                if let Some(mut quests) = npc.get_quests().cloned() {
                     let player_id = match self.get_player_id(player_name) {
                         Some(id) => *id,
                         None => {
@@ -1003,11 +1016,7 @@ impl GameManager {
                                 .dump();
                             }
                         };
-                        let quest_instance = crate::quests::QuestInstance::new(
-                            player_id,
-                            quest_id.clone(),
-                        );
-                        self.quest_instances.push(quest_instance);
+                        self.create_quest_instance(player_id, quest_id.clone());
 
                         return generate_json(
                             player_name,
@@ -1046,7 +1055,8 @@ impl GameManager {
                             "name" => quest.get_name().to_string(),
                             "description" => quest.get_description(),
                             "reward" => quest.get_json_loots(),
-                            "status" => q.get_state() })
+                            "status" => q.get_state(),
+                            "completion" => q.get_completion(quest.get_nb_steps())})
                         } else {
                             warn!("quest not found: {}", q.get_quest_name());
                             None
@@ -1061,7 +1071,8 @@ impl GameManager {
                                 "name" => quest.get_name().to_string(),
                                 "description" => quest.get_description(),
                                 "reward" => quest.get_json_loots(),
-                                "status" => "completed"
+                                "status" => "completed",
+                                "completion" => format!("{}/{}", quest.get_nb_steps(), quest.get_nb_steps())
                             });
                         } else {
                             warn!("completed quest not found: {}", quest_name);

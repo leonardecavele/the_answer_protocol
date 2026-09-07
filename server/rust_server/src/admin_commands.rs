@@ -4,7 +4,7 @@ use crate::{constants::LOST_ITEM, game_manager::GameManager};
 
 impl GameManager {
     pub fn handle_admin_command(&mut self, command: &str) {
-        let words: Vec<&str> = command.split(' ').collect();
+        let words: Vec<&str> = command.split_whitespace().collect();
 
         if let (Some(command), Some(player_name), Some(arg)) = (words.get(0), words.get(1), words.get(2)) {
             match command.to_lowercase().as_str() {
@@ -27,6 +27,18 @@ impl GameManager {
                     } else {
                         warn!("Player not found: {}", player_name);
                     }
+                }
+                _ => warn!("unknown 2 argument admin command: {} (args : {} {})", command, player_name, arg),
+            }
+        } else if let (Some(command), Some(arg)) = (words.get(0), words.get(1)) {
+            match command.to_lowercase().as_str() {
+                _ => warn!("unknown 1 argument admin command: {} (arg : {})", command, arg),
+            }
+        } else if let Some(command) = words.get(0) {
+            match command.to_lowercase().as_str() {
+                "showitems" => {
+                    let all_items: Vec<String> = self.all_items.iter().map(|(_, item)| item.get_protocol_representation()).collect();
+                    info!("all items: {:?}", all_items);
                 }
                 _ => warn!("unknown admin command: {}", command),
             }

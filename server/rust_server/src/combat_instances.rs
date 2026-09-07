@@ -129,6 +129,10 @@ impl CombatInstance {
         &self.grouped_players
     }
 
+    pub fn get_combat_duration_in_seconds(&self) -> u64 {
+        self.combat_start_time.elapsed().as_secs()
+    }
+
     pub fn get_assigned_file_name(&self) -> &str {
         &self.file_name
     }
