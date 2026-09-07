@@ -1,8 +1,13 @@
 use crate::app::App;
+use crate::notification::{Notification, NotificationDuration};
 use crate::states::game::Item;
+use client_api::ApiRequest;
 use client_api::commands::{
-    DropResponse, InventoryResponse, QuestResponse, QuestsResponse, StatusResponse, TakeResponse,
+    DropResponse, InventoryResponse, LookCommand, QuestResponse, QuestsResponse, StatusResponse,
+    TakeResponse,
 };
+use client_api::events::{QuestCompleteData, QuestStepData};
+use std::time::Duration;
 
 impl App {
     pub fn on_status(&mut self, response: StatusResponse) {
@@ -36,6 +41,52 @@ impl App {
         self.state
             .game
             .log_action("You checked your quests.".to_string());
+    }
+
+    pub fn on_quest_step(&mut self, response: QuestStepData) {
+        self.state.game.log_action(format!(
+            "Quest {} next step reached ! ({} -> {})",
+            response.name,
+            response.current_step.saturating_sub(1),
+            response.current_step
+        ));
+
+        self.state.ui.notifications.push(
+            Notification::success(format!(
+                "Quest {}\nnext step reached ! ({} -> {})",
+                response.name,
+                response.current_step.saturating_sub(1),
+                response.current_step
+            ))
+            .with_duration(NotificationDuration::Finite(Duration::from_millis(12_000))),
+        );
+
+        self.state
+            .game
+            .player
+            .set_quest_step(response.name, response.current_step);
+    }
+
+    pub fn on_quest_complete(&mut self, response: QuestCompleteData) {
+        self.state
+            .game
+            .log_action(format!("Quest {} completed!", response.name));
+
+        self.state.ui.notifications.push(
+            Notification::success(format!("Quest {}\ncompleted!", response.name))
+                .with_duration(NotificationDuration::Finite(Duration::from_millis(12_000))),
+        );
+
+        let items = response
+            .reward_items
+            .iter()
+            .map(|name| Item::from_manifest(name.clone(), &self.state.game.manifest))
+            .collect();
+
+        self.state
+            .game
+            .player
+            .set_quest_as_completed(response.name, items);
     }
 
     pub fn on_quest(&mut self, response: QuestResponse) {
@@ -87,5 +138,13 @@ impl App {
         if let Some(room) = &mut self.state.game.room {
             room.spawn_item(item);
         }
+    }
+
+    pub fn on_teleport(&mut self) {
+        self.state.ui.notifications.push(Notification::warning(
+            "💀 A player on your team absolutely sucks. 🤬",
+        ));
+
+        self.send(ApiRequest::Look(LookCommand))
     }
 }

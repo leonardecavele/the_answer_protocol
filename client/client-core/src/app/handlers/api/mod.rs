@@ -10,7 +10,7 @@ use crate::app::App;
 use crate::events::ApiEvent;
 use crate::notification::{Notification, NotificationTopic};
 use crate::states::game::ChatChannel;
-use client_api::events::{GameServerEvent, GroupEvent, RoomEvent, ServerEvent};
+use client_api::events::{GameServerEvent, GroupEvent, QuestEvent, RoomEvent, ServerEvent};
 use client_api::{ApiRequest, ApiResponse, FrameDirection};
 
 impl App {
@@ -192,6 +192,9 @@ impl App {
             ServerEvent::FightEnd => {
                 self.on_fight_end();
             }
+            ServerEvent::Teleport => {
+                self.on_teleport();
+            }
             ServerEvent::Quit(name) => {
                 self.on_player_quit_server(name);
             }
@@ -232,6 +235,10 @@ impl App {
                     self.on_group_moved(direction);
                 }
             },
+            ServerEvent::Quest(quest_event) => match quest_event {
+                QuestEvent::Step(data) => self.on_quest_step(data),
+                QuestEvent::Complete(data) => self.on_quest_complete(data),
+            },
             ServerEvent::GlobalChat(chat) => {
                 self.on_chat_received(ChatChannel::Global, chat.sender, chat.message);
             }
@@ -242,9 +249,6 @@ impl App {
             ServerEvent::Stats(count) => {
                 self.on_stats(count);
             }
-            ServerEvent::Unknown(raw) => {
-                self.on_unknown_event(raw);
-            }
             ServerEvent::GameServer(game_server_event) => match game_server_event {
                 GameServerEvent::Connected => {
                     self.on_game_server_connected();
@@ -253,6 +257,9 @@ impl App {
                     self.on_game_server_disconnected();
                 }
             },
+            ServerEvent::Unknown(raw) => {
+                self.on_unknown_event(raw);
+            }
         }
     }
 }

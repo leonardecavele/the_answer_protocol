@@ -200,7 +200,13 @@ impl LeftPanel {
                 let (label, color) = quest_status(&quest.status);
                 let style = selection_style(color, focused && quests.is_selected(index));
 
-                ListItem::new(Span::styled(format!("[{}] {}", label, quest.name), style))
+                ListItem::new(Span::styled(
+                    format!(
+                        "[{}/{} {}] {}",
+                        quest.current_step, quest.max_step, label, quest.name
+                    ),
+                    style,
+                ))
             })
             .collect();
 

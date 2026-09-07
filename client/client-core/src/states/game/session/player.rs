@@ -1,6 +1,6 @@
 use crate::collections::SelectableList;
 use crate::states::game::world::Item;
-use client_api::commands::QuestData;
+use client_api::commands::{QuestData, QuestStatus};
 
 pub struct PlayerState {
     pub name: Option<String>,
@@ -55,6 +55,33 @@ impl PlayerState {
     pub fn take_item(&mut self, id: &str) -> Option<Item> {
         let index = self.inventory.iter().position(|item| item.id == id)?;
         self.inventory.remove(index)
+    }
+
+    pub fn set_quest_step(&mut self, name: String, current_step: u8) {
+        let Some(quest) = self
+            .quests
+            .iter_mut()
+            .find(|item| item.name.eq_ignore_ascii_case(&name))
+        else {
+            return;
+        };
+
+        quest.current_step = current_step;
+    }
+
+    pub fn set_quest_as_completed(&mut self, name: String, rewards: Vec<Item>) {
+        let Some(quest) = self
+            .quests
+            .iter_mut()
+            .find(|item| item.name.eq_ignore_ascii_case(&name))
+        else {
+            return;
+        };
+
+        quest.current_step = quest.max_step;
+        quest.status = QuestStatus::Completed;
+
+        self.inventory.extend(rewards)
     }
 }
 
