@@ -26,6 +26,18 @@ pub struct KillData {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct QuestCompleteData {
+    pub name: String,
+    pub reward_items: Vec<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct QuestStepData {
+    pub name: String,
+    pub current_step: u8,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct FightStartData {
     pub code: String,
     pub time: u64,
@@ -69,6 +81,12 @@ pub enum GameServerEvent {
 }
 
 #[derive(Debug, Clone)]
+pub enum QuestEvent {
+    Complete(QuestCompleteData),
+    Step(QuestStepData),
+}
+
+#[derive(Debug, Clone)]
 pub enum ServerEvent {
     Connect(String),
     GameServer(GameServerEvent),
@@ -85,6 +103,8 @@ pub enum ServerEvent {
     GlobalChat(ChatMessage),
     PrivateChat(ChatMessage),
     Stats(u32),
+    Quest(QuestEvent),
+    Teleport,
     Unknown(String),
 }
 
@@ -94,7 +114,6 @@ impl From<ServerResponse> for ServerEvent {
 
         match args.as_slice() {
             ["CONNECT", name] => ServerEvent::Connect(name.to_string()),
-
             ["GAME", "SERVER", status] => match status.to_uppercase().as_str() {
                 "CONNECTED" => ServerEvent::GameServer(GameServerEvent::Connected),
                 "DISCONNECTED" => ServerEvent::GameServer(GameServerEvent::Disconnected),
@@ -177,8 +196,6 @@ impl From<ServerResponse> for ServerEvent {
             }
             ["FIGHT", "END"] => ServerEvent::FightEnd,
 
-            ["QUIT", name] => ServerEvent::Quit(name.to_string()),
-
             // Room events
             ["ROOM", name, "PRESENCE", "ENTER"] => {
                 ServerEvent::Room(RoomEvent::PresenceEnter(name.to_string()))
@@ -186,7 +203,6 @@ impl From<ServerResponse> for ServerEvent {
             ["ROOM", name, "PRESENCE", "LEAVE"] => {
                 ServerEvent::Room(RoomEvent::PresenceLeave(name.to_string()))
             }
-
             ["ROOM", "CHAT", sender, message @ ..] => {
                 ServerEvent::Room(RoomEvent::Chat(ChatMessage {
                     sender: sender.to_string(),
@@ -197,7 +213,6 @@ impl From<ServerResponse> for ServerEvent {
             ["TAKE", player, item @ ..] => {
                 ServerEvent::Room(RoomEvent::Take(player.to_string(), item.join(" ")))
             }
-
             ["DROP", player, item @ ..] => {
                 ServerEvent::Room(RoomEvent::Drop(player.to_string(), item.join(" ")))
             }
@@ -244,6 +259,28 @@ impl From<ServerResponse> for ServerEvent {
                     ServerEvent::Unknown(args.join(" "))
                 }
             }
+
+            ["QUEST", "COMPLETE", args @ ..] => {
+                let parsed_args =
+                    serde_json::from_str::<QuestCompleteData>(args.join(" ").as_str());
+
+                match parsed_args {
+                    Ok(data) => ServerEvent::Quest(QuestEvent::Complete(data)),
+                    Err(_) => ServerEvent::Unknown(args.join(" ")),
+                }
+            }
+
+            ["QUEST", "STEP", args @ ..] => {
+                let parsed_args = serde_json::from_str::<QuestStepData>(args.join(" ").as_str());
+
+                match parsed_args {
+                    Ok(data) => ServerEvent::Quest(QuestEvent::Step(data)),
+                    Err(_) => ServerEvent::Unknown(args.join(" ")),
+                }
+            }
+
+            ["TELEPORT"] => ServerEvent::Teleport,
+            ["QUIT", name] => ServerEvent::Quit(name.to_string()),
 
             _ => ServerEvent::Unknown(args.join(" ")),
         }

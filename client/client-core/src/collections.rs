@@ -60,6 +60,14 @@ impl<T> SelectableList<T> {
         self.items.push(item);
     }
 
+    pub fn extend(&mut self, items: Vec<T>) {
+        self.items.extend(items);
+    }
+
+    pub fn iter_mut(&mut self) -> std::slice::IterMut<'_, T> {
+        self.items.iter_mut()
+    }
+
     pub fn retain(&mut self, predicate: impl FnMut(&T) -> bool) {
         self.items.retain(predicate);
         self.clamp_selection();

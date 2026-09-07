@@ -43,6 +43,8 @@ pub struct QuestData {
     pub description: String,
     pub reward: Vec<QuestReward>,
     pub status: QuestStatus,
+    pub current_step: u8,
+    pub max_step: u8,
 }
 
 impl QuestData {

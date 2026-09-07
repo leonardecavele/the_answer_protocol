@@ -36,7 +36,10 @@ impl QuestDetailPopup {
 
         let mut lines = vec![
             Line::from(Span::styled(
-                format!("Status: {}", label),
+                format!(
+                    "[{}/{}] Status: {}",
+                    quest.current_step, quest.max_step, label
+                ),
                 Style::default().fg(color).add_modifier(Modifier::BOLD),
             )),
             Line::from(""),
