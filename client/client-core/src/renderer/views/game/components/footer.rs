@@ -2,10 +2,17 @@ use crate::events::{ApplicationEvent, SendEvent};
 use crate::renderer::components::{
     Component, EventFlow, Interactive, Lifecycle, TextInput, is_mouse_in_rect,
 };
+use crate::renderer::theme::default_block;
 use crate::states::AppState;
 use crate::states::game::GameFocus;
 use crossterm::event::{Event as CrosstermEvent, KeyCode, KeyEvent};
-use ratatui::{Frame, layout::Rect};
+use ratatui::Frame;
+use ratatui::layout::{Alignment, Constraint, Direction, Layout, Rect};
+use ratatui::style::{Color, Modifier, Style};
+use ratatui::widgets::Paragraph;
+
+const LAG_LABEL: &str = "LAG";
+const LAG_WIDTH: u16 = 9;
 
 pub enum FooterHit {
     CommandInput,
@@ -34,13 +41,35 @@ impl Footer {
 
         FooterHit::None
     }
+
+    fn draw_lag(frame: &mut Frame, area: Rect) {
+        let style = Style::default().fg(Color::Red).add_modifier(Modifier::BOLD);
+
+        let paragraph = Paragraph::new(LAG_LABEL)
+            .alignment(Alignment::Center)
+            .style(style)
+            .block(default_block());
+
+        frame.render_widget(paragraph, area);
+    }
 }
 
 impl Component for Footer {
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
-        self.area = Some(area);
+        let lag_width = if state.network.has_lag { LAG_WIDTH } else { 0 };
+
+        let chunks = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints([Constraint::Min(1), Constraint::Length(lag_width)])
+            .split(area);
+
+        self.area = Some(chunks[0]);
         self.input.inner.is_focused = state.game.focus() == GameFocus::Input;
-        self.input.draw(state, frame, area);
+        self.input.draw(state, frame, chunks[0]);
+
+        if state.network.has_lag {
+            Self::draw_lag(frame, chunks[1]);
+        }
     }
 }
 

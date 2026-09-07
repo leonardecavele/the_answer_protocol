@@ -17,7 +17,13 @@ pub enum ApplicationEvent {
     Connection(ConnectionEvent),
     Api(ApiEvent),
     Send(SendEvent),
+    Custom(CustomEvent),
+}
+
+#[derive(Debug, Clone)]
+pub enum CustomEvent {
     FightTimedOut,
+    Lag(bool),
 }
 
 #[derive(Debug, Clone)]

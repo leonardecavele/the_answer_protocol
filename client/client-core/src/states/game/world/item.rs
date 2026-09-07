@@ -10,7 +10,9 @@ pub struct Item {
 
 impl Item {
     pub fn from_manifest(id: String, manifest: &Manifest) -> Self {
-        match manifest.items.get(&id) {
+        let (_, item_name) = id.split_once('.').unwrap_or(("", id.as_str()));
+
+        match manifest.items.get(item_name) {
             Some(entry) => Self {
                 name: entry.name.clone(),
                 description: entry.description.clone(),
