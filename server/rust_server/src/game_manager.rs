@@ -398,10 +398,16 @@ impl GameManager {
             return;
         };
         player.add_completed_quest(quest_name.to_string());
+        // let reward_items_vec_json = JsonValue::Array(given_items_vec.into_iter().map(JsonValue::String).collect());
         let event = GameManager::generate_no_player_event_json(
             &vec![player.get_name().to_string()],
-            "QUEST_COMPLETE",
-            format!("{:?}", given_items_vec).as_str(),
+            "QUEST COMPLETE",
+            object! {
+                "name" => quest_name,
+                "reward_items" => format!("{:?}", given_items_vec),
+            }
+            .dump()
+            .as_str(),
         );
         self.add_diff_to_tick(event);
     }
@@ -842,6 +848,7 @@ impl GameManager {
         if let Some(player) = self.get_mut_player_from_name(player_name) {
             player.move_to_room(&room_name.to_owned());
         }
+        self.check_quest_map_tour(player_name);
     }
 
     pub fn get_npcs_in_room_as_protocol_representations(&self, room_name: &str) -> Vec<String> {
@@ -872,7 +879,31 @@ impl GameManager {
             }
         }
         for (player_id, npc_id) in players_to_punish {
-            self.npc_attacks_player(self.generate_npc_dmg(), player_id, npc_id);
+            let npc_dmg = self.generate_npc_dmg();
+            self.npc_attacks_player(npc_dmg, player_id, npc_id);
+            let player_name = {
+                let Some(player) = self.players.get(&player_id) else {
+                    warn!("tried to punish non-existent player: {}", player_id);
+                    continue;
+                };
+                player.get_name()
+            };
+            let mut players_as_strings = Vec::new();
+            let player_ids = self.combat_instances.get_all_players_in_combat(npc_id);
+            for player_id in player_ids {
+                if let Some(player) = self.get_player(player_id) {
+                    players_as_strings.push(player.get_name().to_owned());
+                }
+            }
+            let event = GameManager::generate_no_player_event_json(
+                &players_as_strings,
+                "FIGHT RESULT",
+                object! { "player_name": player_name, "success": false, "damage_dealt": npc_dmg}
+                    .dump()
+                    .as_str(),
+            );
+
+            self.add_diff_to_tick(event);
         }
     }
 
@@ -1409,25 +1440,112 @@ impl GameManager {
         if time_took_in_seconds > actual_time_allowed {
             return;
         }
-        let Some(player_id) = self.get_player_id(player_name) else {
+        let Some(player_id) = self.get_player_id(player_name).copied() else {
             return;
         };
 
-        let player_id_cloned = player_id.clone();
+        self.add_one_step_to_quest(player_id, quest_name);
+    }
+
+    pub fn add_one_step_to_quest(&mut self, player_id: PlayerId, quest_name: &str) {
+        let max_steps = match self.get_quest(&quest_name.to_string()) {
+            Some(q) => q.get_nb_steps(),
+            None => return,
+        };
+
+        let player_id_cloned = player_id;
         let Some(quest_instance) = self.quest_instances.iter_mut().find(|instance| {
-            instance.get_player() == player_id_cloned
-                && instance.get_quest_name() == quest_name
+            instance.get_player() == player_id_cloned && instance.get_quest_name() == quest_name
         }) else {
             return;
         };
 
         quest_instance.add_one_step();
-        let event = GameManager::generate_no_player_event_json(
-            &vec![player_name.to_string()],
-            "QUEST_STEP",
-            "",
-        );
-        self.add_diff_to_tick(event);
+        let current_step = quest_instance.get_current_step();
+
+        // sends QUEST STEP event to the player if the current step is not the max step
+        if current_step != max_steps {
+            if let Some(player) = self.get_player(player_id) {
+                let event = GameManager::generate_no_player_event_json(
+                    &vec![player.get_name().to_string()],
+                    "QUEST STEP",
+                    object! {
+                        "name" => quest_name,
+                        "current_step" => current_step
+                    }
+                    .dump()
+                    .as_str(),
+                );
+                self.add_diff_to_tick(event);
+            }
+        }
+    }
+
+    pub fn check_quest_map_tour(&mut self, player_name: &str) {
+        let quest_name = "Une marche s'impose.";
+        let Some(player_id) = self.get_player_id(player_name).copied() else {
+            return;
+        };
+
+        let player_id_cloned = player_id;
+        let has_active_quest = self.quest_instances.iter().any(|instance| {
+            instance.get_player() == player_id_cloned && instance.get_quest_name() == quest_name
+        });
+        if !has_active_quest {
+            return;
+        }
+
+        // function that checks if a tour is valid
+        fn is_valid_tour(rooms: &[String]) -> bool {
+            if rooms.len() != 7 {
+                return false;
+            }
+            if rooms.first() != rooms.last() {
+                return false;
+            }
+            let target_cw = [
+                "afk",
+                "cantina",
+                "cluster_du_bas",
+                "pature",
+                "devant_l'école",
+                "entree",
+            ];
+            let target_ccw = [
+                "entree",
+                "devant_l'école",
+                "pature",
+                "cluster_du_bas",
+                "cantina",
+                "afk",
+            ];
+
+            let mut rotated = rooms[..6].to_vec();
+            for _ in 0..6 {
+                if rotated == target_cw || rotated == target_ccw {
+                    return true;
+                }
+                rotated.rotate_left(1);
+            }
+            false
+        }
+
+        let is_tour = if let Some(player) = self.get_player(player_id) {
+            is_valid_tour(&player.last_rooms)
+        } else {
+            false
+        };
+
+        if !is_tour {
+            return;
+        }
+
+        //reset the rooms to set the current room as the first room
+        if let Some(player) = self.players.get_mut(&player_id) {
+            player.reset_last_rooms_to_current();
+        }
+
+        self.add_one_step_to_quest(player_id, quest_name);
     }
 
     pub fn remove_finished_combat_instances(&mut self) {
@@ -1471,7 +1589,6 @@ impl GameManager {
         self.combat_instances.remove_finished_instances();
     }
 
-    // pub fn check_timed_quest_
     pub fn test_code(&mut self, file_name: &str, sent_code: &str, player: &str, npc_id: NpcId) {
         let sender = self.tester_sender.clone();
         let mut response = object! {"player": player, "npc_id": npc_id, "success": false};
@@ -1480,7 +1597,6 @@ impl GameManager {
             .to_owned()
             .replace(CODE_NL_SEP, "\n")
             .replace(CODE_SP_SEP, " ");
-        // debug!("code sent to ldecavel: {}", sent_code_owned);
 
         let instance =
             if let Some(instance) = self.combat_instances.get_mut_instance_for_npc(npc_id) {

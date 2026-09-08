@@ -22,6 +22,7 @@ pub struct Player {
     current_room: String,
     dialogs_index: HashMap<String, (usize, usize)>,
     completed_quests: HashMap<Questid, u32>,
+    pub last_rooms: Vec<String>,
 }
 
 impl Player {
@@ -35,6 +36,7 @@ impl Player {
             current_room: PLAYER_ROOM_SPAWN.to_owned(),
             dialogs_index: HashMap::new(),
             completed_quests: HashMap::new(),
+            last_rooms: vec![PLAYER_ROOM_SPAWN.to_owned()],
         }
     }
     pub fn reset(&mut self) {
@@ -44,18 +46,21 @@ impl Player {
         self.current_room = PLAYER_ROOM_SPAWN.to_owned();
         self.dialogs_index.clear();
         self.completed_quests.clear();
+        self.last_rooms = vec![PLAYER_ROOM_SPAWN.to_owned()];
     }
 
     pub fn from_save(save: Save) -> Self {
+        let current_room = save.current_room;
         Self {
             name: save.name,
             id: save.id,
             hp: save.hp,
             max_hp: save.max_hp,
             inventory: save.inventory,
-            current_room: save.current_room,
+            current_room: current_room.clone(),
             dialogs_index: HashMap::new(),
             completed_quests: save.completed_quests,
+            last_rooms: vec![current_room],
         }
     }
     pub fn set_name(&mut self, new_name: String) {
@@ -94,6 +99,30 @@ impl Player {
     }
     pub fn move_to_room(&mut self, room: &RoomName) {
         self.current_room = room.clone();
+        self.add_last_room(room.clone());
+    }
+    pub fn get_last_rooms(&self) -> &[String] {
+        &self.last_rooms
+    }
+    pub fn get_last_rooms_mut(&mut self) -> &mut Vec<String> {
+        &mut self.last_rooms
+    }
+    pub fn add_last_room(&mut self, room: String) {
+        if self.last_rooms.last() == Some(&room) {
+            return;
+        }
+        self.last_rooms.push(room);
+        if self.last_rooms.len() > 7 {
+            self.last_rooms.remove(0);
+        }
+    }
+    pub fn clear_last_rooms(&mut self) {
+        self.last_rooms.clear();
+    }
+    pub fn reset_last_rooms_to_current(&mut self) {
+        let current = self.current_room.clone();
+        self.last_rooms.clear();
+        self.last_rooms.push(current);
     }
     pub fn get_dialog_index_for_npc(&self, npc_name: &str) -> Option<(usize, usize)> {
         self.dialogs_index.get(npc_name).copied()
