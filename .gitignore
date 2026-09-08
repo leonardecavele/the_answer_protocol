@@ -16,4 +16,4 @@ client/tui/docs/
 *_test.go
 !server/go_server/**/*_test.go
 
-go_server
+/server/go_server/go_server
