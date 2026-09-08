@@ -98,8 +98,8 @@ OK room=<room-identifier>
 ```
 
 Only a group leader moves a group; the other members follow automatically.
-Relevant errors include `NO_EXIT`, `NOT_GROUP_LEADER`, `PLAYER_NOT_FOUND`, and
-`PLAYER_ALREADY_IN_COMBAT`.
+Relevant errors include `NO_EXIT`, `NOT_GROUP_LEADER`, `PLAYER_NOT_FOUND`,
+`PLAYER_ALREADY_IN_COMBAT`, and `MISSING_ITEM`.
 
 #### WHO
 
@@ -388,7 +388,8 @@ client retains both the number and symbolic name.
 | `411` | `PLAYER_NOT_IN_COMBAT` | No active fight exists for the player. |
 | `412` | `FILE_NOT_FOUND` | The challenge source file cannot be loaded. |
 | `413` | `ROOM_NOT_FOUND` | The player's current room cannot be resolved. |
-| `429` | `TOO_MANY_REQUESTS` | More than twenty input frames arrived from one IP within one second. |
+| `414` | `MISSING_ITEM` | The player or group lacks an item required to enter the destination room. |
+| `429` | `TOO_MANY_REQUESTS` | More than twenty-five input frames arrived from one IP within one second. |
 | `900` | `CONNECTION_FAILED` | The game server is unavailable. |
 | `901` | `SEND_FAILED` | A command could not be sent between servers. |
 | `902` | `GAME_SERVER_TIMEOUT` | The game server did not answer within three seconds. |

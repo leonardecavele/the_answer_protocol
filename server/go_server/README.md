@@ -64,7 +64,7 @@ quest, and fight operations.
 | Authentication timeout | 30 seconds |
 | Client read timeout | 30 minutes |
 | Socket write timeout | 5 seconds |
-| Client input frames per IP | 20 per second |
+| Client input frames per IP | 25 per second |
 | Connection attempts per IP | 20 per second |
 | Flood violations before IP ban | 5 |
 | Flood-point decay | 1 point every 30 minutes and IP |

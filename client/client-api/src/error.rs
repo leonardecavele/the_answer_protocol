@@ -45,6 +45,8 @@ impl CommandError {
             411 => String::from("you are not in a fight"),
             412 => String::from("the server could not load the requested file"),
             413 => String::from("room not found"),
+            414 => String::from("an item is required to enter this room"),
+            429 => String::from("too many commands sent in a short time"),
             900 => String::from("server unavailable"),
             901 => String::from("the server could not deliver your message"),
             902 => String::from("the game server did not answer in time"),
