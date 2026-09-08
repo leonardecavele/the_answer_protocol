@@ -50,10 +50,10 @@ func (manager *ConnectionManager) Subscribe(client *Client) error {
 	}
 
 	manager.mutex.Lock()
-	defer manager.mutex.Unlock()
 
 	host := remoteHost(client)
 	if manager.floodManager.IsBanned(host) {
+		manager.mutex.Unlock()
 		return serverError.ErrIPBanned
 	}
 
@@ -70,20 +70,24 @@ func (manager *ConnectionManager) Subscribe(client *Client) error {
 		manager.connectionAttempts[host] = &rateWindow{}
 	}
 	if !manager.connectionAttempts[host].allow(now, config.MaxConnectionAttempts, config.ConnectionAttemptWindow) {
+		manager.mutex.Unlock()
+		manager.registerFlood(host, nil)
 		return serverError.ErrRateLimitExceeded
 	}
 
 	if _, ok := manager.connections[client]; ok {
+		manager.mutex.Unlock()
 		return serverError.ErrConnectionAlreadySubscribed
 	}
 	if len(manager.connections) >= manager.maxConnection {
+		manager.mutex.Unlock()
 		return serverError.ErrMaxConnection
 	}
 
 	manager.connections[client] = time.AfterFunc(manager.authenticationTimeout, func() {
 		manager.timeoutUnauthenticated(client)
 	})
-	client.floodHandler = manager.registerFlood
+	manager.mutex.Unlock()
 
 	return nil
 }
@@ -95,20 +99,35 @@ func (manager *ConnectionManager) RunFloodPointDecay(quit <-chan struct{}) {
 	manager.floodManager.RunDecay(quit)
 }
 
-func (manager *ConnectionManager) registerFlood(client *Client) {
+func (manager *ConnectionManager) AllowInput(client *Client) bool {
 	if manager == nil || client == nil || client.Conn == nil {
-		return
+		return false
 	}
 
 	host := remoteHost(client)
-	if !manager.floodManager.AddFloodPoint(host) {
+	allowed, banned := manager.floodManager.AllowInput(host)
+	if banned {
+		manager.disconnectHost(host, client)
+	}
+	return allowed
+}
+
+func (manager *ConnectionManager) registerFlood(host string, ignoredClient *Client) {
+	if manager == nil || host == "" {
 		return
 	}
 
+	if !manager.floodManager.AddFloodPoint(host) {
+		return
+	}
+	manager.disconnectHost(host, ignoredClient)
+}
+
+func (manager *ConnectionManager) disconnectHost(host string, ignoredClient *Client) {
 	manager.mutex.Lock()
 	connections := make([]net.Conn, 0)
 	for connectedClient := range manager.connections {
-		if connectedClient != client && remoteHost(connectedClient) == host {
+		if connectedClient != ignoredClient && remoteHost(connectedClient) == host {
 			connections = append(connections, connectedClient.Conn)
 		}
 	}

@@ -384,7 +384,7 @@ client retains both the number and symbolic name.
 | `411` | `PLAYER_NOT_IN_COMBAT` | No active fight exists for the player. |
 | `412` | `FILE_NOT_FOUND` | The challenge source file cannot be loaded. |
 | `413` | `ROOM_NOT_FOUND` | The player's current room cannot be resolved. |
-| `429` | `TOO_MANY_REQUESTS` | More than twenty commands arrived within one second. |
+| `429` | `TOO_MANY_REQUESTS` | More than twenty input frames arrived from one IP within one second. |
 | `900` | `CONNECTION_FAILED` | The game server is unavailable. |
 | `901` | `SEND_FAILED` | A command could not be sent between servers. |
 | `902` | `GAME_SERVER_TIMEOUT` | The game server did not answer within three seconds. |

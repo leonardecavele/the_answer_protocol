@@ -64,8 +64,8 @@ quest, and fight operations.
 | Authentication timeout | 30 seconds |
 | Client read timeout | 30 minutes |
 | Socket write timeout | 5 seconds |
-| Commands per client | 20 per second |
-| Connection attempts per host | 5 per 10 seconds |
+| Client input frames per IP | 20 per second |
+| Connection attempts per IP | 20 per second |
 | Flood violations before IP ban | 5 |
 | Flood-point decay | 1 point per hour and IP |
 | Rust command response timeout | 3 seconds |
@@ -73,9 +73,10 @@ quest, and fight operations.
 | Group size | 3 players |
 | Group invitation lifetime | 5 minutes |
 
-Exceeding the command rate produces `ERR 429 TOO_MANY_REQUESTS` and closes the
-connection. Each violation adds one flood point to the client's IP. More than
-five points bans that IP until the hourly decay brings it back to five points.
+Every input frame is counted before parsing, including an invalid `CONNECT`, and
+the rate window is shared by all connections from the same IP. Exceeding the
+input or connection-attempt rate adds one flood point. More than five points
+bans that IP until the hourly decay brings it back to five points.
 
 ## Command ownership
 

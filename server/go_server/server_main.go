@@ -129,7 +129,7 @@ func main() {
 
 		go func() {
 			defer connectionManager.Release(client)
-			client_conn.HandleClient(client, gameServerManager)
+			client_conn.HandleClient(client, gameServerManager, connectionManager)
 		}()
 	}
 }
