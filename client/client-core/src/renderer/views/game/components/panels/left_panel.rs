@@ -13,7 +13,7 @@ use crate::states::game::{
 use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect},
-    style::Color,
+    style::{Color, Modifier},
     text::Span,
     widgets::{List, ListItem},
 };
@@ -197,14 +197,23 @@ impl LeftPanel {
             .iter()
             .enumerate()
             .map(|(index, quest)| {
-                let (label, color) = quest_status(&quest.data.status);
-                let style = selection_style(color, focused && quests.is_selected(index));
+                let (_, color) = quest_status(&quest.data.status);
+                let selected = focused && quests.is_selected(index);
+
+                let progress = if quest.data.is_completed() {
+                    "done".to_string()
+                } else {
+                    format!("{}/{}", quest.data.current_step, quest.data.max_step)
+                };
+
+                let mut style = selection_style(color, selected);
+
+                if quest.data.is_completed() && !selected {
+                    style = style.add_modifier(Modifier::DIM);
+                }
 
                 ListItem::new(Span::styled(
-                    format!(
-                        "[{}/{} {}] {}",
-                        quest.data.current_step, quest.data.max_step, label, quest.data.name
-                    ),
+                    format!("• {} ({})", quest.data.name, progress),
                     style,
                 ))
             })
