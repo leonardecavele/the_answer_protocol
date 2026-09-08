@@ -6,6 +6,6 @@ import (
 
 const (
 	RoomSize       = 20
-	GroupSize      = 3
+	GroupSize      = 5
 	GroupInviteTTL = 5 * time.Minute
 )

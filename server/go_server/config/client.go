@@ -4,9 +4,9 @@ import "time"
 
 const (
 	MaxConnection           = RoomSize
-	MaxCommandsPerWindow    = 20
+	MaxCommandsPerWindow    = 25
 	CommandRateWindow       = time.Second
-	MaxConnectionAttempts   = MaxCommandsPerWindow
+	MaxConnectionAttempts   = 20
 	ConnectionAttemptWindow = CommandRateWindow
 	MaxFloodPoints          = 5
 	FloodPointDecayInterval = 30 * time.Minute
