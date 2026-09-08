@@ -66,7 +66,7 @@ func handleClientEvents(client *session.Client, done <-chan struct{}) {
 	}
 }
 
-func HandleClient(client *session.Client, gameServerManager *game_conn.GameServerManager) {
+func HandleClient(client *session.Client, gameServerManager *game_conn.GameServerManager, connectionManager *session.ConnectionManager) {
 	defer func() {
 		if err := client.DeleteClient(gameServerManager); err != nil {
 			logger.AppLogger.Error("%s Erase client error: %v\n", client.Id, err)
@@ -102,12 +102,20 @@ func HandleClient(client *session.Client, gameServerManager *game_conn.GameServe
 			return
 		}
 
-		if !client.AllowCommand() {
-			logger.AppLogger.Error("%s Command rate limit exceeded", client.Id)
+		if !connectionManager.AllowInput(client) {
+			logger.AppLogger.Error("%s Client input rate limit exceeded", client.Id)
 			if err := client.Write(protocol.ResponseTooManyRequests); err != nil {
 				logger.AppLogger.Error("%s Write error: %v\n", client.Id, err)
 			}
 			return
+		}
+		if !connectionManager.IsInputValid(str) {
+			logger.AppLogger.Error("%s Invalid client input", client.Id)
+			if err := client.Write(protocol.ResponseInvalidArguments); err != nil {
+				logger.AppLogger.Error("%s Write error: %v\n", client.Id, err)
+				return
+			}
+			continue
 		}
 
 		logger.AppLogger.Info("%s Client Read: %s", client.Id, str)

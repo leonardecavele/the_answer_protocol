@@ -265,8 +265,8 @@ tester activity, combat, and shutdown.
 tail -f /tmp/the_answer_protocol-$(id -u)/*-server.log
 ```
 
-Connection-attempt limits, the 20-client ceiling, and the ten-command-per-second
-limit detect and reject flooding. Filtering the structured level and message
+Connection-attempt limits, the 20-client ceiling, and the twenty-input-per-second
+per-IP limit detect and reject flooding. Filtering the structured level and message
 fields exposes recurring failures without blocking request handling. Detailed
 destinations and limits are owned by the [Go server documentation](server/go_server/README.md#logging).
 

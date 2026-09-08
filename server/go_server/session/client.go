@@ -23,19 +23,16 @@ const (
 )
 
 type Client struct {
-	Conn         net.Conn
-	Id           string
-	Username     string
-	State        ClientState
-	Group        *Group
-	Room         *Room
-	commandChan  chan game_conn.CommandFromGameServer
-	eventChan    chan protocol.Event
-	stateMutex   sync.RWMutex
-	writeMutex   sync.Mutex
-	rateMutex    sync.Mutex
-	commandRate  rateWindow
-	floodHandler func(*Client)
+	Conn        net.Conn
+	Id          string
+	Username    string
+	State       ClientState
+	Group       *Group
+	Room        *Room
+	commandChan chan game_conn.CommandFromGameServer
+	eventChan   chan protocol.Event
+	stateMutex  sync.RWMutex
+	writeMutex  sync.Mutex
 }
 
 func NewClient(conn net.Conn, room *Room) *Client {
@@ -118,20 +115,6 @@ func (c *Client) GetState() ClientState {
 
 func (c *Client) IsAuthenticated() bool {
 	return c.GetState() == AUTHENTICATED
-}
-
-func (c *Client) AllowCommand() bool {
-	if c == nil {
-		return false
-	}
-	c.rateMutex.Lock()
-	allowed := c.commandRate.allow(time.Now(), config.MaxCommandsPerWindow, config.CommandRateWindow)
-	c.rateMutex.Unlock()
-
-	if !allowed && c.floodHandler != nil {
-		c.floodHandler(c)
-	}
-	return allowed
 }
 
 func (c *Client) authenticate(username string) {

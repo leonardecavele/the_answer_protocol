@@ -26,6 +26,10 @@ Client frames, including the line ending, are limited to 4,096 bytes. A client
 keeps at most one command awaiting an `OK` or `ERR` response while continuing
 to process any interleaved `EVT` frames.
 
+Client frames containing invalid UTF-8 or control characters other than the
+terminating `LF` and its optional preceding `CR` are rejected with
+`ERR 400 INVALID_ARGUMENTS`.
+
 Command names, subcommands, chat scopes, and movement directions are
 case-insensitive. Examples use uppercase for readability.
 
@@ -384,7 +388,7 @@ client retains both the number and symbolic name.
 | `411` | `PLAYER_NOT_IN_COMBAT` | No active fight exists for the player. |
 | `412` | `FILE_NOT_FOUND` | The challenge source file cannot be loaded. |
 | `413` | `ROOM_NOT_FOUND` | The player's current room cannot be resolved. |
-| `429` | `TOO_MANY_REQUESTS` | More than twenty commands arrived within one second. |
+| `429` | `TOO_MANY_REQUESTS` | More than twenty input frames arrived from one IP within one second. |
 | `900` | `CONNECTION_FAILED` | The game server is unavailable. |
 | `901` | `SEND_FAILED` | A command could not be sent between servers. |
 | `902` | `GAME_SERVER_TIMEOUT` | The game server did not answer within three seconds. |
