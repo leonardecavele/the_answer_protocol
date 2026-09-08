@@ -6,7 +6,7 @@ use rust_server::parser::Parser;
 use clap::Parser as ClapParser;
 use rustyline::error::ReadlineError;
 use rustyline::{DefaultEditor, ExternalPrinter};
-use std::io::{BufRead, BufReader};
+use std::io::{BufRead, BufReader, IsTerminal, Write};
 use std::net::{TcpListener, TcpStream};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -77,10 +77,31 @@ where
                 std::process::exit(1);
             }
             if let Some(f) = file.as_mut() {
-                use std::io::Write;
                 let _ = write!(f, "{}", msg);
             }
             printer.print(msg).ok();
+        });
+    });
+}
+
+fn start_log_writer_thread(log_receiver: mpsc::Receiver<String>) {
+    thread::spawn(move || {
+        let mut file = std::fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open("app.log")
+            .ok();
+        let mut stdout = std::io::stdout();
+
+        log_receiver.into_iter().for_each(|msg| {
+            if msg == "FLUSH_EXIT" {
+                std::process::exit(1);
+            }
+            if let Some(f) = file.as_mut() {
+                let _ = write!(f, "{}", msg);
+            }
+            let _ = stdout.write_all(msg.as_bytes());
+            let _ = stdout.flush();
         });
     });
 }
@@ -94,15 +115,18 @@ struct Args {
 fn main() -> std::io::Result<()> {
     let args = Args::parse();
 
-    let mut rustyline = DefaultEditor::new()
-        .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
-
-    let printer = rustyline
-        .create_external_printer()
-        .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
-
     let (log_sender, log_receiver) = mpsc::channel::<String>();
-    start_log_printer_thread(printer, log_receiver);
+    let rustyline = if std::io::stdin().is_terminal() && std::io::stdout().is_terminal() {
+        let mut editor = DefaultEditor::new().map_err(std::io::Error::other)?;
+        let printer = editor
+            .create_external_printer()
+            .map_err(std::io::Error::other)?;
+        start_log_printer_thread(printer, log_receiver);
+        Some(editor)
+    } else {
+        start_log_writer_thread(log_receiver);
+        None
+    };
 
     let (command_sender, command_receiver) = mpsc::channel::<String>();
 
@@ -150,7 +174,9 @@ fn main() -> std::io::Result<()> {
     })
     .expect("error while setting Ctrl-C handler");
 
-    start_input_reader_thread(rustyline, command_sender, running.clone());
+    if let Some(rustyline) = rustyline {
+        start_input_reader_thread(rustyline, command_sender, running.clone());
+    }
 
     let mut game_manager: Option<GameManager> = None;
     let mut tester_receiver = Some(tester_receiver);

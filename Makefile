@@ -96,10 +96,10 @@ run:
 		ensure_stopped "$(RUST_SERVER_PID_FILE)" "rust server"
 	@$(MAKE) build-go-server build-rust-server build-client-tui
 	@$(HELPERS) info_log "starting Rust server in background"
-	@(cd $(RUST_SERVER_DIR) && exec ./target/debug/rust_server) > "$(RUST_SERVER_LOG)" 2>&1 & \
+	@(cd $(RUST_SERVER_DIR) && exec ./target/debug/rust_server $(RUST_SERVER_ARGS)) < /dev/null > "$(RUST_SERVER_LOG)" 2>&1 & \
 		echo $$! > "$(RUST_SERVER_PID_FILE)"
 	@$(HELPERS) info_log "starting Go server in background"
-	@(cd $(GO_SERVER_DIR) && exec ./go_server $(GO_SERVER_ARGS)) > "$(GO_SERVER_LOG)" 2>&1 & \
+	@(cd $(GO_SERVER_DIR) && exec ./go_server $(GO_SERVER_ARGS)) < /dev/null > "$(GO_SERVER_LOG)" 2>&1 & \
 		echo $$! > "$(GO_SERVER_PID_FILE)"
 	@$(HELPERS) info_log "starting TUI client"
 	@cd $(CLIENT_DIR) && exec ./target/debug/tui $(CLIENT_ARGS)

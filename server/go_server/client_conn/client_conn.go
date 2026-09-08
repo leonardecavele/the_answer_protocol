@@ -109,6 +109,14 @@ func HandleClient(client *session.Client, gameServerManager *game_conn.GameServe
 			}
 			return
 		}
+		if !connectionManager.IsInputValid(str) {
+			logger.AppLogger.Error("%s Invalid client input", client.Id)
+			if err := client.Write(protocol.ResponseInvalidArguments); err != nil {
+				logger.AppLogger.Error("%s Write error: %v\n", client.Id, err)
+				return
+			}
+			continue
+		}
 
 		logger.AppLogger.Info("%s Client Read: %s", client.Id, str)
 		response, err := handleTapCommand(str, client, gameServerManager)

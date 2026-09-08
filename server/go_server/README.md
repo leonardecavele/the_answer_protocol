@@ -78,6 +78,10 @@ the rate window is shared by all connections from the same IP. Exceeding the
 input or connection-attempt rate adds one flood point. More than five points
 bans that IP until the hourly decay brings it back to five points.
 
+Before logging or dispatching a frame, the gateway rejects invalid UTF-8 and
+control characters other than the terminating `LF` and its optional preceding
+`CR` with `ERR 400 INVALID_ARGUMENTS`.
+
 ## Command ownership
 
 The gateway handles these concerns directly:

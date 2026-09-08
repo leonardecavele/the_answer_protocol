@@ -4,8 +4,11 @@ import (
 	"go_server/config"
 	serverError "go_server/error"
 	"net"
+	"strings"
 	"sync"
 	"time"
+	"unicode"
+	"unicode/utf8"
 )
 
 type ConnectionManager struct {
@@ -110,6 +113,17 @@ func (manager *ConnectionManager) AllowInput(client *Client) bool {
 		manager.disconnectHost(host, client)
 	}
 	return allowed
+}
+
+func (manager *ConnectionManager) IsInputValid(input string) bool {
+	if manager == nil || !utf8.ValidString(input) || !strings.HasSuffix(input, "\n") {
+		return false
+	}
+
+	input = strings.TrimSuffix(input, "\n")
+	input = strings.TrimSuffix(input, "\r")
+
+	return !strings.ContainsFunc(input, unicode.IsControl)
 }
 
 func (manager *ConnectionManager) registerFlood(host string, ignoredClient *Client) {

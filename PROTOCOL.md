@@ -26,6 +26,10 @@ Client frames, including the line ending, are limited to 4,096 bytes. A client
 keeps at most one command awaiting an `OK` or `ERR` response while continuing
 to process any interleaved `EVT` frames.
 
+Client frames containing invalid UTF-8 or control characters other than the
+terminating `LF` and its optional preceding `CR` are rejected with
+`ERR 400 INVALID_ARGUMENTS`.
+
 Command names, subcommands, chat scopes, and movement directions are
 case-insensitive. Examples use uppercase for readability.
 
