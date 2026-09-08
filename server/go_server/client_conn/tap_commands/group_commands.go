@@ -20,7 +20,7 @@ var groupCommands = map[string]handleGroup{
 }
 
 func groupCreate(args string, client *session.Client, gameServerManager *game_conn.GameServerManager) (string, error) {
-	if response, err := isOk(args, client, gameServerManager, false, false); response != "" || err != nil {
+	if response, err := isOk(args, client, gameServerManager, true, false); response != "" || err != nil {
 		return response, err
 	}
 	if client.Group != nil {
@@ -36,7 +36,7 @@ func groupCreate(args string, client *session.Client, gameServerManager *game_co
 }
 
 func groupInvite(args string, client *session.Client, gameServerManager *game_conn.GameServerManager) (string, error) {
-	if response, err := isOk(args, client, gameServerManager, false, true); response != "" || err != nil {
+	if response, err := isOk(args, client, gameServerManager, true, true); response != "" || err != nil {
 		return response, err
 	}
 	if client.Group == nil {
@@ -74,7 +74,7 @@ func groupInvite(args string, client *session.Client, gameServerManager *game_co
 }
 
 func groupJoin(args string, client *session.Client, gameServerManager *game_conn.GameServerManager) (string, error) {
-	if response, err := isOk(args, client, gameServerManager, false, true); response != "" || err != nil {
+	if response, err := isOk(args, client, gameServerManager, true, true); response != "" || err != nil {
 		return response, err
 	}
 	if client.Group != nil {
