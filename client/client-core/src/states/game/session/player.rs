@@ -1,4 +1,5 @@
 use crate::collections::SelectableList;
+use crate::states::game::session::quest::{Quest, QuestId};
 use crate::states::game::world::Item;
 use client_api::commands::{QuestData, QuestStatus};
 
@@ -7,7 +8,8 @@ pub struct PlayerState {
     pub hp: u32,
     pub max_hp: u32,
     pub inventory: SelectableList<Item>,
-    pub quests: SelectableList<QuestData>,
+    pub quests: SelectableList<Quest>,
+    next_quest_id: u64,
 }
 
 impl PlayerState {
@@ -18,6 +20,7 @@ impl PlayerState {
             max_hp: 100,
             inventory: SelectableList::new(),
             quests: SelectableList::new(),
+            next_quest_id: 0,
         }
     }
 
@@ -57,31 +60,80 @@ impl PlayerState {
         self.inventory.remove(index)
     }
 
-    pub fn set_quest_step(&mut self, name: String, current_step: u8) {
-        let Some(quest) = self
-            .quests
+    fn new_quest(&mut self, data: QuestData) -> Quest {
+        self.next_quest_id += 1;
+
+        Quest::new(self.next_quest_id, data)
+    }
+
+    pub fn find_quest(&self, id: QuestId) -> Option<&Quest> {
+        self.quests.iter().find(|quest| quest.id == id)
+    }
+
+    fn find_active_quest_index(&self, name: &str) -> Option<usize> {
+        self.quests.iter().position(|quest| {
+            !quest.data.is_completed() && quest.data.name.eq_ignore_ascii_case(name)
+        })
+    }
+
+    fn find_active_quest_mut(&mut self, name: &str) -> Option<&mut Quest> {
+        self.quests
             .iter_mut()
-            .find(|item| item.name.eq_ignore_ascii_case(&name))
-        else {
+            .find(|quest| !quest.data.is_completed() && quest.data.name.eq_ignore_ascii_case(name))
+    }
+
+    fn sort_quests(&mut self) {
+        self.quests.sort_by_key(|quest| quest.data.is_completed());
+    }
+
+    pub fn set_quests(&mut self, quests: Vec<QuestData>) {
+        let quests = quests
+            .into_iter()
+            .map(|data| self.new_quest(data))
+            .collect();
+
+        self.quests.set_items(quests);
+        self.sort_quests();
+    }
+
+    pub fn set_quest(&mut self, data: QuestData) {
+        match (
+            self.find_active_quest_index(&data.name),
+            data.is_completed(),
+        ) {
+            (Some(index), _) => {
+                if let Some(quest) = self.quests.get_mut(index) {
+                    quest.data = data;
+                }
+            }
+            (None, false) => {
+                let quest = self.new_quest(data);
+                self.quests.push(quest);
+            }
+            (None, true) => return,
+        }
+
+        self.sort_quests();
+    }
+
+    pub fn set_quest_step(&mut self, name: String, current_step: u8) {
+        let Some(quest) = self.find_active_quest_mut(&name) else {
             return;
         };
 
-        quest.current_step = current_step;
+        quest.data.current_step = current_step;
     }
 
     pub fn set_quest_as_completed(&mut self, name: String, rewards: Vec<Item>) {
-        let Some(quest) = self
-            .quests
-            .iter_mut()
-            .find(|item| item.name.eq_ignore_ascii_case(&name))
-        else {
+        let Some(quest) = self.find_active_quest_mut(&name) else {
             return;
         };
 
-        quest.current_step = quest.max_step;
-        quest.status = QuestStatus::Completed;
+        quest.data.current_step = quest.data.max_step;
+        quest.data.status = QuestStatus::Completed;
 
-        self.inventory.extend(rewards)
+        self.inventory.extend(rewards);
+        self.sort_quests();
     }
 }
 

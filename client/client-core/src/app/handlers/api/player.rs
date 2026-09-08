@@ -36,7 +36,7 @@ impl App {
     }
 
     pub fn on_quests(&mut self, response: QuestsResponse) {
-        self.state.game.player.quests.set_items(response.quest_list);
+        self.state.game.player.set_quests(response.quest_list);
 
         self.state
             .game
@@ -90,7 +90,7 @@ impl App {
     }
 
     pub fn on_quest(&mut self, response: QuestResponse) {
-        self.state.game.player.quests.push(response.quest_data);
+        self.state.game.player.set_quest(response.quest_data);
     }
 
     pub fn on_take_item(&mut self, response: TakeResponse) {

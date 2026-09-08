@@ -308,9 +308,12 @@ impl GameView {
                 }
                 LeftPanelHit::Quest(index) => {
                     if state.game.player.quests.is_selected(index) {
-                        requested = state.game.player.quests.selected().map(|quest| {
-                            Overlay::QuestDetail(QuestDetailState::new(quest.name.clone()))
-                        });
+                        requested = state
+                            .game
+                            .player
+                            .quests
+                            .selected()
+                            .map(|quest| Overlay::QuestDetail(QuestDetailState::new(quest.id)));
                     } else {
                         state.game.player.quests.select_index(index);
                     }

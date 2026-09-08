@@ -68,6 +68,15 @@ impl<T> SelectableList<T> {
         self.items.iter_mut()
     }
 
+    pub fn get_mut(&mut self, index: usize) -> Option<&mut T> {
+        self.items.get_mut(index)
+    }
+
+    pub fn sort_by_key<K: Ord>(&mut self, key: impl Fn(&T) -> K) {
+        self.items.sort_by_key(key);
+        self.selected = None;
+    }
+
     pub fn retain(&mut self, predicate: impl FnMut(&T) -> bool) {
         self.items.retain(predicate);
         self.clamp_selection();

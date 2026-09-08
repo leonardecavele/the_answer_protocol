@@ -197,13 +197,13 @@ impl LeftPanel {
             .iter()
             .enumerate()
             .map(|(index, quest)| {
-                let (label, color) = quest_status(&quest.status);
+                let (label, color) = quest_status(&quest.data.status);
                 let style = selection_style(color, focused && quests.is_selected(index));
 
                 ListItem::new(Span::styled(
                     format!(
                         "[{}/{} {}] {}",
-                        quest.current_step, quest.max_step, label, quest.name
+                        quest.data.current_step, quest.data.max_step, label, quest.data.name
                     ),
                     style,
                 ))
@@ -427,11 +427,11 @@ impl Lifecycle for LeftPanel {
                 }
                 crossterm::event::KeyCode::Enter => match state.game.player.quests.selected() {
                     Some(quest) => {
-                        let name = quest.name.clone();
+                        let id = quest.id;
                         state
                             .game
                             .overlays
-                            .open(Overlay::QuestDetail(QuestDetailState::new(name)));
+                            .open(Overlay::QuestDetail(QuestDetailState::new(id)));
                         EventFlow::Consumed
                     }
                     None => EventFlow::Ignored,

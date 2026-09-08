@@ -3,17 +3,18 @@ use crate::renderer::components::{Component, EventFlow, Lifecycle};
 use crate::renderer::layout::{centered_rect, percent_of};
 use crate::renderer::text::wrap_str_to_lines;
 use crate::renderer::theme::{close_hint, dim_style, popup_block, quest_status};
-use crate::states::AppState;
 use crate::states::game::QuestDetailState;
+use crate::states::AppState;
 use client_api::commands::{QuestData, QuestReward};
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
 use ratatui::widgets::{Borders, Padding};
 use ratatui::{
-    Frame,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Line, Span},
     widgets::{Block, Clear, Paragraph},
+    style::Stylize,
+    Frame
 };
 use tokio::sync::mpsc::Sender;
 
@@ -37,8 +38,9 @@ impl QuestDetailPopup {
         Self::default()
     }
 
-    fn reward_label(quest: &QuestData, reward: &QuestReward) -> String {
-        let item = format!("{} x{}", reward.r#type, reward.qty);
+    fn reward_label(state: &AppState, quest: &QuestData, reward: &QuestReward) -> String {
+        let item_name = state.game.manifest.item_name(&reward.r#type);
+        let item = format!("{} x{}", item_name, reward.qty);
 
         if quest.is_completed() || reward.chance >= 100 {
             item
@@ -47,10 +49,10 @@ impl QuestDetailPopup {
         }
     }
 
-    fn draw_status(quest: &QuestData, show_steps: bool, frame: &mut Frame, area: Rect) {
+    fn draw_status(quest: &QuestData, frame: &mut Frame, area: Rect) {
         let (label, color) = quest_status(&quest.status);
         let steps = format!("{} / {}", quest.current_step, quest.max_step);
-        let steps_width = if show_steps { steps.len() as u16 } else { 0 };
+        let steps_width = steps.len() as u16;
 
         let columns = Layout::default()
             .direction(Direction::Horizontal)
@@ -67,12 +69,10 @@ impl QuestDetailPopup {
             columns[0],
         );
 
-        if show_steps {
-            frame.render_widget(
-                Paragraph::new(steps).alignment(Alignment::Right),
-                columns[1],
-            );
-        }
+        frame.render_widget(
+            Paragraph::new(steps).alignment(Alignment::Right),
+            columns[1],
+        );
     }
 
     fn draw_progress(quest: &QuestData, frame: &mut Frame, area: Rect) {
@@ -98,7 +98,7 @@ impl QuestDetailPopup {
         );
     }
 
-    fn body(quest: &QuestData, max_width: usize) -> Vec<Line<'static>> {
+    fn body(state: &AppState, quest: &QuestData, max_width: usize) -> Vec<Line<'static>> {
         let mut lines = wrap_str_to_lines(&quest.description, max_width);
 
         if quest.reward.is_empty() {
@@ -122,7 +122,7 @@ impl QuestDetailPopup {
         for reward in &quest.reward {
             lines.push(Line::from(format!(
                 "  {}",
-                Self::reward_label(quest, reward)
+                Self::reward_label(state, quest, reward)
             )));
         }
 
@@ -136,31 +136,23 @@ impl Component for QuestDetailPopup {
     }
 
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
-        let quest_name = match state.game.overlays.get::<QuestDetailState>() {
-            Some(overlay) => overlay.name.as_str(),
+        let quest_id = match state.game.overlays.get::<QuestDetailState>() {
+            Some(overlay) => overlay.id,
             None => return,
         };
 
-        let quest = match state
-            .game
-            .player
-            .quests
-            .iter()
-            .find(|q| q.name == quest_name)
-        {
-            Some(quest) => quest,
+        let quest = match state.game.player.find_quest(quest_id) {
+            Some(quest) => &quest.data,
             None => return,
         };
 
         let popup_width = percent_of(area.width, POPUP_WIDTH_PERCENT);
         let inner_width = popup_width.saturating_sub(BORDERS + HORIZONTAL_PADDING);
 
-        let body = Self::body(quest, inner_width as usize);
-        let has_progress = quest.max_step > 1;
-        let progress_height = if has_progress { PROGRESS_HEIGHT } else { 0 };
+        let body = Self::body(state, quest, inner_width as usize);
 
         let content_height =
-            STATUS_HEIGHT + progress_height + SPACER_HEIGHT + body.len() as u16 + FOOTER_HEIGHT;
+            STATUS_HEIGHT + PROGRESS_HEIGHT + SPACER_HEIGHT + body.len() as u16 + FOOTER_HEIGHT;
 
         let max_height = percent_of(area.height, MAX_HEIGHT_PERCENT).max(MIN_HEIGHT);
         let popup_height = (content_height + BORDERS).clamp(MIN_HEIGHT, max_height);
@@ -179,18 +171,15 @@ impl Component for QuestDetailPopup {
             .direction(Direction::Vertical)
             .constraints([
                 Constraint::Length(STATUS_HEIGHT),
-                Constraint::Length(progress_height),
+                Constraint::Length(PROGRESS_HEIGHT),
                 Constraint::Length(SPACER_HEIGHT),
                 Constraint::Min(1),
                 Constraint::Length(FOOTER_HEIGHT),
             ])
             .split(inner_area);
 
-        Self::draw_status(quest, has_progress, frame, chunks[0]);
-
-        if has_progress {
-            Self::draw_progress(quest, frame, chunks[1]);
-        }
+        Self::draw_status(quest, frame, chunks[0]);
+        Self::draw_progress(quest, frame, chunks[1]);
 
         frame.render_widget(Paragraph::new(body), chunks[3]);
         frame.render_widget(close_hint(), chunks[4]);
