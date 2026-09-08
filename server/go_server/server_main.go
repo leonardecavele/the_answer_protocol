@@ -90,6 +90,7 @@ func main() {
 	connectionManager := session.NewConnectionManager()
 	room := session.NewRoom()
 
+	go connectionManager.RunFloodPointDecay(quit)
 	go gameServerManager.HandleGameServer(
 		quit,
 		serverOptions.RustServerAddress(),

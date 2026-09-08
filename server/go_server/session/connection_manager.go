@@ -15,6 +15,7 @@ type ConnectionManager struct {
 	authenticationTimeout time.Duration
 	connectionAttempts    map[string]*rateWindow
 	lastAttemptCleanup    time.Time
+	floodManager          *FloodManager
 }
 
 func NewConnectionManager() *ConnectionManager {
@@ -27,6 +28,7 @@ func newConnectionManager(maxConnection int, authenticationTimeout time.Duration
 		maxConnection:         maxConnection,
 		authenticationTimeout: authenticationTimeout,
 		connectionAttempts:    make(map[string]*rateWindow),
+		floodManager:          NewFloodManager(),
 	}
 }
 
@@ -50,6 +52,11 @@ func (manager *ConnectionManager) Subscribe(client *Client) error {
 	manager.mutex.Lock()
 	defer manager.mutex.Unlock()
 
+	host := remoteHost(client)
+	if manager.floodManager.IsBanned(host) {
+		return serverError.ErrIPBanned
+	}
+
 	now := time.Now()
 	if now.Sub(manager.lastAttemptCleanup) >= config.ConnectionAttemptWindow {
 		for host, window := range manager.connectionAttempts {
@@ -59,7 +66,6 @@ func (manager *ConnectionManager) Subscribe(client *Client) error {
 		}
 		manager.lastAttemptCleanup = now
 	}
-	host := remoteHost(client)
 	if manager.connectionAttempts[host] == nil {
 		manager.connectionAttempts[host] = &rateWindow{}
 	}
@@ -77,8 +83,40 @@ func (manager *ConnectionManager) Subscribe(client *Client) error {
 	manager.connections[client] = time.AfterFunc(manager.authenticationTimeout, func() {
 		manager.timeoutUnauthenticated(client)
 	})
+	client.floodHandler = manager.registerFlood
 
 	return nil
+}
+
+func (manager *ConnectionManager) RunFloodPointDecay(quit <-chan struct{}) {
+	if manager == nil {
+		return
+	}
+	manager.floodManager.RunDecay(quit)
+}
+
+func (manager *ConnectionManager) registerFlood(client *Client) {
+	if manager == nil || client == nil || client.Conn == nil {
+		return
+	}
+
+	host := remoteHost(client)
+	if !manager.floodManager.AddFloodPoint(host) {
+		return
+	}
+
+	manager.mutex.Lock()
+	connections := make([]net.Conn, 0)
+	for connectedClient := range manager.connections {
+		if connectedClient != client && remoteHost(connectedClient) == host {
+			connections = append(connections, connectedClient.Conn)
+		}
+	}
+	manager.mutex.Unlock()
+
+	for _, connection := range connections {
+		_ = connection.Close()
+	}
 }
 
 func (manager *ConnectionManager) Release(client *Client) {

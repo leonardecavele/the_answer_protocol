@@ -7,6 +7,7 @@ import (
 	"go_server/config"
 	serverError "go_server/error"
 	"go_server/game_conn"
+	"go_server/logger"
 	"go_server/protocol"
 	"net"
 	"strings"
@@ -22,18 +23,19 @@ const (
 )
 
 type Client struct {
-	Conn        net.Conn
-	Id          string
-	Username    string
-	State       ClientState
-	Group       *Group
-	Room        *Room
-	commandChan chan game_conn.CommandFromGameServer
-	eventChan   chan protocol.Event
-	stateMutex  sync.RWMutex
-	writeMutex  sync.Mutex
-	rateMutex   sync.Mutex
-	commandRate rateWindow
+	Conn         net.Conn
+	Id           string
+	Username     string
+	State        ClientState
+	Group        *Group
+	Room         *Room
+	commandChan  chan game_conn.CommandFromGameServer
+	eventChan    chan protocol.Event
+	stateMutex   sync.RWMutex
+	writeMutex   sync.Mutex
+	rateMutex    sync.Mutex
+	commandRate  rateWindow
+	floodHandler func(*Client)
 }
 
 func NewClient(conn net.Conn, room *Room) *Client {
@@ -42,8 +44,8 @@ func NewClient(conn net.Conn, room *Room) *Client {
 		Id:          conn.RemoteAddr().String(),
 		State:       CONNECTED,
 		Room:        room,
-		commandChan: make(chan game_conn.CommandFromGameServer, 16),
-		eventChan:   make(chan protocol.Event, 16),
+		commandChan: make(chan game_conn.CommandFromGameServer, 64),
+		eventChan:   make(chan protocol.Event, 64),
 	}
 }
 
@@ -123,8 +125,13 @@ func (c *Client) AllowCommand() bool {
 		return false
 	}
 	c.rateMutex.Lock()
-	defer c.rateMutex.Unlock()
-	return c.commandRate.allow(time.Now(), config.MaxCommandsPerWindow, config.CommandRateWindow)
+	allowed := c.commandRate.allow(time.Now(), config.MaxCommandsPerWindow, config.CommandRateWindow)
+	c.rateMutex.Unlock()
+
+	if !allowed && c.floodHandler != nil {
+		c.floodHandler(c)
+	}
+	return allowed
 }
 
 func (c *Client) authenticate(username string) {
@@ -222,6 +229,7 @@ func (c *Client) SendEvent(event protocol.Event) bool {
 	case c.eventChan <- event:
 		return true
 	default:
+		logger.AppLogger.Error("%s Event dropped: event_name=%s data=%v", c.Id, event.EventName, event.Data)
 		return false
 	}
 }
