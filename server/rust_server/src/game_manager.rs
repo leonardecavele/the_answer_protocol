@@ -398,13 +398,13 @@ impl GameManager {
             return;
         };
         player.add_completed_quest(quest_name.to_string());
-        // let reward_items_vec_json = JsonValue::Array(given_items_vec.into_iter().map(JsonValue::String).collect());
+        let reward_items_vec_json = JsonValue::Array(given_items_vec.into_iter().map(JsonValue::String).collect());
         let event = GameManager::generate_no_player_event_json(
             &vec![player.get_name().to_string()],
             "QUEST COMPLETE",
             object! {
                 "name" => quest_name,
-                "reward_items" => format!("{:?}", given_items_vec),
+                "reward_items" => reward_items_vec_json,
             }
             .dump()
             .as_str(),
