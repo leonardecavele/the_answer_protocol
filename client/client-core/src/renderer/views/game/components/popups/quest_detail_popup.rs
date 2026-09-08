@@ -3,18 +3,17 @@ use crate::renderer::components::{Component, EventFlow, Lifecycle};
 use crate::renderer::layout::{centered_rect, percent_of};
 use crate::renderer::text::wrap_str_to_lines;
 use crate::renderer::theme::{close_hint, dim_style, popup_block, quest_status};
-use crate::states::game::QuestDetailState;
 use crate::states::AppState;
+use crate::states::game::QuestDetailState;
 use client_api::commands::{QuestData, QuestReward};
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
 use ratatui::widgets::{Borders, Padding};
 use ratatui::{
+    Frame,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Line, Span},
     widgets::{Block, Clear, Paragraph},
-    style::Stylize,
-    Frame
 };
 use tokio::sync::mpsc::Sender;
 
@@ -91,6 +90,11 @@ impl QuestDetailPopup {
             width: percent_of(inner_area.width, percent),
             ..inner_area
         };
+
+        frame.render_widget(
+            Block::default().style(Style::default().bg(Color::Black)),
+            inner_area,
+        );
 
         frame.render_widget(
             Block::default().style(Style::default().bg(color)),
