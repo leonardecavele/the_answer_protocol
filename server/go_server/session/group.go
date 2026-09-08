@@ -138,16 +138,26 @@ func (c *Client) JoinGroup(group *Group) string {
 func (group *Group) deleteExpiredInvites(now time.Time) {
 	for username, expiresAt := range group.invites {
 		if now.After(expiresAt) {
-			delete(group.invites, username)
-			leader := group.clients[group.leader]
-			if leader != nil && leader.Room != nil {
-				leader.Room.RouteEvent(username, protocol.Event{
-					EmittedBy: group.leader,
-					EventName: "GROUP INVITE",
-					Data:      "REMOVED",
-				})
-			}
+			group.deleteInvite(username)
 		}
+	}
+}
+
+func (group *Group) deleteAllInvites() {
+	for username := range group.invites {
+		group.deleteInvite(username)
+	}
+}
+
+func (group *Group) deleteInvite(username string) {
+	delete(group.invites, username)
+	leader := group.clients[group.leader]
+	if leader != nil && leader.Room != nil {
+		leader.Room.RouteEvent(username, protocol.Event{
+			EmittedBy: group.leader,
+			EventName: "GROUP INVITE",
+			Data:      "REMOVED",
+		})
 	}
 }
 
@@ -163,6 +173,7 @@ func (c *Client) QuitGroup() {
 		for _, client := range group.clients {
 			clients = append(clients, client)
 		}
+		group.deleteAllInvites()
 		group.clients = nil
 		group.mutex.Unlock()
 
