@@ -142,7 +142,7 @@ impl App {
 
     pub fn on_teleport(&mut self) {
         self.state.ui.notifications.push(Notification::warning(
-            "💀 A player on your team absolutely sucks. 🤬",
+            "A player on your team died, you respawn with them.",
         ));
 
         self.send(ApiRequest::Look(LookCommand))
