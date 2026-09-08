@@ -9,7 +9,7 @@ const (
 	MaxConnectionAttempts   = MaxCommandsPerWindow
 	ConnectionAttemptWindow = CommandRateWindow
 	MaxFloodPoints          = 5
-	FloodPointDecayInterval = time.Hour
+	FloodPointDecayInterval = 30 * time.Minute
 	AuthenticationTimeout   = 30 * time.Second
 	ClientReadTimeout       = 30 * time.Minute
 )

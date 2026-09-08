@@ -43,7 +43,7 @@ func (manager *FloodManager) allowInput(ip string, now time.Time) (bool, bool) {
 	manager.mutex.Lock()
 	defer manager.mutex.Unlock()
 
-	if manager.pointsByIP[ip] > manager.maxPoints {
+	if manager.pointsByIP[ip] >= manager.maxPoints {
 		return false, true
 	}
 	if manager.inputsByIP[ip] == nil {
@@ -54,7 +54,7 @@ func (manager *FloodManager) allowInput(ip string, now time.Time) (bool, bool) {
 	}
 
 	manager.pointsByIP[ip]++
-	return false, manager.pointsByIP[ip] > manager.maxPoints
+	return false, manager.pointsByIP[ip] >= manager.maxPoints
 }
 
 func (manager *FloodManager) AddFloodPoint(ip string) bool {
@@ -65,8 +65,11 @@ func (manager *FloodManager) AddFloodPoint(ip string) bool {
 	manager.mutex.Lock()
 	defer manager.mutex.Unlock()
 
+	if manager.pointsByIP[ip] >= manager.maxPoints {
+		return true
+	}
 	manager.pointsByIP[ip]++
-	return manager.pointsByIP[ip] > manager.maxPoints
+	return manager.pointsByIP[ip] >= manager.maxPoints
 }
 
 func (manager *FloodManager) IsBanned(ip string) bool {
@@ -77,7 +80,7 @@ func (manager *FloodManager) IsBanned(ip string) bool {
 	manager.mutex.Lock()
 	defer manager.mutex.Unlock()
 
-	return manager.pointsByIP[ip] > manager.maxPoints
+	return manager.pointsByIP[ip] >= manager.maxPoints
 }
 
 func (manager *FloodManager) RunDecay(quit <-chan struct{}) {

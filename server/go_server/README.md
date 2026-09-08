@@ -67,7 +67,7 @@ quest, and fight operations.
 | Client input frames per IP | 20 per second |
 | Connection attempts per IP | 20 per second |
 | Flood violations before IP ban | 5 |
-| Flood-point decay | 1 point per hour and IP |
+| Flood-point decay | 1 point every 30 minutes and IP |
 | Rust command response timeout | 3 seconds |
 | Rust question response timeout | 5 seconds |
 | Group size | 3 players |
@@ -75,8 +75,8 @@ quest, and fight operations.
 
 Every input frame is counted before parsing, including an invalid `CONNECT`, and
 the rate window is shared by all connections from the same IP. Exceeding the
-input or connection-attempt rate adds one flood point. More than five points
-bans that IP until the hourly decay brings it back to five points.
+input or connection-attempt rate adds one flood point, capped at five. Five
+points ban that IP until the 30-minute decay brings it below five points.
 
 Before logging or dispatching a frame, the gateway rejects invalid UTF-8 and
 control characters other than the terminating `LF` and its optional preceding
