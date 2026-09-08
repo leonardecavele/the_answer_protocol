@@ -506,14 +506,23 @@ impl GameManager {
                     self.add_diff_to_tick(event);
                     self.player_attacks_npc(dmg, player_id, npc_id);
 
-                    let (time_took_to_succeed, assigned_file_name) = self.combat_instances.get_instance_for_npc(npc_id)
-                        .map(|instance| (instance.get_combat_duration_in_seconds(), instance.get_assigned_file_name().to_string()))
+                    let (time_took_to_succeed, assigned_file_name) = self
+                        .combat_instances
+                        .get_instance_for_npc(npc_id)
+                        .map(|instance| {
+                            (
+                                instance.get_combat_duration_in_seconds(),
+                                instance.get_assigned_file_name().to_string(),
+                            )
+                        })
                         .unwrap_or((0, "".to_string()));
 
-
                     // Quest Completion part
-                    self.check_complete_code_quest(player, assigned_file_name.as_str(), time_took_to_succeed);
-
+                    self.check_complete_code_quest(
+                        player,
+                        assigned_file_name.as_str(),
+                        time_took_to_succeed,
+                    );
                 } else {
                     let players_in_instance = self
                         .get_player_instance_group(player_id)
@@ -583,11 +592,9 @@ impl GameManager {
             command_name, player_name, data
         );
 
-        if !(command_name == "CONNECT"
-            || command_name == "QUIT"
-            || command_name == "FIGHT_ATTACK"
-            || command_name == "GROUP LEAVE")
-        {
+        let autorised_commands_in_instance =
+            vec!["CONNECT", "QUIT", "FIGHT_ATTACK", "GROUP LEAVE", "LOOK"];
+        if !(autorised_commands_in_instance.contains(&command_name.to_uppercase().as_str())) {
             if let Some(already_in_instance) =
                 self.check_player_is_in_instance(player_name, player_id, command_name)
             {
@@ -990,7 +997,9 @@ impl GameManager {
                                 "name" => quest.get_name().to_string(),
                                 "description" => quest.get_description(),
                                 "reward" => reward,
-                                "status" => "in progress"
+                                "status" => "in progress",
+                                "current_step" => 0,
+                                "max_step" => quest.get_nb_steps(),
                             }
                             .dump();
                         } else {
@@ -1056,7 +1065,8 @@ impl GameManager {
                             "description" => quest.get_description(),
                             "reward" => quest.get_json_loots(),
                             "status" => q.get_state(),
-                            "completion" => q.get_completion(quest.get_nb_steps())})
+                            "current_step" => q.get_current_step(),
+                            "max_step" => quest.get_nb_steps()})
                         } else {
                             warn!("quest not found: {}", q.get_quest_name());
                             None
@@ -1072,7 +1082,8 @@ impl GameManager {
                                 "description" => quest.get_description(),
                                 "reward" => quest.get_json_loots(),
                                 "status" => "completed",
-                                "completion" => format!("{}/{}", quest.get_nb_steps(), quest.get_nb_steps())
+                                "current_step" => quest.get_nb_steps(),
+                                "max_step" => quest.get_nb_steps()
                             });
                         } else {
                             warn!("completed quest not found: {}", quest_name);

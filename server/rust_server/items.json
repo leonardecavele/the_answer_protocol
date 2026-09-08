@@ -9,7 +9,7 @@
       "description": "Un bon remontant pour réussir à continuer à faire ses heures.",
       "spawn_info": {
         "room": "foyer",
-        "cooldown": 180
+        "cooldown": 120
       }
     },
     {
