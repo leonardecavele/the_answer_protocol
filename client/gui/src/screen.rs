@@ -6,7 +6,9 @@ use soft_ratatui::embedded_graphics_unicodefonts::{mono_9x18_atlas, mono_9x18_bo
 use soft_ratatui::{EmbeddedGraphics, SoftBackend};
 
 const TEXTURE_NAME: &str = "client_screen";
-const BACKGROUND: Color = Color::Rgb(0x00, 0x00, 0x00);
+
+const BACKGROUND: Color = Color::Rgb(0x23, 0x11, 0x29);
+const FOREGROUND: Color = Color::Rgb(0xE6, 0xE1, 0xEA);
 
 pub const INITIAL_COLUMNS: u16 = 120;
 pub const INITIAL_ROWS: u16 = 40;
@@ -67,10 +69,14 @@ pub fn drawable_size(screen: &Screen, ui: &egui::Ui) -> egui::Vec2 {
     ui.available_size().clamp(cell_size(screen), limit)
 }
 
-pub fn apply_background(frame: &mut Frame) {
+pub fn apply_default_colors(frame: &mut Frame) {
     for cell in frame.buffer_mut().content.iter_mut() {
         if cell.bg == Color::Reset {
             cell.bg = BACKGROUND;
+        }
+
+        if cell.fg == Color::Reset {
+            cell.fg = FOREGROUND;
         }
     }
 }

@@ -40,7 +40,7 @@ impl eframe::App for GuiApp {
 
         let _ = self.screen.draw(|frame| {
             self.app.draw(frame);
-            screen::apply_background(frame);
+            screen::apply_default_colors(frame);
         });
 
         ctx.request_repaint_after(TICK_RATE);

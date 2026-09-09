@@ -1,20 +1,19 @@
 use crate::renderer::components::is_mouse_in_rect;
+use crate::renderer::theme::WARNING_COLOR;
 use ratatui::Frame;
 use ratatui::layout::Rect;
-use ratatui::style::{Color, Modifier, Style};
+use ratatui::style::{Modifier, Style};
 use ratatui::widgets::{Clear, Paragraph};
 
-pub struct CommandButton {
+pub struct LabelButton {
     label: String,
-    command: &'static str,
     area: Option<Rect>,
 }
 
-impl CommandButton {
-    pub fn new(label: &str, command: &'static str) -> Self {
+impl LabelButton {
+    pub fn new(label: &str) -> Self {
         Self {
             label: format!(" [{}] ", label),
-            command,
             area: None,
         }
     }
@@ -27,7 +26,7 @@ impl CommandButton {
         self.area = Some(area);
 
         let style = Style::default()
-            .fg(Color::Yellow)
+            .fg(WARNING_COLOR)
             .add_modifier(Modifier::BOLD);
 
         frame.render_widget(Clear, area);
@@ -38,13 +37,8 @@ impl CommandButton {
         self.area = None;
     }
 
-    pub fn hit(&self, column: u16, row: u16) -> Option<&'static str> {
-        let area = self.area?;
-
-        if is_mouse_in_rect(column, row, area) {
-            return Some(self.command);
-        }
-
-        None
+    pub fn hit(&self, column: u16, row: u16) -> bool {
+        self.area
+            .is_some_and(|area| is_mouse_in_rect(column, row, area))
     }
 }

@@ -1,8 +1,15 @@
 use crate::events::{ApplicationEvent, SendEvent};
-use crate::renderer::components::{CommandButton, Component, EventFlow, Lifecycle};
+use crate::renderer::components::{Component, EventFlow, LabelButton, Lifecycle};
 use crate::renderer::text::wrap_str_to_lines;
-use crate::renderer::theme::default_block;
+use crate::renderer::theme::{
+    ERROR_COLOR, PLAYER_COLOR, ROOM_COLOR, SUCCESS_COLOR, WARNING_COLOR, default_block,
+};
 use crate::states::AppState;
+use crate::states::game::{HelpState, Overlay};
+use client_api::ApiRequest;
+use client_api::commands::{
+    GroupCreateCommand, GroupLeaveCommand, QuitCommand, StatusCommand, WhoCommand,
+};
 use crossterm::event::{Event as CrosstermEvent, MouseButton, MouseEventKind};
 use ratatui::widgets::Paragraph;
 use ratatui::{
@@ -14,11 +21,13 @@ use ratatui::{
 use tokio::sync::mpsc::Sender;
 
 pub struct Header {
-    who: CommandButton,
-    status: CommandButton,
-    quit: CommandButton,
-    group_create: CommandButton,
-    group_leave: CommandButton,
+    who: LabelButton,
+    status: LabelButton,
+    quit: LabelButton,
+    group_create: LabelButton,
+    group_leave: LabelButton,
+    help: LabelButton,
+    trace: LabelButton,
 }
 
 impl Default for Header {
@@ -30,11 +39,13 @@ impl Default for Header {
 impl Header {
     pub fn new() -> Self {
         Self {
-            who: CommandButton::new("WHO", "WHO"),
-            status: CommandButton::new("STATUS", "STATUS"),
-            quit: CommandButton::new("QUIT", "QUIT"),
-            group_create: CommandButton::new("CREATE GROUP", "GROUP CREATE"),
-            group_leave: CommandButton::new("LEAVE GROUP", "GROUP LEAVE"),
+            who: LabelButton::new("WHO"),
+            status: LabelButton::new("STATUS"),
+            quit: LabelButton::new("QUIT"),
+            group_create: LabelButton::new("CREATE GROUP"),
+            group_leave: LabelButton::new("LEAVE GROUP"),
+            help: LabelButton::new("HELP"),
+            trace: LabelButton::new("TRACE"),
         }
     }
 
@@ -47,7 +58,14 @@ impl Header {
             &mut self.group_create
         };
 
-        let buttons = [&mut self.who, &mut self.status, &mut self.quit, group];
+        let buttons = [
+            &mut self.who,
+            &mut self.status,
+            &mut self.quit,
+            group,
+            &mut self.help,
+            &mut self.trace,
+        ];
 
         let mut x = area.x + 1;
         let y = area.bottom().saturating_sub(1);
@@ -79,9 +97,7 @@ impl Component for Header {
             Span::styled(" Room: ", Style::default().add_modifier(Modifier::BOLD)),
             Span::styled(
                 room_name,
-                Style::default()
-                    .fg(Color::Cyan)
-                    .add_modifier(Modifier::BOLD),
+                Style::default().fg(ROOM_COLOR).add_modifier(Modifier::BOLD),
             ),
             Span::raw(" "),
         ]);
@@ -92,11 +108,11 @@ impl Component for Header {
             let percentage =
                 (state.game.player.hp as f32 / state.game.player.max_hp as f32) * 100.0;
             if percentage > 50.0 {
-                Color::Green
+                SUCCESS_COLOR
             } else if percentage > 25.0 {
-                Color::Yellow
+                WARNING_COLOR
             } else {
-                Color::Red
+                ERROR_COLOR
             }
         };
 
@@ -110,7 +126,7 @@ impl Component for Header {
                     .clone()
                     .unwrap_or("unknown".to_string()),
                 Style::default()
-                    .fg(Color::Magenta)
+                    .fg(PLAYER_COLOR)
                     .add_modifier(Modifier::BOLD),
             ),
             Span::styled(" | HP: ", Style::default().add_modifier(Modifier::BOLD)),
@@ -148,7 +164,7 @@ impl Component for Header {
                 Span::styled(
                     display_leader,
                     Style::default()
-                        .fg(Color::Yellow)
+                        .fg(PLAYER_COLOR)
                         .add_modifier(Modifier::BOLD),
                 ),
                 Span::raw(" "),
@@ -176,7 +192,7 @@ impl Component for Header {
 impl Lifecycle for Header {
     fn handle_device_event(
         &mut self,
-        _state: &mut AppState,
+        state: &mut AppState,
         event: &CrosstermEvent,
         event_sender: &Sender<ApplicationEvent>,
     ) -> EventFlow {
@@ -188,24 +204,35 @@ impl Lifecycle for Header {
             return EventFlow::Ignored;
         }
 
-        let buttons = [
-            &self.who,
-            &self.status,
-            &self.quit,
-            &self.group_create,
-            &self.group_leave,
+        if self.help.hit(mouse.column, mouse.row) {
+            state.game.overlays.toggle(Overlay::Help(HelpState));
+            return EventFlow::Consumed;
+        }
+
+        if self.trace.hit(mouse.column, mouse.row) {
+            state.ui.show_trace_log = !state.ui.show_trace_log;
+            return EventFlow::Consumed;
+        }
+
+        let requests = [
+            (&self.who, ApiRequest::Who(WhoCommand)),
+            (&self.status, ApiRequest::Status(StatusCommand)),
+            (&self.quit, ApiRequest::Quit(QuitCommand)),
+            (
+                &self.group_create,
+                ApiRequest::GroupCreate(GroupCreateCommand),
+            ),
+            (&self.group_leave, ApiRequest::GroupLeave(GroupLeaveCommand)),
         ];
 
-        let Some(command) = buttons
-            .iter()
-            .find_map(|button| button.hit(mouse.column, mouse.row))
+        let Some(request) = requests
+            .into_iter()
+            .find_map(|(button, request)| button.hit(mouse.column, mouse.row).then_some(request))
         else {
             return EventFlow::Ignored;
         };
 
-        let _ = event_sender.try_send(ApplicationEvent::Send(SendEvent::RawCommand(
-            command.to_string(),
-        )));
+        let _ = event_sender.try_send(ApplicationEvent::Send(SendEvent::ApiRequest(request)));
 
         EventFlow::Consumed
     }

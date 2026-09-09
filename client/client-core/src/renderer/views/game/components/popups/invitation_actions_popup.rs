@@ -39,22 +39,15 @@ impl InvitationActionsPopup {
         Some(row.saturating_sub(area.y) as usize)
     }
 
-    fn activate(
-        &self,
-        state: &mut AppState,
-        leader: &str,
-        event_sender: &Sender<ApplicationEvent>,
-    ) -> EventFlow {
-        let command = state
+    fn activate(&self, state: &mut AppState, event_sender: &Sender<ApplicationEvent>) -> EventFlow {
+        let request = state
             .game
             .overlays
             .get::<InvitationActionsState>()
-            .and_then(|overlay| overlay.selected_command());
+            .and_then(|overlay| overlay.selected_request());
 
-        if let Some(command) = command {
-            let raw_command = format!("{} {}", command, leader);
-            let _ =
-                event_sender.try_send(ApplicationEvent::Send(SendEvent::RawCommand(raw_command)));
+        if let Some(request) = request {
+            let _ = event_sender.try_send(ApplicationEvent::Send(SendEvent::ApiRequest(request)));
         }
 
         state.game.close_top_overlay();
@@ -105,11 +98,9 @@ impl Lifecycle for InvitationActionsPopup {
         event: &CrosstermEvent,
         event_sender: &Sender<ApplicationEvent>,
     ) -> EventFlow {
-        let Some(overlay) = state.game.overlays.get::<InvitationActionsState>() else {
+        if !state.game.overlays.is_open::<InvitationActionsState>() {
             return EventFlow::Ignored;
-        };
-
-        let leader = overlay.leader.clone();
+        }
 
         match event {
             CrosstermEvent::Key(key) => match key.code {
@@ -130,7 +121,7 @@ impl Lifecycle for InvitationActionsPopup {
                     state.game.close_top_overlay();
                     EventFlow::Consumed
                 }
-                KeyCode::Enter => self.activate(state, &leader, event_sender),
+                KeyCode::Enter => self.activate(state, event_sender),
                 _ => EventFlow::Ignored,
             },
             CrosstermEvent::Mouse(mouse)
@@ -144,7 +135,7 @@ impl Lifecycle for InvitationActionsPopup {
                     overlay.actions.select_index(index);
                 }
 
-                self.activate(state, &leader, event_sender)
+                self.activate(state, event_sender)
             }
             _ => EventFlow::Ignored,
         }

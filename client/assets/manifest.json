@@ -87,22 +87,22 @@
     },
     "items": {
         "objet_perdu": {
-            "name": "objet_perdu",
+            "name": "Objet perdu",
             "description": "Il faudrait déposer cet objet quelque part où son propriétaire pourrait le retrouver...",
             "image_path": "pictures/items/lost_item.png"
         },
         "wrap_du_foyer": {
-            "name": "wrap_du_foyer",
+            "name": "Wrap du foyer",
             "description": "un bon remontant pour réussir à continuer à faire ses heures",
             "image_path": "pictures/items/wrap.png"
         },
         "t_shirt_bde": {
-            "name": "t_shirt_bde",
+            "name": "T Shirt B.D.E",
             "description": "dans ce tissu on se sent solide comme un rock",
             "image_path": "pictures/items/t_shirt.png"
         },
         "merci": {
-            "name": "merci",
+            "name": "Merci",
             "description": "Un concentré pur de la gratitude de Nathan.",
             "image_path": "pictures/items/merci.png"
         }
@@ -110,7 +110,7 @@
     "rooms": {
         "0.cluster_du_bas": {
             "image_path": "pictures/rooms/cluster_du_bas.jpg",
-            "direction": "N"
+            "direction": "S"
         },
         "1.pature": {
             "image_path": "pictures/rooms/pature.jpeg",
@@ -126,7 +126,7 @@
         },
         "4.cluster_du_haut": {
 			"image_path": "pictures/rooms/cluster_du_haut.jpeg",
-            "direction": "N"
+            "direction": "S"
         },
         "5.afk": {
 			"image_path": "pictures/rooms/afk.jpg",

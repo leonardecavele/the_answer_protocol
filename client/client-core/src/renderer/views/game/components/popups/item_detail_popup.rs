@@ -3,7 +3,7 @@ use crate::renderer::components::{Component, EventFlow, Lifecycle};
 use crate::renderer::image::ImageRenderer;
 use crate::renderer::layout::centered_rect_percent;
 use crate::renderer::text::wrap_str_to_lines;
-use crate::renderer::theme::{close_hint, popup_block};
+use crate::renderer::theme::{close_hint, dim_style, popup_block};
 use crate::states::AppState;
 use crate::states::game::ItemDetailState;
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
@@ -21,6 +21,7 @@ const POPUP_HEIGHT_PERCENT: u16 = 70;
 const IMAGE_MIN_HEIGHT: u16 = 10;
 const SPACER_HEIGHT: u16 = 1;
 const DESC_HEIGHT: u16 = 6;
+const IDS_HEIGHT: u16 = 2;
 const FOOTER_HEIGHT: u16 = 2;
 
 #[derive(Default)]
@@ -69,13 +70,15 @@ impl Component for ItemDetailPopup {
                 Constraint::Min(IMAGE_MIN_HEIGHT),
                 Constraint::Length(SPACER_HEIGHT),
                 Constraint::Length(DESC_HEIGHT),
+                Constraint::Length(IDS_HEIGHT),
                 Constraint::Length(FOOTER_HEIGHT),
             ])
             .split(inner_area);
 
         let image_area = chunks[0];
         let desc_area = chunks[2];
-        let footer_area = chunks[3];
+        let ids_area = chunks[3];
+        let footer_area = chunks[4];
 
         match item.sprite.frame_at(Duration::ZERO) {
             Some(image_path) => {
@@ -101,6 +104,20 @@ impl Component for ItemDetailPopup {
         let desc_lines = wrap_str_to_lines(&item.description, desc_area.width as usize);
         let desc_paragraph = Paragraph::new(desc_lines).alignment(Alignment::Center);
         frame.render_widget(desc_paragraph, desc_area);
+
+        if let Some(stack) = state.game.find_item_stack(item_id) {
+            let ids = stack
+                .iter()
+                .map(|item| item.id.as_str())
+                .collect::<Vec<&str>>()
+                .join(", ");
+
+            let ids_lines = wrap_str_to_lines(&ids, ids_area.width as usize);
+            let ids_paragraph = Paragraph::new(ids_lines)
+                .alignment(Alignment::Center)
+                .style(dim_style());
+            frame.render_widget(ids_paragraph, ids_area);
+        }
 
         frame.render_widget(close_hint(), footer_area);
     }

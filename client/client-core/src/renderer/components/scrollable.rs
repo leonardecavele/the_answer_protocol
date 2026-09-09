@@ -129,7 +129,9 @@ impl<T: ScrollableComponent> Lifecycle for Scrollable<T> {
                 }
                 _ => {}
             }
-        } else if let CrosstermEvent::Mouse(mouse) = event {
+        } else if let CrosstermEvent::Mouse(mouse) = event
+            && matches!(self.hit(mouse.column, mouse.row), ScrollableHit::Box)
+        {
             if mouse.kind == MouseEventKind::ScrollUp {
                 self.scroll_offset = self
                     .scroll_offset

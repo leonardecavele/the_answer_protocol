@@ -10,4 +10,4 @@ pub use interaction::{
 };
 pub use session::{ChatChannel, ChatMessage, ChatSender, FightPhase, Room};
 pub use state::GameState;
-pub use world::{Direction, Item, Npc, Sprite};
+pub use world::{Direction, Item, ItemStack, Npc, Sprite};

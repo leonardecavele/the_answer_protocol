@@ -1,10 +1,10 @@
 use crate::renderer::components::{EventFlow, InteractiveComponent, Lifecycle};
-use crate::renderer::theme::{default_block, dim_style};
+use crate::renderer::theme::{SUCCESS_COLOR, default_block, dim_style};
 use crate::states::AppState;
 use crossterm::event::{Event as CrosstermEvent, KeyCode, KeyEvent};
 use ratatui::Frame;
 use ratatui::layout::{Alignment, Rect};
-use ratatui::style::{Color, Modifier, Style};
+use ratatui::style::{Modifier, Style};
 use ratatui::widgets::Paragraph;
 use tokio::sync::mpsc::Sender;
 
@@ -38,7 +38,7 @@ impl InteractiveComponent for Button {
     fn render(&mut self, _state: &AppState, frame: &mut Frame, area: Rect) {
         let style = if self.is_focused {
             Style::default()
-                .fg(Color::Green)
+                .fg(SUCCESS_COLOR)
                 .add_modifier(Modifier::BOLD)
         } else {
             dim_style()

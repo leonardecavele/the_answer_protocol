@@ -5,7 +5,7 @@ use crate::states::game::interaction::{DialogueState, GameFocus, Overlay, Overla
 use crate::states::game::session::{
     ChatMessage, FightState, GroupState, PlayerState, Room, ServerState,
 };
-use crate::states::game::{Item, Npc};
+use crate::states::game::{Item, ItemStack, Npc};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
@@ -144,6 +144,19 @@ impl GameState {
         self.room
             .as_ref()
             .and_then(|room| room.items.iter().find(|item| item.id == id))
-            .or_else(|| self.player.inventory.iter().find(|item| item.id == id))
+            .or_else(|| {
+                self.player
+                    .inventory
+                    .iter()
+                    .flat_map(|stack| stack.iter())
+                    .find(|item| item.id == id)
+            })
+    }
+
+    pub fn find_item_stack(&self, id: &str) -> Option<&ItemStack> {
+        self.player
+            .inventory
+            .iter()
+            .find(|stack| stack.iter().any(|item| item.id == id))
     }
 }

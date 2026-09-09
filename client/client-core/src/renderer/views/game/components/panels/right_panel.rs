@@ -1,11 +1,12 @@
 use crate::events::{ApplicationEvent, SendEvent};
-use crate::renderer::components::{
-    CommandButton, Component, EventFlow, Lifecycle, is_mouse_in_rect,
-};
+use crate::renderer::components::{Component, EventFlow, LabelButton, Lifecycle, is_mouse_in_rect};
 use crate::renderer::image::ImageRenderer;
 use crate::renderer::text::wrap_str_to_lines;
+use crate::renderer::theme::{ERROR_COLOR, WARNING_COLOR};
 use crate::states::AppState;
 use crate::states::game::{Direction, GameFocus, Sprite};
+use client_api::ApiRequest;
+use client_api::commands::LookCommand;
 use crossterm::event::{Event as CrosstermEvent, KeyCode, MouseButton, MouseEventKind};
 use ratatui::style::Stylize;
 use ratatui::widgets::{Block, BorderType, Borders};
@@ -85,7 +86,7 @@ pub struct RightPanel {
     shown_npc: Option<String>,
     area: Option<Rect>,
     exits: Vec<(Direction, Rect)>,
-    look_button: CommandButton,
+    look_button: LabelButton,
     image_renderer: ImageRenderer,
 }
 
@@ -102,7 +103,7 @@ impl RightPanel {
             shown_npc: None,
             area: None,
             exits: Vec::new(),
-            look_button: CommandButton::new("LOOK", "LOOK"),
+            look_button: LabelButton::new("LOOK"),
             image_renderer: ImageRenderer::new(),
         }
     }
@@ -228,11 +229,11 @@ impl RightPanel {
             Block::default()
                 .borders(Borders::ALL)
                 .border_type(BorderType::Double)
-                .border_style(Style::default().fg(Color::Red)),
+                .border_style(Style::default().fg(ERROR_COLOR)),
             area,
         );
 
-        self.draw_message(frame, area, DISCONNECTED, Color::Red);
+        self.draw_message(frame, area, DISCONNECTED, ERROR_COLOR);
     }
 
     fn draw_focus_badge(&self, frame: &mut Frame, area: Rect) {
@@ -246,14 +247,14 @@ impl RightPanel {
 
         frame.render_widget(Clear, badge_area);
         frame.render_widget(
-            Paragraph::new(FOCUS_BADGE).style(Style::default().fg(Color::Yellow)),
+            Paragraph::new(FOCUS_BADGE).style(Style::default().fg(WARNING_COLOR)),
             badge_area,
         );
     }
 
     fn draw_exits(&mut self, state: &AppState, frame: &mut Frame, image_area: Rect) {
         let style = Style::default()
-            .fg(Color::Yellow)
+            .fg(WARNING_COLOR)
             .add_modifier(Modifier::BOLD);
 
         let facing = self.room_facing(state);
@@ -344,10 +345,10 @@ impl Lifecycle for RightPanel {
     ) -> EventFlow {
         if let CrosstermEvent::Mouse(mouse) = event
             && mouse.kind == MouseEventKind::Down(MouseButton::Left)
-            && let Some(command) = self.look_button.hit(mouse.column, mouse.row)
+            && self.look_button.hit(mouse.column, mouse.row)
         {
-            let _ = event_sender.try_send(ApplicationEvent::Send(SendEvent::RawCommand(
-                command.to_string(),
+            let _ = event_sender.try_send(ApplicationEvent::Send(SendEvent::ApiRequest(
+                ApiRequest::Look(LookCommand),
             )));
             return EventFlow::Consumed;
         }

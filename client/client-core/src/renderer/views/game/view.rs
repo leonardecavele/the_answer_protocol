@@ -20,6 +20,10 @@ use ratatui::Frame;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use tokio::sync::mpsc;
 
+const LEFT_PANEL_WIDTH_PERCENT: u16 = 25;
+const RIGHT_PANEL_MIN_WIDTH_PERCENT: u16 = 20;
+const RIGHT_PANEL_MAX_WIDTH_PERCENT: u16 = 40;
+
 pub struct GameView {
     header: Header,
     footer: Footer,
@@ -224,8 +228,8 @@ impl GameView {
             && mouse.kind
                 == crossterm::event::MouseEventKind::Down(crossterm::event::MouseButton::Left)
         {
-            let left_hit = self.left_panel.hit(mouse.column, mouse.row);
-            let inventory_hit = self.inventory.hit(mouse.column, mouse.row);
+            let left_hit = self.left_panel.hit(state, mouse.column, mouse.row);
+            let inventory_hit = self.inventory.hit(state, mouse.column, mouse.row);
 
             match left_hit {
                 LeftPanelHit::Player(_) => state.game.set_focus(GameFocus::PlayerList),
@@ -308,9 +312,12 @@ impl GameView {
                 }
                 LeftPanelHit::Quest(index) => {
                     if state.game.player.quests.is_selected(index) {
-                        requested = state.game.player.quests.selected().map(|quest| {
-                            Overlay::QuestDetail(QuestDetailState::new(quest.name.clone()))
-                        });
+                        requested = state
+                            .game
+                            .player
+                            .quests
+                            .selected()
+                            .map(|quest| Overlay::QuestDetail(QuestDetailState::new(quest.id)));
                     } else {
                         state.game.player.quests.select_index(index);
                     }
@@ -330,12 +337,18 @@ impl GameView {
 
         if let InventoryPanelHit::Item(Some(index)) = inventory_hit {
             if state.game.player.inventory.is_selected(index) {
-                requested = state.game.player.inventory.selected().map(|item| {
-                    Overlay::ItemActions(ItemActionsState::new(
-                        item.id.clone(),
-                        ItemLocation::Inventory,
-                    ))
-                });
+                requested = state
+                    .game
+                    .player
+                    .inventory
+                    .selected()
+                    .and_then(|stack| stack.first())
+                    .map(|item| {
+                        Overlay::ItemActions(ItemActionsState::new(
+                            item.id.clone(),
+                            ItemLocation::Inventory,
+                        ))
+                    });
             } else {
                 state.game.player.inventory.select_index(index);
             }
@@ -361,11 +374,11 @@ impl Component for GameView {
             .split(area);
 
         let available_height = vertical_chunks[1].height;
-        let mut right_width_constraint = Constraint::Percentage(40);
+        let mut right_width_constraint = Constraint::Percentage(RIGHT_PANEL_MAX_WIDTH_PERCENT);
 
         if let Some(desired_width) = self.right_panel.get_desired_width(state, available_height) {
-            let max_width = percent_of(area.width, 40);
-            let min_width = percent_of(area.width, 20);
+            let max_width = percent_of(area.width, RIGHT_PANEL_MAX_WIDTH_PERCENT);
+            let min_width = percent_of(area.width, RIGHT_PANEL_MIN_WIDTH_PERCENT);
             let final_width = desired_width.clamp(min_width, max_width);
             right_width_constraint = Constraint::Length(final_width);
         }
@@ -374,7 +387,11 @@ impl Component for GameView {
         let horizontal_chunks = Layout::default()
             .direction(Direction::Horizontal)
             .constraints([
-                Constraint::Percentage(if has_left_panel { 20 } else { 0 }),
+                Constraint::Percentage(if has_left_panel {
+                    LEFT_PANEL_WIDTH_PERCENT
+                } else {
+                    0
+                }),
                 Constraint::Min(1),
                 right_width_constraint,
             ])

@@ -1,12 +1,13 @@
 use super::{Overlay, OverlayPayload};
+use crate::states::game::session::QuestId;
 
 pub struct QuestDetailState {
-    pub name: String,
+    pub id: QuestId,
 }
 
 impl QuestDetailState {
-    pub fn new(name: String) -> Self {
-        Self { name }
+    pub fn new(id: QuestId) -> Self {
+        Self { id }
     }
 }
 

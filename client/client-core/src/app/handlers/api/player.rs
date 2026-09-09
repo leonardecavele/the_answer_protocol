@@ -22,7 +22,7 @@ impl App {
     }
 
     pub fn on_inventory(&mut self, response: InventoryResponse) {
-        self.state.game.player.inventory.set_items(
+        self.state.game.player.set_inventory(
             response
                 .inventory
                 .into_iter()
@@ -36,7 +36,7 @@ impl App {
     }
 
     pub fn on_quests(&mut self, response: QuestsResponse) {
-        self.state.game.player.quests.set_items(response.quest_list);
+        self.state.game.player.set_quests(response.quest_list);
 
         self.state
             .game
@@ -90,7 +90,7 @@ impl App {
     }
 
     pub fn on_quest(&mut self, response: QuestResponse) {
-        self.state.game.player.quests.push(response.quest_data);
+        self.state.game.player.set_quest(response.quest_data);
     }
 
     pub fn on_take_item(&mut self, response: TakeResponse) {
@@ -114,7 +114,7 @@ impl App {
         self.state
             .game
             .log_action(format!("You took {}.", item.name));
-        self.state.game.player.inventory.push(item);
+        self.state.game.player.add_item(item);
     }
 
     pub fn on_drop_item(&mut self, response: DropResponse) {
@@ -142,7 +142,7 @@ impl App {
 
     pub fn on_teleport(&mut self) {
         self.state.ui.notifications.push(Notification::warning(
-            "💀 A player on your team absolutely sucks. 🤬",
+            "A player on your team died, you respawn with them.",
         ));
 
         self.send(ApiRequest::Look(LookCommand))

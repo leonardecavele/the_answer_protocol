@@ -1,11 +1,12 @@
 use crate::renderer::components::{Lifecycle, ScrollableComponent};
 use crate::renderer::layout::percent_of;
 use crate::renderer::text::wrap_str_to_lines;
-use crate::renderer::theme::overlay_block;
+use crate::renderer::theme::{
+    CHAT_GLOBAL_COLOR, CHAT_GROUP_COLOR, CHAT_PRIVATE_COLOR, CHAT_ROOM_COLOR, overlay_block,
+};
 use crate::states::AppState;
 use crate::states::game::{ChatChannel, ChatSender};
 use ratatui::layout::Rect;
-use ratatui::style::Color;
 use ratatui::text::Line;
 use ratatui::widgets::Block;
 
@@ -47,10 +48,10 @@ impl ScrollableComponent for ChatOverlay {
 
         for msg in &state.game.chat_log {
             let (prefix, _) = match &msg.channel {
-                ChatChannel::Global => ("[GLOBAL]", Color::Yellow),
-                ChatChannel::Group => ("[GROUP]", Color::LightGreen),
-                ChatChannel::Room => ("[ROOM]", Color::LightCyan),
-                ChatChannel::Private(_) => ("[PRIVATE]", Color::LightMagenta),
+                ChatChannel::Global => ("[GLOBAL]", CHAT_GLOBAL_COLOR),
+                ChatChannel::Group => ("[GROUP]", CHAT_GROUP_COLOR),
+                ChatChannel::Room => ("[ROOM]", CHAT_ROOM_COLOR),
+                ChatChannel::Private(_) => ("[PRIVATE]", CHAT_PRIVATE_COLOR),
             };
 
             let full_text = match (&msg.channel, &msg.sender) {

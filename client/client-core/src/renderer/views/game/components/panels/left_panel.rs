@@ -1,15 +1,20 @@
-use crate::collections::Step;
+use crate::collections::{SelectableList, Step};
 use crate::events::{ApplicationEvent, SendEvent};
 use crate::manifest::NpcKind;
 use crate::renderer::components::{
-    CommandButton, Component, EventFlow, Lifecycle, is_mouse_in_rect,
+    Component, EventFlow, LabelButton, Lifecycle, is_mouse_in_rect, scroll_direction,
 };
-use crate::renderer::theme::{panel_block, quest_status, selection_style};
+use crate::renderer::theme::{
+    ERROR_COLOR, INFORMATION_COLOR, INVITATION_COLOR, ITEM_COLOR, MUTED_COLOR, PLAYER_COLOR,
+    WARNING_COLOR, panel_block, quest_status, selection_style,
+};
 use crate::states::AppState;
 use crate::states::game::{
     GameFocus, InvitationActionsState, ItemActionsState, ItemLocation, NpcActionsState, Overlay,
     PlayerActionsState, QuestDetailState, Room,
 };
+use client_api::ApiRequest;
+use client_api::commands::QuestsCommand;
 use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect},
@@ -18,6 +23,8 @@ use ratatui::{
     widgets::{List, ListItem},
 };
 use tokio::sync::mpsc::Sender;
+
+const BORDERS_HEIGHT: u16 = 2;
 
 pub enum LeftPanelHit {
     Player(usize),
@@ -34,7 +41,7 @@ pub struct LeftPanel {
     items_area: Option<Rect>,
     quests_area: Option<Rect>,
     invitations_area: Option<Rect>,
-    quests_button: CommandButton,
+    quests_button: LabelButton,
 }
 
 impl Default for LeftPanel {
@@ -51,50 +58,131 @@ impl LeftPanel {
             items_area: None,
             quests_area: None,
             invitations_area: None,
-            quests_button: CommandButton::new("QUESTS", "QUESTS"),
+            quests_button: LabelButton::new("QUESTS"),
         }
     }
 
-    fn hit_entry(area: Rect, column: u16, row: u16) -> Option<usize> {
+    fn hit_entry(area: Option<Rect>, offset: usize, column: u16, row: u16) -> Option<usize> {
+        let area = area?;
+
         if !is_mouse_in_rect(column, row, area) || row <= area.y || row + 1 >= area.bottom() {
             return None;
         }
 
-        Some((row - area.y - 1) as usize)
+        Some(offset + (row - area.y - 1) as usize)
     }
 
-    pub fn hit(&self, column: u16, row: u16) -> LeftPanelHit {
-        if let Some(area) = self.players_area
-            && let Some(index) = Self::hit_entry(area, column, row)
-        {
-            return LeftPanelHit::Player(index);
+    fn visible_count(area: Option<Rect>) -> usize {
+        area.map(|area| area.height.saturating_sub(BORDERS_HEIGHT) as usize)
+            .unwrap_or(0)
+    }
+
+    pub fn hit(&self, state: &AppState, column: u16, row: u16) -> LeftPanelHit {
+        if let Some(room) = &state.game.room {
+            if let Some(index) =
+                Self::hit_entry(self.players_area, room.players.offset(), column, row)
+            {
+                return LeftPanelHit::Player(index);
+            }
+
+            if let Some(index) = Self::hit_entry(self.npcs_area, room.npcs.offset(), column, row) {
+                return LeftPanelHit::Npc(index);
+            }
+
+            if let Some(index) = Self::hit_entry(self.items_area, room.items.offset(), column, row)
+            {
+                return LeftPanelHit::Item(index);
+            }
         }
 
-        if let Some(area) = self.npcs_area
-            && let Some(index) = Self::hit_entry(area, column, row)
-        {
-            return LeftPanelHit::Npc(index);
-        }
-
-        if let Some(area) = self.items_area
-            && let Some(index) = Self::hit_entry(area, column, row)
-        {
-            return LeftPanelHit::Item(index);
-        }
-
-        if let Some(area) = self.quests_area
-            && let Some(index) = Self::hit_entry(area, column, row)
-        {
+        if let Some(index) = Self::hit_entry(
+            self.quests_area,
+            state.game.player.quests.offset(),
+            column,
+            row,
+        ) {
             return LeftPanelHit::Quest(index);
         }
 
-        if let Some(area) = self.invitations_area
-            && let Some(index) = Self::hit_entry(area, column, row)
-        {
+        if let Some(index) = Self::hit_entry(
+            self.invitations_area,
+            state.game.group.invitations.offset(),
+            column,
+            row,
+        ) {
             return LeftPanelHit::Invitation(index);
         }
 
         LeftPanelHit::None
+    }
+
+    fn area_of(&self, focus: GameFocus) -> Option<Rect> {
+        match focus {
+            GameFocus::PlayerList => self.players_area,
+            GameFocus::NpcList => self.npcs_area,
+            GameFocus::RoomItemsList => self.items_area,
+            GameFocus::QuestList => self.quests_area,
+            GameFocus::InvitationList => self.invitations_area,
+            _ => None,
+        }
+    }
+
+    fn list_at(&self, column: u16, row: u16) -> Option<GameFocus> {
+        [
+            GameFocus::PlayerList,
+            GameFocus::NpcList,
+            GameFocus::RoomItemsList,
+            GameFocus::QuestList,
+            GameFocus::InvitationList,
+        ]
+        .into_iter()
+        .find(|focus| {
+            self.area_of(*focus)
+                .is_some_and(|area| is_mouse_in_rect(column, row, area))
+        })
+    }
+
+    fn set_visible_counts(&self, state: &mut AppState) {
+        if let Some(room) = state.game.room.as_mut() {
+            room.players
+                .set_visible_count(Self::visible_count(self.area_of(GameFocus::PlayerList)));
+            room.npcs
+                .set_visible_count(Self::visible_count(self.area_of(GameFocus::NpcList)));
+            room.items
+                .set_visible_count(Self::visible_count(self.area_of(GameFocus::RoomItemsList)));
+        }
+
+        state
+            .game
+            .player
+            .quests
+            .set_visible_count(Self::visible_count(self.area_of(GameFocus::QuestList)));
+        state
+            .game
+            .group
+            .invitations
+            .set_visible_count(Self::visible_count(self.area_of(GameFocus::InvitationList)));
+    }
+
+    fn scroll<T>(list: Option<&mut SelectableList<T>>, step: Step) {
+        if let Some(list) = list {
+            list.scroll(step, 1);
+        }
+    }
+
+    fn scroll_list(&self, state: &mut AppState, focus: GameFocus, step: Step) {
+        let room = state.game.room.as_mut();
+
+        match focus {
+            GameFocus::PlayerList => Self::scroll(room.map(|room| &mut room.players), step),
+            GameFocus::NpcList => Self::scroll(room.map(|room| &mut room.npcs), step),
+            GameFocus::RoomItemsList => Self::scroll(room.map(|room| &mut room.items), step),
+            GameFocus::QuestList => Self::scroll(Some(&mut state.game.player.quests), step),
+            GameFocus::InvitationList => {
+                Self::scroll(Some(&mut state.game.group.invitations), step)
+            }
+            _ => {}
+        }
     }
 
     fn draw_players(&mut self, state: &AppState, room: &Room, frame: &mut Frame, area: Rect) {
@@ -104,9 +192,10 @@ impl LeftPanel {
             .players
             .iter()
             .enumerate()
+            .skip(room.players.offset())
             .map(|(index, name)| {
                 let color = if Some(name) == state.game.player.name.as_ref() {
-                    Color::Yellow
+                    PLAYER_COLOR
                 } else {
                     Color::Reset
                 };
@@ -129,11 +218,12 @@ impl LeftPanel {
             .npcs
             .iter()
             .enumerate()
+            .skip(room.npcs.offset())
             .map(|(index, npc)| {
                 let color = match npc.kind {
-                    NpcKind::Enemy => Color::Red,
-                    NpcKind::QuestGiver => Color::Yellow,
-                    NpcKind::Dialogue => Color::Blue,
+                    NpcKind::Enemy => ERROR_COLOR,
+                    NpcKind::QuestGiver => WARNING_COLOR,
+                    NpcKind::Dialogue => INFORMATION_COLOR,
                     NpcKind::Normal => Color::Reset,
                 };
                 let style = selection_style(color, focused && room.npcs.is_selected(index));
@@ -154,8 +244,9 @@ impl LeftPanel {
             .items
             .iter()
             .enumerate()
+            .skip(room.items.offset())
             .map(|(index, item)| {
-                let style = selection_style(Color::Cyan, focused && room.items.is_selected(index));
+                let style = selection_style(ITEM_COLOR, focused && room.items.is_selected(index));
 
                 ListItem::new(Span::styled(
                     format!("• {} ({})", item.name, item.id),
@@ -176,9 +267,10 @@ impl LeftPanel {
         let items: Vec<ListItem> = invitations
             .iter()
             .enumerate()
+            .skip(invitations.offset())
             .map(|(index, leader)| {
                 let style =
-                    selection_style(Color::Magenta, focused && invitations.is_selected(index));
+                    selection_style(INVITATION_COLOR, focused && invitations.is_selected(index));
 
                 ListItem::new(Span::styled(format!("• {}", leader), style))
             })
@@ -196,15 +288,27 @@ impl LeftPanel {
         let items: Vec<ListItem> = quests
             .iter()
             .enumerate()
+            .skip(quests.offset())
             .map(|(index, quest)| {
-                let (label, color) = quest_status(&quest.status);
-                let style = selection_style(color, focused && quests.is_selected(index));
+                let (_, color) = quest_status(&quest.data.status);
+                let selected = focused && quests.is_selected(index);
+
+                let progress = if quest.data.is_completed() {
+                    "done".to_string()
+                } else {
+                    format!("{}/{}", quest.data.current_step, quest.data.max_step)
+                };
+
+                let color = if quest.data.is_completed() && !selected {
+                    MUTED_COLOR
+                } else {
+                    color
+                };
+
+                let style = selection_style(color, selected);
 
                 ListItem::new(Span::styled(
-                    format!(
-                        "[{}/{} {}] {}",
-                        quest.current_step, quest.max_step, label, quest.name
-                    ),
+                    format!("• {} ({})", quest.data.name, progress),
                     style,
                 ))
             })
@@ -266,14 +370,24 @@ impl Lifecycle for LeftPanel {
         event: &crossterm::event::Event,
         event_sender: &Sender<ApplicationEvent>,
     ) -> EventFlow {
+        self.set_visible_counts(state);
+
         if let crossterm::event::Event::Mouse(mouse) = event
             && mouse.kind
                 == crossterm::event::MouseEventKind::Down(crossterm::event::MouseButton::Left)
-            && let Some(command) = self.quests_button.hit(mouse.column, mouse.row)
+            && self.quests_button.hit(mouse.column, mouse.row)
         {
-            let _ = event_sender.try_send(ApplicationEvent::Send(SendEvent::RawCommand(
-                command.to_string(),
+            let _ = event_sender.try_send(ApplicationEvent::Send(SendEvent::ApiRequest(
+                ApiRequest::Quests(QuestsCommand),
             )));
+            return EventFlow::Consumed;
+        }
+
+        if let crossterm::event::Event::Mouse(mouse) = event
+            && let Some(step) = scroll_direction(mouse.kind)
+            && let Some(focus) = self.list_at(mouse.column, mouse.row)
+        {
+            self.scroll_list(state, focus, step);
             return EventFlow::Consumed;
         }
 
@@ -427,11 +541,11 @@ impl Lifecycle for LeftPanel {
                 }
                 crossterm::event::KeyCode::Enter => match state.game.player.quests.selected() {
                     Some(quest) => {
-                        let name = quest.name.clone();
+                        let id = quest.id;
                         state
                             .game
                             .overlays
-                            .open(Overlay::QuestDetail(QuestDetailState::new(name)));
+                            .open(Overlay::QuestDetail(QuestDetailState::new(id)));
                         EventFlow::Consumed
                     }
                     None => EventFlow::Ignored,

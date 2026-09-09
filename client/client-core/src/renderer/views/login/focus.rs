@@ -7,16 +7,18 @@ pub enum LoginFocus {
     ServerIp,
     ServerPort,
     ConnectButton,
+    QuitButton,
 }
 
 impl LoginFocus {
-    pub const FOCUS_COUNT: usize = 4;
+    pub const FOCUS_COUNT: usize = 5;
 
     const ORDER: [LoginFocus; Self::FOCUS_COUNT] = [
         LoginFocus::PlayerName,
         LoginFocus::ServerIp,
         LoginFocus::ServerPort,
         LoginFocus::ConnectButton,
+        LoginFocus::QuitButton,
     ];
 
     fn index(self) -> usize {
@@ -25,6 +27,7 @@ impl LoginFocus {
             LoginFocus::ServerIp => 1,
             LoginFocus::ServerPort => 2,
             LoginFocus::ConnectButton => 3,
+            LoginFocus::QuitButton => 4,
         }
     }
 
