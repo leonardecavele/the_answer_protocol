@@ -86,7 +86,7 @@
       "description": "Parlez 5 fois avec smenard.",
       "nb_steps": 5,
       "loots": {
-        "t_shirt_bde": { "qty": 1, "chance": 100.0 }
+        "t_shirt_bde": { "qty": 1, "chance": 20.0 }
       }
     },
     {

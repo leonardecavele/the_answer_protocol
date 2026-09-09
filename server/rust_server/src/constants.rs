@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use std::time::Duration;
 use strum::EnumIter;
 
@@ -16,7 +17,7 @@ pub const CODE_SP_SEP: &str = "<SP>";
 pub const LOST_ITEM_SPAWN: &str = "pature";
 pub const PLAYER_ROOM_SPAWN: &str = "devant_l'école";
 pub const AUTO_SAVE_INTERVAL: Duration = Duration::from_mins(2);
-pub const MAX_TIME_FOR_COMBAT: Duration = Duration::from_secs(0 * MINUTE + 5);
+pub const MAX_TIME_FOR_COMBAT: Duration = Duration::from_secs(3 * MINUTE + 42);
 pub const NPC_RESPAWN_TIME: Duration = Duration::from_secs(30);
 pub const ITEM_DESPAWN_TIME: Duration = Duration::from_mins(1);
 pub const TICK_TIME_AMPLIFICATION: u64 = 1;
@@ -103,10 +104,13 @@ impl ErrorCode {
     }
 }
 
-#[derive(Clone, Copy, Debug, EnumIter)]
+#[derive(Clone, Copy, Debug, EnumIter, Serialize, Deserialize, PartialEq, Eq)]
 pub enum LootType {
+    #[serde(rename = "merci", alias = "Merci")]
     Merci,
+    #[serde(rename = "t_shirt_bde", alias = "tshirt", alias = "t_shirt", alias = "TShirt")]
     TShirt,
+    #[serde(rename = "wrap_du_foyer", alias = "wrap", alias = "Wrap")]
     Wrap,
 }
 

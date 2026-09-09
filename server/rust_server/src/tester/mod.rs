@@ -9,7 +9,7 @@ use sandbox_permit::SandboxPermit;
 use std::fs;
 use std::io;
 use std::path::Path;
-use tracing::warn;
+use tracing::{error, warn};
 
 const TESTS_PATH: &str = "../assets/tests";
 
@@ -24,7 +24,7 @@ pub fn test(file_name: &str, code: &str) -> bool {
     let tests = match tests_for(file_name) {
         Ok(tests) => tests,
         Err(error) => {
-            warn!(file_name, %error, "could not load exercise tests");
+            error!(file_name, %error, "could not load exercise tests");
             return false;
         }
     };

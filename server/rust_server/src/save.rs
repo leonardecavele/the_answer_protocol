@@ -1,6 +1,6 @@
 use crate::constants::{PLAYER_ROOM_SPAWN, PLAYER_STARTING_HP, PLAYER_STARTING_MAX_HP};
 use crate::inventory::Inventory;
-use crate::quests::Questid;
+use crate::quests::{Loot, Questid};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -16,7 +16,7 @@ pub struct Save {
     #[serde(default)]
     pub quests: Vec<(Questid, String, u32)>,
     #[serde(default)]
-    pub completed_quests: HashMap<Questid, u32>,
+    pub completed_quests: HashMap<Questid, Vec<Vec<Loot>>>,
 }
 
 impl Default for Save {

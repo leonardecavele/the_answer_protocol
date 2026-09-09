@@ -1,4 +1,4 @@
- use rust_server::constants::{AUTO_SAVE_INTERVAL, TickResult};
+use rust_server::constants::{AUTO_SAVE_INTERVAL, TickResult};
 use rust_server::game_manager::GameManager;
 use rust_server::logs::ChannelWriter;
 use rust_server::parser::Parser;
@@ -16,7 +16,9 @@ use std::time::Instant;
 use time::macros::format_description;
 use tracing::{debug, error, info};
 use tracing_subscriber::EnvFilter;
-use tracing_subscriber::fmt::time::LocalTime;
+use tracing_subscriber::fmt::time::UtcTime;
+use tracing_subscriber::layer::SubscriberExt;
+use tracing_subscriber::util::SubscriberInitExt;
 
 fn start_tcp_reader_thread(reader_stream: TcpStream, mpsc_sender: mpsc::Sender<String>) {
     thread::spawn(move || {
@@ -65,19 +67,10 @@ where
     P: ExternalPrinter + Send + 'static,
 {
     thread::spawn(move || {
-        let mut file = std::fs::OpenOptions::new()
-            .create(true)
-            .append(true)
-            .open("app.log")
-            .ok();
-
         log_receiver.into_iter().for_each(|msg| {
             if msg == "FLUSH_EXIT" {
                 let _ = std::process::Command::new("stty").arg("sane").status();
                 std::process::exit(1);
-            }
-            if let Some(f) = file.as_mut() {
-                let _ = write!(f, "{}", msg);
             }
             printer.print(msg).ok();
         });
@@ -130,22 +123,37 @@ fn main() -> std::io::Result<()> {
 
     let (command_sender, command_receiver) = mpsc::channel::<String>();
 
-    let time_format = format_description!("[hour]:[minute]:[second].[subsecond digits:6]");
-    let timer = LocalTime::new(time_format);
+    let log_file = std::fs::File::create("app.log")?;
+
+    let time_format =
+        format_description!("[year]-[month]-[day] [hour]:[minute]:[second].[subsecond digits:6]");
+    let timer_console = UtcTime::new(time_format);
+    let timer_file = UtcTime::new(time_format);
     let log_sender_for_writer = log_sender.clone();
-    tracing_subscriber::fmt()
+
+    let filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info"));
+    let filter = if let Ok(directive) = "rustyline=warn".parse() {
+        filter.add_directive(directive)
+    } else {
+        filter
+    };
+
+    let console_layer = tracing_subscriber::fmt::layer()
+        .with_ansi(true)
+        .with_timer(timer_console)
         .with_writer(move || ChannelWriter {
             sender: log_sender_for_writer.clone(),
-        })
-        .with_env_filter({
-            let filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info"));
-            if let Ok(directive) = "rustyline=warn".parse() {
-                filter.add_directive(directive)
-            } else {
-                filter
-            }
-        })
-        .with_timer(timer)
+        });
+
+    let file_layer = tracing_subscriber::fmt::layer()
+        .with_ansi(false)
+        .with_timer(timer_file)
+        .with_writer(std::sync::Mutex::new(log_file));
+
+    tracing_subscriber::registry()
+        .with(filter)
+        .with(console_layer)
+        .with(file_layer)
         .init();
 
     let mut parser = Parser::new("npcs.json", "items.json", "rooms.json", "quests.json");
