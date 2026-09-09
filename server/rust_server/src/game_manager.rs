@@ -3,7 +3,7 @@ use crate::commands::generate_json;
 use crate::constants::{
     CODE_NL_SEP, CODE_SP_SEP, Direction, LOST_ITEM, LOST_ITEM_SPAWN, MAX_DMG_DEALT,
     MAX_TIME_FOR_COMBAT, MIN_DMG_DEALT, NPC_MAX_DMG, NPC_MIN_DMG, NPC_RESPAWN_TIME,
-    PLAYER_ROOM_SPAWN, TEST_FILES_DIR,
+    PLAYER_ROOM_SPAWN, T_SHIRT, TEST_FILES_DIR,
 };
 use rand::RngExt;
 
@@ -398,8 +398,13 @@ impl GameManager {
             return;
         };
         player.add_completed_quest(quest_name.to_string(), loots_won);
-        let reward_items_vec_json = JsonValue::Array(given_items_vec.into_iter().map(JsonValue::String).collect());
-        info!("player {} completed quest {}", player.get_name(), quest_name);
+        let reward_items_vec_json =
+            JsonValue::Array(given_items_vec.into_iter().map(JsonValue::String).collect());
+        info!(
+            "player {} completed quest {}",
+            player.get_name(),
+            quest_name
+        );
         let event = GameManager::generate_no_player_event_json(
             &vec![player.get_name().to_string()],
             "QUEST COMPLETE",
@@ -678,7 +683,11 @@ impl GameManager {
         if let Some(player) = self.get_player(player_id) {
             if let Some(item) = self.get_item(item_id) {
                 let item_repr = item.get_protocol_representation();
-                info!("removing item {} from player {}", item_repr, player.get_name());
+                info!(
+                    "removing item {} from player {}",
+                    item_repr,
+                    player.get_name()
+                );
             }
         }
         if let Some(player) = self.players.get_mut(&player_id) {
@@ -781,9 +790,10 @@ impl GameManager {
         self.all_items.contains_key(&item_id)
     }
 
-    pub fn generate_npc_dmg(&self) -> u32 {
-        let min = NPC_MIN_DMG;
-        let max = NPC_MAX_DMG;
+    pub fn generate_npc_dmg(&self, nb_t_shirt_bde: u64) -> u32 {
+        let dmg_reduction = nb_t_shirt_bde.clamp(0, 3) as f32 * 0.1;
+        let min = ((NPC_MIN_DMG as f32 * (1.0 - dmg_reduction)) as u32).clamp(0, NPC_MIN_DMG);
+        let max = ((NPC_MAX_DMG as f32 * (1.0 - dmg_reduction)) as u32).clamp(0, NPC_MAX_DMG);
         min + rand::random::<u32>() % (max - min + 1)
     }
 
@@ -918,7 +928,8 @@ impl GameManager {
             }
         }
         for (player_id, npc_id) in players_to_punish {
-            let npc_dmg = self.generate_npc_dmg();
+            let nb_t_shirt = self.get_nb_t_shirt_bde_for_player_id(player_id);
+            let npc_dmg = self.generate_npc_dmg(nb_t_shirt);
             self.npc_attacks_player(npc_dmg, player_id, npc_id);
             let player_name = {
                 let Some(player) = self.players.get(&player_id) else {
@@ -934,7 +945,10 @@ impl GameManager {
                     players_as_strings.push(player.get_name().to_owned());
                 }
             }
-            warn!("fight_result: player {} didnt respond during fight instance", player_name);
+            warn!(
+                "fight_result: player {} didnt respond during fight instance",
+                player_name
+            );
             let event = GameManager::generate_no_player_event_json(
                 &players_as_strings,
                 "FIGHT RESULT",
@@ -1178,6 +1192,28 @@ impl GameManager {
         self.add_diff_to_tick(event);
         if let Some(instance) = self.combat_instances.get_mut_instance_for_player(player_id) {
             instance.player_died(player_id);
+        }
+    }
+
+    pub fn get_nb_t_shirt_bde_for_player_id(&self, player_id: PlayerId) -> u64 {
+        if let Some(player) = self.get_player(player_id) {
+            let inv = player.get_inventory().get_items();
+            inv.iter()
+                .filter(|item| self.get_item_name(**item) == T_SHIRT)
+                .count() as u64
+        } else {
+            0
+        }
+    }
+
+    pub fn get_nb_t_shirt_bde_for_player(&self, player_name: &str) -> u64 {
+        if let Some(player) = self.get_player_from_name(player_name) {
+            let inv = player.get_inventory().get_items();
+            inv.iter()
+                .filter(|item| self.get_item_name(**item) == T_SHIRT)
+                .count() as u64
+        } else {
+            0
         }
     }
 
@@ -1507,8 +1543,11 @@ impl GameManager {
         if current_step != max_steps {
             if let Some(player) = self.get_player(player_id) {
                 let player_name = player.get_name();
-                info!("player {} completed one step of quest {}", player_name, quest_name);
-                
+                info!(
+                    "player {} completed one step of quest {}",
+                    player_name, quest_name
+                );
+
                 let event = GameManager::generate_no_player_event_json(
                     &vec![player_name.to_string()],
                     "QUEST STEP",
@@ -1522,7 +1561,6 @@ impl GameManager {
                 self.add_diff_to_tick(event);
             }
         }
-        
     }
 
     pub fn check_quest_map_tour(&mut self, player_name: &str) {
