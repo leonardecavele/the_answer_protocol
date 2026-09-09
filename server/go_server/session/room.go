@@ -5,6 +5,7 @@ import (
 	"go_server/game_conn"
 	"go_server/logger"
 	"go_server/protocol"
+	"sort"
 	"strings"
 	"sync"
 )
@@ -73,6 +74,42 @@ func (room *Room) GetClient(username string) (*Client, bool) {
 	room.mutex.Unlock()
 
 	return client, ok
+}
+
+func (room *Room) Disconnect(username string) bool {
+	client, ok := room.GetClient(username)
+	if !ok {
+		return false
+	}
+
+	_ = client.Conn.Close()
+	return true
+}
+
+func (room *Room) Groups() []GroupInfo {
+	if room == nil {
+		return nil
+	}
+
+	room.mutex.Lock()
+	groupsByPointer := make(map[*Group]struct{})
+	for _, client := range room.clients {
+		if client.Group != nil {
+			groupsByPointer[client.Group] = struct{}{}
+		}
+	}
+	room.mutex.Unlock()
+
+	groups := make([]GroupInfo, 0, len(groupsByPointer))
+	for group := range groupsByPointer {
+		if info, ok := group.Info(); ok {
+			groups = append(groups, info)
+		}
+	}
+	sort.Slice(groups, func(i, j int) bool {
+		return groups[i].ID < groups[j].ID
+	})
+	return groups
 }
 
 func (room *Room) RouteCommand(username string, command game_conn.CommandFromGameServer) bool {

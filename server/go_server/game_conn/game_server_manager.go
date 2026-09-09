@@ -49,6 +49,16 @@ func (manager *GameServerManager) IsConnected() bool {
 	return manager.getGameServer() != nil
 }
 
+func (manager *GameServerManager) Reconnect() error {
+	gameServer := manager.getGameServer()
+	if gameServer == nil {
+		return serverError.ErrGameServerNotConnected
+	}
+
+	manager.ClearServer(gameServer)
+	return gameServer.Close()
+}
+
 func (manager *GameServerManager) resolveQuestion(answer AnswerFromGameServer) bool {
 	manager.mutex.Lock()
 	if manager.questionManager == nil {

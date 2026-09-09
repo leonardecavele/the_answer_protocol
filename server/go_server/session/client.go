@@ -31,6 +31,7 @@ type Client struct {
 	Room        *Room
 	commandChan chan game_conn.CommandFromGameServer
 	eventChan   chan protocol.Event
+	connectedAt time.Time
 	stateMutex  sync.RWMutex
 	writeMutex  sync.Mutex
 }
@@ -43,7 +44,19 @@ func NewClient(conn net.Conn, room *Room) *Client {
 		Room:        room,
 		commandChan: make(chan game_conn.CommandFromGameServer, 64),
 		eventChan:   make(chan protocol.Event, 64),
+		connectedAt: time.Now(),
 	}
+}
+
+func (c *Client) connectionInfo() (string, ClientState, time.Time) {
+	if c == nil {
+		return "", CONNECTED, time.Time{}
+	}
+
+	c.stateMutex.RLock()
+	defer c.stateMutex.RUnlock()
+
+	return c.Username, c.State, c.connectedAt
 }
 
 func (c *Client) DeleteClient(gameServerManager *game_conn.GameServerManager) error {
@@ -77,10 +90,8 @@ func (c *Client) DeleteClient(gameServerManager *game_conn.GameServerManager) er
 		})
 
 		c.Room.BroadcastEvent(protocol.EventBatch{
-			IgnoredPlayers: []string{username},
 			Events: []protocol.Event{
 				{
-					// EmittedBy: username,
 					EventName: "STATS",
 					Data:      fmt.Sprintf("players=%d", c.Room.Count()),
 				},
