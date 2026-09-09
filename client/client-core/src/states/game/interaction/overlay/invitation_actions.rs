@@ -1,5 +1,7 @@
 use super::{Overlay, OverlayPayload};
 use crate::collections::SelectableList;
+use client_api::ApiRequest;
+use client_api::commands::GroupJoinCommand;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum InvitationAction {
@@ -15,9 +17,11 @@ impl InvitationAction {
         }
     }
 
-    pub fn keyword(self) -> Option<&'static str> {
+    pub fn request(self, leader: &str) -> Option<ApiRequest> {
         match self {
-            Self::Join => Some("GROUP JOIN"),
+            Self::Join => Some(ApiRequest::GroupJoin(GroupJoinCommand {
+                leader_name: leader.to_string(),
+            })),
             Self::Cancel => None,
         }
     }
@@ -37,8 +41,10 @@ impl InvitationActionsState {
         Self { leader, actions }
     }
 
-    pub fn selected_command(&self) -> Option<&'static str> {
-        self.actions.selected().and_then(|action| action.keyword())
+    pub fn selected_request(&self) -> Option<ApiRequest> {
+        self.actions
+            .selected()
+            .and_then(|action| action.request(&self.leader))
     }
 }
 

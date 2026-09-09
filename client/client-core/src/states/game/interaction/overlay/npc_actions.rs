@@ -1,6 +1,8 @@
 use super::{Overlay, OverlayPayload};
 use crate::collections::SelectableList;
 use crate::manifest::NpcKind;
+use client_api::ApiRequest;
+use client_api::commands::{AttackCommand, FightCreateCommand, QuestCommand, TalkCommand};
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum NpcAction {
@@ -22,12 +24,20 @@ impl NpcAction {
         }
     }
 
-    pub fn keyword(self) -> Option<&'static str> {
+    pub fn request(self, npc_id: &str) -> Option<ApiRequest> {
         match self {
-            Self::Talk => Some("TALK"),
-            Self::Attack => Some("ATTACK"),
-            Self::Fight => Some("FC"),
-            Self::Quest => Some("QUEST"),
+            Self::Talk => Some(ApiRequest::Talk(TalkCommand {
+                npc_name: npc_id.to_string(),
+            })),
+            Self::Attack => Some(ApiRequest::Attack(AttackCommand {
+                npc_name: npc_id.to_string(),
+            })),
+            Self::Fight => Some(ApiRequest::FightCreate(FightCreateCommand {
+                npc_id: npc_id.to_string(),
+            })),
+            Self::Quest => Some(ApiRequest::Quest(QuestCommand {
+                npc_name: npc_id.to_string(),
+            })),
             Self::Cancel => None,
         }
     }
@@ -54,8 +64,10 @@ impl NpcActionsState {
         Self { npc_id, actions }
     }
 
-    pub fn selected_command(&self) -> Option<&'static str> {
-        self.actions.selected().and_then(|action| action.keyword())
+    pub fn selected_request(&self) -> Option<ApiRequest> {
+        self.actions
+            .selected()
+            .and_then(|action| action.request(&self.npc_id))
     }
 }
 

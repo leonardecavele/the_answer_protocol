@@ -1,5 +1,7 @@
 use super::{Overlay, OverlayPayload};
 use crate::collections::SelectableList;
+use client_api::ApiRequest;
+use client_api::commands::GroupInviteCommand;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum PlayerAction {
@@ -15,9 +17,11 @@ impl PlayerAction {
         }
     }
 
-    pub fn keyword(self) -> Option<&'static str> {
+    pub fn request(self, player_name: &str) -> Option<ApiRequest> {
         match self {
-            Self::Invite => Some("GROUP INVITE"),
+            Self::Invite => Some(ApiRequest::GroupInvite(GroupInviteCommand {
+                username: player_name.to_string(),
+            })),
             Self::Cancel => None,
         }
     }
@@ -47,8 +51,10 @@ impl PlayerActionsState {
         }
     }
 
-    pub fn selected_command(&self) -> Option<&'static str> {
-        self.actions.selected().and_then(|action| action.keyword())
+    pub fn selected_request(&self) -> Option<ApiRequest> {
+        self.actions
+            .selected()
+            .and_then(|action| action.request(&self.player_name))
     }
 }
 
