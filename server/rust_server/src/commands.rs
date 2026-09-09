@@ -595,9 +595,9 @@ impl GameManager {
             command_name, player_name, data
         );
 
-        let autorised_commands_in_instance =
-            vec!["CONNECT", "QUIT", "FIGHT_ATTACK", "GROUP LEAVE", "LOOK"];
-        if !(autorised_commands_in_instance.contains(&command_name.to_uppercase().as_str())) {
+        let authorized_commands_in_instance =
+            vec!["CONNECT", "QUIT", "FIGHT_ATTACK", "GROUP LEAVE", "LOOK", "STATUS"];
+        if !(authorized_commands_in_instance.contains(&command_name.to_uppercase().as_str())) {
             if let Some(already_in_instance) =
                 self.check_player_is_in_instance(player_name, player_id, command_name)
             {
