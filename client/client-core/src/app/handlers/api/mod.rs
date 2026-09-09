@@ -10,7 +10,9 @@ use crate::app::App;
 use crate::events::ApiEvent;
 use crate::notification::{Notification, NotificationTopic};
 use crate::states::game::ChatChannel;
-use client_api::events::{GameServerEvent, GroupEvent, QuestEvent, RoomEvent, ServerEvent};
+use client_api::events::{
+    GameServerEvent, GroupEvent, ItemEvent, QuestEvent, RoomEvent, ServerEvent,
+};
 use client_api::{ApiRequest, ApiResponse, FrameDirection};
 
 impl App {
@@ -236,6 +238,7 @@ impl App {
                 }
             },
             ServerEvent::Quest(quest_event) => match quest_event {
+                QuestEvent::Add(data) => self.on_quest_add(data),
                 QuestEvent::Step(data) => self.on_quest_step(data),
                 QuestEvent::Complete(data) => self.on_quest_complete(data),
             },
@@ -257,6 +260,10 @@ impl App {
                     self.on_game_server_disconnected();
                 }
             },
+            ServerEvent::Item(item_event) => match item_event {
+                ItemEvent::Add(item_identifier) => self.on_item_add(item_identifier),
+            },
+            ServerEvent::Broadcast(message) => self.on_broadcast(message),
             ServerEvent::Unknown(raw) => {
                 self.on_unknown_event(raw);
             }
