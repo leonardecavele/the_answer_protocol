@@ -227,7 +227,7 @@ open descriptors, and stack size are bounded.
 Successful damage is based on target health at fight creation divided by the
 participant count, with a minimum of five. A finishing blow deals exactly the
 target's remaining health. A failed submission deals 25 to 50 damage to the
-player. On death, the player returns to the starting room with reduced health.
+player. On death, the player returns to the starting room.
 
 Fight creation emits `FIGHT START`; each evaluation emits `FIGHT RESULT`; the
 completed or expired instance emits `FIGHT END`.
