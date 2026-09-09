@@ -57,6 +57,13 @@ impl PlayerState {
             .any(|stack| stack.iter().any(|item| item.id == id))
     }
 
+    pub fn find_item_by_name(&self, name: &str) -> Option<&Item> {
+        self.inventory
+            .iter()
+            .find(|stack| stack.name.eq_ignore_ascii_case(name))
+            .and_then(|stack| stack.first())
+    }
+
     pub fn set_inventory(&mut self, items: Vec<Item>) {
         self.inventory.clear();
 
