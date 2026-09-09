@@ -40,7 +40,22 @@ func Run(
 
 func (console *serverCLI) readCommands() {
 	scanner := bufio.NewScanner(os.Stdin)
-	for scanner.Scan() {
+	interactive := isInteractive(os.Stdin)
+	if interactive {
+		logger.AppLogger.EnablePrompt(prompt, os.Stdout)
+		defer logger.AppLogger.DisablePrompt()
+	}
+	for {
+		if interactive {
+			logger.AppLogger.PrintPrompt()
+		}
+		if !scanner.Scan() {
+			break
+		}
+		if interactive {
+			logger.AppLogger.ConsumePrompt()
+		}
+
 		command, arguments := splitCommand(scanner.Text())
 		if command == "" {
 			continue
@@ -53,6 +68,11 @@ func (console *serverCLI) readCommands() {
 	if err := scanner.Err(); err != nil {
 		logger.AppLogger.Error("CLI input error: %v", err)
 	}
+}
+
+func isInteractive(input *os.File) bool {
+	info, err := input.Stat()
+	return err == nil && info.Mode()&os.ModeCharDevice != 0
 }
 
 func splitCommand(input string) (string, string) {
@@ -101,7 +121,7 @@ func (console *serverCLI) handleCommand(command string, arguments string) bool {
 		return console.scheduleShutdown(arguments)
 	case CommandHelp:
 		if hasNoArguments(CommandHelp, arguments) {
-			fmt.Print(helpMessage)
+			logger.AppLogger.Console(helpMessage)
 		}
 	default:
 		logger.AppLogger.Error("Unknown CLI command %q. Enter help to list commands.", command)

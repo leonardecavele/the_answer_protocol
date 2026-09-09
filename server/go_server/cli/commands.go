@@ -1,5 +1,7 @@
 package cli
 
+const prompt = "go_server> "
+
 const (
 	CommandBan          = "ban"
 	CommandUnban        = "deban"
