@@ -110,7 +110,7 @@
     "rooms": {
         "0.cluster_du_bas": {
             "image_path": "pictures/rooms/cluster_du_bas.jpg",
-            "direction": "N"
+            "direction": "S"
         },
         "1.pature": {
             "image_path": "pictures/rooms/pature.jpeg",
@@ -126,7 +126,7 @@
         },
         "4.cluster_du_haut": {
 			"image_path": "pictures/rooms/cluster_du_haut.jpeg",
-            "direction": "N"
+            "direction": "S"
         },
         "5.afk": {
 			"image_path": "pictures/rooms/afk.jpg",
