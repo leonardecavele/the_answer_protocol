@@ -5,10 +5,14 @@ use crate::renderer::components::{
 };
 use crate::renderer::theme::{panel_block, selection_style};
 use crate::states::AppState;
-use crate::states::game::{GameFocus, Item, ItemActionsState, ItemLocation, Overlay};
+use crate::states::game::{GameFocus, ItemActionsState, ItemLocation, ItemStack, Overlay};
 use ratatui::layout::Alignment;
-use ratatui::widgets::Paragraph;
-use ratatui::{Frame, layout::Rect, style::Color};
+use ratatui::widgets::{Block, Paragraph};
+use ratatui::{
+    Frame,
+    layout::{Margin, Rect},
+    style::{Color, Style},
+};
 use tokio::sync::mpsc::Sender;
 
 const INVENTORY_ITEM_WIDTH: u16 = 20;
@@ -66,7 +70,7 @@ impl InventoryPanel {
         self.rows * self.cols
     }
 
-    fn adjust_offset_alignment(&self, inventory: &mut SelectableList<Item>) {
+    fn adjust_offset_alignment(&self, inventory: &mut SelectableList<ItemStack>) {
         let cols = self.cols.max(1);
         let misalignment = inventory.offset() % cols;
 
@@ -117,7 +121,7 @@ impl Component for InventoryPanel {
         let cols = self.cols.max(1);
         let offset = state.game.player.inventory.offset();
 
-        for (idx, item) in state.game.player.inventory.iter().enumerate().skip(offset) {
+        for (idx, stack) in state.game.player.inventory.iter().enumerate().skip(offset) {
             let col = (idx - offset) % cols;
             let row = (idx - offset) / cols;
 
@@ -135,17 +139,18 @@ impl Component for InventoryPanel {
                 height: INVENTORY_ITEM_HEIGHT.min(inv_inner.bottom().saturating_sub(cell_y)),
             };
 
-            let text = format!("{}\n{}", item.name, item.id);
+            let text = format!("{}\nx{}", stack.name, stack.len());
             let style = selection_style(
                 Color::Reset,
                 focused && state.game.player.inventory.is_selected(idx),
             );
 
-            let mut text_area = cell_area;
-            if text_area.height >= 4 {
-                text_area.y += 1;
-                text_area.height -= 1;
-            }
+            let text_area = cell_area.inner(Margin::new(1, 1));
+
+            frame.render_widget(
+                Block::default().style(Style::default().bg(Color::Black)),
+                text_area,
+            );
 
             let paragraph = Paragraph::new(text)
                 .alignment(Alignment::Center)
@@ -225,7 +230,13 @@ impl Lifecycle for InventoryPanel {
                         return EventFlow::Consumed;
                     }
                     crossterm::event::KeyCode::Enter => {
-                        if let Some(item) = state.game.player.inventory.selected() {
+                        if let Some(item) = state
+                            .game
+                            .player
+                            .inventory
+                            .selected()
+                            .and_then(|stack| stack.first())
+                        {
                             let item_id = item.id.clone();
                             state
                                 .game

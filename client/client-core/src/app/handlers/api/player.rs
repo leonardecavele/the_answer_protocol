@@ -22,7 +22,7 @@ impl App {
     }
 
     pub fn on_inventory(&mut self, response: InventoryResponse) {
-        self.state.game.player.inventory.set_items(
+        self.state.game.player.set_inventory(
             response
                 .inventory
                 .into_iter()
@@ -114,7 +114,7 @@ impl App {
         self.state
             .game
             .log_action(format!("You took {}.", item.name));
-        self.state.game.player.inventory.push(item);
+        self.state.game.player.add_item(item);
     }
 
     pub fn on_drop_item(&mut self, response: DropResponse) {

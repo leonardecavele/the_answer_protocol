@@ -337,12 +337,18 @@ impl GameView {
 
         if let InventoryPanelHit::Item(Some(index)) = inventory_hit {
             if state.game.player.inventory.is_selected(index) {
-                requested = state.game.player.inventory.selected().map(|item| {
-                    Overlay::ItemActions(ItemActionsState::new(
-                        item.id.clone(),
-                        ItemLocation::Inventory,
-                    ))
-                });
+                requested = state
+                    .game
+                    .player
+                    .inventory
+                    .selected()
+                    .and_then(|stack| stack.first())
+                    .map(|item| {
+                        Overlay::ItemActions(ItemActionsState::new(
+                            item.id.clone(),
+                            ItemLocation::Inventory,
+                        ))
+                    });
             } else {
                 state.game.player.inventory.select_index(index);
             }

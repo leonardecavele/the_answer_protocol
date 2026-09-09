@@ -1,13 +1,13 @@
 use crate::collections::SelectableList;
 use crate::states::game::session::quest::{Quest, QuestId};
-use crate::states::game::world::Item;
+use crate::states::game::world::{Item, ItemStack};
 use client_api::commands::{QuestData, QuestStatus};
 
 pub struct PlayerState {
     pub name: Option<String>,
     pub hp: u32,
     pub max_hp: u32,
-    pub inventory: SelectableList<Item>,
+    pub inventory: SelectableList<ItemStack>,
     pub quests: SelectableList<Quest>,
     next_quest_id: u64,
 }
@@ -52,12 +52,47 @@ impl PlayerState {
     }
 
     pub fn has_item(&self, id: &str) -> bool {
-        self.inventory.iter().any(|item| item.id == id)
+        self.inventory
+            .iter()
+            .any(|stack| stack.iter().any(|item| item.id == id))
+    }
+
+    pub fn set_inventory(&mut self, items: Vec<Item>) {
+        self.inventory.clear();
+
+        for item in items {
+            self.add_item(item);
+        }
+    }
+
+    pub fn add_item(&mut self, item: Item) {
+        match self
+            .inventory
+            .iter()
+            .position(|stack| stack.name == item.name)
+        {
+            Some(index) => {
+                if let Some(stack) = self.inventory.get_mut(index) {
+                    stack.push(item);
+                }
+            }
+            None => self.inventory.push(ItemStack::new(item)),
+        }
     }
 
     pub fn take_item(&mut self, id: &str) -> Option<Item> {
-        let index = self.inventory.iter().position(|item| item.id == id)?;
-        self.inventory.remove(index)
+        let index = self
+            .inventory
+            .iter()
+            .position(|stack| stack.iter().any(|item| item.id == id))?;
+
+        let item = self.inventory.get_mut(index)?.take_item(id)?;
+
+        if self.inventory[index].is_empty() {
+            self.inventory.remove(index);
+        }
+
+        Some(item)
     }
 
     fn new_quest(&mut self, data: QuestData) -> Quest {
@@ -132,7 +167,10 @@ impl PlayerState {
         quest.data.current_step = quest.data.max_step;
         quest.data.status = QuestStatus::Completed;
 
-        self.inventory.extend(rewards);
+        for item in rewards {
+            self.add_item(item);
+        }
+
         self.sort_quests();
     }
 }
