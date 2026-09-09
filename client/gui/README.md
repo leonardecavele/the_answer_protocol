@@ -48,11 +48,8 @@ make run-client-gui
 The native window is titled `The Answer Protocol` and connects to the default
 gateway at `127.0.0.1:38800`.
 
-| Flag | Default | Purpose |
-| --- | --- | --- |
-| `--ip` | `127.0.0.1` | Go TAP server IP address or hostname. |
-| `--port` | `38800` | Public TAP server port. |
-| `--assets` | Embedded assets | Optional directory containing `manifest.json` and pictures. |
+Shared flags and defaults are listed in the
+[client workspace instructions](../README.md#build-and-run).
 
 Example with another endpoint and an external asset directory:
 
@@ -89,8 +86,7 @@ When `App` requests shutdown, the GUI closes the native viewport.
 The software terminal starts at 120 columns by 40 rows and uses 9-by-18 regular
 and bold monospace atlases. The native window cannot shrink below the 80-by-24
 application minimum, and the zoom factor is capped so that minimum grid remains
-visible. The shared renderer centers and limits the interface to 200 columns by
-60 rows. Cells with an unset background are normalized to black before display.
+visible. Cells with an unset background are normalized to black before display.
 The drawable area is also clamped to the graphics texture limit.
 
 ## Input translation
@@ -115,41 +111,19 @@ from Egui pixels to Ratatui column and row coordinates using the active cell
 size and displayed grid rectangle. Wheel events modified with Ctrl remain
 available to Egui for native zoom behavior.
 
-## Controls
+## Shared application
 
-Because the GUI feeds the same event type into the same `App`, it retains the
-TUI controls:
-
-| Input | Action |
-| --- | --- |
-| `Ctrl+C` | Quit. |
-| `Ctrl+H` | Toggle help. |
-| `Ctrl+E` | Toggle events and traces. |
-| `F1` | Toggle chat. |
-| `Tab` / `Shift+Tab` | Cycle focus. |
-| Arrow keys | Navigate, select, or move according to focus. |
-| `Enter` | Submit or activate the focused action. |
-| `Esc` | Close the active popup. |
-| Left click | Focus or select a mapped terminal cell. |
-| Mouse wheel | Scroll the panel beneath the pointer. |
-| `Ctrl+S` in the fight editor | Submit the C solution. |
-
-The command input accepts the same full commands and aliases as the terminal
-client. Contextual room, inventory, NPC, quest, group, chat, and navigation
-panels expose `LOOK`, `MOVE`, `TAKE`, `DROP`, `TALK`, `ATTACK`,
-`STATUS`, `QUEST`, `QUESTS`, `WHO`, `GROUP`, and `QUIT` actions. Room state and
-server/player counters update from command responses and asynchronous events.
-
-The shared [request-chain model](../README.md#request-chains) keeps dependent
-commands such as `[MOVE, LOOK]` together and drops unsent requests after a chain
-error. A red `LAG` block beside the input uses the same rolling request-time
-average as the TUI: at least one second over the last three measurements, or
-the available samples until three exist.
+The GUI uses the core's [keyboard and mouse controls](../client-core/README.md#keyboard-and-mouse-controls)
+and [command input](../client-core/README.md#command-input). Its
+[views](../client-core/README.md#views-and-components),
+[request chains](../client-core/README.md#request-chains),
+[latency indicator](../client-core/README.md#latency-indicator), and
+[fight editor](../client-core/README.md#fight-editor) are documented there.
 
 ## Logging
 
-The GUI appends structured tracing records to `gui.log`. The default filter is
-`debug`; override it with `RUST_LOG`:
+The frontend writes to `gui.log` using the core's
+[logging setup](../client-core/README.md#notifications-and-logging). For example:
 
 ```bash
 RUST_LOG=info make run-client-gui

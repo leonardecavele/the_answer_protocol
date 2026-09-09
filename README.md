@@ -7,7 +7,7 @@ by 1970s MUDs. It recreates our school, with our friends as
 NPCs you can fight by completing sandboxed C coding challenges.
 
 The project implements RFC [42TAP](PROTOCOL.md) as a line-oriented TCP protocol. The public
-[gateway](server/go_server/README.md), authoritative [game engine](server/rust_server/README.md), shared [client core](client/client-core), reusable [client API](client/client-api/README.md), [terminal interface](client/tui/README.md),
+[gateway](server/go_server/README.md), authoritative [game engine](server/rust_server/README.md), shared [client core](client/client-core/README.md), reusable [client API](client/client-api/README.md), [terminal interface](client/tui/README.md),
 and [graphical interface](client/gui/README.md) are separate components with clearly defined responsibilities.
 
 ## Documentation
@@ -25,7 +25,7 @@ to the component that owns it:
     quests, persistence, and C sandbox.
 - [Client architecture](client/README.md): shared application and rendering
   model.
-  - [Client core](client/client-core): shared application state, networking,
+  - [Client core](client/client-core/README.md): shared application state, networking,
     widgets, and Ratatui rendering.
   - [Client API](client/client-api/README.md): reusable asynchronous TAP
     transport.
@@ -56,33 +56,11 @@ evaluation runs on bounded worker threads and returns results to that loop.
 This model keeps network clients responsive without introducing concurrent
 writes to the world.
 
-The `client-core` crate owns the `App`, state machine, widgets, networking code,
-and key bindings shared by the TUI and GUI. Only the event source and rendering
-backend change:
-
-```mermaid
-flowchart LR
-    CE["Crossterm Event"] --> App["App"]
-    App --> Ratatui["Ratatui"]
-    Ratatui --> CB["Crossterm Backend"]
-    CB --> Terminal["Terminal"]
-```
-
-```mermaid
-flowchart LR
-    EE["Egui Event"] --> CE["Crossterm Event"]
-    CE --> App["App"]
-    App --> Ratatui["Ratatui"]
-    Ratatui --> SB["Soft Ratatui Backend"]
-    SB --> EW["Egui Window"]
-```
-
-Both frontends share [request chains](client/README.md#request-chains), keeping
-dependent commands such as `[MOVE, LOOK]` together in the application queue.
-Commands still wait for individual responses; a failure drops the chain's
-remaining requests. A red `LAG` indicator beside the input reports an average
-request time of at least one second over the last three measurements, using
-the available samples until three exist.
+The [client core](client/client-core/README.md) owns the application logic
+shared by the TUI and GUI. Its README covers state, event handling, request
+chains, the latency indicator, views, controls, and assets. Frontend rendering
+and lifecycle details are documented in the [TUI](client/tui/README.md) and
+[GUI](client/gui/README.md) READMEs.
 
 ## Instructions
 

@@ -41,11 +41,8 @@ make build-client-tui
 make run-client-tui
 ```
 
-| Flag | Default | Purpose |
-| --- | --- | --- |
-| `--ip` | `127.0.0.1` | Go TAP server IP address or hostname. |
-| `--port` | `38800` | Public TAP server port. |
-| `--assets` | Embedded assets | Optional directory containing `manifest.json` and pictures. |
+Shared flags and defaults are listed in the
+[client workspace instructions](../README.md#build-and-run).
 
 Example with another endpoint:
 
@@ -70,75 +67,17 @@ an application event from `client-core`. The shared event broker produces the
 bounded Tokio channel. Normal shutdown restores the cursor, disables mouse
 capture, leaves the alternate screen, and disables raw mode.
 
-## Application lifecycle
+## Shared application
 
-The login view collects a player name, opens the TAP connection, and sends
-`CONNECT`. After authentication, the application loads `WHO`, `STATUS`,
-`INVENTORY`, `QUESTS`, and `LOOK` through the network manager.
+The [Client core README](../client-core/README.md) owns the shared behavior:
 
-Network, game, and presentation state are kept separate. Typed API responses
-and asynchronous server events update the central state before the next draw.
-Movement queues `[MOVE, LOOK]` as one request chain, keeping the room refresh
-ahead of subsequent queued commands. An error drops the chain's remaining
-requests. The shared [request-chain model](../README.md#request-chains) also
-covers initial state loading and the refresh after death.
-
-A red `LAG` block appears beside the command input when the average of the last
-three request timings is at least one second, using the available samples
-until three exist. It clears when the average falls below that threshold.
-
-## Keyboard and mouse controls
-
-| Input | Action |
-| --- | --- |
-| `Ctrl+C` | Quit the application. |
-| `Ctrl+H` | Toggle help. |
-| `Ctrl+E` | Toggle the event and trace overlay. |
-| `F1` | Toggle the chat overlay. |
-| `Tab` / `Shift+Tab` | Cycle focus across interactive panels. |
-| Arrow keys on navigation | Move north, south, west, or east. |
-| Arrow keys in lists | Change selection or scroll. |
-| `Enter` | Submit input, activate an action, or advance dialogue. |
-| `Esc` | Close the active popup or modal. |
-| Left mouse button | Focus, select, or dismiss supported elements. |
-| `Ctrl+S` in the fight editor | Submit the encoded C solution. |
-
-Focus cycles through command input, NPCs, room items, quests, action history,
-inventory, and the contextual right panel.
-
-## Text commands
-
-The parser accepts full TAP-like phrases and compact aliases without case
-sensitivity:
-
-| Input | Request |
-| --- | --- |
-| `connect <name>` | `CONNECT <name>` |
-| `quit` | `QUIT` |
-| `look` | `LOOK` |
-| `move <direction>` | `MOVE <direction>` |
-| `who` | `WHO` |
-| `chat global <message>` / `say <message>` | `CHAT GLOBAL` |
-| `chat room <message>` / `cr <message>` | `CHAT ROOM` |
-| `chat group <message>` / `cg <message>` | `CHAT GROUP` |
-| `chat private <name> <message>` / `msg ...` | `CHAT PRIVATE` |
-| `take <item>` | `TAKE` |
-| `drop <item>` | `DROP` |
-| `inventory` / `inv` | `INVENTORY` |
-| `status` | `STATUS` |
-| `talk <npc>` | `TALK` |
-| `attack <npc>` | `ATTACK` |
-| `quest <npc>` | `QUEST` |
-| `quests` | `QUESTS` |
-| `group create` / `gc` | `GROUP CREATE` |
-| `group invite <name>` / `gi <name>` | `GROUP INVITE` |
-| `group join <name>` / `gj <name>` | `GROUP JOIN` |
-| `group leave` / `gl` | `GROUP LEAVE` |
-| `fight create <npc>` / `fc <npc>` | `FIGHT CREATE` |
-| `fight attack <code>` / `fa <code>` | `FIGHT ATTACK` |
-
-Contextual panels expose the same operations without requiring command entry,
-including take, drop, talk, quest, direct attack, and code-fight actions.
+- [Application and connection lifecycle](../client-core/README.md#connection-lifecycle)
+- [Request chains](../client-core/README.md#request-chains) and
+  [latency indicator](../client-core/README.md#latency-indicator)
+- [Keyboard and mouse controls](../client-core/README.md#keyboard-and-mouse-controls)
+- [Command input](../client-core/README.md#command-input)
+- [Views and components](../client-core/README.md#views-and-components)
+- [Fight editor](../client-core/README.md#fight-editor)
 
 ## Source layout
 
@@ -152,8 +91,8 @@ are implemented by the sibling `client-core` crate.
 
 ## Logging
 
-The client appends structured tracing records to `tui.log`. The default filter
-is `debug`; override it with `RUST_LOG`:
+The frontend writes to `tui.log` using the core's
+[logging setup](../client-core/README.md#notifications-and-logging). For example:
 
 ```bash
 RUST_LOG=info make run-client-tui
