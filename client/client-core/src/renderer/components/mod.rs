@@ -10,4 +10,4 @@ pub use interactive::{Interactive, InteractiveComponent, is_mouse_in_rect, scrol
 pub use lifecycle::{EventFlow, Lifecycle};
 pub use overlays::{NotificationsOverlay, TraceOverlay};
 pub use scrollable::{Scrollable, ScrollableComponent, ScrollableHit};
-pub use widgets::{Button, CloseButton, CommandButton, LabelButton, TextInput};
+pub use widgets::{Button, CloseButton, LabelButton, TextInput};

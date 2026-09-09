@@ -2,7 +2,7 @@ use crate::collections::{SelectableList, Step};
 use crate::events::{ApplicationEvent, SendEvent};
 use crate::manifest::NpcKind;
 use crate::renderer::components::{
-    CommandButton, Component, EventFlow, Lifecycle, is_mouse_in_rect, scroll_direction,
+    Component, EventFlow, LabelButton, Lifecycle, is_mouse_in_rect, scroll_direction,
 };
 use crate::renderer::theme::{
     ERROR_COLOR, INFORMATION_COLOR, INVITATION_COLOR, ITEM_COLOR, MUTED_COLOR, PLAYER_COLOR,
@@ -13,6 +13,8 @@ use crate::states::game::{
     GameFocus, InvitationActionsState, ItemActionsState, ItemLocation, NpcActionsState, Overlay,
     PlayerActionsState, QuestDetailState, Room,
 };
+use client_api::ApiRequest;
+use client_api::commands::QuestsCommand;
 use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect},
@@ -39,7 +41,7 @@ pub struct LeftPanel {
     items_area: Option<Rect>,
     quests_area: Option<Rect>,
     invitations_area: Option<Rect>,
-    quests_button: CommandButton,
+    quests_button: LabelButton,
 }
 
 impl Default for LeftPanel {
@@ -56,7 +58,7 @@ impl LeftPanel {
             items_area: None,
             quests_area: None,
             invitations_area: None,
-            quests_button: CommandButton::new("QUESTS", "QUESTS"),
+            quests_button: LabelButton::new("QUESTS"),
         }
     }
 
@@ -373,10 +375,10 @@ impl Lifecycle for LeftPanel {
         if let crossterm::event::Event::Mouse(mouse) = event
             && mouse.kind
                 == crossterm::event::MouseEventKind::Down(crossterm::event::MouseButton::Left)
-            && let Some(command) = self.quests_button.hit(mouse.column, mouse.row)
+            && self.quests_button.hit(mouse.column, mouse.row)
         {
-            let _ = event_sender.try_send(ApplicationEvent::Send(SendEvent::RawCommand(
-                command.to_string(),
+            let _ = event_sender.try_send(ApplicationEvent::Send(SendEvent::ApiRequest(
+                ApiRequest::Quests(QuestsCommand),
             )));
             return EventFlow::Consumed;
         }

@@ -1,11 +1,15 @@
 use crate::events::{ApplicationEvent, SendEvent};
-use crate::renderer::components::{CommandButton, Component, EventFlow, LabelButton, Lifecycle};
+use crate::renderer::components::{Component, EventFlow, LabelButton, Lifecycle};
 use crate::renderer::text::wrap_str_to_lines;
 use crate::renderer::theme::{
     ERROR_COLOR, PLAYER_COLOR, ROOM_COLOR, SUCCESS_COLOR, WARNING_COLOR, default_block,
 };
 use crate::states::AppState;
 use crate::states::game::{HelpState, Overlay};
+use client_api::ApiRequest;
+use client_api::commands::{
+    GroupCreateCommand, GroupLeaveCommand, QuitCommand, StatusCommand, WhoCommand,
+};
 use crossterm::event::{Event as CrosstermEvent, MouseButton, MouseEventKind};
 use ratatui::widgets::Paragraph;
 use ratatui::{
@@ -17,11 +21,11 @@ use ratatui::{
 use tokio::sync::mpsc::Sender;
 
 pub struct Header {
-    who: CommandButton,
-    status: CommandButton,
-    quit: CommandButton,
-    group_create: CommandButton,
-    group_leave: CommandButton,
+    who: LabelButton,
+    status: LabelButton,
+    quit: LabelButton,
+    group_create: LabelButton,
+    group_leave: LabelButton,
     help: LabelButton,
     trace: LabelButton,
 }
@@ -35,25 +39,14 @@ impl Default for Header {
 impl Header {
     pub fn new() -> Self {
         Self {
-            who: CommandButton::new("WHO", "WHO"),
-            status: CommandButton::new("STATUS", "STATUS"),
-            quit: CommandButton::new("QUIT", "QUIT"),
-            group_create: CommandButton::new("CREATE GROUP", "GROUP CREATE"),
-            group_leave: CommandButton::new("LEAVE GROUP", "GROUP LEAVE"),
+            who: LabelButton::new("WHO"),
+            status: LabelButton::new("STATUS"),
+            quit: LabelButton::new("QUIT"),
+            group_create: LabelButton::new("CREATE GROUP"),
+            group_leave: LabelButton::new("LEAVE GROUP"),
             help: LabelButton::new("HELP"),
             trace: LabelButton::new("TRACE"),
         }
-    }
-
-    fn next_button_area(cursor: &mut u16, y: u16, right: u16, width: u16) -> Option<Rect> {
-        if *cursor + width >= right {
-            return None;
-        }
-
-        let area = Rect::new(*cursor, y, width, 1);
-        *cursor += width;
-
-        Some(area)
     }
 
     fn draw_buttons(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
@@ -65,23 +58,28 @@ impl Header {
             &mut self.group_create
         };
 
-        let commands = [&mut self.who, &mut self.status, &mut self.quit, group];
+        let buttons = [
+            &mut self.who,
+            &mut self.status,
+            &mut self.quit,
+            group,
+            &mut self.help,
+            &mut self.trace,
+        ];
 
-        let mut cursor = area.x + 1;
+        let mut x = area.x + 1;
         let y = area.bottom().saturating_sub(1);
 
-        for button in commands {
-            match Self::next_button_area(&mut cursor, y, area.right(), button.width()) {
-                Some(button_area) => button.draw(frame, button_area),
-                None => button.hide(),
-            }
-        }
+        for button in buttons {
+            let width = button.width();
 
-        for button in [&mut self.help, &mut self.trace] {
-            match Self::next_button_area(&mut cursor, y, area.right(), button.width()) {
-                Some(button_area) => button.draw(frame, button_area),
-                None => button.hide(),
+            if x + width >= area.right() {
+                button.hide();
+                continue;
             }
+
+            button.draw(frame, Rect::new(x, y, width, 1));
+            x += width;
         }
     }
 }
@@ -216,24 +214,25 @@ impl Lifecycle for Header {
             return EventFlow::Consumed;
         }
 
-        let buttons = [
-            &self.who,
-            &self.status,
-            &self.quit,
-            &self.group_create,
-            &self.group_leave,
+        let requests = [
+            (&self.who, ApiRequest::Who(WhoCommand)),
+            (&self.status, ApiRequest::Status(StatusCommand)),
+            (&self.quit, ApiRequest::Quit(QuitCommand)),
+            (
+                &self.group_create,
+                ApiRequest::GroupCreate(GroupCreateCommand),
+            ),
+            (&self.group_leave, ApiRequest::GroupLeave(GroupLeaveCommand)),
         ];
 
-        let Some(command) = buttons
-            .iter()
-            .find_map(|button| button.hit(mouse.column, mouse.row))
+        let Some(request) = requests
+            .into_iter()
+            .find_map(|(button, request)| button.hit(mouse.column, mouse.row).then_some(request))
         else {
             return EventFlow::Ignored;
         };
 
-        let _ = event_sender.try_send(ApplicationEvent::Send(SendEvent::RawCommand(
-            command.to_string(),
-        )));
+        let _ = event_sender.try_send(ApplicationEvent::Send(SendEvent::ApiRequest(request)));
 
         EventFlow::Consumed
     }

@@ -1,11 +1,13 @@
 use crate::collections::{SelectableList, Step};
 use crate::events::{ApplicationEvent, SendEvent};
 use crate::renderer::components::{
-    CommandButton, Component, EventFlow, Lifecycle, is_mouse_in_rect, scroll_direction,
+    Component, EventFlow, LabelButton, Lifecycle, is_mouse_in_rect, scroll_direction,
 };
 use crate::renderer::theme::{panel_block, selection_style};
 use crate::states::AppState;
 use crate::states::game::{GameFocus, ItemActionsState, ItemLocation, ItemStack, Overlay};
+use client_api::ApiRequest;
+use client_api::commands::InventoryCommand;
 use ratatui::layout::Alignment;
 use ratatui::widgets::{Block, Paragraph};
 use ratatui::{
@@ -27,7 +29,7 @@ pub struct InventoryPanel {
     cols: usize,
     rows: usize,
     area: Option<Rect>,
-    refresh_button: CommandButton,
+    refresh_button: LabelButton,
 }
 
 impl Default for InventoryPanel {
@@ -42,7 +44,7 @@ impl InventoryPanel {
             cols: 1,
             rows: 1,
             area: None,
-            refresh_button: CommandButton::new("INVENTORY", "INVENTORY"),
+            refresh_button: LabelButton::new("INVENTORY"),
         }
     }
 
@@ -176,10 +178,10 @@ impl Lifecycle for InventoryPanel {
         if let crossterm::event::Event::Mouse(mouse) = event
             && mouse.kind
                 == crossterm::event::MouseEventKind::Down(crossterm::event::MouseButton::Left)
-            && let Some(command) = self.refresh_button.hit(mouse.column, mouse.row)
+            && self.refresh_button.hit(mouse.column, mouse.row)
         {
-            let _ = event_sender.try_send(ApplicationEvent::Send(SendEvent::RawCommand(
-                command.to_string(),
+            let _ = event_sender.try_send(ApplicationEvent::Send(SendEvent::ApiRequest(
+                ApiRequest::Inventory(InventoryCommand),
             )));
             return EventFlow::Consumed;
         }
