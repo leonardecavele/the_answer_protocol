@@ -13,7 +13,7 @@ use crate::items::{Item, ItemId};
 use crate::npc::{Npc, NpcId};
 use crate::parser::Parser;
 use crate::player::{Player, PlayerCount, PlayerId};
-use crate::quests::{Quest, QuestInstance, Questid};
+use crate::quests::{Loot, Quest, QuestInstance, Questid};
 use crate::room::{Room, RoomId, RoomName};
 use crate::save::{Save, ServerSave};
 use crate::tester::test;
@@ -366,24 +366,24 @@ impl GameManager {
         };
 
         let mut rng = rand::rng();
-        let mut loots_to_give = Vec::new();
+        let mut loots_won: Vec<Loot> = Vec::new();
         let mut given_items_vec = Vec::new();
         for possible_loot in quest.get_loots() {
             let float_generated: f32 = rng.random_range(0.0..100.0);
             if float_generated <= possible_loot.chance {
-                let item_name = possible_loot.loot_type.to_string();
-                loots_to_give.push((item_name, possible_loot.qty));
+                loots_won.push(possible_loot.clone());
             }
         }
 
-        for (item_name, qty) in loots_to_give {
+        for loot in &loots_won {
+            let item_name = loot.loot_type.to_string();
             let model_id = (0..self.nb_models).find(|&i| {
                 self.get_item(i)
                     .is_some_and(|item| item.get_name() == item_name)
             });
 
             if let Some(item_id) = model_id {
-                for _ in 0..qty {
+                for _ in 0..loot.qty {
                     let new_item_id = self.instantiate_item(item_id);
                     let item_repr = Item::protocol_representation(new_item_id, &item_name);
                     given_items_vec.push(item_repr);
@@ -397,8 +397,9 @@ impl GameManager {
         let Some(player) = self.players.get_mut(player_id) else {
             return;
         };
-        player.add_completed_quest(quest_name.to_string());
+        player.add_completed_quest(quest_name.to_string(), loots_won);
         let reward_items_vec_json = JsonValue::Array(given_items_vec.into_iter().map(JsonValue::String).collect());
+        info!("player {} completed quest {}", player.get_name(), quest_name);
         let event = GameManager::generate_no_player_event_json(
             &vec![player.get_name().to_string()],
             "QUEST COMPLETE",
@@ -486,7 +487,7 @@ impl GameManager {
                     item_id, save_data.name
                 );
             } else if item_id == LOST_ITEM {
-                tracing::error!("removing invalid lost_item from player {}", save_data.name);
+                warn!("Removing invalid lost_item from player {}", save_data.name);
             } else {
                 save_data.inventory.add_item(self.instantiate_item(item_id));
             }
@@ -522,16 +523,16 @@ impl GameManager {
             }
         });
 
-        save_data.completed_quests.retain(|quest_id, count| {
+        save_data.completed_quests.retain(|quest_id, completions| {
             if quest_id.trim().is_empty() {
                 warn!(
                     "Removing invalid completed quest with empty name from player {}",
                     save_data.name
                 );
                 false
-            } else if *count == 0 {
+            } else if completions.is_empty() {
                 warn!(
-                    "Removing completed quest '{}' with count 0 from player {}",
+                    "Removing completed quest '{}' with no completions from player {}",
                     quest_id, save_data.name
                 );
                 false
@@ -542,6 +543,22 @@ impl GameManager {
                 );
                 false
             } else {
+                for run_loots in completions.iter() {
+                    for loot in run_loots {
+                        let item_name = loot.loot_type.to_string();
+                        let item_exists = (0..self.nb_models).any(|i| {
+                            self.get_item(i)
+                                .is_some_and(|item| item.get_name() == item_name)
+                        });
+                        if !item_exists {
+                            warn!(
+                                "Removing completed quest '{}' from player {}: item '{}' model does not exist",
+                                quest_id, save_data.name, item_name
+                            );
+                            return false;
+                        }
+                    }
+                }
                 true
             }
         });
@@ -604,7 +621,7 @@ impl GameManager {
         let player_id = match self.players_by_name.get(&name) {
             Some(&id) => id,
             _none => {
-                error!("disconnect player: player not found");
+                warn!("disconnect player: player not found");
                 return;
             }
         };
@@ -658,6 +675,12 @@ impl GameManager {
     }
 
     pub fn remove_item_from_player(&mut self, player_id: PlayerId, item_id: ItemId) {
+        if let Some(player) = self.get_player(player_id) {
+            if let Some(item) = self.get_item(item_id) {
+                let item_repr = item.get_protocol_representation();
+                info!("removing item {} from player {}", item_repr, player.get_name());
+            }
+        }
         if let Some(player) = self.players.get_mut(&player_id) {
             player.remove_item(item_id);
         } else {
@@ -669,7 +692,14 @@ impl GameManager {
     }
 
     pub fn add_item_to_player(&mut self, player_id: PlayerId, item_id: ItemId) {
-        if let Some(player) = self.players.get_mut(&player_id) {
+        if let Some(player) = self.get_player(player_id) {
+            if let Some(item) = self.get_item(item_id) {
+                let item_repr = item.get_protocol_representation();
+                info!("adding item {} to player {}", item_repr, player.get_name());
+            }
+        }
+
+        if let Some(player) = self.get_mut_player(player_id) {
             player.add_item(item_id);
         } else {
             warn!("tried to add item to non-existent player: {}", player_id);
@@ -711,6 +741,11 @@ impl GameManager {
     }
 
     pub fn remove_item_from_room(&mut self, room_name: &str, item_id: ItemId) {
+        if let Some(item) = self.get_item(item_id) {
+            let item_repr = item.get_protocol_representation();
+            info!("removing item {} from room {}", item_repr, room_name);
+        }
+
         if let Some(room) = self.get_mut_room_by_name(room_name) {
             room.remove_item(item_id);
         } else {
@@ -719,6 +754,10 @@ impl GameManager {
     }
 
     pub fn add_item_to_room(&mut self, room_name: &str, item_id: ItemId) {
+        if let Some(item) = self.get_item(item_id) {
+            let item_repr = item.get_protocol_representation();
+            info!("adding item {} to room {}", item_repr, room_name);
+        }
         if let Some(room) = self.get_mut_room_by_name(room_name) {
             room.add_item(item_id);
         } else {
@@ -895,6 +934,7 @@ impl GameManager {
                     players_as_strings.push(player.get_name().to_owned());
                 }
             }
+            warn!("fight_result: player {} didnt respond during fight instance", player_name);
             let event = GameManager::generate_no_player_event_json(
                 &players_as_strings,
                 "FIGHT RESULT",
@@ -1466,8 +1506,11 @@ impl GameManager {
         // sends QUEST STEP event to the player if the current step is not the max step
         if current_step != max_steps {
             if let Some(player) = self.get_player(player_id) {
+                let player_name = player.get_name();
+                info!("player {} completed one step of quest {}", player_name, quest_name);
+                
                 let event = GameManager::generate_no_player_event_json(
-                    &vec![player.get_name().to_string()],
+                    &vec![player_name.to_string()],
                     "QUEST STEP",
                     object! {
                         "name" => quest_name,
@@ -1479,6 +1522,7 @@ impl GameManager {
                 self.add_diff_to_tick(event);
             }
         }
+        
     }
 
     pub fn check_quest_map_tour(&mut self, player_name: &str) {

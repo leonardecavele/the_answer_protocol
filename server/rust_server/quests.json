@@ -87,6 +87,7 @@
       "nb_steps": 50,
       "loots": {
         "merci": { "qty": 10, "chance": 100.0 }
+      
       }
     },
     {

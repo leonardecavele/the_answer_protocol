@@ -42,7 +42,7 @@ impl GameManager {
             || !parsed_json.has_key("player")
             || !parsed_json.has_key("data")
         {
-            error!("invalid json: {}", parsed_json.dump());
+            warn!("invalid json: {}", parsed_json.dump());
             ErrorCode::InvalidCommand
         } else {
             ErrorCode::NoError
@@ -253,6 +253,7 @@ impl GameManager {
         }
 
         for p in &all_moving_players {
+            info!("moving player {} to room {}", p, room_to_go);
             self.move_player_to_room(p, room_to_go.as_str());
         }
 
@@ -318,7 +319,7 @@ impl GameManager {
                 generate_question_json(question, format!("{:?}", players).as_str(), id).dump()
             }
             _ => {
-                error!("unknown question: {}", question);
+                warn!("unknown question: {}", question);
                 "".to_owned()
             }
         }
@@ -359,7 +360,7 @@ impl GameManager {
                 self.fight_create_command(leader, npc_id, grouped_players)
             }
             _ => {
-                error!("unknown group command: {}", command_name);
+                warn!("unknown group command: {}", command_name);
                 "".to_owned()
             }
         }
@@ -460,13 +461,14 @@ impl GameManager {
             }
             let player = json["player"].as_str().unwrap_or("");
             let npc_id = json["npc_id"].as_u32().unwrap_or(0);
+            let player_success = json["success"].as_bool().unwrap_or(false);
+            info!("fight result: player: {}, npc_id: {}, player_success: {}", player, npc_id, player_success);
             if let Some(instance) = self.combat_instances.get_mut_instance_for_npc(npc_id)
                 && instance.evaluating_players_count > 0
             {
                 instance.evaluating_players_count -= 1;
             }
             if let Some(player_id) = self.get_player_id(player).copied() {
-                let player_success = json["success"].as_bool().unwrap_or(false);
                 if player_success {
                     let instance_player_count = self
                         .get_nb_players_in_player_instance(player_id)
@@ -553,7 +555,7 @@ impl GameManager {
         */
 
         let Ok(json_object) = json::parse(&msg) else {
-            error!("parsed msg but found invalid json");
+            warn!("parsed msg but found invalid json");
             return generate_json("", "", ErrorCode::InvalidCommand, "").dump();
         };
         let group_command_json_validity = self.validate_grouped_command(&json_object);
@@ -734,6 +736,7 @@ impl GameManager {
                             .dump();
                         }
                     };
+                    info!("player {} talks with {}", player_name, npc.get_name());
                     player.talk_with(&npc)
                 };
                 generate_json(
@@ -937,6 +940,7 @@ impl GameManager {
 
                 let combat_result = self.player_attacks_npc(1, player_id, npc_id);
 
+                info!("Player {} attacks NPC {} -> result: {}", player_name, npc_id, combat_result.as_str());
                 generate_json(
                     player_name,
                     command_name,
@@ -1027,6 +1031,7 @@ impl GameManager {
                         };
                         self.create_quest_instance(player_id, quest_id.clone());
 
+                        info!("added quest {} to player {}", quest_id, player_name);
                         return generate_json(
                             player_name,
                             command_name,
@@ -1075,16 +1080,21 @@ impl GameManager {
                     .collect::<Vec<_>>();
 
                 if let Some(player) = self.get_player(player_id) {
-                    for quest_name in player.get_completed_quests().keys() {
+                    for (quest_name, all_completions_loots) in player.get_completed_quests() {
                         if let Some(quest) = self.get_quest(quest_name) {
-                            quests.push(json::object! {
-                                "name" => quest.get_name().to_string(),
-                                "description" => quest.get_description(),
-                                "reward" => quest.get_json_loots(),
-                                "status" => "completed",
-                                "current_step" => quest.get_nb_steps(),
-                                "max_step" => quest.get_nb_steps()
-                            });
+                            for run_loots in all_completions_loots {
+                                let reward_json: JsonValue = JsonValue::Array(
+                                    run_loots.iter().map(|loot| loot.to_json()).collect(),
+                                );
+                                quests.push(json::object! {
+                                    "name" => quest.get_name().to_string(),
+                                    "description" => quest.get_description(),
+                                    "reward" => reward_json,
+                                    "status" => "completed",
+                                    "current_step" => quest.get_nb_steps(),
+                                    "max_step" => quest.get_nb_steps()
+                                });
+                            }
                         } else {
                             warn!("completed quest not found: {}", quest_name);
                         }
@@ -1106,13 +1116,8 @@ impl GameManager {
                 {
                     instance.player_left_group(player_id);
                 }
-                generate_json(
-                    player_name,
-                    command_name,
-                    ErrorCode::NoError,
-                    BASE_COMMAND_RESPONSE,
-                )
-                .dump()
+
+                BASE_COMMAND_RESPONSE.to_string()
             }
             _ => {
                 warn!("Unknown command: {}", command_name);

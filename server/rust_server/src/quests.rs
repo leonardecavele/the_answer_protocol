@@ -1,13 +1,15 @@
 use crate::{constants::LootType, player::PlayerId};
 use json::JsonValue;
+use serde::{Deserialize, Serialize};
 use tracing::warn;
 
 pub type Questid = String;
 
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Loot {
     pub qty: u32,
     pub chance: f32,
+    #[serde(alias = "type")]
     pub loot_type: LootType,
 }
 
@@ -17,6 +19,14 @@ impl Loot {
             "qty" => self.qty,
             "chance" => self.chance,
             "type" => self.loot_type.to_string(),
+        }
+    }
+
+    pub fn to_json_from(qty: u32, chance: f32, loot_type: LootType) -> JsonValue {
+        json::object! {
+            "qty" => qty,
+            "chance" => chance,
+            "type" => loot_type.to_string(),
         }
     }
 }
@@ -77,6 +87,14 @@ impl Quest {
         self.nb_steps
     }
 
+    pub fn get_chance_to_get_loot(&self, loot_name: &str) -> f32 {
+        self.loots
+            .iter()
+            .find(|loot| loot.loot_type.to_string() == loot_name)
+            .map(|loot| loot.chance)
+            .unwrap_or(0.0)
+    }
+
     pub fn get_json_loots(&self) -> JsonValue {
         let vec: Vec<JsonValue> = self.loots.iter().map(|loot| loot.to_json()).collect();
         JsonValue::Array(vec)
@@ -85,7 +103,6 @@ impl Quest {
     pub fn get_loots(&self) -> &Vec<Loot> {
         &self.loots
     }
-
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -104,11 +121,11 @@ impl QuestInstance {
         }
     }
 
-    pub fn new_with_step(
-        player: PlayerId,
-        quest: Questid,
-        current_step: u32,
-    ) -> Self {
+    pub fn set_step(&mut self, step: u32) {
+        self.current_step = step;
+    }
+
+    pub fn new_with_step(player: PlayerId, quest: Questid, current_step: u32) -> Self {
         Self {
             player,
             quest,
