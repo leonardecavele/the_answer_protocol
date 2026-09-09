@@ -82,11 +82,11 @@
       }
     },
     {
-      "name": "SIX ! SEVEN !",
-      "description": "Parlez 50 fois avec mphippen. Peut-être finira-t-il par révéler pourquoi 67 est la véritable origine de l'univers.",
-      "nb_steps": 50,
+      "name": "Cringe",
+      "description": "Parlez 5 fois avec smenard.",
+      "nb_steps": 5,
       "loots": {
-        "merci": { "qty": 10, "chance": 100.0 }
+        "t_shirt_bde": { "qty": 1, "chance": 100.0 }
       }
     },
     {

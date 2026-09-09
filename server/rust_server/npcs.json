@@ -121,7 +121,17 @@
     {
       "name": "smenard",
       "max_hp": null,
-      "dialogs": [["baaaakaaaa"]],
+      "dialogs": [
+        ["baaaakaaaa"],
+        ["baakaaa"],
+        ["baaakaaa"],
+        ["baaakkkkaa"],
+        ["baaaaaaaaaaaaaaaaaakaaaaaaaaaaaa"],
+        ["bakabaka"],
+        ["bakakakakakaka"],
+        ["babababaka"],
+        ["Ce qui ne me tue pas me rend plus fort."]
+      ],
       "quests": [],
       "spawns": "cluster_du_bas"
     },
