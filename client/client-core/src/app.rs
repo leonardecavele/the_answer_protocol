@@ -13,14 +13,17 @@ use client_api::ApiRequest;
 use client_api::commands::{
     InventoryCommand, LookCommand, QuestsCommand, StatusCommand, WhoCommand,
 };
+use crossterm::event::KeyCode;
 use ratatui::Frame;
 use std::sync::Arc;
+use std::time::Instant;
 
 pub struct App {
     pub state: AppState,
     pub event_broker: EventBroker,
     pub network_manager: Option<NetworkManager>,
     pub view_manager: ViewManager,
+    last_key: Option<(KeyCode, Instant)>,
 }
 
 impl App {
@@ -43,6 +46,7 @@ impl App {
             event_broker: EventBroker::new(),
             network_manager: None,
             view_manager: ViewManager::new(ip, port),
+            last_key: None,
         }
     }
 
