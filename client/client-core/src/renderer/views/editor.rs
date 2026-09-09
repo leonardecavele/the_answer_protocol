@@ -1,5 +1,5 @@
 use crate::events::{ApplicationEvent, CustomEvent, SendEvent};
-use crate::renderer::components::{Component, EventFlow, Lifecycle};
+use crate::renderer::components::{Button, Component, EventFlow, Interactive, Lifecycle};
 use crate::renderer::image::ImageRenderer;
 use crate::renderer::layout::percent_of;
 use crate::renderer::theme::{ERROR_COLOR, SUCCESS_COLOR, WARNING_COLOR, default_block, dim_style};
@@ -8,7 +8,9 @@ use crate::states::game::{FightPhase, Sprite};
 use client_api::ApiRequest;
 use client_api::commands::FightAttackCommand;
 use client_api::events::FightStartData;
-use crossterm::event::{Event as CrosstermEvent, KeyCode, KeyModifiers};
+use crossterm::event::{
+    Event as CrosstermEvent, KeyCode, KeyModifiers, MouseButton, MouseEventKind,
+};
 use mpsc::Sender;
 use ratatui::Frame;
 use ratatui::layout::{Alignment, Constraint, Direction, Layout, Position, Rect};
@@ -29,6 +31,7 @@ const OPPONENT_WIDTH: u16 = 60;
 const MIN_EDITOR_WIDTH: u16 = 80;
 const NO_IMAGE: &str = " No image ";
 const HEALTH_BAR_HEIGHT: u16 = 1;
+const SUBMIT_WIDTH: u16 = 12;
 
 pub struct EditorView {
     editor: Editor,
@@ -40,6 +43,7 @@ pub struct EditorView {
     editor_area: Rect,
     timed_out: bool,
     image_renderer: ImageRenderer,
+    submit_button: Interactive<Button>,
 }
 
 impl EditorView {
@@ -62,7 +66,17 @@ impl EditorView {
             editor_area: Rect::default(),
             timed_out: false,
             image_renderer: ImageRenderer::new(),
+            submit_button: Interactive::new(Button::new("SUBMIT")),
         })
+    }
+
+    fn submit(&self, state: &mut AppState, event_sender: &Sender<ApplicationEvent>) {
+        let request = ApiRequest::FightAttack(FightAttackCommand {
+            code: self.serialize_code(),
+        });
+
+        let _ = event_sender.try_send(ApplicationEvent::Send(SendEvent::ApiRequest(request)));
+        state.game.fight.submit();
     }
 
     fn serialize_code(&self) -> String {
@@ -164,6 +178,24 @@ impl EditorView {
         .block(default_block())
     }
 
+    fn draw_footer(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
+        let is_editing = state.game.fight.phase() == FightPhase::Editing;
+        let submit_width = if is_editing { SUBMIT_WIDTH } else { 0 };
+
+        let chunks = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints([Constraint::Min(1), Constraint::Length(submit_width)])
+            .split(area);
+
+        frame.render_widget(self.footer(state), chunks[0]);
+
+        if is_editing {
+            self.submit_button.draw(state, frame, chunks[1]);
+        } else {
+            self.submit_button.last_area = None;
+        }
+    }
+
     fn footer(&self, state: &AppState) -> Paragraph<'static> {
         let (text, style) = match state.game.fight.phase() {
             FightPhase::Editing => ("Press Ctrl+S to submit your code", dim_style()),
@@ -199,7 +231,7 @@ impl Component for EditorView {
             .split(area);
 
         frame.render_widget(self.header(state), chunks[0]);
-        frame.render_widget(self.footer(state), chunks[2]);
+        self.draw_footer(state, frame, chunks[2]);
 
         let opponent_fits = chunks[1].width >= OPPONENT_WIDTH + MIN_EDITOR_WIDTH;
         let opponent_width = if opponent_fits { OPPONENT_WIDTH } else { 0 };
@@ -248,17 +280,21 @@ impl Lifecycle for EditorView {
             return EventFlow::Ignored;
         }
 
+        if let CrosstermEvent::Mouse(mouse) = event
+            && mouse.kind == MouseEventKind::Down(MouseButton::Left)
+            && self.submit_button.is_mouse_over(mouse.column, mouse.row)
+        {
+            self.submit(state, event_sender);
+
+            return EventFlow::Consumed;
+        }
+
         let CrosstermEvent::Key(key) = event else {
             return EventFlow::Ignored;
         };
 
         if key.code == KeyCode::Char('s') && key.modifiers.contains(KeyModifiers::CONTROL) {
-            let request = ApiRequest::FightAttack(FightAttackCommand {
-                code: self.serialize_code(),
-            });
-
-            let _ = event_sender.try_send(ApplicationEvent::Send(SendEvent::ApiRequest(request)));
-            state.game.fight.submit();
+            self.submit(state, event_sender);
 
             return EventFlow::Consumed;
         }

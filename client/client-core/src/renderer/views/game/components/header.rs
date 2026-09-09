@@ -1,10 +1,11 @@
 use crate::events::{ApplicationEvent, SendEvent};
-use crate::renderer::components::{CommandButton, Component, EventFlow, Lifecycle};
+use crate::renderer::components::{CommandButton, Component, EventFlow, LabelButton, Lifecycle};
 use crate::renderer::text::wrap_str_to_lines;
 use crate::renderer::theme::{
     ERROR_COLOR, PLAYER_COLOR, ROOM_COLOR, SUCCESS_COLOR, WARNING_COLOR, default_block,
 };
 use crate::states::AppState;
+use crate::states::game::{HelpState, Overlay};
 use crossterm::event::{Event as CrosstermEvent, MouseButton, MouseEventKind};
 use ratatui::widgets::Paragraph;
 use ratatui::{
@@ -21,6 +22,8 @@ pub struct Header {
     quit: CommandButton,
     group_create: CommandButton,
     group_leave: CommandButton,
+    help: LabelButton,
+    trace: LabelButton,
 }
 
 impl Default for Header {
@@ -37,7 +40,20 @@ impl Header {
             quit: CommandButton::new("QUIT", "QUIT"),
             group_create: CommandButton::new("CREATE GROUP", "GROUP CREATE"),
             group_leave: CommandButton::new("LEAVE GROUP", "GROUP LEAVE"),
+            help: LabelButton::new("HELP"),
+            trace: LabelButton::new("TRACE"),
         }
+    }
+
+    fn next_button_area(cursor: &mut u16, y: u16, right: u16, width: u16) -> Option<Rect> {
+        if *cursor + width >= right {
+            return None;
+        }
+
+        let area = Rect::new(*cursor, y, width, 1);
+        *cursor += width;
+
+        Some(area)
     }
 
     fn draw_buttons(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
@@ -49,21 +65,23 @@ impl Header {
             &mut self.group_create
         };
 
-        let buttons = [&mut self.who, &mut self.status, &mut self.quit, group];
+        let commands = [&mut self.who, &mut self.status, &mut self.quit, group];
 
-        let mut x = area.x + 1;
+        let mut cursor = area.x + 1;
         let y = area.bottom().saturating_sub(1);
 
-        for button in buttons {
-            let width = button.width();
-
-            if x + width >= area.right() {
-                button.hide();
-                continue;
+        for button in commands {
+            match Self::next_button_area(&mut cursor, y, area.right(), button.width()) {
+                Some(button_area) => button.draw(frame, button_area),
+                None => button.hide(),
             }
+        }
 
-            button.draw(frame, Rect::new(x, y, width, 1));
-            x += width;
+        for button in [&mut self.help, &mut self.trace] {
+            match Self::next_button_area(&mut cursor, y, area.right(), button.width()) {
+                Some(button_area) => button.draw(frame, button_area),
+                None => button.hide(),
+            }
         }
     }
 }
@@ -176,7 +194,7 @@ impl Component for Header {
 impl Lifecycle for Header {
     fn handle_device_event(
         &mut self,
-        _state: &mut AppState,
+        state: &mut AppState,
         event: &CrosstermEvent,
         event_sender: &Sender<ApplicationEvent>,
     ) -> EventFlow {
@@ -186,6 +204,16 @@ impl Lifecycle for Header {
 
         if mouse.kind != MouseEventKind::Down(MouseButton::Left) {
             return EventFlow::Ignored;
+        }
+
+        if self.help.hit(mouse.column, mouse.row) {
+            state.game.overlays.toggle(Overlay::Help(HelpState));
+            return EventFlow::Consumed;
+        }
+
+        if self.trace.hit(mouse.column, mouse.row) {
+            state.ui.show_trace_log = !state.ui.show_trace_log;
+            return EventFlow::Consumed;
         }
 
         let buttons = [
