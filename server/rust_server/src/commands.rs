@@ -5,6 +5,7 @@ use crate::constants::{
 use crate::game_manager::GameManager;
 use crate::items::{Item, ItemId};
 use crate::npc::{Npc, NpcId};
+use crate::quests::Quest;
 use crate::room::Room;
 use json::{JsonValue, object};
 use rand::RngExt;
@@ -359,6 +360,76 @@ impl GameManager {
                 // here call a function with leader id and npc id and grouped players
                 self.fight_create_command(leader, npc_id, grouped_players)
             }
+            "QUEST" => {
+                let npc = match self.verify_npc_target(leader, command_name, data) {
+                    Ok(npc) => npc,
+                    Err(err) => return err,
+                };
+
+                let quest = match self.get_quest_for_player(&npc, leader) {
+                    Some(quest) => quest,
+                    None => {
+                        return generate_json(
+                            leader,
+                            command_name,
+                            ErrorCode::NoQuestAvailable,
+                            "",
+                        )
+                        .dump();
+                    }
+                };
+
+                let quest_id = quest.get_name().to_string();
+                let reward = quest.get_json_loots();
+                let quest_json_str = json::object! {
+                    "name" => quest.get_name().to_string(),
+                    "description" => quest.get_description(),
+                    "reward" => reward,
+                    "status" => "in progress",
+                    "current_step" => 0,
+                    "max_step" => quest.get_nb_steps(),
+                }
+                .dump();
+
+                let mut eligible_members = Vec::new();
+                for player_name in &grouped_players {
+                    if let Some(player_id) = self.get_player_id(player_name) {
+                        let player_id = *player_id;
+                        if !self.player_has_quest(player_id, quest_id.clone()) {
+                            eligible_members.push((player_name.clone(), player_id));
+                        }
+                    }
+                }
+
+                if !eligible_members.is_empty() {
+                    let eligible_names: Vec<String> = eligible_members
+                        .iter()
+                        .map(|(name, _)| name.clone())
+                        .collect();
+                    let event = GameManager::generate_no_player_event_json(
+                        &eligible_names,
+                        "Quest add",
+                        quest_json_str.as_str(),
+                    );
+                    self.add_diff_to_tick(event);
+                }
+
+                self.create_quest_instance(leader_id, quest_id.clone());
+                info!("added quest {} to player {}", quest_id, leader);
+
+                for (player_name, player_id) in eligible_members {
+                    self.create_quest_instance(player_id, quest_id.clone());
+                    info!("added quest {} to player {}", quest_id, player_name);
+                }
+
+                generate_json(
+                    leader,
+                    command_name,
+                    ErrorCode::NoError,
+                    quest_json_str.as_str(),
+                )
+                .dump()
+            }
             _ => {
                 warn!("unknown group command: {}", command_name);
                 "".to_owned()
@@ -449,6 +520,22 @@ impl GameManager {
             );
         }
         Ok(npc.clone())
+    }
+
+    pub fn get_quest_for_player(&self, npc: &Npc, player_name: &str) -> Option<Quest> {
+        let player_id = *self.get_player_id(player_name)?;
+        let mut quests = npc.get_quests()?.clone();
+        quests.retain(|quest_id| {
+            self.get_quest(quest_id).is_some()
+                && !self.player_has_quest(player_id, quest_id.clone())
+        });
+        if quests.is_empty() {
+            return None;
+        }
+        let mut rng = rand::rng();
+        let random_index = rng.random_range(0..quests.len());
+        let quest_id = quests.get(random_index)?;
+        self.get_quest(quest_id).cloned()
     }
 
     pub fn process_tester_responses(&mut self) -> std::io::Result<()> {
@@ -968,23 +1055,9 @@ impl GameManager {
                     Err(err) => return err,
                 };
 
-                if let Some(mut quests) = npc.get_quests().cloned() {
-                    let player_id = match self.get_player_id(player_name) {
-                        Some(id) => *id,
-                        None => {
-                            warn!("Player not found: {}", player_name);
-                            return generate_json(
-                                player_name,
-                                command_name,
-                                ErrorCode::PlayerNotFound,
-                                "",
-                            )
-                            .dump();
-                        }
-                    };
-
-                    quests.retain(|quest| !self.player_has_quest(player_id, quest.clone()));
-                    if quests.is_empty() {
+                let quest = match self.get_quest_for_player(&npc, player_name) {
+                    Some(quest) => quest,
+                    None => {
                         return generate_json(
                             player_name,
                             command_name,
@@ -993,58 +1066,45 @@ impl GameManager {
                         )
                         .dump();
                     }
-                    let mut rng = rand::rng();
-                    let random_index = rng.random_range(0..quests.len());
-                    if let Some(quest_id) = quests.get(random_index) {
-                        let quest_json_str;
-                        if let Some(quest) = self.get_quest(quest_id) {
-                            let reward = quest.get_json_loots();
+                };
 
-                            quest_json_str = json::object! {
-                                "name" => quest.get_name().to_string(),
-                                "description" => quest.get_description(),
-                                "reward" => reward,
-                                "status" => "in progress",
-                                "current_step" => 0,
-                                "max_step" => quest.get_nb_steps(),
-                            }
-                            .dump();
-                        } else {
-                            return generate_json(
-                                player_name,
-                                command_name,
-                                ErrorCode::NoQuestAvailable,
-                                "",
-                            )
-                            .dump();
-                        }
-
-                        let player_id = match self.get_player_id(player_name) {
-                            Some(id) => *id,
-                            None => {
-                                warn!("Player not found: {}", player_name);
-                                return generate_json(
-                                    player_name,
-                                    command_name,
-                                    ErrorCode::PlayerNotFound,
-                                    "",
-                                )
-                                .dump();
-                            }
-                        };
-                        self.create_quest_instance(player_id, quest_id.clone());
-
-                        info!("added quest {} to player {}", quest_id, player_name);
+                let player_id = match self.get_player_id(player_name) {
+                    Some(id) => *id,
+                    None => {
+                        warn!("Player not found: {}", player_name);
                         return generate_json(
                             player_name,
                             command_name,
-                            ErrorCode::NoError,
-                            quest_json_str.as_str(),
+                            ErrorCode::PlayerNotFound,
+                            "",
                         )
                         .dump();
                     }
+                };
+
+                let quest_id = quest.get_name().to_string();
+                let reward = quest.get_json_loots();
+
+                let quest_json_str = json::object! {
+                    "name" => quest.get_name().to_string(),
+                    "description" => quest.get_description(),
+                    "reward" => reward,
+                    "status" => "in progress",
+                    "current_step" => 0,
+                    "max_step" => quest.get_nb_steps(),
                 }
-                generate_json(player_name, command_name, ErrorCode::NoQuestAvailable, "").dump()
+                .dump();
+
+                self.create_quest_instance(player_id, quest_id.clone());
+
+                info!("added quest {} to player {}", quest_id, player_name);
+                generate_json(
+                    player_name,
+                    command_name,
+                    ErrorCode::NoError,
+                    quest_json_str.as_str(),
+                )
+                .dump()
             }
             "QUESTS" => {
                 let player_id = match self.get_player_id(player_name) {
