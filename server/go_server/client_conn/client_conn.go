@@ -58,12 +58,18 @@ func handleClientEvents(client *session.Client, done <-chan struct{}) {
 				return
 			}
 			if err := client.Write(message); err != nil {
-				logger.AppLogger.Error("%s Write error: %v\n", client.Id, err)
+				if shouldLogClientIOError(client, err) {
+					logger.AppLogger.Error("%s Write error: %v\n", client.Id, err)
+				}
 				return
 			}
 			logger.AppLogger.Info("%s Client Write: %s\n", client.Id, message)
 		}
 	}
+}
+
+func shouldLogClientIOError(client *session.Client, err error) bool {
+	return err != nil && (client == nil || !client.WasDisconnectedByServer())
 }
 
 func HandleClient(client *session.Client, gameServerManager *game_conn.GameServerManager, connectionManager *session.ConnectionManager) {
@@ -80,7 +86,9 @@ func HandleClient(client *session.Client, gameServerManager *game_conn.GameServe
 	defer logger.AppLogger.Info("%s Disconnected", client.Id)
 
 	if err := client.Write(protocol.ResponseHello); err != nil {
-		logger.AppLogger.Error("%s Client Write Error: %v\n", client.Id, err)
+		if shouldLogClientIOError(client, err) {
+			logger.AppLogger.Error("%s Client Write Error: %v\n", client.Id, err)
+		}
 		return
 	}
 	logger.AppLogger.Info("%s Client Write: %s", client.Id, protocol.ResponseHello)
@@ -90,13 +98,15 @@ func HandleClient(client *session.Client, gameServerManager *game_conn.GameServe
 	reader := bufio.NewReader(client.Conn)
 	for {
 		if err := client.Conn.SetReadDeadline(time.Now().Add(config.ClientReadTimeout)); err != nil {
-			logger.AppLogger.Error("%s Failed to set read timeout: %v\n", client.Id, err)
+			if shouldLogClientIOError(client, err) {
+				logger.AppLogger.Error("%s Failed to set read timeout: %v\n", client.Id, err)
+			}
 			return
 		}
 
 		str, err := helper.ReadStringWithLimit(reader, '\n', config.ReadStringMaxSize)
 		if err != nil {
-			if !errors.Is(err, io.EOF) {
+			if !errors.Is(err, io.EOF) && shouldLogClientIOError(client, err) {
 				logger.AppLogger.Error("%s Read error: %v\n", client.Id, err)
 			}
 			return
@@ -105,14 +115,18 @@ func HandleClient(client *session.Client, gameServerManager *game_conn.GameServe
 		if !connectionManager.AllowInput(client) {
 			logger.AppLogger.Error("%s Client input rate limit exceeded", client.Id)
 			if err := client.Write(protocol.ResponseTooManyRequests); err != nil {
-				logger.AppLogger.Error("%s Write error: %v\n", client.Id, err)
+				if shouldLogClientIOError(client, err) {
+					logger.AppLogger.Error("%s Write error: %v\n", client.Id, err)
+				}
 			}
 			return
 		}
 		if !connectionManager.IsInputValid(str) {
 			logger.AppLogger.Error("%s Invalid client input", client.Id)
 			if err := client.Write(protocol.ResponseInvalidArguments); err != nil {
-				logger.AppLogger.Error("%s Write error: %v\n", client.Id, err)
+				if shouldLogClientIOError(client, err) {
+					logger.AppLogger.Error("%s Write error: %v\n", client.Id, err)
+				}
 				return
 			}
 			continue
@@ -128,7 +142,9 @@ func HandleClient(client *session.Client, gameServerManager *game_conn.GameServe
 			continue
 		}
 		if err := client.Write(response); err != nil {
-			logger.AppLogger.Error("%s Write error: %v\n", client.Id, err)
+			if shouldLogClientIOError(client, err) {
+				logger.AppLogger.Error("%s Write error: %v\n", client.Id, err)
+			}
 			return
 		}
 		if response == protocol.ResponseConnected && !gameServerManager.IsConnected() {
