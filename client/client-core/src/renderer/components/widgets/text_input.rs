@@ -1,11 +1,11 @@
 use crate::events::ApplicationEvent;
 use crate::renderer::components::{EventFlow, InteractiveComponent, Lifecycle};
-use crate::renderer::theme::{default_block, dim_style};
+use crate::renderer::theme::{ITEM_COLOR, default_block, dim_style};
 use crate::states::AppState;
 use crossterm::event::{Event as CrosstermEvent, KeyCode, KeyEvent};
 use ratatui::Frame;
 use ratatui::layout::Rect;
-use ratatui::style::{Color, Style};
+use ratatui::style::Style;
 use ratatui::widgets::Paragraph;
 use tokio::sync::mpsc::Sender;
 
@@ -29,7 +29,7 @@ impl TextInput {
 impl InteractiveComponent for TextInput {
     fn render(&mut self, _state: &AppState, frame: &mut Frame, area: Rect) {
         let text_style = if self.is_focused {
-            Style::default().fg(Color::Cyan)
+            Style::default().fg(ITEM_COLOR)
         } else {
             dim_style()
         };

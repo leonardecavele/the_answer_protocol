@@ -2,12 +2,12 @@ use crate::events::ApplicationEvent;
 use crate::renderer::components::{EventFlow, Lifecycle, ScrollableComponent};
 use crate::renderer::layout::percent_of;
 use crate::renderer::text::wrap_slice_to_lines;
-use crate::renderer::theme::overlay_block;
+use crate::renderer::theme::{TRACE_COLOR, overlay_block};
 use crate::states::AppState;
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
 use mpsc::Sender;
 use ratatui::layout::Rect;
-use ratatui::style::{Color, Style};
+use ratatui::style::Style;
 use ratatui::text::Line;
 use ratatui::widgets::Block;
 use tokio::sync::mpsc;
@@ -45,7 +45,7 @@ impl ScrollableComponent for TraceOverlay {
     fn get_block<'a>(&self, _state: &AppState) -> Block<'a> {
         overlay_block()
             .title(" Event history overlay (Press Ctrl+E or Esc to close) ")
-            .style(Style::default().fg(Color::LightMagenta))
+            .style(Style::default().fg(TRACE_COLOR))
     }
 
     fn get_content<'a>(&self, state: &'a AppState, max_width: usize) -> Vec<Line<'a>> {

@@ -1,7 +1,8 @@
 use crate::renderer::components::is_mouse_in_rect;
+use crate::renderer::theme::WARNING_COLOR;
 use ratatui::Frame;
 use ratatui::layout::Rect;
-use ratatui::style::{Color, Modifier, Style};
+use ratatui::style::{Modifier, Style};
 use ratatui::widgets::{Clear, Paragraph};
 
 pub struct CommandButton {
@@ -27,7 +28,7 @@ impl CommandButton {
         self.area = Some(area);
 
         let style = Style::default()
-            .fg(Color::Yellow)
+            .fg(WARNING_COLOR)
             .add_modifier(Modifier::BOLD);
 
         frame.render_widget(Clear, area);

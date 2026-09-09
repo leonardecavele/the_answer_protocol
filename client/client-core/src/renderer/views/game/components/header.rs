@@ -1,7 +1,9 @@
 use crate::events::{ApplicationEvent, SendEvent};
 use crate::renderer::components::{CommandButton, Component, EventFlow, Lifecycle};
 use crate::renderer::text::wrap_str_to_lines;
-use crate::renderer::theme::default_block;
+use crate::renderer::theme::{
+    ERROR_COLOR, PLAYER_COLOR, ROOM_COLOR, SUCCESS_COLOR, WARNING_COLOR, default_block,
+};
 use crate::states::AppState;
 use crossterm::event::{Event as CrosstermEvent, MouseButton, MouseEventKind};
 use ratatui::widgets::Paragraph;
@@ -79,9 +81,7 @@ impl Component for Header {
             Span::styled(" Room: ", Style::default().add_modifier(Modifier::BOLD)),
             Span::styled(
                 room_name,
-                Style::default()
-                    .fg(Color::Cyan)
-                    .add_modifier(Modifier::BOLD),
+                Style::default().fg(ROOM_COLOR).add_modifier(Modifier::BOLD),
             ),
             Span::raw(" "),
         ]);
@@ -92,11 +92,11 @@ impl Component for Header {
             let percentage =
                 (state.game.player.hp as f32 / state.game.player.max_hp as f32) * 100.0;
             if percentage > 50.0 {
-                Color::Green
+                SUCCESS_COLOR
             } else if percentage > 25.0 {
-                Color::Yellow
+                WARNING_COLOR
             } else {
-                Color::Red
+                ERROR_COLOR
             }
         };
 
@@ -110,7 +110,7 @@ impl Component for Header {
                     .clone()
                     .unwrap_or("unknown".to_string()),
                 Style::default()
-                    .fg(Color::Magenta)
+                    .fg(PLAYER_COLOR)
                     .add_modifier(Modifier::BOLD),
             ),
             Span::styled(" | HP: ", Style::default().add_modifier(Modifier::BOLD)),
@@ -148,7 +148,7 @@ impl Component for Header {
                 Span::styled(
                     display_leader,
                     Style::default()
-                        .fg(Color::Yellow)
+                        .fg(PLAYER_COLOR)
                         .add_modifier(Modifier::BOLD),
                 ),
                 Span::raw(" "),

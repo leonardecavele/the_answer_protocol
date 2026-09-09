@@ -2,7 +2,7 @@ use crate::events::{ApplicationEvent, CustomEvent, SendEvent};
 use crate::renderer::components::{Component, EventFlow, Lifecycle};
 use crate::renderer::image::ImageRenderer;
 use crate::renderer::layout::percent_of;
-use crate::renderer::theme::{default_block, dim_style};
+use crate::renderer::theme::{ERROR_COLOR, SUCCESS_COLOR, WARNING_COLOR, default_block, dim_style};
 use crate::states::AppState;
 use crate::states::game::{FightPhase, Sprite};
 use client_api::ApiRequest;
@@ -128,7 +128,7 @@ impl EditorView {
         };
 
         frame.render_widget(
-            Block::default().style(Style::default().bg(Color::Red)),
+            Block::default().style(Style::default().bg(ERROR_COLOR)),
             filled_area,
         );
 
@@ -144,9 +144,9 @@ impl EditorView {
         let remaining = self.remaining_seconds();
 
         let timer_color = if remaining == 0 {
-            Color::Red
+            ERROR_COLOR
         } else {
-            Color::Yellow
+            WARNING_COLOR
         };
 
         Paragraph::new(Span::styled(
@@ -173,11 +173,11 @@ impl EditorView {
             ),
             FightPhase::Resolved { success: false } => (
                 "Your code failed. Waiting for the other players...",
-                Style::default().fg(Color::Red),
+                Style::default().fg(ERROR_COLOR),
             ),
             FightPhase::Resolved { success: true } => (
                 "Your code succeeded. Waiting for the other players...",
-                Style::default().fg(Color::Green),
+                Style::default().fg(SUCCESS_COLOR),
             ),
         };
 

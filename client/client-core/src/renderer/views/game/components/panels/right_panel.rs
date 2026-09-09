@@ -4,6 +4,7 @@ use crate::renderer::components::{
 };
 use crate::renderer::image::ImageRenderer;
 use crate::renderer::text::wrap_str_to_lines;
+use crate::renderer::theme::{ERROR_COLOR, WARNING_COLOR};
 use crate::states::AppState;
 use crate::states::game::{Direction, GameFocus, Sprite};
 use crossterm::event::{Event as CrosstermEvent, KeyCode, MouseButton, MouseEventKind};
@@ -228,11 +229,11 @@ impl RightPanel {
             Block::default()
                 .borders(Borders::ALL)
                 .border_type(BorderType::Double)
-                .border_style(Style::default().fg(Color::Red)),
+                .border_style(Style::default().fg(ERROR_COLOR)),
             area,
         );
 
-        self.draw_message(frame, area, DISCONNECTED, Color::Red);
+        self.draw_message(frame, area, DISCONNECTED, ERROR_COLOR);
     }
 
     fn draw_focus_badge(&self, frame: &mut Frame, area: Rect) {
@@ -246,14 +247,14 @@ impl RightPanel {
 
         frame.render_widget(Clear, badge_area);
         frame.render_widget(
-            Paragraph::new(FOCUS_BADGE).style(Style::default().fg(Color::Yellow)),
+            Paragraph::new(FOCUS_BADGE).style(Style::default().fg(WARNING_COLOR)),
             badge_area,
         );
     }
 
     fn draw_exits(&mut self, state: &AppState, frame: &mut Frame, image_area: Rect) {
         let style = Style::default()
-            .fg(Color::Yellow)
+            .fg(WARNING_COLOR)
             .add_modifier(Modifier::BOLD);
 
         let facing = self.room_facing(state);

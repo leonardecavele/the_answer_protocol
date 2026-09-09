@@ -2,7 +2,7 @@ use crate::events::ApplicationEvent;
 use crate::renderer::components::{Component, EventFlow, Lifecycle};
 use crate::renderer::layout::{centered_rect, percent_of};
 use crate::renderer::text::wrap_str_to_lines;
-use crate::renderer::theme::{close_hint, dim_style, popup_block, quest_status};
+use crate::renderer::theme::{WARNING_COLOR, close_hint, dim_style, popup_block, quest_status};
 use crate::states::AppState;
 use crate::states::game::QuestDetailState;
 use client_api::commands::{QuestData, QuestReward};
@@ -119,7 +119,7 @@ impl QuestDetailPopup {
         lines.push(Line::from(Span::styled(
             heading,
             Style::default()
-                .fg(Color::Yellow)
+                .fg(WARNING_COLOR)
                 .add_modifier(Modifier::BOLD),
         )));
 

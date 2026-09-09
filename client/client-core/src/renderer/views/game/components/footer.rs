@@ -2,13 +2,13 @@ use crate::events::{ApplicationEvent, SendEvent};
 use crate::renderer::components::{
     Component, EventFlow, Interactive, Lifecycle, TextInput, is_mouse_in_rect,
 };
-use crate::renderer::theme::default_block;
+use crate::renderer::theme::{ERROR_COLOR, default_block};
 use crate::states::AppState;
 use crate::states::game::GameFocus;
 use crossterm::event::{Event as CrosstermEvent, KeyCode, KeyEvent};
 use ratatui::Frame;
 use ratatui::layout::{Alignment, Constraint, Direction, Layout, Rect};
-use ratatui::style::{Color, Modifier, Style};
+use ratatui::style::{Modifier, Style};
 use ratatui::widgets::Paragraph;
 
 const LAG_LABEL: &str = "LAG";
@@ -43,7 +43,9 @@ impl Footer {
     }
 
     fn draw_lag(frame: &mut Frame, area: Rect) {
-        let style = Style::default().fg(Color::Red).add_modifier(Modifier::BOLD);
+        let style = Style::default()
+            .fg(ERROR_COLOR)
+            .add_modifier(Modifier::BOLD);
 
         let paragraph = Paragraph::new(LAG_LABEL)
             .alignment(Alignment::Center)

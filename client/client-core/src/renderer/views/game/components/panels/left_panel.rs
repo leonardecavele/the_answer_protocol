@@ -4,7 +4,10 @@ use crate::manifest::NpcKind;
 use crate::renderer::components::{
     CommandButton, Component, EventFlow, Lifecycle, is_mouse_in_rect,
 };
-use crate::renderer::theme::{panel_block, quest_status, selection_style};
+use crate::renderer::theme::{
+    ERROR_COLOR, INFORMATION_COLOR, INVITATION_COLOR, ITEM_COLOR, MUTED_COLOR, PLAYER_COLOR,
+    WARNING_COLOR, panel_block, quest_status, selection_style,
+};
 use crate::states::AppState;
 use crate::states::game::{
     GameFocus, InvitationActionsState, ItemActionsState, ItemLocation, NpcActionsState, Overlay,
@@ -13,7 +16,7 @@ use crate::states::game::{
 use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect},
-    style::{Color, Modifier},
+    style::Color,
     text::Span,
     widgets::{List, ListItem},
 };
@@ -106,7 +109,7 @@ impl LeftPanel {
             .enumerate()
             .map(|(index, name)| {
                 let color = if Some(name) == state.game.player.name.as_ref() {
-                    Color::Yellow
+                    PLAYER_COLOR
                 } else {
                     Color::Reset
                 };
@@ -131,9 +134,9 @@ impl LeftPanel {
             .enumerate()
             .map(|(index, npc)| {
                 let color = match npc.kind {
-                    NpcKind::Enemy => Color::Red,
-                    NpcKind::QuestGiver => Color::Yellow,
-                    NpcKind::Dialogue => Color::Blue,
+                    NpcKind::Enemy => ERROR_COLOR,
+                    NpcKind::QuestGiver => WARNING_COLOR,
+                    NpcKind::Dialogue => INFORMATION_COLOR,
                     NpcKind::Normal => Color::Reset,
                 };
                 let style = selection_style(color, focused && room.npcs.is_selected(index));
@@ -155,7 +158,7 @@ impl LeftPanel {
             .iter()
             .enumerate()
             .map(|(index, item)| {
-                let style = selection_style(Color::Cyan, focused && room.items.is_selected(index));
+                let style = selection_style(ITEM_COLOR, focused && room.items.is_selected(index));
 
                 ListItem::new(Span::styled(
                     format!("• {} ({})", item.name, item.id),
@@ -178,7 +181,7 @@ impl LeftPanel {
             .enumerate()
             .map(|(index, leader)| {
                 let style =
-                    selection_style(Color::Magenta, focused && invitations.is_selected(index));
+                    selection_style(INVITATION_COLOR, focused && invitations.is_selected(index));
 
                 ListItem::new(Span::styled(format!("• {}", leader), style))
             })
@@ -206,11 +209,13 @@ impl LeftPanel {
                     format!("{}/{}", quest.data.current_step, quest.data.max_step)
                 };
 
-                let mut style = selection_style(color, selected);
+                let color = if quest.data.is_completed() && !selected {
+                    MUTED_COLOR
+                } else {
+                    color
+                };
 
-                if quest.data.is_completed() && !selected {
-                    style = style.add_modifier(Modifier::DIM);
-                }
+                let style = selection_style(color, selected);
 
                 ListItem::new(Span::styled(
                     format!("• {} ({})", quest.data.name, progress),

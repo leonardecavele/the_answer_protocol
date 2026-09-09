@@ -1,13 +1,13 @@
 use crate::events::ApplicationEvent;
 use crate::renderer::components::{EventFlow, Lifecycle, ScrollableComponent};
-use crate::renderer::theme::overlay_block;
+use crate::renderer::theme::{WARNING_COLOR, overlay_block};
 use crate::states::AppState;
 use crate::states::game::HelpState;
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
 use mpsc::Sender;
 use ratatui::{
     layout::{Alignment, Rect},
-    style::{Color, Modifier, Style},
+    style::{Modifier, Style},
     text::{Line, Span},
     widgets::Block,
 };
@@ -58,7 +58,7 @@ impl ScrollableComponent for HelpOverlay {
             Line::from(vec![Span::styled(
                 "Global",
                 Style::default()
-                    .fg(Color::Yellow)
+                    .fg(WARNING_COLOR)
                     .add_modifier(Modifier::BOLD),
             )]),
             Line::from("  ctrl+c: quit game"),
@@ -70,7 +70,7 @@ impl ScrollableComponent for HelpOverlay {
             Line::from(vec![Span::styled(
                 "Input panel",
                 Style::default()
-                    .fg(Color::Yellow)
+                    .fg(WARNING_COLOR)
                     .add_modifier(Modifier::BOLD),
             )]),
             Line::from("  enter: send command / focus right panel"),
@@ -78,7 +78,7 @@ impl ScrollableComponent for HelpOverlay {
             Line::from(vec![Span::styled(
                 "Right panel (details/movement)",
                 Style::default()
-                    .fg(Color::Yellow)
+                    .fg(WARNING_COLOR)
                     .add_modifier(Modifier::BOLD),
             )]),
             Line::from("  up/down/left/right: move north/south/west/east"),
@@ -87,7 +87,7 @@ impl ScrollableComponent for HelpOverlay {
             Line::from(vec![Span::styled(
                 "Room npcs list",
                 Style::default()
-                    .fg(Color::Yellow)
+                    .fg(WARNING_COLOR)
                     .add_modifier(Modifier::BOLD),
             )]),
             Line::from("  up/down: select npc"),
@@ -96,7 +96,7 @@ impl ScrollableComponent for HelpOverlay {
             Line::from(vec![Span::styled(
                 "Quest list",
                 Style::default()
-                    .fg(Color::Yellow)
+                    .fg(WARNING_COLOR)
                     .add_modifier(Modifier::BOLD),
             )]),
             Line::from("  up/down: select quest"),
@@ -105,7 +105,7 @@ impl ScrollableComponent for HelpOverlay {
             Line::from(vec![Span::styled(
                 "Interaction menus & chat",
                 Style::default()
-                    .fg(Color::Yellow)
+                    .fg(WARNING_COLOR)
                     .add_modifier(Modifier::BOLD),
             )]),
             Line::from("  esc: close menus"),
@@ -115,7 +115,7 @@ impl ScrollableComponent for HelpOverlay {
             Line::from(vec![Span::styled(
                 "Text commands (input)",
                 Style::default()
-                    .fg(Color::Yellow)
+                    .fg(WARNING_COLOR)
                     .add_modifier(Modifier::BOLD),
             )]),
             Line::from("  connect <name> : connect to server"),
@@ -144,7 +144,7 @@ impl ScrollableComponent for HelpOverlay {
             Line::from(vec![Span::styled(
                 "Hud & status",
                 Style::default()
-                    .fg(Color::Yellow)
+                    .fg(WARNING_COLOR)
                     .add_modifier(Modifier::BOLD),
             )]),
             Line::from("  top right : your hp and max hp"),

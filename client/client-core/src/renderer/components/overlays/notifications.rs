@@ -3,12 +3,14 @@ use crate::notification::{NotificationId, NotificationKind};
 use crate::renderer::components::{Component, EventFlow, Lifecycle, is_mouse_in_rect};
 use crate::renderer::layout::percent_of;
 use crate::renderer::text::wrap_str_to_lines;
-use crate::renderer::theme::default_block;
+use crate::renderer::theme::{
+    ERROR_COLOR, INFORMATION_COLOR, SUCCESS_COLOR, WARNING_COLOR, default_block,
+};
 use crate::states::AppState;
 use crossterm::event::{Event as CrosstermEvent, MouseButton, MouseEvent, MouseEventKind};
 use ratatui::Frame;
 use ratatui::layout::{Alignment, Rect};
-use ratatui::style::{Color, Modifier, Style};
+use ratatui::style::{Modifier, Style};
 use ratatui::widgets::{Block, Clear, Paragraph};
 use tokio::sync::mpsc::Sender;
 
@@ -49,10 +51,10 @@ impl Component for NotificationsOverlay {
 
         for (id, notif) in notifs_to_draw {
             let color = match notif.kind {
-                NotificationKind::Information => Color::Blue,
-                NotificationKind::Warning => Color::Yellow,
-                NotificationKind::Error => Color::Red,
-                NotificationKind::Success => Color::Green,
+                NotificationKind::Information => INFORMATION_COLOR,
+                NotificationKind::Warning => WARNING_COLOR,
+                NotificationKind::Error => ERROR_COLOR,
+                NotificationKind::Success => SUCCESS_COLOR,
             };
 
             let block =
