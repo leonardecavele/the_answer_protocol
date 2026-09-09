@@ -82,7 +82,7 @@ func (room *Room) Disconnect(username string) bool {
 		return false
 	}
 
-	_ = client.Conn.Close()
+	_ = client.Disconnect()
 	return true
 }
 

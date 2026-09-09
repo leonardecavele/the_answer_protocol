@@ -23,17 +23,18 @@ const (
 )
 
 type Client struct {
-	Conn        net.Conn
-	Id          string
-	Username    string
-	State       ClientState
-	Group       *Group
-	Room        *Room
-	commandChan chan game_conn.CommandFromGameServer
-	eventChan   chan protocol.Event
-	connectedAt time.Time
-	stateMutex  sync.RWMutex
-	writeMutex  sync.Mutex
+	Conn                 net.Conn
+	Id                   string
+	Username             string
+	State                ClientState
+	Group                *Group
+	Room                 *Room
+	commandChan          chan game_conn.CommandFromGameServer
+	eventChan            chan protocol.Event
+	connectedAt          time.Time
+	stateMutex           sync.RWMutex
+	writeMutex           sync.Mutex
+	disconnectedByServer bool
 }
 
 func NewClient(conn net.Conn, room *Room) *Client {
@@ -57,6 +58,27 @@ func (c *Client) connectionInfo() (string, ClientState, time.Time) {
 	defer c.stateMutex.RUnlock()
 
 	return c.Username, c.State, c.connectedAt
+}
+
+func (c *Client) Disconnect() error {
+	if c == nil || c.Conn == nil {
+		return nil
+	}
+
+	c.stateMutex.Lock()
+	c.disconnectedByServer = true
+	c.stateMutex.Unlock()
+	return c.Conn.Close()
+}
+
+func (c *Client) WasDisconnectedByServer() bool {
+	if c == nil {
+		return false
+	}
+
+	c.stateMutex.RLock()
+	defer c.stateMutex.RUnlock()
+	return c.disconnectedByServer
 }
 
 func (c *Client) DeleteClient(gameServerManager *game_conn.GameServerManager) error {
@@ -100,6 +122,9 @@ func (c *Client) DeleteClient(gameServerManager *game_conn.GameServerManager) er
 	}
 
 	closeErr := c.Conn.Close()
+	if c.WasDisconnectedByServer() {
+		closeErr = nil
+	}
 
 	if state == AUTHENTICATED {
 		if err := gameServerManager.WriteCommand(game_conn.CommandToGameServer{

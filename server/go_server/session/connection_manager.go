@@ -232,16 +232,16 @@ func (manager *ConnectionManager) registerFlood(host string, ignoredClient *Clie
 
 func (manager *ConnectionManager) disconnectHost(host string, ignoredClient *Client) {
 	manager.mutex.Lock()
-	connections := make([]net.Conn, 0)
+	clients := make([]*Client, 0)
 	for connectedClient := range manager.connections {
 		if connectedClient != ignoredClient && remoteHost(connectedClient) == host {
-			connections = append(connections, connectedClient.Conn)
+			clients = append(clients, connectedClient)
 		}
 	}
 	manager.mutex.Unlock()
 
-	for _, connection := range connections {
-		_ = connection.Close()
+	for _, client := range clients {
+		_ = client.Disconnect()
 	}
 }
 
@@ -287,5 +287,5 @@ func (manager *ConnectionManager) timeoutUnauthenticated(client *Client) {
 	delete(manager.connections, client)
 	manager.mutex.Unlock()
 
-	_ = client.Conn.Close()
+	_ = client.Disconnect()
 }
