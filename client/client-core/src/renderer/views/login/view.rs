@@ -18,6 +18,7 @@ pub struct LoginView {
     pub ip_input: Interactive<TextInput>,
     pub port_input: Interactive<TextInput>,
     pub connect_button: Interactive<Button>,
+    pub quit_button: Interactive<Button>,
 }
 
 impl LoginView {
@@ -28,6 +29,7 @@ impl LoginView {
             ip_input: Interactive::new(TextInput::new("Server IP")),
             port_input: Interactive::new(TextInput::new("Server Port")),
             connect_button: Interactive::new(Button::new("Connect")),
+            quit_button: Interactive::new(Button::new("Quit")),
         };
 
         view.ip_input.inner.value = ip;
@@ -55,6 +57,7 @@ impl LoginView {
         self.ip_input.inner.is_focused = self.focus == LoginFocus::ServerIp;
         self.port_input.inner.is_focused = self.focus == LoginFocus::ServerPort;
         self.connect_button.inner.is_focused = self.focus == LoginFocus::ConnectButton;
+        self.quit_button.inner.is_focused = self.focus == LoginFocus::QuitButton;
     }
 }
 
@@ -71,7 +74,7 @@ impl Component for LoginView {
                 Constraint::Length(1), // Spacer
                 Constraint::Length(3), // Port input
                 Constraint::Length(1), // Spacer
-                Constraint::Length(3), // Button
+                Constraint::Length(3), // Buttons
                 Constraint::Percentage(30),
             ])
             .split(area);
@@ -91,16 +94,19 @@ impl Component for LoginView {
         self.ip_input.draw(state, frame, get_center_rect(3));
         self.port_input.draw(state, frame, get_center_rect(5));
 
-        let button_area = Layout::default()
+        let button_chunks = Layout::default()
             .direction(Direction::Horizontal)
             .constraints([
-                Constraint::Percentage(40),
-                Constraint::Percentage(20), // Button width
-                Constraint::Percentage(40),
+                Constraint::Percentage(30),
+                Constraint::Percentage(18), // Button width
+                Constraint::Percentage(4),  // Spacer
+                Constraint::Percentage(18), // Button width
+                Constraint::Percentage(30),
             ])
-            .split(vertical_chunks[7])[1];
+            .split(vertical_chunks[7]);
 
-        self.connect_button.draw(state, frame, button_area);
+        self.connect_button.draw(state, frame, button_chunks[3]);
+        self.quit_button.draw(state, frame, button_chunks[1]);
     }
 }
 
@@ -113,6 +119,10 @@ impl Lifecycle for LoginView {
     ) -> EventFlow {
         match event {
             CrosstermEvent::Key(KeyEvent { code, .. }) => {
+                if *code == KeyCode::Esc {
+                    state.should_quit = true;
+                    return EventFlow::Consumed;
+                }
                 if *code == KeyCode::Tab || *code == KeyCode::Down {
                     self.cycle_focus(Step::Next);
                     return EventFlow::Consumed;
@@ -123,10 +133,14 @@ impl Lifecycle for LoginView {
                 }
 
                 if *code == KeyCode::Enter
-                    && self.focus != LoginFocus::ConnectButton {
+                    && matches!(
+                        self.focus,
+                        LoginFocus::PlayerName | LoginFocus::ServerIp | LoginFocus::ServerPort
+                    )
+                {
                     self.set_focus(LoginFocus::ConnectButton);
-                        return EventFlow::Consumed;
-                    }
+                    return EventFlow::Consumed;
+                }
             }
             CrosstermEvent::Mouse(MouseEvent {
                 kind, column, row, ..
@@ -145,6 +159,9 @@ impl Lifecycle for LoginView {
                     } else if self.connect_button.is_mouse_over(*column, *row) {
                         self.set_focus(LoginFocus::ConnectButton);
                         self.connect_button.inner.is_pressed = true;
+                    } else if self.quit_button.is_mouse_over(*column, *row) {
+                        self.set_focus(LoginFocus::QuitButton);
+                        self.quit_button.inner.is_pressed = true;
                     }
                 }
             _ => {}
@@ -191,6 +208,17 @@ impl Lifecycle for LoginView {
                             },
                         ));
                     }
+                }
+
+                flow
+            }
+            LoginFocus::QuitButton => {
+                let flow = self
+                    .quit_button
+                    .handle_device_event(state, event, event_sender);
+
+                if self.quit_button.inner.take_pressed() {
+                    state.should_quit = true;
                 }
 
                 flow
