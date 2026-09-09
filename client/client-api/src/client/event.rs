@@ -1,3 +1,4 @@
+use crate::commands::QuestData;
 use crate::protocol::response::ServerResponse;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
@@ -95,8 +96,14 @@ pub enum GameServerEvent {
 
 #[derive(Debug, Clone)]
 pub enum QuestEvent {
+    Add(QuestData),
     Complete(QuestCompleteData),
     Step(QuestStepData),
+}
+
+#[derive(Debug, Clone)]
+pub enum ItemEvent {
+    Add(String),
 }
 
 #[derive(Debug, Clone)]
@@ -118,6 +125,8 @@ pub enum ServerEvent {
     Stats(u32),
     Quest(QuestEvent),
     Teleport,
+    Item(ItemEvent),
+    Broadcast(String),
     Unknown(String),
 }
 
@@ -273,6 +282,14 @@ impl From<ServerResponse> for ServerEvent {
                 }
             }
 
+            ["QUEST", "ADD", args @ ..] => {
+                let payload = args.join(" ");
+
+                match parse_payload::<QuestData>("QUEST ADD", &payload) {
+                    Some(data) => ServerEvent::Quest(QuestEvent::Add(data)),
+                    None => ServerEvent::Unknown(payload),
+                }
+            }
             ["QUEST", "COMPLETE", args @ ..] => {
                 let payload = args.join(" ");
 
@@ -281,7 +298,6 @@ impl From<ServerResponse> for ServerEvent {
                     None => ServerEvent::Unknown(payload),
                 }
             }
-
             ["QUEST", "STEP", args @ ..] => {
                 let payload = args.join(" ");
 
@@ -293,6 +309,11 @@ impl From<ServerResponse> for ServerEvent {
 
             ["TELEPORT"] => ServerEvent::Teleport,
             ["QUIT", name] => ServerEvent::Quit(name.to_string()),
+
+            ["ITEM", "ADD", item_identifier @ ..] => {
+                ServerEvent::Item(ItemEvent::Add(item_identifier.join(" ")))
+            }
+            ["BROADCAST", message @ ..] => ServerEvent::Broadcast(message.join(" ")),
 
             _ => ServerEvent::Unknown(args.join(" ")),
         }

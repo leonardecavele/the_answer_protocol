@@ -3,8 +3,8 @@ use crate::notification::{Notification, NotificationDuration};
 use crate::states::game::Item;
 use client_api::ApiRequest;
 use client_api::commands::{
-    DropResponse, InventoryResponse, LookCommand, QuestResponse, QuestsResponse, StatusResponse,
-    TakeResponse,
+    DropResponse, InventoryResponse, LookCommand, QuestData, QuestResponse, QuestsResponse,
+    StatusResponse, TakeResponse,
 };
 use client_api::events::{QuestCompleteData, QuestStepData};
 use std::time::Duration;
@@ -41,6 +41,15 @@ impl App {
         self.state
             .game
             .log_action("You checked your quests.".to_string());
+    }
+
+    pub fn on_quest_add(&mut self, data: QuestData) {
+        self.state
+            .ui
+            .notifications
+            .push(Notification::info("New quest added".to_string()));
+
+        self.state.game.player.set_quest(data);
     }
 
     pub fn on_quest_step(&mut self, response: QuestStepData) {
@@ -91,6 +100,20 @@ impl App {
 
     pub fn on_quest(&mut self, response: QuestResponse) {
         self.state.game.player.set_quest(response.quest_data);
+    }
+
+    pub fn on_item_add(&mut self, item_id: String) {
+        let item = Item::from_manifest(item_id, &self.state.game.manifest);
+        let message = "The item fell from the sky and landed in your inventory".to_string();
+
+        self.state
+            .ui
+            .notifications
+            .push(Notification::info(message.clone()));
+
+        self.state.game.log_action(message);
+
+        self.state.game.player.add_item(item);
     }
 
     pub fn on_take_item(&mut self, response: TakeResponse) {

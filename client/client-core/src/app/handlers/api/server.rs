@@ -99,4 +99,15 @@ impl App {
         self.state.game.close_all_overlays();
         self.state.network.is_connected = false;
     }
+
+    pub fn on_broadcast(&mut self, message: String) {
+        let message = format!("[SERVER] {}", message);
+
+        self.state
+            .ui
+            .notifications
+            .push(Notification::info(message.clone()));
+
+        self.state.game.log_action(message);
+    }
 }
