@@ -212,8 +212,9 @@ reconnection.
 
 ## Logging
 
-The logger emits one structured record per line to stdout and `app.log`. Each
-record contains a microsecond timestamp, severity, and message:
+The logger emits informational records to stdout, error records to stderr, and
+all records to `app.log`. Each record contains a microsecond timestamp, severity,
+and message:
 
 ```text
 15:04:05.123456 INFO client connected remote=127.0.0.1:52144

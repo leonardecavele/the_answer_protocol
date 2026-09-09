@@ -47,7 +47,10 @@ func main() {
 		return
 	}
 	defer logFile.Close()
-	logger.AppLogger.SetOutput(io.MultiWriter(os.Stdout, logFile))
+	logger.AppLogger.SetOutputs(
+		io.MultiWriter(os.Stdout, logFile),
+		io.MultiWriter(os.Stderr, logFile),
+	)
 
 	validProtocol := false
 	for n := range config.SupportedProtocols {

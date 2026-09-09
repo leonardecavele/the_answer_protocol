@@ -2,21 +2,31 @@ package logger
 
 import (
 	"go_server/config"
+	"io"
 	"log"
 	"os"
 	"time"
 )
 
 type Logger struct {
-	*log.Logger
+	info  *log.Logger
+	error *log.Logger
 }
 
 func (l Logger) Info(format string, v ...any) {
-	l.Printf(time.Now().Format(config.LogFormat)+" "+colorGreen+"INFO"+colorReset+" "+format, v...)
+	l.info.Printf(time.Now().Format(config.LogFormat)+" "+colorGreen+"INFO"+colorReset+" "+format, v...)
 }
 
 func (l Logger) Error(format string, v ...any) {
-	l.Printf(time.Now().Format(config.LogFormat)+" "+colorRed+"ERROR"+colorReset+" "+format, v...)
+	l.error.Printf(time.Now().Format(config.LogFormat)+" "+colorRed+"ERROR"+colorReset+" "+format, v...)
 }
 
-var AppLogger = Logger{log.New(os.Stdout, "", 0)}
+func (l Logger) SetOutputs(infoOutput, errorOutput io.Writer) {
+	l.info.SetOutput(infoOutput)
+	l.error.SetOutput(errorOutput)
+}
+
+var AppLogger = Logger{
+	info:  log.New(os.Stdout, "", 0),
+	error: log.New(os.Stderr, "", 0),
+}
