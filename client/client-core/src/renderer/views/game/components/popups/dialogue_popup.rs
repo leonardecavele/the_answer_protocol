@@ -79,14 +79,15 @@ impl ScrollableComponent for DialoguePopup {
             let mut display_text: String =
                 dialog.full_text.chars().take(self.chars_shown).collect();
 
-            if self.chars_shown >= dialog.char_count() {
-                let text = if dialog.ends_dialog {
-                    "(Press Enter to close)"
-                } else {
-                    "(Press Enter to continue)"
-                };
-                display_text.push_str(format!("\n\n{text}").as_str());
-            }
+            let hint = if self.chars_shown < dialog.char_count() {
+                "(Press Enter to skip)"
+            } else if dialog.ends_dialog {
+                "(Press Enter to close)"
+            } else {
+                "(Press Enter to continue)"
+            };
+
+            display_text.push_str(format!("\n\n{hint}").as_str());
 
             wrap_str_to_lines(&display_text, max_width)
         } else {
