@@ -1,10 +1,10 @@
 package main
 
 import (
-	"bufio"
 	"errors"
 	"flag"
 	"fmt"
+	"go_server/cli"
 	"go_server/client_conn"
 	"go_server/config"
 	serverError "go_server/error"
@@ -16,7 +16,6 @@ import (
 	"net"
 	"os"
 	"os/signal"
-	"strings"
 	"sync"
 	"syscall"
 )
@@ -65,7 +64,13 @@ func main() {
 
 	quit := make(chan struct{})
 	var stopOnce sync.Once
-	var listener net.Listener
+
+	listener, listenErr := net.Listen("tcp", serverOptions.GoServerAddress())
+	if listenErr != nil {
+		logger.AppLogger.Error(fmt.Sprint(listenErr))
+		os.Exit(int(serverError.CodeListenerError))
+	}
+	defer listener.Close()
 
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, os.Interrupt, syscall.SIGTERM)
@@ -76,23 +81,13 @@ func main() {
 		shutdownServer(quit, listener, &stopOnce)
 	}()
 
-	go func() {
-		scanner := bufio.NewScanner(os.Stdin)
-
-		for scanner.Scan() {
-			input := strings.ToLower(strings.TrimSpace(scanner.Text()))
-
-			if _, ok := config.QuitCommands[input]; ok {
-				shutdownServer(quit, listener, &stopOnce)
-				return
-			}
-		}
-	}()
-
 	gameServerManager := &game_conn.GameServerManager{}
 	connectionManager := session.NewConnectionManager()
 	room := session.NewRoom()
 
+	go cli.Run(connectionManager, room, gameServerManager, func() {
+		shutdownServer(quit, listener, &stopOnce)
+	})
 	go connectionManager.RunFloodPointDecay(quit)
 	go gameServerManager.HandleGameServer(
 		quit,
@@ -101,13 +96,6 @@ func main() {
 		room.RouteCommand,
 		room.BroadcastEvent,
 	)
-
-	listener, listenErr := net.Listen("tcp", serverOptions.GoServerAddress())
-	if listenErr != nil {
-		logger.AppLogger.Error(fmt.Sprint(listenErr))
-		os.Exit(int(serverError.CodeListenerError))
-	}
-	defer listener.Close()
 
 	logger.AppLogger.Info("TCP server started on %s", net.JoinHostPort(helper.GetServerIP(), fmt.Sprint(serverOptions.GoServerPort)))
 

@@ -4,10 +4,17 @@ import (
 	"go_server/config"
 	"go_server/helper"
 	"go_server/protocol"
+	"sort"
 	"strings"
 	"sync"
 	"time"
 )
+
+type GroupInfo struct {
+	ID      string
+	Leader  string
+	Members []string
+}
 
 type Group struct {
 	clients map[string]*Client
@@ -80,6 +87,30 @@ func (group *Group) GroupedClients() []*Client {
 	}
 
 	return clients
+}
+
+func (group *Group) Info() (GroupInfo, bool) {
+	if group == nil {
+		return GroupInfo{}, false
+	}
+
+	group.mutex.Lock()
+	defer group.mutex.Unlock()
+	if group.clients == nil {
+		return GroupInfo{}, false
+	}
+
+	members := make([]string, 0, len(group.clients))
+	for username := range group.clients {
+		members = append(members, username)
+	}
+	sort.Strings(members)
+
+	return GroupInfo{
+		ID:      group.Id,
+		Leader:  group.leader,
+		Members: members,
+	}, true
 }
 
 func (group *Group) Invite(username string) string {

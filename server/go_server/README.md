@@ -33,8 +33,26 @@ make run-go-server \
   GO_SERVER_ARGS="--go-server-port 38800 --rust-server-ip 127.0.0.1 --rust-server-port 38801"
 ```
 
-Ports must be between 1 and 65535. Stop the process with `SIGINT`, `SIGTERM`,
-or by entering `quit`, `exit`, or `q` on standard input.
+Ports must be between 1 and 65535. The server accepts these administrative
+commands on standard input:
+
+| Command | Purpose |
+| --- | --- |
+| `ban <ip>` | Ban an IP address and disconnect its active clients. |
+| `deban <ip>` | Unban an IP address and clear all of its flood state. |
+| `status` | Show uptime, connection counts, bans, groups, and game-server state. |
+| `clients` | List clients with their IP, state, and connection duration. |
+| `kick <username>` | Disconnect an authenticated client. |
+| `bans` | List banned IP addresses and their flood points. |
+| `flood <ip>` | Show the flood points and ban state of an IP address. |
+| `broadcast <message>` | Send `EVT BROADCAST <message>` to every authenticated client. |
+| `groups` | List active groups, their leaders, and their members. |
+| `gameserver reconnect` | Force the Rust game server connection to restart. |
+| `shutdown [seconds]` | Stop immediately, or broadcast a warning and stop after a delay. |
+| `help` | List the available administrative commands. |
+| `quit`, `exit`, `q` | Stop the server. |
+
+`SIGINT` and `SIGTERM` also stop the process.
 
 ## Client lifecycle
 

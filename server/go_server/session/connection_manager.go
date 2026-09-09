@@ -3,13 +3,22 @@ package session
 import (
 	"go_server/config"
 	serverError "go_server/error"
+	"go_server/helper"
 	"net"
+	"sort"
 	"strings"
 	"sync"
 	"time"
 	"unicode"
 	"unicode/utf8"
 )
+
+type ClientInfo struct {
+	Username     string
+	IP           string
+	State        ClientState
+	ConnectedFor time.Duration
+}
 
 type ConnectionManager struct {
 	mutex                 sync.Mutex
@@ -40,6 +49,9 @@ func remoteHost(client *Client) string {
 	host, _, err := net.SplitHostPort(address)
 	if err != nil {
 		return address
+	}
+	if normalizedHost := helper.NormalizeIP(host); normalizedHost != "" {
+		return normalizedHost
 	}
 	return host
 }
@@ -100,6 +112,87 @@ func (manager *ConnectionManager) RunFloodPointDecay(quit <-chan struct{}) {
 		return
 	}
 	manager.floodManager.RunDecay(quit)
+}
+
+func (manager *ConnectionManager) BanIP(ip string) bool {
+	if manager == nil {
+		return false
+	}
+
+	normalizedHost := helper.NormalizeIP(ip)
+	if normalizedHost == "" {
+		return false
+	}
+
+	manager.floodManager.BanIP(normalizedHost)
+	manager.disconnectHost(normalizedHost, nil)
+	return true
+}
+
+func (manager *ConnectionManager) UnbanIP(ip string) bool {
+	if manager == nil {
+		return false
+	}
+
+	normalizedHost := helper.NormalizeIP(ip)
+	if normalizedHost == "" {
+		return false
+	}
+
+	manager.floodManager.ClearIP(normalizedHost)
+
+	manager.mutex.Lock()
+	delete(manager.connectionAttempts, normalizedHost)
+	manager.mutex.Unlock()
+
+	return true
+}
+
+func (manager *ConnectionManager) BannedIPs() []IPFloodInfo {
+	if manager == nil {
+		return nil
+	}
+	return manager.floodManager.BannedIPs()
+}
+
+func (manager *ConnectionManager) FloodInfo(ip string) (IPFloodInfo, bool) {
+	if manager == nil {
+		return IPFloodInfo{}, false
+	}
+
+	normalizedHost := helper.NormalizeIP(ip)
+	if normalizedHost == "" {
+		return IPFloodInfo{}, false
+	}
+	return manager.floodManager.Info(normalizedHost), true
+}
+
+func (manager *ConnectionManager) Clients() []ClientInfo {
+	if manager == nil {
+		return nil
+	}
+
+	now := time.Now()
+	manager.mutex.Lock()
+	clients := make([]ClientInfo, 0, len(manager.connections))
+	for client := range manager.connections {
+		username, state, connectedAt := client.connectionInfo()
+		clients = append(clients, ClientInfo{
+			Username:     username,
+			IP:           remoteHost(client),
+			State:        state,
+			ConnectedFor: now.Sub(connectedAt).Round(time.Second),
+		})
+	}
+	manager.mutex.Unlock()
+
+	sort.Slice(clients, func(i, j int) bool {
+		if clients[i].Username == clients[j].Username {
+			return clients[i].IP < clients[j].IP
+		}
+		return clients[i].Username < clients[j].Username
+	})
+	return clients
 }
 
 func (manager *ConnectionManager) AllowInput(client *Client) bool {

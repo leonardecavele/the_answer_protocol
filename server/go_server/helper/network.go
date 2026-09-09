@@ -5,7 +5,20 @@ import (
 	"errors"
 	serverError "go_server/error"
 	"net"
+	"strings"
 )
+
+func IsValidIP(value string) bool {
+	return NormalizeIP(value) != ""
+}
+
+func NormalizeIP(value string) string {
+	ip := net.ParseIP(strings.TrimSpace(value))
+	if ip == nil {
+		return ""
+	}
+	return ip.String()
+}
 
 func ReadStringWithLimit(reader *bufio.Reader, delimiter byte, maxSize int) (string, error) {
 	fragment, err := reader.ReadSlice(delimiter)
