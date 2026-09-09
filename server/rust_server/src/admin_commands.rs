@@ -1,6 +1,6 @@
 use tracing::{info, warn};
 
-use crate::{constants::LOST_ITEM, game_manager::GameManager};
+use crate::{constants::LOST_ITEM, game_manager::GameManager, items::Item};
 
 impl GameManager {
     pub fn handle_admin_command(&mut self, command: &str) {
@@ -27,7 +27,14 @@ impl GameManager {
                         if let Some(item_id) = model_id {
                             if item_id != LOST_ITEM {
                                 let new_item_id = self.instantiate_item(item_id);
+                                let item_repr = Item::protocol_representation(new_item_id, item_name);
                                 self.add_item_to_player(player_id, new_item_id);
+                                let event = GameManager::generate_no_player_event_json(
+                                    &vec![player_name.to_string()],
+                                    "Item add",
+                                    item_repr.as_str(),
+                                );
+                                self.add_diff_to_tick(event);
                                 info!("gave item {} to player {}", item_name, player_name);
                             } else {
                                 warn!("Cannot give objet_perdu");
