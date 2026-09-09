@@ -45,7 +45,7 @@ fn start_input_reader_thread(
 ) {
     thread::spawn(move || {
         loop {
-            match rustyline.readline(">>> ") {
+            match rustyline.readline("game_server>") {
                 Ok(line) => {
                     if command_sender.send(line).is_err() {
                         break;

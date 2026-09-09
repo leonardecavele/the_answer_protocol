@@ -3,7 +3,7 @@ use crate::constants::{
     SKIP_PLAYER_EXISTS_TEST, TEST_FILES_DIR,
 };
 use crate::game_manager::GameManager;
-use crate::items::ItemId;
+use crate::items::{Item, ItemId};
 use crate::npc::{Npc, NpcId};
 use crate::room::Room;
 use json::{JsonValue, object};
@@ -535,7 +535,8 @@ impl GameManager {
                             );
                             vec![]
                         });
-                    let npc_dmg = self.generate_npc_dmg();
+                    let nb_t_shirt = self.get_nb_t_shirt_bde_for_player(player.to_string().as_str());
+                    let npc_dmg = self.generate_npc_dmg(nb_t_shirt);
                     let event = GameManager::generate_no_player_event_json(
                         &players_in_instance,
                         "FIGHT RESULT",
@@ -707,7 +708,8 @@ impl GameManager {
                             .get_instance_for_player(player_id)
                             .expect("safe, we check it in get_player_success")
                             .get_npc_id();
-                        self.npc_attacks_player(self.generate_npc_dmg(), player_id, npc_id);
+                        let nb_t_shirt = self.get_nb_t_shirt_bde_for_player(player_name);
+                        self.npc_attacks_player(self.generate_npc_dmg(nb_t_shirt), player_id, npc_id);
                     }
                 }
                 // player_success : Option<Option<bool>: first option if the player does not exist and the second for the success{
@@ -843,12 +845,13 @@ impl GameManager {
 
                 self.start_dropped_at_for_item(item_id);
 
+                let item_repr = Item::protocol_representation(item_id, &item_name);
                 let mut players_to_send = self.get_all_players_at_room(room_name.as_str());
                 let events_json =
                     self.generate_event_json(&mut players_to_send, player_name, "DROP", item, true);
                 self.add_diff_to_tick(events_json);
 
-                generate_json(player_name, command_name, ErrorCode::NoError, item).dump()
+                generate_json(player_name, command_name, ErrorCode::NoError, item_repr.as_str()).dump()
             }
             "INVENTORY" => {
                 let inventory = self.get_player_inventory_as_string(player_name);
