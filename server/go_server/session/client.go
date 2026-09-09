@@ -90,10 +90,8 @@ func (c *Client) DeleteClient(gameServerManager *game_conn.GameServerManager) er
 		})
 
 		c.Room.BroadcastEvent(protocol.EventBatch{
-			IgnoredPlayers: []string{username},
 			Events: []protocol.Event{
 				{
-					// EmittedBy: username,
 					EventName: "STATS",
 					Data:      fmt.Sprintf("players=%d", c.Room.Count()),
 				},

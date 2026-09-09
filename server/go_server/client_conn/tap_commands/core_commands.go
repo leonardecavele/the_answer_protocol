@@ -58,10 +58,8 @@ func handleConnectCommand(args string, client *session.Client, gameServerManager
 	})
 
 	client.Room.BroadcastEvent(protocol.EventBatch{
-		IgnoredPlayers: []string{client.Username},
 		Events: []protocol.Event{
 			{
-				// EmittedBy: client.Username,
 				EventName: "STATS",
 				Data:      fmt.Sprintf("players=%d", client.Room.Count()),
 			},
