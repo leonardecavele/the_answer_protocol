@@ -77,6 +77,13 @@ flowchart LR
     SB --> EW["Egui Window"]
 ```
 
+Both frontends share [request chains](client/README.md#request-chains), keeping
+dependent commands such as `[MOVE, LOOK]` together in the application queue.
+Commands still wait for individual responses; a failure drops the chain's
+remaining requests. A red `LAG` indicator beside the input reports an average
+request time of at least one second over the last three measurements, using
+the available samples until three exist.
+
 ## Instructions
 
 ### Requirements
@@ -154,7 +161,7 @@ UTF-8, one `LF`-terminated frame per line, the `OK hello proto=1` handshake,
 request/response commands, and interleaved asynchronous events. Command names
 and subcommands are case-insensitive. The complete grammar, command catalog,
 error catalog, event catalog, and examples are maintained in
-[PROTOCOLE.md](PROTOCOL.md).
+[PROTOCOL.md](PROTOCOL.md).
 
 The project makes the following documented implementation choices:
 
@@ -165,7 +172,7 @@ The project makes the following documented implementation choices:
 | Usernames | Use 3–20 ASCII identifier characters and canonical uppercase lookup to avoid ambiguous identities. |
 | Server split | Keep public TAP in Go and use private single-line JSON to isolate the Rust game engine. |
 | Chat | Add private messages alongside the RFC global, room, and group scopes. |
-| Groups | Limit groups to three players, expire invitations after five minutes, and accept `GROUP QUIT` as a leave alias. |
+| Groups | Limit groups to five players, expire invitations after five minutes, and accept `GROUP QUIT` as a leave alias. |
 | Items | Support unique instances, identifiers or exact names, `USE` behaviors, expiry, and renewable wrap spawns. |
 | Combat | Add cooperative `FIGHT CREATE` and `FIGHT ATTACK` C challenges with asynchronous events. |
 
@@ -201,8 +208,10 @@ Quest definitions are data-driven and contain descriptions, ordered objectives,
 completion conditions, and probabilistic rewards. `QUEST` assigns an eligible
 quest individually or to the members selected by a grouped leader request;
 `QUESTS` returns the saved active state. The authoritative game engine owns
-validation and persistence. Its [quest documentation](server/rust_server/README.md#quests)
-records the remaining progression task.
+validation, progression, rewards, and persistence. Gameplay checks advance
+quest steps; `QUEST STEP` and `QUEST COMPLETE` events update client progress
+and display notifications. See the [quest documentation](server/rust_server/README.md#quests)
+for progression and reward handling.
 
 ## World Design
 
@@ -237,7 +246,7 @@ owns the detailed asset schema and timing rules.
 
 ```text
 .
-├── protocole.md              TAP wire reference
+├── PROTOCOL.md              TAP wire reference
 ├── client/
 │   ├── client-api/           reusable asynchronous TAP client
 │   ├── client-core/          shared application, state, and Ratatui renderer
@@ -251,8 +260,8 @@ owns the detailed asset schema and timing rules.
 ## Server Logging
 
 The Go gateway writes structured lines in the form
-`HH:MM:SS.ffffff LEVEL message` to stdout and
-`server/go_server/app.log`. Records cover connections and IP addresses,
+`HH:MM:SS.ffffff LEVEL message`, with informational records on stdout,
+errors on stderr, and both in `server/go_server/app.log`. Records cover connections and IP addresses,
 commands and parameters, responses and error codes, internal server traffic,
 world actions, combat, quest activity, reconnects, and abuse rejection. The
 Rust engine uses `tracing` for startup, parsing, command dispatch, world saves,
@@ -265,7 +274,7 @@ tester activity, combat, and shutdown.
 tail -f /tmp/the_answer_protocol-$(id -u)/*-server.log
 ```
 
-Connection-attempt limits, the 20-client ceiling, and the twenty-input-per-second
+Connection-attempt limits, the 20-client ceiling, and the 25-input-per-second
 per-IP limit detect and reject flooding. Filtering the structured level and message
 fields exposes recurring failures without blocking request handling. Detailed
 destinations and limits are owned by the [Go server documentation](server/go_server/README.md#logging).

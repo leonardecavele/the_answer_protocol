@@ -68,6 +68,11 @@ the wire at a time. Interleaved `EVT` frames are decoded and broadcast without
 consuming that pending response. Every sent and received line is also
 published as a directional `Frame`.
 
+The TUI and GUI add [request chains](../README.md#request-chains) in
+`client-core` above this API. A chain keeps related requests together in the
+application queue and stops on the first failure; it does not change TAP
+framing or send a batch of commands on the wire.
+
 Connection state is available through a Tokio watch receiver:
 
 ```rust

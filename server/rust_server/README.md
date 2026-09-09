@@ -197,8 +197,13 @@ rewards. An NPC can assign a quest to one player or, through a grouped `QUEST`
 request, to every eligible member of the leader's group. `QUESTS` serializes
 the active quest state for the client.
 
-TODO: connect gameplay events to automatic quest-step progression and reward
-distribution.
+Gameplay checks advance active quest instances, including campus tours and
+selected coding challenges completed within their quest-specific deadlines.
+Intermediate progress emits `QUEST STEP`. The game loop detects finished
+quests, rolls each configured loot chance, adds awarded item instances to the
+player's inventory, records completion, and removes the finished active quest.
+`QUEST COMPLETE` carries the quest name and awarded item identifiers to the
+client.
 
 ## C challenge combat
 

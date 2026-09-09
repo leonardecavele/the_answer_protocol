@@ -78,8 +78,14 @@ The login view collects a player name, opens the TAP connection, and sends
 
 Network, game, and presentation state are kept separate. Typed API responses
 and asynchronous server events update the central state before the next draw.
-A successful movement automatically requests `LOOK` so the room view stays
-synchronized with the authoritative server.
+Movement queues `[MOVE, LOOK]` as one request chain, keeping the room refresh
+ahead of subsequent queued commands. An error drops the chain's remaining
+requests. The shared [request-chain model](../README.md#request-chains) also
+covers initial state loading and the refresh after death.
+
+A red `LAG` block appears beside the command input when the average of the last
+three request timings is at least one second, using the available samples
+until three exist. It clears when the average falls below that threshold.
 
 ## Keyboard and mouse controls
 

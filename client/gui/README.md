@@ -140,6 +140,12 @@ panels expose `LOOK`, `MOVE`, `TAKE`, `DROP`, `TALK`, `ATTACK`,
 `STATUS`, `QUEST`, `QUESTS`, `WHO`, `GROUP`, and `QUIT` actions. Room state and
 server/player counters update from command responses and asynchronous events.
 
+The shared [request-chain model](../README.md#request-chains) keeps dependent
+commands such as `[MOVE, LOOK]` together and drops unsent requests after a chain
+error. A red `LAG` block beside the input uses the same rolling request-time
+average as the TUI: at least one second over the last three measurements, or
+the available samples until three exist.
+
 ## Logging
 
 The GUI appends structured tracing records to `gui.log`. The default filter is

@@ -70,7 +70,7 @@ quest, and fight operations.
 | Flood-point decay | 1 point every 30 minutes and IP |
 | Rust command response timeout | 3 seconds |
 | Rust question response timeout | 5 seconds |
-| Group size | 3 players |
+| Group size | 5 players |
 | Group invitation lifetime | 5 minutes |
 
 Every input frame is counted before parsing, including an invalid `CONNECT`, and
@@ -111,6 +111,16 @@ It forwards commands that need authoritative game state:
 
 Room chat and same-room group checks use the correlated `ROOM_PLAYERS`
 question.
+
+Group creation, invitations, and joining require an available game server.
+Inviting and joining also check that the players share a room. Leaving remains
+available when the game server is disconnected.
+
+Invitation cleanup emits `GROUP INVITE <leader> REMOVED` so clients can remove
+stale invitations. Expired invitations are cleaned up when a new invitation is
+processed; disbanding a group removes its outstanding invitations. When the
+leader leaves, remaining members receive `GROUP LEAVE <leader>`, allowing both
+frontends to clear group state and notify the player.
 
 ## Internal JSON messages
 
@@ -220,8 +230,9 @@ and message:
 15:04:05.123456 INFO client connected remote=127.0.0.1:52144
 ```
 
-ANSI coloring is enabled for the console while the log file remains suitable
-for filtering and post-processing. The file is reset at process start.
+The same ANSI-colored records are written to the console and log file.
+Consumers that need plain text must strip the escape sequences. The file is
+reset at process start.
 
 ## Validation
 

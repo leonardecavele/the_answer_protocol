@@ -48,6 +48,45 @@ There is no pseudo-terminal between the GUI and the application. Egui input is
 translated directly into Crossterm-compatible events; Ratatui renders into an
 in-memory character grid; Egui then paints that grid in its native window.
 
+## Request chains
+
+Both frontends submit `RequestChain` values to the shared network manager.
+Each chain occupies one entry in the bounded command queue and is processed
+before the next chain. Requests still execute sequentially: each command waits
+for its response before the following command is sent. Responses are delivered
+individually to the application, and asynchronous server events remain active.
+
+A movement is queued as `[MOVE, LOOK]`. Two successful movements therefore run
+as `MOVE -> response -> LOOK -> response -> MOVE -> response -> LOOK -> response`.
+Keeping the refresh in the original chain prevents another queued movement from
+being inserted between its `MOVE` and `LOOK` under latency.
+
+A server command error or local request failure stops the current chain and
+discards its unsent requests. Already completed commands are not rolled back,
+and other queued chains are not discarded. Initial state loading uses
+`[WHO, STATUS, INVENTORY, QUESTS, LOOK]`; the player's death refresh uses
+`[LOOK, STATUS]`. A full command queue rejects the new chain and displays a
+warning.
+
+## Latency indicator
+
+The shared command input displays a red `LAG` block when the rolling average
+of the last three completed request timings reaches at least 1,000 ms. Until
+three measurements are available, the average uses the available samples.
+The indicator disappears when that average falls below the threshold.
+
+Measurements cover request execution and response-event delivery, including
+failed requests, but exclude time waiting in the application command queue.
+The indicator updates after each request completes; it is shared by the TUI
+and GUI.
+
+## Group and quest updates
+
+Both frontends remove invitations on `GROUP INVITE <leader> REMOVED`. A
+`GROUP LEAVE` event from the leader clears local group state and displays a
+disbanding notification. Quest-step and completion events update the quest
+panel and display notifications; completion data includes the awarded items.
+
 ## Shared assets
 
 `client/assets/manifest.json` associates server identifiers with presentation
