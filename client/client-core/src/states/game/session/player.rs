@@ -166,15 +166,21 @@ impl PlayerState {
         quest.data.current_step = current_step;
     }
 
-    pub fn set_quest_as_completed(&mut self, name: String, rewards: Vec<Item>) {
+    pub fn set_quest_as_completed(&mut self, name: String, items: Vec<Item>) {
         let Some(quest) = self.find_active_quest_mut(&name) else {
             return;
         };
 
         quest.data.current_step = quest.data.max_step;
         quest.data.status = QuestStatus::Completed;
+        quest.data.reward.retain(|reward| {
+            items.iter().any(|item| {
+                let (_, item_type) = item.id.split_once('.').unwrap_or(("", item.id.as_str()));
+                item_type == reward.r#type
+            })
+        });
 
-        for item in rewards {
+        for item in items {
             self.add_item(item);
         }
 
