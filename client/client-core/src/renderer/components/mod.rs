@@ -6,7 +6,7 @@ mod scrollable;
 mod widgets;
 
 pub use component::Component;
-pub use interactive::{Interactive, InteractiveComponent, is_mouse_in_rect};
+pub use interactive::{Interactive, InteractiveComponent, is_mouse_in_rect, scroll_direction};
 pub use lifecycle::{EventFlow, Lifecycle};
 pub use overlays::{NotificationsOverlay, TraceOverlay};
 pub use scrollable::{Scrollable, ScrollableComponent, ScrollableHit};

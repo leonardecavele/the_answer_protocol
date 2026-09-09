@@ -1,10 +1,11 @@
+use crate::collections::{SelectableList, Step};
 use crate::events::{ApplicationEvent, SendEvent};
 use crate::renderer::components::{
-    CommandButton, Component, EventFlow, Lifecycle, is_mouse_in_rect,
+    CommandButton, Component, EventFlow, Lifecycle, is_mouse_in_rect, scroll_direction,
 };
 use crate::renderer::theme::{panel_block, selection_style};
 use crate::states::AppState;
-use crate::states::game::{GameFocus, ItemActionsState, ItemLocation, Overlay};
+use crate::states::game::{GameFocus, Item, ItemActionsState, ItemLocation, Overlay};
 use ratatui::layout::Alignment;
 use ratatui::widgets::Paragraph;
 use ratatui::{Frame, layout::Rect, style::Color};
@@ -20,6 +21,7 @@ pub enum InventoryPanelHit {
 
 pub struct InventoryPanel {
     cols: usize,
+    rows: usize,
     area: Option<Rect>,
     refresh_button: CommandButton,
 }
@@ -34,12 +36,13 @@ impl InventoryPanel {
     pub fn new() -> Self {
         Self {
             cols: 1,
+            rows: 1,
             area: None,
             refresh_button: CommandButton::new("INVENTORY", "INVENTORY"),
         }
     }
 
-    pub fn hit(&self, column: u16, row: u16) -> InventoryPanelHit {
+    pub fn hit(&self, state: &AppState, column: u16, row: u16) -> InventoryPanelHit {
         if let Some(area) = self.area
             && is_mouse_in_rect(column, row, area)
         {
@@ -49,7 +52,7 @@ impl InventoryPanel {
                 let col = (rel_x - 1) as usize / INVENTORY_ITEM_WIDTH as usize;
                 let row = (rel_y - 1) as usize / INVENTORY_ITEM_HEIGHT as usize;
                 let cols = self.cols.max(1);
-                let index = row * cols + col;
+                let index = state.game.player.inventory.offset() + row * cols + col;
                 return InventoryPanelHit::Item(Some(index));
             }
 
@@ -57,6 +60,29 @@ impl InventoryPanel {
         }
 
         InventoryPanelHit::None
+    }
+
+    fn visible_count(&self) -> usize {
+        self.rows * self.cols
+    }
+
+    fn adjust_offset_alignment(&self, inventory: &mut SelectableList<Item>) {
+        let cols = self.cols.max(1);
+        let misalignment = inventory.offset() % cols;
+
+        let Some(selected) = inventory.selected_index() else {
+            return;
+        };
+
+        if misalignment == 0 {
+            return;
+        }
+
+        if selected < inventory.offset() - misalignment + self.visible_count() {
+            inventory.scroll(Step::Previous, misalignment);
+        } else {
+            inventory.scroll(Step::Next, cols - misalignment);
+        }
     }
 }
 
@@ -86,11 +112,14 @@ impl Component for InventoryPanel {
         }
 
         self.cols = (inv_inner.width / INVENTORY_ITEM_WIDTH) as usize;
-        let cols = self.cols.max(1);
+        self.rows = (inv_inner.height / INVENTORY_ITEM_HEIGHT) as usize;
 
-        for (idx, item) in state.game.player.inventory.iter().enumerate() {
-            let col = idx % cols;
-            let row = idx / cols;
+        let cols = self.cols.max(1);
+        let offset = state.game.player.inventory.offset();
+
+        for (idx, item) in state.game.player.inventory.iter().enumerate().skip(offset) {
+            let col = (idx - offset) % cols;
+            let row = (idx - offset) / cols;
 
             let cell_x = inv_inner.x + (col as u16 * INVENTORY_ITEM_WIDTH);
             let cell_y = inv_inner.y + (row as u16 * INVENTORY_ITEM_HEIGHT);
@@ -133,6 +162,12 @@ impl Lifecycle for InventoryPanel {
         event: &crossterm::event::Event,
         event_sender: &Sender<ApplicationEvent>,
     ) -> EventFlow {
+        state
+            .game
+            .player
+            .inventory
+            .set_visible_count(self.visible_count());
+
         if let crossterm::event::Event::Mouse(mouse) = event
             && mouse.kind
                 == crossterm::event::MouseEventKind::Down(crossterm::event::MouseButton::Left)
@@ -141,6 +176,14 @@ impl Lifecycle for InventoryPanel {
             let _ = event_sender.try_send(ApplicationEvent::Send(SendEvent::RawCommand(
                 command.to_string(),
             )));
+            return EventFlow::Consumed;
+        }
+
+        if let crossterm::event::Event::Mouse(mouse) = event
+            && let Some(step) = scroll_direction(mouse.kind)
+            && let InventoryPanelHit::Item(_) = self.hit(state, mouse.column, mouse.row)
+        {
+            state.game.player.inventory.scroll(step, self.cols.max(1));
             return EventFlow::Consumed;
         }
 
@@ -176,6 +219,8 @@ impl Lifecycle for InventoryPanel {
                                 _ => {}
                             },
                         }
+
+                        self.adjust_offset_alignment(&mut state.game.player.inventory);
 
                         return EventFlow::Consumed;
                     }

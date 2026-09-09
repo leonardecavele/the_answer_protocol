@@ -1,8 +1,9 @@
 use super::component::Component;
 use super::lifecycle::{EventFlow, Lifecycle};
+use crate::collections::Step;
 use crate::events::ApplicationEvent;
 use crate::states::AppState;
-use crossterm::event::{Event as CrosstermEvent, MouseEvent};
+use crossterm::event::{Event as CrosstermEvent, MouseEvent, MouseEventKind};
 use ratatui::Frame;
 use ratatui::layout::Rect;
 use tokio::sync::mpsc;
@@ -82,4 +83,13 @@ impl<T: InteractiveComponent> Component for Interactive<T> {
 /// Helper function to check if the mouse coordinates fall within a Rect
 pub fn is_mouse_in_rect(col: u16, row: u16, area: Rect) -> bool {
     col >= area.x && col < area.x + area.width && row >= area.y && row < area.y + area.height
+}
+
+/// Helper function to read the step a mouse wheel event scrolls by
+pub fn scroll_direction(kind: MouseEventKind) -> Option<Step> {
+    match kind {
+        MouseEventKind::ScrollUp => Some(Step::Previous),
+        MouseEventKind::ScrollDown => Some(Step::Next),
+        _ => None,
+    }
 }

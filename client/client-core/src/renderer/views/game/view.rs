@@ -228,8 +228,8 @@ impl GameView {
             && mouse.kind
                 == crossterm::event::MouseEventKind::Down(crossterm::event::MouseButton::Left)
         {
-            let left_hit = self.left_panel.hit(mouse.column, mouse.row);
-            let inventory_hit = self.inventory.hit(mouse.column, mouse.row);
+            let left_hit = self.left_panel.hit(state, mouse.column, mouse.row);
+            let inventory_hit = self.inventory.hit(state, mouse.column, mouse.row);
 
             match left_hit {
                 LeftPanelHit::Player(_) => state.game.set_focus(GameFocus::PlayerList),
