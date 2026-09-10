@@ -1,20 +1,20 @@
 use crate::collections::Step;
 use crate::events::{ApplicationEvent, SendEvent};
-use crate::renderer::components::{is_mouse_in_rect, Component, EventFlow, Lifecycle};
+use crate::renderer::components::{Component, EventFlow, Lifecycle, is_mouse_in_rect};
 use crate::renderer::layout::centered_rect;
 use crate::renderer::theme::{popup_block, selection_style};
-use crate::states::game::{ItemActionsState, ItemDetailState, Overlay};
 use crate::states::AppState;
-use client_api::commands::{DropCommand, TakeCommand, UseCommand};
+use crate::states::game::{ItemActionsState, ItemDetailState, Overlay};
 use client_api::ApiRequest;
+use client_api::commands::{DropCommand, TakeCommand, UseCommand};
 use crossterm::event::{Event as CrosstermEvent, KeyCode, MouseButton, MouseEventKind};
 use mpsc::Sender;
 use ratatui::{
+    Frame,
     layout::Rect,
     style::Color,
     text::Span,
     widgets::{Clear, List, ListItem},
-    Frame,
 };
 use tokio::sync::mpsc;
 

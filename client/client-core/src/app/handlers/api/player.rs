@@ -11,6 +11,8 @@ use std::time::Duration;
 
 impl App {
     pub fn on_use(&mut self, response: UseResponse) {
+        self.state.game.player.take_item(&response.id);
+
         match response.r#type.as_str() {
             "heal" => {
                 let healed = response

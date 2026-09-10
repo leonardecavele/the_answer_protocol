@@ -26,7 +26,7 @@ impl ItemActionsState {
 
         let mut actions = vec![reach.to_string()];
 
-        if useable {
+        if useable && matches!(location, ItemLocation::Inventory) {
             actions.push(Self::USE.to_string());
         }
 

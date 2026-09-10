@@ -11,6 +11,7 @@ pub struct UseCommand {
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct UseResponse {
+    pub id: String,
     pub r#type: String,
     pub context: HashMap<String, String>,
 }
