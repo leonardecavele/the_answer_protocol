@@ -87,7 +87,15 @@ impl Client {
         let response = request_result?;
 
         match response.opcode {
-            Opcode::Ok => Ok(command.parse_response(response)),
+            Opcode::Ok => {
+                let result = command.parse_response(response);
+
+                if let Err(error) = &result {
+                    warn!("unreadable response to '{}': {}", raw_command, error);
+                }
+
+                Ok(result)
+            }
             _ => {
                 let mut command_error = CommandError::from_response(response);
                 command.refine_error(&mut command_error);

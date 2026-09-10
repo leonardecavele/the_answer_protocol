@@ -139,7 +139,11 @@ impl From<ServerResponse> for ServerEvent {
             ["GAME", "SERVER", status] => match status.to_uppercase().as_str() {
                 "CONNECTED" => ServerEvent::GameServer(GameServerEvent::Connected),
                 "DISCONNECTED" => ServerEvent::GameServer(GameServerEvent::Disconnected),
-                _ => ServerEvent::Unknown(status.to_string()),
+                _ => {
+                    warn!("unknown game server status: {}", status);
+
+                    ServerEvent::Unknown(status.to_string())
+                }
             },
 
             ["SPAWN", r#type, id] => {
@@ -315,7 +319,13 @@ impl From<ServerResponse> for ServerEvent {
             }
             ["BROADCAST", message @ ..] => ServerEvent::Broadcast(message.join(" ")),
 
-            _ => ServerEvent::Unknown(args.join(" ")),
+            _ => {
+                let raw = args.join(" ");
+
+                warn!("unknown event: {}", raw);
+
+                ServerEvent::Unknown(raw)
+            }
         }
     }
 }
