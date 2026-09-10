@@ -1,6 +1,7 @@
 use crate::events::ApplicationEvent;
 use crate::renderer::components::{
     Component, EventFlow, Lifecycle, NotificationsOverlay, Scrollable, TraceOverlay,
+    is_mouse_in_rect,
 };
 use crate::renderer::layout::{MIN_COLUMNS, MIN_ROWS, interface_area};
 use crate::renderer::theme::too_small_hint;
@@ -56,6 +57,21 @@ impl Lifecycle for ViewManager {
         sender: &Sender<ApplicationEvent>,
     ) -> EventFlow {
         if state.ui.show_trace_log {
+            if let CrosstermEvent::Mouse(mouse) = event
+                && mouse.kind
+                    == crossterm::event::MouseEventKind::Down(crossterm::event::MouseButton::Left)
+            {
+                let outside = self
+                    .event_overlay
+                    .drawn_area()
+                    .is_some_and(|area| !is_mouse_in_rect(mouse.column, mouse.row, area));
+
+                if outside {
+                    state.ui.show_trace_log = false;
+                    return EventFlow::Consumed;
+                }
+            }
+
             let _ = self.event_overlay.handle_device_event(state, event, sender);
 
             return EventFlow::Consumed;
