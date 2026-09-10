@@ -303,6 +303,7 @@ impl GameView {
                         requested = room.items.selected().map(|item| {
                             Overlay::ItemActions(ItemActionsState::new(
                                 item.id.clone(),
+                                item.useable,
                                 ItemLocation::Room,
                             ))
                         });
@@ -346,6 +347,7 @@ impl GameView {
                     .map(|item| {
                         Overlay::ItemActions(ItemActionsState::new(
                             item.id.clone(),
+                            item.useable,
                             ItemLocation::Inventory,
                         ))
                     });

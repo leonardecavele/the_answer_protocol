@@ -7,6 +7,7 @@ pub struct Item {
     pub name: String,
     pub description: String,
     pub sprite: Sprite,
+    pub useable: bool,
 }
 
 impl Item {
@@ -18,12 +19,14 @@ impl Item {
                 name: entry.name.clone(),
                 description: entry.description.clone(),
                 sprite: Sprite::from(entry),
+                useable: entry.useable,
                 id,
             },
             None => Self {
                 name: id.clone(),
                 description: "No description available.".to_string(),
                 sprite: Sprite::None,
+                useable: false,
                 id,
             },
         }

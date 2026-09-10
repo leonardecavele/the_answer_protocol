@@ -30,6 +30,8 @@ pub struct ItemEntry {
     pub name: String,
     pub description: String,
     pub image_path: Option<String>,
+    #[serde(default)]
+    pub useable: bool,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]

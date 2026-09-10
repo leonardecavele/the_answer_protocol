@@ -87,7 +87,15 @@ impl Client {
         let response = request_result?;
 
         match response.opcode {
-            Opcode::Ok => Ok(command.parse_response(response)),
+            Opcode::Ok => {
+                let result = command.parse_response(response);
+
+                if let Err(error) = &result {
+                    warn!("unreadable response to '{}': {}", raw_command, error);
+                }
+
+                Ok(result)
+            }
             _ => {
                 let mut command_error = CommandError::from_response(response);
                 command.refine_error(&mut command_error);
@@ -114,6 +122,7 @@ impl Client {
             ApiRequest::Look(cmd) => Ok(ApiResponse::Look(self.request(cmd, flow).await?)),
             ApiRequest::Move(cmd) => Ok(ApiResponse::Move(self.request(cmd, flow).await?)),
             ApiRequest::Who(cmd) => Ok(ApiResponse::Who(self.request(cmd, flow).await?)),
+            ApiRequest::Use(cmd) => Ok(ApiResponse::Use(self.request(cmd, flow).await?)),
             ApiRequest::FightCreate(cmd) => {
                 Ok(ApiResponse::FightCreate(self.request(cmd, flow).await?))
             }

@@ -94,18 +94,19 @@
         "wrap_du_foyer": {
             "name": "Wrap du foyer",
             "description": "un bon remontant pour réussir à continuer à faire ses heures",
-            "image_path": "pictures/items/wrap.png"
-        },
+            "image_path": "pictures/items/wrap.png",
+			"useable": true
+		},
         "t_shirt_bde": {
             "name": "T Shirt B.D.E",
             "description": "dans ce tissu on se sent solide comme un rock",
             "image_path": "pictures/items/t_shirt.png"
-        },
+		},
         "merci": {
             "name": "Merci",
             "description": "Un concentré pur de la gratitude de Nathan.",
             "image_path": "pictures/items/merci.png"
-        }
+		}
     },
     "rooms": {
         "0.cluster_du_bas": {

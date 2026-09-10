@@ -495,41 +495,43 @@ impl Lifecycle for LeftPanel {
                 }
                 _ => EventFlow::Ignored,
             },
-            GameFocus::RoomItemsList => {
-                match key.code {
-                    crossterm::event::KeyCode::Up => {
-                        if let Some(room) = &mut state.game.room {
-                            room.items.move_selection(Step::Previous);
-                        }
-                        EventFlow::Consumed
+            GameFocus::RoomItemsList => match key.code {
+                crossterm::event::KeyCode::Up => {
+                    if let Some(room) = &mut state.game.room {
+                        room.items.move_selection(Step::Previous);
                     }
-                    crossterm::event::KeyCode::Down => {
-                        if let Some(room) = &mut state.game.room {
-                            room.items.move_selection(Step::Next);
-                        }
-                        EventFlow::Consumed
-                    }
-                    crossterm::event::KeyCode::Enter => {
-                        let selected = state
-                            .game
-                            .room
-                            .as_ref()
-                            .and_then(|room| room.items.selected())
-                            .map(|item| item.id.clone());
-
-                        match selected {
-                            Some(item_id) => {
-                                state.game.overlays.open(Overlay::ItemActions(
-                                    ItemActionsState::new(item_id, ItemLocation::Room),
-                                ));
-                                EventFlow::Consumed
-                            }
-                            None => EventFlow::Ignored,
-                        }
-                    }
-                    _ => EventFlow::Ignored,
+                    EventFlow::Consumed
                 }
-            }
+                crossterm::event::KeyCode::Down => {
+                    if let Some(room) = &mut state.game.room {
+                        room.items.move_selection(Step::Next);
+                    }
+                    EventFlow::Consumed
+                }
+                crossterm::event::KeyCode::Enter => {
+                    let selected = state
+                        .game
+                        .room
+                        .as_ref()
+                        .and_then(|room| room.items.selected());
+
+                    match selected {
+                        Some(item) => {
+                            state
+                                .game
+                                .overlays
+                                .open(Overlay::ItemActions(ItemActionsState::new(
+                                    item.id.clone(),
+                                    item.useable,
+                                    ItemLocation::Room,
+                                )));
+                            EventFlow::Consumed
+                        }
+                        None => EventFlow::Ignored,
+                    }
+                }
+                _ => EventFlow::Ignored,
+            },
             GameFocus::QuestList => match key.code {
                 crossterm::event::KeyCode::Up => {
                     state.game.player.quests.move_selection(Step::Previous);

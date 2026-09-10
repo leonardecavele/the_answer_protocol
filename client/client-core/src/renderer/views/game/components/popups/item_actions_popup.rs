@@ -6,7 +6,7 @@ use crate::renderer::theme::{popup_block, selection_style};
 use crate::states::AppState;
 use crate::states::game::{ItemActionsState, ItemDetailState, Overlay};
 use client_api::ApiRequest;
-use client_api::commands::{DropCommand, TakeCommand};
+use client_api::commands::{DropCommand, TakeCommand, UseCommand};
 use crossterm::event::{Event as CrosstermEvent, KeyCode, MouseButton, MouseEventKind};
 use mpsc::Sender;
 use ratatui::{
@@ -66,6 +66,13 @@ impl ItemActionsPopup {
             Some(ItemActionsState::TAKE) => {
                 let _ = event_sender.try_send(ApplicationEvent::Send(SendEvent::ApiRequest(
                     ApiRequest::Take(TakeCommand {
+                        item_identifier: item_id.to_string(),
+                    }),
+                )));
+            }
+            Some(ItemActionsState::USE) => {
+                let _ = event_sender.try_send(ApplicationEvent::Send(SendEvent::ApiRequest(
+                    ApiRequest::Use(UseCommand {
                         item_identifier: item_id.to_string(),
                     }),
                 )));

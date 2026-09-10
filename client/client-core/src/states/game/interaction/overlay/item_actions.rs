@@ -13,21 +13,25 @@ pub struct ItemActionsState {
 
 impl ItemActionsState {
     pub const TAKE: &'static str = "TAKE";
+    pub const USE: &'static str = "USE";
     pub const DROP: &'static str = "DROP";
     pub const VIEW: &'static str = "VIEW";
     pub const CANCEL: &'static str = "CANCEL";
 
-    pub fn new(item_id: String, location: ItemLocation) -> Self {
+    pub fn new(item_id: String, useable: bool, location: ItemLocation) -> Self {
         let reach = match location {
             ItemLocation::Room => Self::TAKE,
             ItemLocation::Inventory => Self::DROP,
         };
 
-        let actions = vec![
-            reach.to_string(),
-            Self::VIEW.to_string(),
-            Self::CANCEL.to_string(),
-        ];
+        let mut actions = vec![reach.to_string()];
+
+        if useable && matches!(location, ItemLocation::Inventory) {
+            actions.push(Self::USE.to_string());
+        }
+
+        actions.push(Self::VIEW.to_string());
+        actions.push(Self::CANCEL.to_string());
 
         let mut actions = SelectableList::with_items(actions);
         actions.select_index(0);

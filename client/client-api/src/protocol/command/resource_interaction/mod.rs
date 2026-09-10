@@ -5,3 +5,4 @@ pub(crate) mod quest;
 pub(crate) mod status;
 pub(crate) mod take;
 pub(crate) mod talk;
+pub(crate) mod r#use;

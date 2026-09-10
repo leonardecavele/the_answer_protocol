@@ -1,15 +1,67 @@
 use crate::app::App;
-use crate::notification::{Notification, NotificationDuration};
+use crate::notification::{Notification, NotificationDuration, NotificationTopic};
 use crate::states::game::Item;
 use client_api::ApiRequest;
 use client_api::commands::{
     DropResponse, InventoryResponse, LookCommand, QuestData, QuestResponse, QuestsResponse,
-    StatusResponse, TakeResponse,
+    StatusResponse, TakeResponse, UseResponse,
 };
 use client_api::events::{QuestCompleteData, QuestStepData};
 use std::time::Duration;
 
 impl App {
+    pub fn on_use(&mut self, response: UseResponse) {
+        self.state.game.player.take_item(&response.id);
+
+        match response.r#type.as_str() {
+            "heal" => {
+                let healed = response
+                    .context
+                    .get("healed")
+                    .and_then(|amount| amount.parse::<u32>().ok());
+                let health = response
+                    .context
+                    .get("health")
+                    .and_then(|amount| amount.parse::<u32>().ok());
+
+                let (Some(healed), Some(health)) = (healed, health) else {
+                    self.record_trace(
+                        "desync",
+                        format!(
+                            "used an item with an unreadable heal context: {:?}",
+                            response
+                        ),
+                    );
+
+                    self.state.ui.notifications.push(
+                        Notification::warning("The server sent an unreadable heal effect.")
+                            .with_topic(NotificationTopic::Protocol),
+                    );
+
+                    return;
+                };
+
+                self.state.game.player.set_hp(health);
+
+                let message = format!("You healed {} HP.", healed);
+
+                self.state.game.log_action(message.clone());
+                self.state
+                    .ui
+                    .notifications
+                    .push(Notification::success(message));
+            }
+            effect => {
+                self.record_trace("desync", format!("used an unknown effect: {}", effect));
+
+                self.state.ui.notifications.push(
+                    Notification::warning(format!("The {} effect is not handled yet.", effect))
+                        .with_topic(NotificationTopic::Protocol),
+                );
+            }
+        }
+    }
+
     pub fn on_status(&mut self, response: StatusResponse) {
         self.state
             .game
