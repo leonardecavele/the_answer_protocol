@@ -94,6 +94,15 @@ impl Player {
     pub fn get_current_room(&self) -> &str {
         &self.current_room
     }
+    pub fn heal(&mut self, amount: u32) -> (u32, u32) {
+        let old_hp = self.hp;
+    
+        self.hp = (self.hp + amount).min(self.max_hp);
+    
+        let healed = self.hp - old_hp;
+    
+        (healed, self.hp)
+    }
     pub fn get_inventory(&self) -> &Inventory {
         &self.inventory
     }

@@ -107,9 +107,7 @@ impl GameManager {
             match command.to_lowercase().as_str() {
                 "showitems" => {
                     let all_items: Vec<String> = self
-                        .all_items
-                        .iter()
-                        .map(|(_, item)| item.get_protocol_representation())
+                        .all_items.values().map(|item| item.get_protocol_representation())
                         .collect();
                     info!("all items: {:?}", all_items);
                 }

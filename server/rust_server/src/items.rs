@@ -98,7 +98,7 @@ impl Item {
     }
 
     pub fn can_spawn(&self) -> bool {
-        self.spawn_info.as_ref().map_or(false, |s| s.is_ready())
+        self.spawn_info.as_ref().is_some_and(|s| s.is_ready())
     }
 
     pub fn reset_spawn_timer(&mut self) {

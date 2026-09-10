@@ -39,11 +39,11 @@ impl CombatInstanceManager {
         if let Some(instance) = self.instances.get(&npc_id){
             vec.extend(instance.get_grouped_players());
             vec.push(instance.leader);
-            return vec;            
+            vec
         }
         else{
             warn!("No combat instance found for npc_id: {}", npc_id);
-            return vec;
+            vec
         }
     }
 

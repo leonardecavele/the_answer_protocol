@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use crate::constants::{
     BASE_COMMAND_RESPONSE, CODE_NL_SEP, CODE_SP_SEP, ErrorCode, MAX_TIME_FOR_COMBAT, NPC_MOB,
     SKIP_PLAYER_EXISTS_TEST, TEST_FILES_DIR,
@@ -235,16 +237,15 @@ impl GameManager {
         if let Some(item_needed) = self.get_item_needed(&room_to_go) {
             let mut any_has_item = false;
             for player_to_check in &all_moving_players {
-                if let Some(player) = self.get_player_from_name(player_to_check) {
-                    if player
+                if let Some(player) = self.get_player_from_name(player_to_check)
+                    && player
                         .get_inventory()
                         .get_items()
                         .iter()
                         .any(|item_id| self.get_item_name(*item_id) == *item_needed)
-                    {
-                        any_has_item = true;
-                        break;
-                    }
+                {
+                    any_has_item = true;
+                    break;
                 }
             }
             if !any_has_item {
@@ -549,7 +550,10 @@ impl GameManager {
             let player = json["player"].as_str().unwrap_or("");
             let npc_id = json["npc_id"].as_u32().unwrap_or(0);
             let player_success = json["success"].as_bool().unwrap_or(false);
-            info!("fight result: player: {}, npc_id: {}, player_success: {}", player, npc_id, player_success);
+            info!(
+                "fight result: player: {}, npc_id: {}, player_success: {}",
+                player, npc_id, player_success
+            );
             if let Some(instance) = self.combat_instances.get_mut_instance_for_npc(npc_id)
                 && instance.evaluating_players_count > 0
             {
@@ -622,7 +626,8 @@ impl GameManager {
                             );
                             vec![]
                         });
-                    let nb_t_shirt = self.get_nb_t_shirt_bde_for_player(player.to_string().as_str());
+                    let nb_t_shirt =
+                        self.get_nb_t_shirt_bde_for_player(player.to_string().as_str());
                     let npc_dmg = self.generate_npc_dmg(nb_t_shirt);
                     let event = GameManager::generate_no_player_event_json(
                         &players_in_instance,
@@ -682,14 +687,19 @@ impl GameManager {
             command_name, player_name, data
         );
 
-        let authorized_commands_in_instance =
-            vec!["CONNECT", "QUIT", "FIGHT_ATTACK", "GROUP LEAVE", "LOOK", "STATUS"];
-        if !(authorized_commands_in_instance.contains(&command_name.to_uppercase().as_str())) {
-            if let Some(already_in_instance) =
+        let authorized_commands_in_instance = [
+            "CONNECT",
+            "QUIT",
+            "FIGHT_ATTACK",
+            "GROUP LEAVE",
+            "LOOK",
+            "STATUS",
+        ];
+        if !(authorized_commands_in_instance.contains(&command_name.to_uppercase().as_str()))
+            && let Some(already_in_instance) =
                 self.check_player_is_in_instance(player_name, player_id, command_name)
-            {
-                return already_in_instance.dump();
-            }
+        {
+            return already_in_instance.dump();
         }
         match command_name.to_uppercase().as_str() {
             "CONNECT" => {
@@ -788,16 +798,16 @@ impl GameManager {
             "MOVE" => self.group_command_move(player_name.to_owned(), command_name, vec![], data),
 
             "QUIT" => {
-                if let Some(player_combat_info) = self.get_player_success(player_id) {
-                    if player_combat_info.is_none() {
-                        let npc_id = self
-                            .combat_instances
-                            .get_instance_for_player(player_id)
-                            .expect("safe, we check it in get_player_success")
-                            .get_npc_id();
-                        let nb_t_shirt = self.get_nb_t_shirt_bde_for_player(player_name);
-                        self.npc_attacks_player(self.generate_npc_dmg(nb_t_shirt), player_id, npc_id);
-                    }
+                if let Some(player_combat_info) = self.get_player_success(player_id)
+                    && player_combat_info.is_none()
+                {
+                    let npc_id = self
+                        .combat_instances
+                        .get_instance_for_player(player_id)
+                        .expect("safe, we check it in get_player_success")
+                        .get_npc_id();
+                    let nb_t_shirt = self.get_nb_t_shirt_bde_for_player(player_name);
+                    self.npc_attacks_player(self.generate_npc_dmg(nb_t_shirt), player_id, npc_id);
                 }
                 // player_success : Option<Option<bool>: first option if the player does not exist and the second for the success{
 
@@ -861,15 +871,13 @@ impl GameManager {
                 };
                 let item = data;
                 let room_name = room.get_name().to_owned();
-                let Some(parsed_item) = self.parse_item(item, &room) else {
+                let Some(parsed_item) = self.parse_item(item, room) else {
                     return generate_json(player_name, command_name, ErrorCode::ItemNotFound, "")
                         .dump();
                 };
-                let (item_id, item_name) = parsed_item;
+                let (item_id, _) = parsed_item;
 
-                if !self.item_exists_with_name(item_id, item_name.as_str())
-                    || !room.contains_item(item_id)
-                {
+                if !room.contains_item(item_id) {
                     return generate_json(player_name, command_name, ErrorCode::ItemNotFound, "")
                         .dump();
                 }
@@ -909,15 +917,13 @@ impl GameManager {
                 let player_id = player.get_id();
                 let item = data;
                 let room_name = player.get_current_room().to_owned();
-                let Some(item_tuple) = self.parse_item_from_player(item, &player) else {
+                let Some(item_tuple) = self.parse_item_from_player(item, player) else {
                     return generate_json(player_name, command_name, ErrorCode::ItemNotFound, "")
                         .dump();
                 };
 
                 let (item_id, item_name) = item_tuple;
-                if !self.item_exists_with_name(item_id, item_name.as_str())
-                    || !player.has_item(item_id)
-                {
+                if !player.has_item(item_id) {
                     return generate_json(
                         player_name,
                         command_name,
@@ -938,7 +944,13 @@ impl GameManager {
                     self.generate_event_json(&mut players_to_send, player_name, "DROP", item, true);
                 self.add_diff_to_tick(events_json);
 
-                generate_json(player_name, command_name, ErrorCode::NoError, item_repr.as_str()).dump()
+                generate_json(
+                    player_name,
+                    command_name,
+                    ErrorCode::NoError,
+                    item_repr.as_str(),
+                )
+                .dump()
             }
             "INVENTORY" => {
                 let inventory = self.get_player_inventory_as_string(player_name);
@@ -1030,7 +1042,12 @@ impl GameManager {
 
                 let combat_result = self.player_attacks_npc(1, player_id, npc_id);
 
-                info!("Player {} attacks NPC {} -> result: {}", player_name, npc_id, combat_result.as_str());
+                info!(
+                    "Player {} attacks NPC {} -> result: {}",
+                    player_name,
+                    npc_id,
+                    combat_result.as_str()
+                );
                 generate_json(
                     player_name,
                     command_name,
@@ -1038,6 +1055,52 @@ impl GameManager {
                     combat_result.as_str(),
                 )
                 .dump()
+            }
+            "USE" => {
+                let player = match self.get_player_from_name(player_name) {
+                    Some(p) => p,
+                    None => {
+                        warn!("Player not found: {}", player_name);
+                        return generate_json(
+                            player_name,
+                            command_name,
+                            ErrorCode::PlayerNotFound,
+                            "",
+                        )
+                        .dump();
+                    }
+                };
+
+                let item = data;
+                let Some(item_tuple) = self.parse_item_from_player(item, player) else {
+                    return generate_json(player_name, command_name, ErrorCode::ItemNotFound, "")
+                        .dump();
+                };
+
+                let (item_id, item_name) = item_tuple;
+                if !player.has_item(item_id) {
+                    return generate_json(
+                        player_name,
+                        command_name,
+                        ErrorCode::ItemNotInInventory,
+                        "",
+                    )
+                    .dump();
+                }
+
+                match self.player_uses_item(player_name, item_id, item_name.as_str()) {
+                    Ok(context) => generate_json(
+                        player_name,
+                        command_name,
+                        ErrorCode::NoError,
+                        context.dump().as_str(),
+                    )
+                    .dump(),
+                    Err(_) => {
+                        return generate_json(player_name, command_name, ErrorCode::NotUsable, "")
+                            .dump();
+                    }
+                }
             }
             "STATUS" => {
                 let player_status = self.get_player_status_as_string(player_name);
