@@ -3,7 +3,7 @@ use crate::events::{ApplicationEvent, SendEvent};
 use crate::renderer::components::{
     Component, EventFlow, LabelButton, Lifecycle, is_mouse_in_rect, scroll_direction,
 };
-use crate::renderer::theme::{panel_block, selection_style};
+use crate::renderer::theme::{SURFACE_COLOR, panel_block, selection_style};
 use crate::states::AppState;
 use crate::states::game::{GameFocus, ItemActionsState, ItemLocation, ItemStack, Overlay};
 use client_api::ApiRequest;
@@ -131,7 +131,7 @@ impl Component for InventoryPanel {
             let cell_y = inv_inner.y + (row as u16 * INVENTORY_ITEM_HEIGHT);
 
             if cell_y >= inv_inner.bottom() {
-                continue; // Cannot fit more rows
+                continue;
             }
 
             let cell_area = Rect {
@@ -150,7 +150,7 @@ impl Component for InventoryPanel {
             let text_area = cell_area.inner(Margin::new(1, 1));
 
             frame.render_widget(
-                Block::default().style(Style::default().bg(Color::Black)),
+                Block::default().style(Style::default().bg(SURFACE_COLOR)),
                 text_area,
             );
 
