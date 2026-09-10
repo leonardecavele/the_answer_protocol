@@ -21,7 +21,7 @@ impl App {
                 self.state.should_quit = true;
                 return;
             }
-            if key_event.modifiers == KeyModifiers::CONTROL && key_event.code == KeyCode::Char('e')
+            if key_event.modifiers == KeyModifiers::CONTROL && key_event.code == KeyCode::Char('t')
             {
                 self.state.ui.show_trace_log = !self.state.ui.show_trace_log;
                 return;
