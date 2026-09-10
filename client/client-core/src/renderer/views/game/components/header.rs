@@ -5,7 +5,7 @@ use crate::renderer::theme::{
     ERROR_COLOR, PLAYER_COLOR, ROOM_COLOR, SUCCESS_COLOR, WARNING_COLOR, default_block,
 };
 use crate::states::AppState;
-use crate::states::game::{HelpState, Overlay};
+use crate::states::game::{ChatState, HelpState, Overlay};
 use client_api::ApiRequest;
 use client_api::commands::{
     GroupCreateCommand, GroupLeaveCommand, QuitCommand, StatusCommand, WhoCommand,
@@ -26,6 +26,7 @@ pub struct Header {
     quit: LabelButton,
     group_create: LabelButton,
     group_leave: LabelButton,
+    chat: LabelButton,
     help: LabelButton,
     trace: LabelButton,
 }
@@ -44,6 +45,7 @@ impl Header {
             quit: LabelButton::new("QUIT"),
             group_create: LabelButton::new("CREATE GROUP"),
             group_leave: LabelButton::new("LEAVE GROUP"),
+            chat: LabelButton::new("CHAT"),
             help: LabelButton::new("HELP"),
             trace: LabelButton::new("TRACE"),
         }
@@ -62,6 +64,7 @@ impl Header {
             group,
             &mut self.who,
             &mut self.status,
+            &mut self.chat,
             &mut self.help,
             &mut self.trace,
             &mut self.quit,
@@ -202,6 +205,11 @@ impl Lifecycle for Header {
 
         if mouse.kind != MouseEventKind::Down(MouseButton::Left) {
             return EventFlow::Ignored;
+        }
+
+        if self.chat.hit(mouse.column, mouse.row) {
+            state.game.overlays.toggle(Overlay::Chat(ChatState));
+            return EventFlow::Consumed;
         }
 
         if self.help.hit(mouse.column, mouse.row) {
