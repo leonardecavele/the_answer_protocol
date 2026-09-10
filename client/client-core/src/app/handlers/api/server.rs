@@ -13,36 +13,20 @@ impl App {
             .game
             .server
             .set_online_count(response.player_count);
-        self.state
-            .game
-            .log_action("You checked who is here.".to_string());
+
+        self.state.game.log_action(format!(
+            "There are {} other players currently on the server.",
+            response.player_count.saturating_sub(1)
+        ));
     }
 
     pub fn on_player_joined_server(&mut self, name: String) {
-        // TODO: retirer cette estimation quand le serveur emettra STATS a chaque changement
-        let count = self
-            .state
-            .game
-            .server
-            .online_players_count
-            .saturating_add(1);
-        self.state.game.server.set_online_count(count);
-
         self.state
             .game
             .log_action(format!("{} joined the server.", name));
     }
 
     pub fn on_player_quit_server(&mut self, name: String) {
-        // TODO: retirer cette estimation quand le serveur emettra STATS a chaque changement
-        let count = self
-            .state
-            .game
-            .server
-            .online_players_count
-            .saturating_sub(1);
-        self.state.game.server.set_online_count(count);
-
         if let Some(room) = &mut self.state.game.room {
             room.player_left(&name);
         }

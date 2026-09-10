@@ -59,12 +59,12 @@ impl Header {
         };
 
         let buttons = [
+            group,
             &mut self.who,
             &mut self.status,
-            &mut self.quit,
-            group,
             &mut self.help,
             &mut self.trace,
+            &mut self.quit,
         ];
 
         let mut x = area.x + 1;

@@ -21,6 +21,8 @@ pub const CHAT_GROUP_COLOR: Color = Color::Rgb(0x5B, 0xC4, 0x6A);
 pub const CHAT_ROOM_COLOR: Color = Color::Rgb(0x4F, 0xD1, 0xC5);
 pub const CHAT_PRIVATE_COLOR: Color = Color::Rgb(0xC8, 0x8B, 0xE0);
 
+pub const SURFACE_COLOR: Color = Color::Rgb(0x16, 0x0B, 0x1A);
+
 pub const OVERLAY_BORDER_COLOR: Color = Color::Rgb(0xC8, 0x8B, 0xE0);
 pub const FOCUS_BORDER_COLOR: Color = Color::Rgb(0xE8, 0xB8, 0x4B);
 pub const TRACE_COLOR: Color = Color::Rgb(0xC8, 0x8B, 0xE0);
