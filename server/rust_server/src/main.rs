@@ -270,5 +270,5 @@ fn main() -> std::io::Result<()> {
         game_manager.save_server_state();
     }
 
-    return Ok(());
+    Ok(())
 }

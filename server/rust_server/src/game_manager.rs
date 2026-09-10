@@ -1,9 +1,9 @@
 use crate::combat_instances::{CombatInstance, CombatInstanceManager};
 use crate::commands::generate_json;
 use crate::constants::{
-    CODE_NL_SEP, CODE_SP_SEP, Direction, LOST_ITEM, LOST_ITEM_SPAWN, MAX_DMG_DEALT,
-    MAX_TIME_FOR_COMBAT, MIN_DMG_DEALT, NPC_MAX_DMG, NPC_MIN_DMG, NPC_RESPAWN_TIME,
-    PLAYER_ROOM_SPAWN, T_SHIRT, TEST_FILES_DIR,
+    CODE_NL_SEP, CODE_SP_SEP, Direction, ITEM_DESPAWN_TIME, LOST_ITEM, LOST_ITEM_SPAWN,
+    MAX_DMG_DEALT, MAX_TIME_FOR_COMBAT, MIN_DMG_DEALT, NPC_MAX_DMG, NPC_MIN_DMG,
+    NPC_RESPAWN_TIME, PLAYER_ROOM_SPAWN, T_SHIRT, TEST_FILES_DIR,
 };
 use rand::RngExt;
 
@@ -15,15 +15,15 @@ use crate::parser::Parser;
 use crate::player::{Player, PlayerCount, PlayerId};
 use crate::quests::{Loot, Quest, QuestInstance, Questid};
 use crate::room::{Room, RoomId, RoomName};
-use crate::save::{Save, ServerSave};
+use crate::save::{Save, SavedItem, ServerSave};
 use crate::tester::test;
 use json::{JsonValue, object};
 use std::cmp::Reverse;
 use std::collections::{BinaryHeap, HashMap};
-use std::io::Write;
+use std::io::{Error, ErrorKind, Write};
 use std::net::TcpStream;
 use std::sync::mpsc;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 use tracing::warn;
 use tracing::{debug, error, info};
 
@@ -228,10 +228,11 @@ impl GameManager {
     }
 
     pub fn recycle_item_id(&mut self, item_id: ItemId) {
-        if item_id != LOST_ITEM && item_id >= self.nb_models {
-            if self.all_items.remove(&item_id).is_some() {
-                self.free_item_ids.push(Reverse(item_id));
-            }
+        if item_id != LOST_ITEM
+            && item_id >= self.nb_models
+            && self.all_items.remove(&item_id).is_some()
+        {
+            self.free_item_ids.push(Reverse(item_id));
         }
     }
 
@@ -275,7 +276,7 @@ impl GameManager {
         if server_save.next_player_id > 0 {
             self.next_player_id = server_save.next_player_id;
             for (room_id_str, mut inventory) in server_save.rooms_inventory {
-                let items_to_check: Vec<ItemId> = inventory.get_items().iter().cloned().collect();
+                let items_to_check: Vec<ItemId> = inventory.get_items().to_vec();
                 inventory.get_items_mut().clear();
                 for item_id in items_to_check {
                     if item_id >= self.nb_models {
@@ -290,7 +291,6 @@ impl GameManager {
                 }
 
                 let mut items_to_start_timer = Vec::new();
-
                 if let Ok(room_id) = room_id_str.parse::<u32>() {
                     if let Some(room) = self.all_rooms.get_mut(&room_id) {
                         items_to_start_timer = inventory.get_items().clone();
@@ -483,7 +483,7 @@ impl GameManager {
         }
 
         // remove nonexistent items from player's inventory
-        let items_to_check: Vec<ItemId> = save_data.inventory.get_items().iter().cloned().collect();
+        let items_to_check: Vec<ItemId> = save_data.inventory.get_items().to_vec();
         save_data.inventory.get_items_mut().clear();
         for item_id in items_to_check {
             if item_id >= self.nb_models {
@@ -680,15 +680,15 @@ impl GameManager {
     }
 
     pub fn remove_item_from_player(&mut self, player_id: PlayerId, item_id: ItemId) {
-        if let Some(player) = self.get_player(player_id) {
-            if let Some(item) = self.get_item(item_id) {
-                let item_repr = item.get_protocol_representation();
-                info!(
-                    "removing item {} from player {}",
-                    item_repr,
-                    player.get_name()
-                );
-            }
+        if let Some(player) = self.get_player(player_id)
+            && let Some(item) = self.get_item(item_id)
+        {
+            let item_repr = item.get_protocol_representation();
+            info!(
+                "removing item {} from player {}",
+                item_repr,
+                player.get_name()
+            );
         }
         if let Some(player) = self.players.get_mut(&player_id) {
             player.remove_item(item_id);
@@ -700,12 +700,54 @@ impl GameManager {
         }
     }
 
-    pub fn add_item_to_player(&mut self, player_id: PlayerId, item_id: ItemId) {
-        if let Some(player) = self.get_player(player_id) {
-            if let Some(item) = self.get_item(item_id) {
-                let item_repr = item.get_protocol_representation();
-                info!("adding item {} to player {}", item_repr, player.get_name());
+    pub fn heal_player(&mut self, player_id: PlayerId, amount: u32) -> (u32, u32) {
+        let player = self.get_mut_player(player_id);
+        if let Some(player) = player {
+            let healed = player.heal(amount);
+            healed
+        } else {
+            warn!("tried to heal non-existent player: {}", player_id);
+            (0, 100)
+        }
+    }
+
+    pub fn player_uses_item(
+        &mut self,
+        player_name: &str,
+        item_id: ItemId,
+        item_name: &str,
+    ) -> std::io::Result<JsonValue> {
+        let usable_items: HashMap<&str, (&str, u32)> =
+            HashMap::from([("wrap_du_foyer", ("heal", 25))]);
+        let Some(item_info) = usable_items.get(&item_name) else {
+            return Err(Error::new(ErrorKind::InvalidInput, "item not usable"));
+        };
+        let Some(player_id) = self.get_player_id(player_name).cloned() else {
+            warn!("tried to use item for non-existent player: {}", player_name);
+            return Err(Error::new(ErrorKind::NotFound, "player not found"));
+        };
+        let item_repr = Item::protocol_representation(item_id, item_name);
+        self.remove_item_from_player(player_id, item_id);
+        self.recycle_item_id(item_id);
+        info!("Player {} used item {}", player_name, item_repr);
+        match item_info.0 {
+            "heal" => {
+                let (healed, current_health) = self.heal_player(player_id, item_info.1);
+                let json = object! { "type" => item_info.0, "id" => item_repr, "context" => object! { "healed" => healed.to_string(), "health" => current_health.to_string() } };
+                return Ok(json);
             }
+            _ => {
+                return Err(Error::new(ErrorKind::InvalidInput, "item not usable"));
+            }
+        }
+    }
+
+    pub fn add_item_to_player(&mut self, player_id: PlayerId, item_id: ItemId) {
+        if let Some(player) = self.get_player(player_id)
+            && let Some(item) = self.get_item(item_id)
+        {
+            let item_repr = item.get_protocol_representation();
+            info!("adding item {} to player {}", item_repr, player.get_name());
         }
 
         if let Some(player) = self.get_mut_player(player_id) {
@@ -827,7 +869,7 @@ impl GameManager {
     pub fn get_only_item_with_name(&self, item_name: &str) -> Option<ItemId> {
         let mut count = 0;
         let mut item_id: Option<ItemId> = None;
-        for (_, item) in self.all_items.iter() {
+        for item in self.all_items.values() {
             if item.get_name() == item_name {
                 count += 1;
                 item_id = Some(item.get_id());
@@ -1026,8 +1068,10 @@ impl GameManager {
     }
 
     pub fn parse_item(&self, item_rep: &str, room: &Room) -> Option<(ItemId, String)> {
-        if let Some(item) = Item::parse_item(item_rep) {
-            return Some(item);
+        if let Some((item_id, item_name)) = Item::parse_item(item_rep) {
+            return self
+                .item_exists_with_name(item_id, &item_name)
+                .then_some((item_id, item_name));
         }
         room.get_inventory()
             .get_items()
@@ -1041,8 +1085,10 @@ impl GameManager {
         item_rep: &str,
         player: &Player,
     ) -> Option<(ItemId, String)> {
-        if let Some(item) = Item::parse_item(item_rep) {
-            return Some(item);
+        if let Some((item_id, item_name)) = Item::parse_item(item_rep) {
+            return self
+                .item_exists_with_name(item_id, &item_name)
+                .then_some((item_id, item_name));
         }
         player
             .get_inventory()
@@ -1058,7 +1104,7 @@ impl GameManager {
     }
 
     pub fn convert_items_to_string(&self, inventory: &Inventory) -> Vec<String> {
-        let mut item_ids: Vec<_> = inventory.get_items().iter().copied().collect();
+        let mut item_ids: Vec<_> = inventory.get_items().to_vec();
 
         item_ids.sort_unstable();
 
@@ -1075,6 +1121,7 @@ impl GameManager {
     }
 
     pub fn start_dropped_at_for_item(&mut self, item_id: ItemId) {
+        // delay is used to avoid sending too much despawn event at the same time
         if let Some(item) = self.get_item_mut(item_id) {
             item.set_dropped_at(Instant::now());
         }
@@ -1475,7 +1522,7 @@ impl GameManager {
         }
 
         let mut vec: Vec<Vec<(PlayerId, bool)>> = Vec::new();
-        for (_npc_id, instance) in self.combat_instances.instances.iter() {
+        for instance in self.combat_instances.instances.values() {
             if instance.all_players_finished() {
                 let mut players_info: Vec<(PlayerId, bool)> = Vec::new();
                 let mut all_players = instance.get_grouped_players().clone();
@@ -1540,26 +1587,26 @@ impl GameManager {
         let current_step = quest_instance.get_current_step();
 
         // sends QUEST STEP event to the player if the current step is not the max step
-        if current_step != max_steps {
-            if let Some(player) = self.get_player(player_id) {
-                let player_name = player.get_name();
-                info!(
-                    "player {} completed one step of quest {}",
-                    player_name, quest_name
-                );
+        if current_step != max_steps
+            && let Some(player) = self.get_player(player_id)
+        {
+            let player_name = player.get_name();
+            info!(
+                "player {} completed one step of quest {}",
+                player_name, quest_name
+            );
 
-                let event = GameManager::generate_no_player_event_json(
-                    &vec![player_name.to_string()],
-                    "QUEST STEP",
-                    object! {
-                        "name" => quest_name,
-                        "current_step" => current_step
-                    }
-                    .dump()
-                    .as_str(),
-                );
-                self.add_diff_to_tick(event);
-            }
+            let event = GameManager::generate_no_player_event_json(
+                &vec![player_name.to_string()],
+                "QUEST STEP",
+                object! {
+                    "name" => quest_name,
+                    "current_step" => current_step
+                }
+                .dump()
+                .as_str(),
+            );
+            self.add_diff_to_tick(event);
         }
     }
 
@@ -1704,13 +1751,12 @@ impl GameManager {
         let mut to_spawn = Vec::new();
 
         for id in 0..self.nb_models {
-            if let Some(item) = self.all_items.get_mut(&id) {
-                if let Some(spawn_info) = item.get_spawn_info_mut() {
-                    if spawn_info.timer.elapsed().as_secs() >= spawn_info.cooldown {
-                        spawn_info.reset_timer();
-                        to_spawn.push((id, spawn_info.room.clone()));
-                    }
-                }
+            if let Some(item) = self.all_items.get_mut(&id)
+                && let Some(spawn_info) = item.get_spawn_info_mut()
+                && spawn_info.timer.elapsed().as_secs() >= spawn_info.cooldown
+            {
+                spawn_info.reset_timer();
+                to_spawn.push((id, spawn_info.room.clone()));
             }
         }
 

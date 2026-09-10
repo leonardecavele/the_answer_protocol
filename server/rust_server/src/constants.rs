@@ -1,12 +1,14 @@
 use serde::{Deserialize, Serialize};
-use std::time::Duration;
+use std::{fmt, time::Duration};
 use strum::EnumIter;
 
 pub const TEST_FILES_DIR: &str = "assets/code";
 
 pub const NPC_MAX_DMG: u32 = 50;
+
 pub const SKIP_PLAYER_EXISTS_TEST: u32 = 0;
 pub const NPC_MIN_DMG: u32 = 25;
+pub const RESTART_ITEM_TIMER_BATCH: u32 = 10;
 pub const MINUTE: u64 = 60;
 pub const MIN_DMG_DEALT: u32 = 5;
 pub const MAX_DMG_DEALT: u32 = u32::MAX;
@@ -66,6 +68,7 @@ pub enum ErrorCode {
     NoContent,
     RoomNotFound,
     MissingItem,
+    NotUsable,
 }
 
 impl ErrorCode {
@@ -95,6 +98,7 @@ impl ErrorCode {
             Self::FileNotFound => 412,
             Self::RoomNotFound => 413,
             Self::MissingItem => 414,
+            Self::NotUsable => 415,
             Self::ConnectionFailed => 900,
             Self::SendFailed => 901,
             Self::InvalidGroupCommand => 997,
@@ -108,7 +112,12 @@ impl ErrorCode {
 pub enum LootType {
     #[serde(rename = "merci", alias = "Merci")]
     Merci,
-    #[serde(rename = "t_shirt_bde", alias = "tshirt", alias = "t_shirt", alias = "TShirt")]
+    #[serde(
+        rename = "t_shirt_bde",
+        alias = "tshirt",
+        alias = "t_shirt",
+        alias = "TShirt"
+    )]
     TShirt,
     #[serde(rename = "wrap_du_foyer", alias = "wrap", alias = "Wrap")]
     Wrap,
@@ -123,13 +132,17 @@ impl LootType {
             _ => None,
         }
     }
+}
 
-    pub fn to_string(&self) -> String {
-        match self {
-            Self::Merci => "merci".to_owned(),
-            Self::TShirt => "t_shirt_bde".to_owned(),
-            Self::Wrap => "wrap_du_foyer".to_owned(),
-        }
+impl fmt::Display for LootType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let s = match self {
+            Self::Merci => "merci",
+            Self::TShirt => "t_shirt_bde",
+            Self::Wrap => "wrap_du_foyer",
+        };
+
+        write!(f, "{s}")
     }
 }
 

@@ -49,7 +49,7 @@ impl Parser {
                 return Err(format!(
                     "Loot type '{:?}' ('{}') does not exist as an item",
                     loot,
-                    loot.to_string()
+                    loot
                 ));
             }
         }
@@ -93,8 +93,8 @@ impl Parser {
                     ));
                 }
             }
-            if let Some(needed) = room.get_item_needed() {
-                if !self.items.values().any(|i| i.get_name() == needed) {
+            if let Some(needed) = room.get_item_needed()
+                && !self.items.values().any(|i| i.get_name() == needed) {
                     return Err(format!(
                         "Room {} ({}) requires item_needed '{}' which does not exist in items.json",
                         room_id,
@@ -102,7 +102,6 @@ impl Parser {
                         needed
                     ));
                 }
-            }
             for dest in room.get_exits().values() {
                 if !valid_room_names.contains(dest) {
                     return Err(format!(
@@ -116,8 +115,8 @@ impl Parser {
         }
 
         for (item_id, item) in &self.items {
-            if let Some(spawn_info) = item.get_spawn_info() {
-                if !valid_room_names.contains(&spawn_info.room) {
+            if let Some(spawn_info) = item.get_spawn_info()
+                && !valid_room_names.contains(&spawn_info.room) {
                     return Err(format!(
                         "Item {} ({}) has an invalid spawn room '{}'",
                         item_id,
@@ -125,7 +124,6 @@ impl Parser {
                         spawn_info.room
                     ));
                 }
-            }
         }
 
         for (npc_id, npc) in &self.npcs {
