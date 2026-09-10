@@ -408,7 +408,7 @@ impl GameManager {
                         .collect();
                     let event = GameManager::generate_no_player_event_json(
                         &eligible_names,
-                        "Quest add",
+                        "QUEST ADD",
                         quest_json_str.as_str(),
                     );
                     self.add_diff_to_tick(event);
