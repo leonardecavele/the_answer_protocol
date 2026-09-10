@@ -3,7 +3,7 @@ use crate::renderer::components::Lifecycle;
 use crossterm::event::{Event as CrosstermEvent, KeyCode, KeyModifiers};
 use std::time::{Duration, Instant};
 
-const KEY_RELEASE_DELAY: Duration = Duration::from_millis(120);
+const KEY_RELEASE_DELAY: Duration = Duration::from_millis(90);
 
 impl App {
     pub fn handle_device_event(&mut self, event: CrosstermEvent) {
