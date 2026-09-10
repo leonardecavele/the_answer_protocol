@@ -4,21 +4,20 @@ use crate::{constants::LOST_ITEM, game_manager::GameManager, items::Item};
 
 impl GameManager {
     pub fn handle_admin_command(&mut self, command: &str) {
-        let words: Vec<&str> = command.split_whitespace().collect();
-        if words.is_empty() {
-            return;
-        }
+        let mut parts = command.splitn(3, char::is_whitespace);
 
-        if let (Some(command), Some(player_name), Some(arg)) =
-            (words.get(0), words.get(1), words.get(2))
-        {
+        let command = parts.next();
+        let player_name = parts.next();
+        let arg = parts.next();
+
+        if let (Some(command), Some(player_name), Some(arg)) = (command, player_name, arg) {
             match command.to_lowercase().as_str() {
                 "giveitem" => {
                     if let Some(player_id) = self
                         .get_player_id(player_name.to_uppercase().as_str())
                         .copied()
                     {
-                        let item_name = *arg;
+                        let item_name = arg;
                         let model_id = (0..self.nb_models).find(|&i| {
                             self.get_item(i)
                                 .is_some_and(|item| item.get_name() == item_name)
@@ -27,11 +26,12 @@ impl GameManager {
                         if let Some(item_id) = model_id {
                             if item_id != LOST_ITEM {
                                 let new_item_id = self.instantiate_item(item_id);
-                                let item_repr = Item::protocol_representation(new_item_id, item_name);
+                                let item_repr =
+                                    Item::protocol_representation(new_item_id, item_name);
                                 self.add_item_to_player(player_id, new_item_id);
                                 let event = GameManager::generate_no_player_event_json(
                                     &vec![player_name.to_string()],
-                                    "Item add",
+                                    "ITEM ADD",
                                     item_repr.as_str(),
                                 );
                                 self.add_diff_to_tick(event);
@@ -75,7 +75,7 @@ impl GameManager {
                     command, player_name, arg
                 ),
             }
-        } else if let (Some(command), Some(arg)) = (words.get(0), words.get(1)) {
+        } else if let (Some(command), Some(arg)) = (command, arg) {
             match command.to_lowercase().as_str() {
                 "help" | "?" => match arg.to_lowercase().as_str() {
                     "giveitem" => {
@@ -103,7 +103,7 @@ impl GameManager {
                     command, arg
                 ),
             }
-        } else if let Some(command) = words.get(0) {
+        } else if let Some(command) = command{
             match command.to_lowercase().as_str() {
                 "showitems" => {
                     let all_items: Vec<String> = self
@@ -126,8 +126,6 @@ impl GameManager {
                 }
                 _ => warn!("unknown admin command: {}", command),
             }
-        } else {
-            warn!("admin command not recognized: {}", command);
         }
     }
 }
