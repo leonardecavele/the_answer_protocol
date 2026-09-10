@@ -10,6 +10,7 @@ use ratatui::Frame;
 use ratatui::layout::{Alignment, Constraint, Direction, Layout, Rect};
 use ratatui::style::{Modifier, Style};
 use ratatui::widgets::Paragraph;
+use tokio::sync::mpsc::Sender;
 
 const LAG_LABEL: &str = "LAG";
 const LAG_WIDTH: u16 = 9;
@@ -76,6 +77,10 @@ impl Component for Footer {
 }
 
 impl Lifecycle for Footer {
+    fn on_tick(&mut self, state: &mut AppState, sender: &Sender<ApplicationEvent>) {
+        self.input.on_tick(state, sender);
+    }
+
     fn handle_device_event(
         &mut self,
         state: &mut AppState,

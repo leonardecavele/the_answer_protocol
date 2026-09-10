@@ -440,6 +440,7 @@ impl Component for GameView {
 impl Lifecycle for GameView {
     fn on_tick(&mut self, state: &mut AppState, sender: &mpsc::Sender<ApplicationEvent>) {
         self.dialogue.on_tick(state, sender);
+        self.footer.on_tick(state, sender);
     }
 
     fn handle_device_event(
