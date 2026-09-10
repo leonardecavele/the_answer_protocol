@@ -20,8 +20,6 @@ const POPUP_WIDTH_PERCENT: u16 = 60;
 const POPUP_HEIGHT_PERCENT: u16 = 70;
 const IMAGE_MIN_HEIGHT: u16 = 10;
 const SPACER_HEIGHT: u16 = 1;
-const DESC_HEIGHT: u16 = 6;
-const IDS_HEIGHT: u16 = 2;
 const FOOTER_HEIGHT: u16 = 2;
 
 #[derive(Default)]
@@ -64,21 +62,49 @@ impl Component for ItemDetailPopup {
         let inner_area = block.inner(popup_area);
         frame.render_widget(block, popup_area);
 
+        let mut ids_lines = Vec::new();
+        if let Some(stack) = state.game.find_item_stack(item_id) {
+            let ids = stack
+                .iter()
+                .map(|item| item.id.as_str())
+                .collect::<Vec<&str>>()
+                .join(", ");
+
+            ids_lines = wrap_str_to_lines(&ids, inner_area.width as usize);
+        }
+
+        let desc_lines = wrap_str_to_lines(&item.description, inner_area.width as usize);
+
+        let ids_spacer_height = if ids_lines.is_empty() {
+            0
+        } else {
+            SPACER_HEIGHT
+        };
+
+        let available_height = inner_area.height.saturating_sub(
+            IMAGE_MIN_HEIGHT + SPACER_HEIGHT * 2 + ids_spacer_height + FOOTER_HEIGHT,
+        );
+
+        let desc_height = (desc_lines.len() as u16).min(available_height);
+        let ids_height = (ids_lines.len() as u16).min(available_height - desc_height);
+
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
                 Constraint::Min(IMAGE_MIN_HEIGHT),
                 Constraint::Length(SPACER_HEIGHT),
-                Constraint::Length(DESC_HEIGHT),
-                Constraint::Length(IDS_HEIGHT),
+                Constraint::Length(desc_height),
+                Constraint::Length(ids_spacer_height),
+                Constraint::Length(ids_height),
+                Constraint::Length(SPACER_HEIGHT),
                 Constraint::Length(FOOTER_HEIGHT),
             ])
             .split(inner_area);
 
         let image_area = chunks[0];
         let desc_area = chunks[2];
-        let ids_area = chunks[3];
-        let footer_area = chunks[4];
+        let ids_area = chunks[4];
+        let footer_area = chunks[6];
 
         match item.sprite.frame_at(Duration::ZERO) {
             Some(image_path) => {
@@ -101,18 +127,10 @@ impl Component for ItemDetailPopup {
             }
         }
 
-        let desc_lines = wrap_str_to_lines(&item.description, desc_area.width as usize);
         let desc_paragraph = Paragraph::new(desc_lines).alignment(Alignment::Center);
         frame.render_widget(desc_paragraph, desc_area);
 
-        if let Some(stack) = state.game.find_item_stack(item_id) {
-            let ids = stack
-                .iter()
-                .map(|item| item.id.as_str())
-                .collect::<Vec<&str>>()
-                .join(", ");
-
-            let ids_lines = wrap_str_to_lines(&ids, ids_area.width as usize);
+        if !ids_lines.is_empty() {
             let ids_paragraph = Paragraph::new(ids_lines)
                 .alignment(Alignment::Center)
                 .style(dim_style());
