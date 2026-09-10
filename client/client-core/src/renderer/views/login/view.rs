@@ -111,6 +111,12 @@ impl Component for LoginView {
 }
 
 impl Lifecycle for LoginView {
+    fn on_tick(&mut self, state: &mut AppState, sender: &Sender<ApplicationEvent>) {
+        self.name_input.on_tick(state, sender);
+        self.ip_input.on_tick(state, sender);
+        self.port_input.on_tick(state, sender);
+    }
+
     fn handle_device_event(
         &mut self,
         state: &mut AppState,
