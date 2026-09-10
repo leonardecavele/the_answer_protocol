@@ -46,6 +46,7 @@ impl CommandError {
             412 => String::from("the server could not load the requested file"),
             413 => String::from("room not found"),
             414 => String::from("an item is required to enter this room"),
+            415 => String::from("item cannot be used"),
             429 => String::from("too many commands sent in a short time"),
             900 => String::from("server unavailable"),
             901 => String::from("the server could not deliver your message"),

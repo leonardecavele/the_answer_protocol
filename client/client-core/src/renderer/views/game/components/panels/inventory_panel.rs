@@ -245,6 +245,7 @@ impl Lifecycle for InventoryPanel {
                                 .overlays
                                 .open(Overlay::ItemActions(ItemActionsState::new(
                                     item_id,
+                                    item.useable,
                                     ItemLocation::Inventory,
                                 )));
                             return EventFlow::Consumed;

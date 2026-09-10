@@ -114,6 +114,7 @@ impl Client {
             ApiRequest::Look(cmd) => Ok(ApiResponse::Look(self.request(cmd, flow).await?)),
             ApiRequest::Move(cmd) => Ok(ApiResponse::Move(self.request(cmd, flow).await?)),
             ApiRequest::Who(cmd) => Ok(ApiResponse::Who(self.request(cmd, flow).await?)),
+            ApiRequest::Use(cmd) => Ok(ApiResponse::Use(self.request(cmd, flow).await?)),
             ApiRequest::FightCreate(cmd) => {
                 Ok(ApiResponse::FightCreate(self.request(cmd, flow).await?))
             }

@@ -62,4 +62,5 @@ pub mod commands {
     };
     pub use crate::protocol::command::resource_interaction::take::{TakeCommand, TakeResponse};
     pub use crate::protocol::command::resource_interaction::talk::{TalkCommand, TalkResponse};
+    pub use crate::protocol::command::resource_interaction::r#use::{UseCommand, UseResponse};
 }

@@ -1,5 +1,6 @@
 use crate::commands::{
-    FightAttackCommand, FightAttackResponse, FightCreateCommand, FightCreateResponse,
+    FightAttackCommand, FightAttackResponse, FightCreateCommand, FightCreateResponse, UseCommand,
+    UseResponse,
 };
 use crate::error::CommandError;
 use crate::protocol::request::RequestFlow;
@@ -121,6 +122,7 @@ define_api_protocol! {
     Look(LookCommand, LookResponse) => ["look"],
     Move(MoveCommand, MoveResponse) => ["move"],
     Who(WhoCommand, WhoResponse) => ["who"],
+    Use(UseCommand, UseResponse) => ["use"],
     FightCreate(FightCreateCommand, FightCreateResponse) => ["fight create", "fc"],
     FightAttack(FightAttackCommand, FightAttackResponse) => ["fight attack", "fa"],
     GlobalChat(GlobalChatCommand, GlobalChatResponse) => ["chat global", "say"],

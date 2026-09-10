@@ -69,6 +69,9 @@ impl App {
             (ApiRequest::Who(_), ApiResponse::Who(Ok(response))) => {
                 self.on_who(response);
             }
+            (ApiRequest::Use(_), ApiResponse::Use(Ok(response))) => {
+                self.on_use(response);
+            }
             (ApiRequest::FightCreate(_), ApiResponse::FightCreate(Ok(_))) => {}
             (ApiRequest::FightAttack(_), ApiResponse::FightAttack(Ok(_))) => {}
             (ApiRequest::Status(_), ApiResponse::Status(Ok(response))) => {

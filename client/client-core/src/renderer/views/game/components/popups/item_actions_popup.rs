@@ -1,20 +1,20 @@
 use crate::collections::Step;
 use crate::events::{ApplicationEvent, SendEvent};
-use crate::renderer::components::{Component, EventFlow, Lifecycle, is_mouse_in_rect};
+use crate::renderer::components::{is_mouse_in_rect, Component, EventFlow, Lifecycle};
 use crate::renderer::layout::centered_rect;
 use crate::renderer::theme::{popup_block, selection_style};
-use crate::states::AppState;
 use crate::states::game::{ItemActionsState, ItemDetailState, Overlay};
+use crate::states::AppState;
+use client_api::commands::{DropCommand, TakeCommand, UseCommand};
 use client_api::ApiRequest;
-use client_api::commands::{DropCommand, TakeCommand};
 use crossterm::event::{Event as CrosstermEvent, KeyCode, MouseButton, MouseEventKind};
 use mpsc::Sender;
 use ratatui::{
-    Frame,
     layout::Rect,
     style::Color,
     text::Span,
     widgets::{Clear, List, ListItem},
+    Frame,
 };
 use tokio::sync::mpsc;
 
@@ -66,6 +66,13 @@ impl ItemActionsPopup {
             Some(ItemActionsState::TAKE) => {
                 let _ = event_sender.try_send(ApplicationEvent::Send(SendEvent::ApiRequest(
                     ApiRequest::Take(TakeCommand {
+                        item_identifier: item_id.to_string(),
+                    }),
+                )));
+            }
+            Some(ItemActionsState::USE) => {
+                let _ = event_sender.try_send(ApplicationEvent::Send(SendEvent::ApiRequest(
+                    ApiRequest::Use(UseCommand {
                         item_identifier: item_id.to_string(),
                     }),
                 )));
