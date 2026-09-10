@@ -47,6 +47,10 @@ impl TextInput {
         }
     }
 
+    pub fn cursor_to_end(&mut self) {
+        self.cursor.index = self.value.chars().count();
+    }
+
     fn add(&mut self, c: char) {
         let byte_index = self
             .value
@@ -160,7 +164,7 @@ impl InteractiveComponent for TextInput {
                     EventFlow::Consumed
                 }
                 KeyCode::Char('e' | 'E') if modifiers.contains(KeyModifiers::CONTROL) => {
-                    self.cursor.index = self.value.chars().count();
+                    self.cursor_to_end();
                     EventFlow::Consumed
                 }
                 KeyCode::Char(c) => {
