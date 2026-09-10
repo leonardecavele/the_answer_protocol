@@ -9,7 +9,7 @@ use client_api::ApiRequest;
 use client_api::commands::FightAttackCommand;
 use client_api::events::FightStartData;
 use crossterm::event::{
-    Event as CrosstermEvent, KeyCode, KeyModifiers, MouseButton, MouseEventKind,
+    Event as CrosstermEvent, KeyCode, KeyEvent, KeyModifiers, MouseButton, MouseEventKind,
 };
 use mpsc::Sender;
 use ratatui::Frame;
@@ -17,6 +17,10 @@ use ratatui::layout::{Alignment, Constraint, Direction, Layout, Position, Rect};
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::Span;
 use ratatui::widgets::{Block, Paragraph};
+use ratatui_code_editor::actions::{
+    Delete, Indent, InsertNewline, InsertText, MoveDown, MoveLeft, MoveRight, MoveUp, Redo,
+    UnIndent, Undo,
+};
 use ratatui_code_editor::editor::Editor;
 use ratatui_code_editor::theme::vesper;
 use ratatui_image::Resize;
@@ -33,6 +37,12 @@ const NO_IMAGE: &str = " No image ";
 const HEALTH_BAR_HEIGHT: u16 = 1;
 const SUBMIT_WIDTH: u16 = 12;
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum EditorMode {
+    Normal,
+    Insert,
+}
+
 pub struct EditorView {
     editor: Editor,
     npc_id: String,
@@ -44,6 +54,9 @@ pub struct EditorView {
     timed_out: bool,
     image_renderer: ImageRenderer,
     submit_button: Interactive<Button>,
+    mode: EditorMode,
+    pending: Option<char>,
+    register: Option<String>,
 }
 
 impl EditorView {
@@ -67,7 +80,174 @@ impl EditorView {
             timed_out: false,
             image_renderer: ImageRenderer::new(),
             submit_button: Interactive::new(Button::new("SUBMIT")),
+            mode: EditorMode::Normal,
+            pending: None,
+            register: None,
         })
+    }
+
+    fn move_to_line(&mut self, row: usize) {
+        let cursor = self.editor.code_ref().line_to_char(row);
+
+        self.editor.set_cursor(cursor);
+    }
+
+    fn move_to_line_start(&mut self) {
+        let code = self.editor.code_ref();
+        let (row, _) = code.point(self.editor.get_cursor());
+        let cursor = code.line_to_char(row);
+
+        self.editor.set_cursor(cursor);
+    }
+
+    fn move_to_line_end(&mut self) {
+        let code = self.editor.code_ref();
+        let (row, _) = code.point(self.editor.get_cursor());
+        let cursor = code.line_to_char(row) + code.line_len(row);
+
+        self.editor.set_cursor(cursor);
+    }
+
+    fn move_to_last_line(&mut self) {
+        let row = self.editor.code_ref().len_lines().saturating_sub(1);
+
+        self.move_to_line(row);
+    }
+
+    fn move_to_next_word(&mut self) {
+        let code = self.editor.code_ref();
+        let (row, mut col) = code.point(self.editor.get_cursor());
+        let length = code.line_len(row);
+        let characters: Vec<char> = code.line(row).chars().collect();
+
+        while col < length && !characters[col].is_whitespace() {
+            col += 1;
+        }
+
+        while col < length && characters[col].is_whitespace() {
+            col += 1;
+        }
+
+        let cursor = code.line_to_char(row) + col;
+
+        self.editor.set_cursor(cursor);
+    }
+
+    fn move_to_previous_word(&mut self) {
+        let code = self.editor.code_ref();
+        let (row, mut col) = code.point(self.editor.get_cursor());
+        let characters: Vec<char> = code.line(row).chars().collect();
+
+        while col > 0 && characters[col - 1].is_whitespace() {
+            col -= 1;
+        }
+
+        while col > 0 && !characters[col - 1].is_whitespace() {
+            col -= 1;
+        }
+
+        let cursor = code.line_to_char(row) + col;
+
+        self.editor.set_cursor(cursor);
+    }
+
+    fn cut_line(&mut self) {
+        let code = self.editor.code_ref();
+        let (row, _) = code.point(self.editor.get_cursor());
+        let start = code.line_to_char(row);
+
+        let end = if row + 1 < code.len_lines() {
+            code.line_to_char(row + 1)
+        } else {
+            code.len_chars()
+        };
+
+        self.register = Some(code.slice(start, end));
+
+        self.editor.set_cursor(start);
+        self.editor.extend_selection(end);
+        self.editor.apply(Delete {});
+    }
+
+    fn paste_register(&mut self) {
+        let Some(text) = self.register.clone() else {
+            return;
+        };
+
+        self.editor.apply(InsertText { text });
+    }
+
+    fn insert_line_below(&mut self) {
+        self.move_to_line_end();
+        self.editor.apply(InsertNewline {});
+    }
+
+    fn insert_line_above(&mut self) {
+        self.move_to_line_start();
+        self.editor.apply(InsertNewline {});
+        self.editor.apply(MoveUp { shift: false });
+    }
+
+    fn handle_normal_key(&mut self, key: &KeyEvent) {
+        if let Some(pending) = self.pending.take() {
+            match (pending, key.code) {
+                ('d', KeyCode::Char('d')) => self.cut_line(),
+                ('g', KeyCode::Char('g')) => self.move_to_line(0),
+                _ => {}
+            }
+
+            return;
+        }
+
+        match key.code {
+            KeyCode::Char('h') | KeyCode::Left => self.editor.apply(MoveLeft { shift: false }),
+            KeyCode::Char('j') | KeyCode::Down => self.editor.apply(MoveDown { shift: false }),
+            KeyCode::Char('k') | KeyCode::Up => self.editor.apply(MoveUp { shift: false }),
+            KeyCode::Char('l') | KeyCode::Right => self.editor.apply(MoveRight { shift: false }),
+
+            KeyCode::Char('0') => self.move_to_line_start(),
+            KeyCode::Char('$') => self.move_to_line_end(),
+            KeyCode::Char('G') => self.move_to_last_line(),
+            KeyCode::Char('w') => self.move_to_next_word(),
+            KeyCode::Char('b') => self.move_to_previous_word(),
+
+            KeyCode::Char('x') => {
+                self.editor.apply(MoveRight { shift: false });
+                self.editor.apply(Delete {});
+            }
+            KeyCode::Char('>') | KeyCode::Char('|') => self.editor.apply(Indent {}),
+            KeyCode::Char('<') | KeyCode::Char('\\') => self.editor.apply(UnIndent {}),
+            KeyCode::Char('u') => self.editor.apply(Undo {}),
+            KeyCode::Char('r') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                self.editor.apply(Redo {})
+            }
+            KeyCode::Char('p') => self.paste_register(),
+
+            KeyCode::Char(character @ ('d' | 'g')) => self.pending = Some(character),
+
+            KeyCode::Char('i') => self.mode = EditorMode::Insert,
+            KeyCode::Char('a') => {
+                self.editor.apply(MoveRight { shift: false });
+                self.mode = EditorMode::Insert;
+            }
+            KeyCode::Char('I') => {
+                self.move_to_line_start();
+                self.mode = EditorMode::Insert;
+            }
+            KeyCode::Char('A') => {
+                self.move_to_line_end();
+                self.mode = EditorMode::Insert;
+            }
+            KeyCode::Char('o') => {
+                self.insert_line_below();
+                self.mode = EditorMode::Insert;
+            }
+            KeyCode::Char('O') => {
+                self.insert_line_above();
+                self.mode = EditorMode::Insert;
+            }
+            _ => {}
+        }
     }
 
     fn submit(&self, state: &mut AppState, event_sender: &Sender<ApplicationEvent>) {
@@ -198,7 +378,15 @@ impl EditorView {
 
     fn footer(&self, state: &AppState) -> Paragraph<'static> {
         let (text, style) = match state.game.fight.phase() {
-            FightPhase::Editing => ("Press Ctrl+S to submit your code", dim_style()),
+            FightPhase::Editing => (
+                match self.mode {
+                    EditorMode::Normal => {
+                        "NORMAL  hjkl 0 $ w b gg G  ·  i a I A o O  ·  x dd < > u Ctrl+R p  ·  Ctrl+S submit"
+                    }
+                    EditorMode::Insert => "INSERT  ·  Esc  ·  Ctrl+S submit",
+                },
+                dim_style(),
+            ),
             FightPhase::AwaitingResult => (
                 "Code submitted. Waiting for the other players...",
                 dim_style(),
@@ -299,7 +487,19 @@ impl Lifecycle for EditorView {
             return EventFlow::Consumed;
         }
 
-        let _ = self.editor.input(*key, &self.editor_area);
+        match self.mode {
+            EditorMode::Insert => {
+                if key.code == KeyCode::Esc {
+                    self.mode = EditorMode::Normal;
+                } else {
+                    let _ = self.editor.input(*key, &self.editor_area);
+                }
+            }
+            EditorMode::Normal => {
+                self.handle_normal_key(key);
+                self.editor.focus(&self.editor_area);
+            }
+        }
 
         EventFlow::Consumed
     }
