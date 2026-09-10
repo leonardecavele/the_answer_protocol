@@ -44,7 +44,7 @@ impl ScrollableComponent for TraceOverlay {
 
     fn get_block<'a>(&self, _state: &AppState) -> Block<'a> {
         overlay_block()
-            .title(" Event history overlay (Press Ctrl+E or Esc to close) ")
+            .title(" Event history overlay (Press Ctrl+T or Esc to close) ")
             .style(Style::default().fg(TRACE_COLOR))
     }
 

@@ -2,7 +2,7 @@ use crate::events::ApplicationEvent;
 use crate::renderer::components::{EventFlow, InteractiveComponent, Lifecycle};
 use crate::renderer::theme::{ITEM_COLOR, default_block, dim_style};
 use crate::states::AppState;
-use crossterm::event::{Event as CrosstermEvent, KeyCode, KeyEvent};
+use crossterm::event::{Event as CrosstermEvent, KeyCode, KeyEvent, KeyModifiers};
 use ratatui::Frame;
 use ratatui::layout::Rect;
 use ratatui::style::{Modifier, Style};
@@ -150,8 +150,19 @@ impl InteractiveComponent for TextInput {
             return EventFlow::Ignored;
         }
 
-        if let CrosstermEvent::Key(KeyEvent { code, .. }) = event {
+        if let CrosstermEvent::Key(KeyEvent {
+            code, modifiers, ..
+        }) = event
+        {
             match code {
+                KeyCode::Char('a' | 'A') if modifiers.contains(KeyModifiers::CONTROL) => {
+                    self.cursor.index = 0;
+                    EventFlow::Consumed
+                }
+                KeyCode::Char('e' | 'E') if modifiers.contains(KeyModifiers::CONTROL) => {
+                    self.cursor.index = self.value.chars().count();
+                    EventFlow::Consumed
+                }
                 KeyCode::Char(c) => {
                     self.add(*c);
                     EventFlow::Consumed
