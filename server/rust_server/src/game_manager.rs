@@ -280,7 +280,7 @@ impl GameManager {
         let server_save = match confy::load_path::<ServerSave>(path) {
             Ok(save) => save,
             Err(e) => {
-                warn!(
+                error!(
                     "Failed to load server state from {}: {}. Ignoring save.",
                     path, e
                 );
