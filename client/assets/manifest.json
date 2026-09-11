@@ -55,7 +55,8 @@
             "image_paths": [
                 "pictures/mobs/talk/mphippen/mphippen0.jpeg",
                 "pictures/mobs/talk/mphippen/mphippen1.jpeg",
-                "pictures/mobs/talk/mphippen/mphippen2.jpeg"
+                "pictures/mobs/talk/mphippen/mphippen2.jpeg",
+                "pictures/mobs/talk/mphippen/mphippen3.jpeg"
             ],
             "frame_ms": 800
         },
