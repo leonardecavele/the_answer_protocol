@@ -8,7 +8,7 @@ use tracing_subscriber::{EnvFilter, Layer, fmt};
 const MAX_LOG_SIZE: u64 = 5 * 1024 * 1024;
 
 pub fn setup(path: &str) -> Result<(), ClientError> {
-    rotate(path)?;
+    rotate(path);
 
     let file = OpenOptions::new().create(true).append(true).open(path)?;
 
@@ -26,13 +26,13 @@ pub fn setup(path: &str) -> Result<(), ClientError> {
     Ok(())
 }
 
-fn rotate(path: &str) -> Result<(), ClientError> {
+fn rotate(path: &str) {
     let Ok(metadata) = fs::metadata(path) else {
-        return Ok(());
+        return;
     };
 
     if metadata.len() < MAX_LOG_SIZE {
-        return Ok(());
+        return;
     }
 
     let mut generation = 1;
@@ -42,15 +42,13 @@ fn rotate(path: &str) -> Result<(), ClientError> {
     }
 
     while generation > 1 {
-        fs::rename(
+        let _ = fs::rename(
             format!("{}.{}", path, generation - 1),
             format!("{}.{}", path, generation),
-        )?;
+        );
 
         generation -= 1;
     }
 
-    fs::rename(path, format!("{}.1", path))?;
-
-    Ok(())
+    let _ = fs::rename(path, format!("{}.1", path));
 }
