@@ -108,7 +108,8 @@ fn main() -> std::io::Result<()> {
 
     let (log_sender, log_receiver) = mpsc::channel::<String>();
 
-    let (rustyline, printer) = if std::io::stdin().is_terminal() && std::io::stdout().is_terminal() {
+    let (rustyline, printer) = if std::io::stdin().is_terminal() && std::io::stdout().is_terminal()
+    {
         let mut editor = DefaultEditor::new().map_err(std::io::Error::other)?;
         let printer = editor
             .create_external_printer()
