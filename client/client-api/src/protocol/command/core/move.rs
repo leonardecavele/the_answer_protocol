@@ -21,15 +21,22 @@ impl Command for MoveCommand {
     }
 
     fn parse_response(&self, response: ServerResponse) -> Result<Self::ResponseData, CommandError> {
-        if response.arguments.len() != 1 {
+        if response.arguments.is_empty() {
             return Err(CommandError {
                 code: None,
                 message: "invalid arguments".to_string(),
             });
         }
 
-        let room_id = match response.arguments[0].strip_prefix("room=") {
-            Some(id) => id.to_string(),
+        let room_id = match response
+            .arguments
+            .first()
+            .and_then(|arg| arg.strip_prefix("room="))
+        {
+            Some(id) => match response.arguments.get(1..).unwrap_or_default().join(" ") {
+                rest if rest.is_empty() => id.to_string(),
+                rest => format!("{id} {rest}"),
+            },
             None => {
                 return Err(CommandError {
                     code: None,
