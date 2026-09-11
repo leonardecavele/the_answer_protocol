@@ -42,6 +42,7 @@ const (
 	FileNotFoundError          = 412
 	RoomNotFoundError          = 413
 	MissingItemError           = 414
+	NotUsableError             = 415
 	TooManyRequestsError       = 429
 
 	ConnectionFailedError  = 900

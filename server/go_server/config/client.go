@@ -11,5 +11,5 @@ const (
 	MaxFloodPoints          = 5
 	FloodPointDecayInterval = 30 * time.Minute
 	AuthenticationTimeout   = 30 * time.Second
-	ClientReadTimeout       = 30 * time.Minute
+	ClientReadTimeout       = 10 * time.Minute
 )

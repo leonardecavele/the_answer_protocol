@@ -389,6 +389,7 @@ client retains both the number and symbolic name.
 | `412` | `FILE_NOT_FOUND` | The challenge source file cannot be loaded. |
 | `413` | `ROOM_NOT_FOUND` | The player's current room cannot be resolved. |
 | `414` | `MISSING_ITEM` | The player or group lacks an item required to enter the destination room. |
+| `415` | `NOT_USABLE` | The selected inventory item cannot be used. |
 | `429` | `TOO_MANY_REQUESTS` | More than twenty-five input frames arrived from one IP within one second. |
 | `900` | `CONNECTION_FAILED` | The game server is unavailable. |
 | `901` | `SEND_FAILED` | A command could not be sent between servers. |

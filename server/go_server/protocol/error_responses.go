@@ -47,6 +47,7 @@ var (
 	ResponseFileNotFound          = ResponseError(serverError.FileNotFoundError, "FILE_NOT_FOUND")
 	ResponseRoomNotFound          = ResponseError(serverError.RoomNotFoundError, "ROOM_NOT_FOUND")
 	ResponseMissingItem           = ResponseError(serverError.MissingItemError, "MISSING_ITEM")
+	ResponseNotUsable             = ResponseError(serverError.NotUsableError, "NOT_USABLE")
 	ResponseTooManyRequests       = ResponseError(serverError.TooManyRequestsError, "TOO_MANY_REQUESTS")
 	ResponseConnectionFailed      = ResponseError(serverError.ConnectionFailedError, "CONNECTION_FAILED")
 	ResponseGameServerClosed      = ResponseConnectionFailed
@@ -161,6 +162,16 @@ var ErrorResponseByCommand = map[string]map[int]string{
 	"INVENTORY": {
 		serverError.PlayerNotFoundError:        ResponsePlayerNotFound,
 		serverError.PlayerAlreadyInCombatError: ResponsePlayerAlreadyInCombat,
+		serverError.ConnectionFailedError:      ResponseConnectionFailed,
+		serverError.SendFailedError:            ResponseSendFailed,
+		serverError.InvalidQuestionError:       ResponseInvalidQuestion,
+		serverError.InvalidCommandError:        ResponseInvalidCommand,
+	},
+	"USE": {
+		serverError.ItemNotInInventoryError:    ResponseItemNotInInventory,
+		serverError.PlayerNotFoundError:        ResponsePlayerNotFound,
+		serverError.PlayerAlreadyInCombatError: ResponsePlayerAlreadyInCombat,
+		serverError.NotUsableError:             ResponseNotUsable,
 		serverError.ConnectionFailedError:      ResponseConnectionFailed,
 		serverError.SendFailedError:            ResponseSendFailed,
 		serverError.InvalidQuestionError:       ResponseInvalidQuestion,
