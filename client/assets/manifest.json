@@ -56,7 +56,8 @@
                 "pictures/mobs/talk/mphippen/mphippen0.jpeg",
                 "pictures/mobs/talk/mphippen/mphippen1.jpeg",
                 "pictures/mobs/talk/mphippen/mphippen2.jpeg"
-            ]
+            ],
+            "frame_ms": 800
         },
         "10.crappo": {
             "name": "crappo",
