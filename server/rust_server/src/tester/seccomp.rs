@@ -64,7 +64,6 @@ fn seccomp_instructions() -> io::Result<Vec<BpfInstruction>> {
             jump_false: 0,
             value: 4,
         },
-
         //check if the syscall comes from the expected architecture
         BpfInstruction {
             code: BpfOpcode::JumpEqual,
@@ -72,7 +71,6 @@ fn seccomp_instructions() -> io::Result<Vec<BpfInstruction>> {
             jump_false: 0,
             value: AUDIT_ARCH,
         },
-
         //kill the process if the architecture is not supported
         BpfInstruction {
             code: BpfOpcode::Return,
@@ -80,7 +78,6 @@ fn seccomp_instructions() -> io::Result<Vec<BpfInstruction>> {
             jump_false: 0,
             value: BpfResult::KillProcess as u32,
         },
-
         //load the syscall number from seccomp_data
         BpfInstruction {
             code: BpfOpcode::LoadWordAbsolute,

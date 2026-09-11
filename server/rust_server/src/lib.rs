@@ -1,9 +1,11 @@
+pub mod admin_commands;
 pub mod combat_instances;
 pub mod commands;
 pub mod constants;
 pub mod game_manager;
 pub mod inventory;
 pub mod items;
+pub mod logs;
 pub mod npc;
 pub mod parser;
 pub mod player;
@@ -13,5 +15,3 @@ pub mod room;
 pub mod save;
 pub mod simulation;
 pub mod tester;
-pub mod logs;
-pub mod admin_commands;

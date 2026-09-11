@@ -1,7 +1,7 @@
 use std::io::Write;
 use std::sync::mpsc;
 
-pub struct ChannelWriter{
+pub struct ChannelWriter {
     pub sender: mpsc::Sender<String>,
 }
 

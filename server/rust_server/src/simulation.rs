@@ -12,7 +12,7 @@ impl GameManager {
             // Process any pending responses from the code tester thread
             self.process_tester_responses()?;
             self.process_admin_commands();
-            
+
             if tick_timer.elapsed() >= TICK_TIME {
                 break;
             }
@@ -31,12 +31,12 @@ impl GameManager {
 
     pub fn update_game_state(&mut self) -> std::io::Result<()> {
         self.remove_finished_combat_instances();
-        
+
         self.check_finished_quests();
         self.punish_inactive_players_in_combat();
         self.revive_dead_npcs();
         self.spawn_items();
-        
+
         let current_time = Instant::now();
 
         let mut actions: Vec<(String, ItemId, bool, String)> = Vec::new();
@@ -45,17 +45,18 @@ impl GameManager {
             for item_id in room.get_inventory().get_items() {
                 if let Some(item) = self.get_item(*item_id)
                     && let Some(dropped_time) = item.get_dropped_at()
-                        && current_time.duration_since(dropped_time) >= ITEM_DESPAWN_TIME {
-                            let no_despawn_room = item.get_remove_despawn_in_room();
-                            if no_despawn_room != Some(room.get_id()) {
-                                actions.push((
-                                    room.get_name().to_owned(),
-                                    *item_id,
-                                    item.get_id() == (LOST_ITEM as ItemId),
-                                    item.get_protocol_representation(),
-                                ));
-                            }
-                        }
+                    && current_time.duration_since(dropped_time) >= ITEM_DESPAWN_TIME
+                {
+                    let no_despawn_room = item.get_remove_despawn_in_room();
+                    if no_despawn_room != Some(room.get_id()) {
+                        actions.push((
+                            room.get_name().to_owned(),
+                            *item_id,
+                            item.get_id() == (LOST_ITEM as ItemId),
+                            item.get_protocol_representation(),
+                        ));
+                    }
+                }
             }
         }
         for (room_name, item_id, is_lost_item, item_rep) in actions {

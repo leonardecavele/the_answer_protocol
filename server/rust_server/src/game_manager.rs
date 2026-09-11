@@ -718,8 +718,7 @@ impl GameManager {
     pub fn heal_player(&mut self, player_id: PlayerId, amount: u32) -> (u32, u32) {
         let player = self.get_mut_player(player_id);
         if let Some(player) = player {
-            let healed = player.heal(amount);
-            healed
+            player.heal(amount)
         } else {
             warn!("tried to heal non-existent player: {}", player_id);
             (0, 100)
@@ -749,11 +748,9 @@ impl GameManager {
             "heal" => {
                 let (healed, current_health) = self.heal_player(player_id, item_info.1);
                 let json = object! { "type" => item_info.0, "id" => item_repr, "context" => object! { "healed" => healed.to_string(), "health" => current_health.to_string() } };
-                return Ok(json);
+                Ok(json)
             }
-            _ => {
-                return Err(Error::new(ErrorKind::InvalidInput, "item not usable"));
-            }
+            _ => Err(Error::new(ErrorKind::InvalidInput, "item not usable")),
         }
     }
 
@@ -820,10 +817,8 @@ impl GameManager {
     }
 
     pub fn check_quest_talk_npc(&mut self, player_name: &str, npc_name: &str) {
-        let possibilities: HashMap<&str, &str> = HashMap::from([
-            ("smenard", "Cringe"),
-            ("vquetier", "Tunnel"),
-        ]);
+        let possibilities: HashMap<&str, &str> =
+            HashMap::from([("smenard", "Cringe"), ("vquetier", "Tunnel")]);
 
         let Some(&quest_name) = possibilities.get(npc_name) else {
             warn!("no quest associated with npc '{}'", npc_name);
@@ -831,7 +826,10 @@ impl GameManager {
         };
 
         let Some(player_id) = self.get_player_id(player_name).copied() else {
-            warn!("tried to check quest for non-existent player: {}", player_name);
+            warn!(
+                "tried to check quest for non-existent player: {}",
+                player_name
+            );
             return;
         };
 
@@ -1323,13 +1321,7 @@ impl GameManager {
         }
         false
     }
-    pub fn npc_attacks_player(
-        &mut self,
-        damage: u32,
-        player_id: NpcId,
-        npc_id: PlayerId,
-    ) {
-
+    pub fn npc_attacks_player(&mut self, damage: u32, player_id: NpcId, npc_id: PlayerId) {
         let player = if let Some(player) = self.get_mut_player(player_id) {
             player
         } else {
@@ -1337,11 +1329,7 @@ impl GameManager {
         };
         let _player_name = player.get_name().to_owned();
         let player_hp = player.get_hp();
-        let new_player_hp = if player_hp > damage {
-            player_hp - damage
-        } else {
-            0
-        };
+        let new_player_hp = player_hp.saturating_sub(damage);
 
         player.set_hp(new_player_hp);
 

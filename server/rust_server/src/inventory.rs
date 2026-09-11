@@ -15,9 +15,7 @@ impl Default for Inventory {
 
 impl Inventory {
     pub fn new() -> Self {
-        Self {
-            items: Vec::new(),
-        }
+        Self { items: Vec::new() }
     }
 
     pub fn contains_item(&self, item_id: ItemId) -> bool {
