@@ -53,11 +53,10 @@
             "name": "mphippen",
             "type": "dialogue",
             "image_paths": [
-                "pictures/mobs/talk/mphippen/mphippen0.png",
-                "pictures/mobs/talk/mphippen/mphippen1.png",
-                "pictures/mobs/talk/mphippen/mphippen2.png"
+                "pictures/mobs/talk/mphippen/mphippen0.jpeg",
+                "pictures/mobs/talk/mphippen/mphippen1.jpeg",
+                "pictures/mobs/talk/mphippen/mphippen2.jpeg"
             ],
-            "frame_ms": 500
         },
         "10.crappo": {
             "name": "crappo",
