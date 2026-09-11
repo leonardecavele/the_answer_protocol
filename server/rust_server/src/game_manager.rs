@@ -1328,46 +1328,21 @@ impl GameManager {
         damage: u32,
         player_id: NpcId,
         npc_id: PlayerId,
-    ) -> String {
-        let error_return =
-            "{{\"attacker_hp\":error, \"target_hp\":error, \"damage\":0, \"status\":\"combat\"}}"
-                .to_string();
-        let npc_hp = if let Some(npc) = self.get_mut_npc(npc_id) {
-            debug!(
-                "npc: {}, npc_id_received: {}",
-                npc.get_protocol_representation(),
-                npc_id
-            );
-            if let Some(hp) = npc.get_hp() {
-                hp
-            } else {
-                return error_return;
-            }
-        } else {
-            return error_return;
-        };
+    ) {
 
-        let mut dealt_damage = damage;
         let player = if let Some(player) = self.get_mut_player(player_id) {
             player
         } else {
-            return error_return;
+            return;
         };
         let _player_name = player.get_name().to_owned();
         let player_hp = player.get_hp();
         let new_player_hp = if player_hp > damage {
             player_hp - damage
         } else {
-            dealt_damage = player_hp;
             0
         };
 
-        // TODO: event dans defend qui dis combien de degats le joueur defend ( envoyé aux membres du groupe)
-        // pareil dans Attack
-        // faire que quand un joueur quitte, Defend soit lancé automatiquement et il est marqué comme finished dans l'instance
-        // sur le point au dessus manque plus que de mettre des degats au joueur quand il quitte
-
-        let status = if player_hp > 0 { "combat" } else { "death" };
         player.set_hp(new_player_hp);
 
         //does nothing if no the player is not in a combat instance
@@ -1385,10 +1360,6 @@ impl GameManager {
         if new_player_hp == 0 {
             self.kill_player(player_id);
         }
-        format!(
-            "{{\"attacker_hp\":{}, \"target_hp\":{}, \"damage\":{}, \"status\":\"{}\"}}",
-            npc_hp, new_player_hp, dealt_damage, status
-        )
     }
 
     pub fn get_player_success(&self, player_id: PlayerId) -> Option<Option<bool>> {

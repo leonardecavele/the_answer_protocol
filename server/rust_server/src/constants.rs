@@ -10,6 +10,7 @@ pub const SKIP_PLAYER_EXISTS_TEST: u32 = 0;
 pub const NPC_MIN_DMG: u32 = 25;
 pub const RESTART_ITEM_TIMER_BATCH: u32 = 10;
 pub const MINUTE: u64 = 60;
+pub const PLAYER_ATTACK_DMG: u32 = 1;
 pub const MIN_DMG_DEALT: u32 = 5;
 pub const MAX_DMG_DEALT: u32 = u32::MAX;
 pub const LOST_ITEM: u64 = 0;

@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use crate::constants::{
-    BASE_COMMAND_RESPONSE, CODE_NL_SEP, CODE_SP_SEP, ErrorCode, MAX_TIME_FOR_COMBAT, NO_MORE_MESSAGES, NPC_MOB, SKIP_PLAYER_EXISTS_TEST, TEST_FILES_DIR,
+    BASE_COMMAND_RESPONSE, CODE_NL_SEP, CODE_SP_SEP, ErrorCode, MAX_TIME_FOR_COMBAT, NO_MORE_MESSAGES, NPC_MOB, PLAYER_ATTACK_DMG, SKIP_PLAYER_EXISTS_TEST, TEST_FILES_DIR,
 };
 use crate::game_manager::GameManager;
 use crate::items::{Item, ItemId};
@@ -1043,7 +1043,7 @@ impl GameManager {
                     }
                 };
 
-                let combat_result = self.player_attacks_npc(1, player_id, npc_id);
+                let combat_result = self.player_attacks_npc(PLAYER_ATTACK_DMG, player_id, npc_id);
 
                 info!(
                     "Player {} attacks NPC {} -> result: {}",
