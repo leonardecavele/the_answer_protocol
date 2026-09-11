@@ -821,7 +821,6 @@ impl GameManager {
             HashMap::from([("smenard", "Cringe"), ("vquetier", "Tunnel")]);
 
         let Some(&quest_name) = possibilities.get(npc_name) else {
-            warn!("no quest associated with npc '{}'", npc_name);
             return;
         };
 
