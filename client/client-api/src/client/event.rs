@@ -223,10 +223,10 @@ impl From<ServerResponse> for ServerEvent {
             ["FIGHT", "END"] => ServerEvent::FightEnd,
 
             // Room events
-            ["ROOM", name, "PRESENCE", "ENTER"] => {
+            ["ROOM", "PRESENCE", "ENTER", name] => {
                 ServerEvent::Room(RoomEvent::PresenceEnter(name.to_string()))
             }
-            ["ROOM", name, "PRESENCE", "LEAVE"] => {
+            ["ROOM", "PRESENCE", "LEAVE", name] => {
                 ServerEvent::Room(RoomEvent::PresenceLeave(name.to_string()))
             }
             ["ROOM", "CHAT", sender, message @ ..] => {
