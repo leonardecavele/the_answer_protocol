@@ -819,6 +819,25 @@ impl GameManager {
         }
     }
 
+    pub fn check_quest_talk_npc(&mut self, player_name: &str, npc_name: &str) {
+        let possibilities: HashMap<&str, &str> = HashMap::from([
+            ("smenard", "Cringe"),
+            ("vquetier", "Tunnel"),
+        ]);
+
+        let Some(&quest_name) = possibilities.get(npc_name) else {
+            warn!("no quest associated with npc '{}'", npc_name);
+            return;
+        };
+
+        let Some(player_id) = self.get_player_id(player_name).copied() else {
+            warn!("tried to check quest for non-existent player: {}", player_name);
+            return;
+        };
+
+        self.add_one_step_to_quest(player_id, quest_name);
+    }
+
     pub fn add_item_to_room(&mut self, room_name: &str, item_id: ItemId) {
         if let Some(item) = self.get_item(item_id) {
             let item_repr = item.get_protocol_representation();

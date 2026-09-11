@@ -85,6 +85,7 @@ fn start_log_writer_thread(log_receiver: mpsc::Receiver<String>) {
             .open("app.log")
             .ok();
         let mut stdout = std::io::stdout();
+        let mut stderr = std::io::stderr();
 
         log_receiver.into_iter().for_each(|msg| {
             if msg == "FLUSH_EXIT" {
@@ -93,8 +94,13 @@ fn start_log_writer_thread(log_receiver: mpsc::Receiver<String>) {
             if let Some(f) = file.as_mut() {
                 let _ = write!(f, "{}", msg);
             }
-            let _ = stdout.write_all(msg.as_bytes());
-            let _ = stdout.flush();
+            if msg.contains("ERROR") {
+                let _ = stderr.write_all(msg.as_bytes());
+                let _ = stderr.flush();
+            } else {
+                let _ = stdout.write_all(msg.as_bytes());
+                let _ = stdout.flush();
+            }
         });
     });
 }
