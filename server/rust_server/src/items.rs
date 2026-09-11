@@ -41,7 +41,12 @@ pub struct Item {
 }
 
 impl Item {
-    pub fn new(id: ItemId, name: String, description: String, spawn_info: Option<SpawnInfo>) -> Self {
+    pub fn new(
+        id: ItemId,
+        name: String,
+        description: String,
+        spawn_info: Option<SpawnInfo>,
+    ) -> Self {
         Self {
             id,
             model_id: id,
@@ -88,7 +93,7 @@ impl Item {
     pub fn get_description(&self) -> &str {
         &self.description
     }
-    
+
     pub fn get_spawn_info(&self) -> Option<&SpawnInfo> {
         self.spawn_info.as_ref()
     }

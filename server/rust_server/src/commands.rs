@@ -1,7 +1,6 @@
-use std::time::Duration;
-
 use crate::constants::{
-    BASE_COMMAND_RESPONSE, CODE_NL_SEP, CODE_SP_SEP, ErrorCode, MAX_TIME_FOR_COMBAT, NO_MORE_MESSAGES, NPC_MOB, PLAYER_ATTACK_DMG, SKIP_PLAYER_EXISTS_TEST, TEST_FILES_DIR,
+    BASE_COMMAND_RESPONSE, CODE_NL_SEP, CODE_SP_SEP, ErrorCode, MAX_TIME_FOR_COMBAT,
+    NO_MORE_MESSAGES, NPC_MOB, PLAYER_ATTACK_DMG, SKIP_PLAYER_EXISTS_TEST, TEST_FILES_DIR,
 };
 use crate::game_manager::GameManager;
 use crate::items::{Item, ItemId};
@@ -1100,8 +1099,7 @@ impl GameManager {
                     )
                     .dump(),
                     Err(_) => {
-                        return generate_json(player_name, command_name, ErrorCode::NotUsable, "")
-                            .dump();
+                        generate_json(player_name, command_name, ErrorCode::NotUsable, "").dump()
                     }
                 }
             }

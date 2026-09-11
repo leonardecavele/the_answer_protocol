@@ -45,11 +45,14 @@ impl Parser {
 
     pub fn check_loots_exists(&self) -> Result<(), String> {
         for loot in LootType::iter() {
-            if !self.items.values().any(|item| item.get_name() == loot.to_string()) {
+            if !self
+                .items
+                .values()
+                .any(|item| item.get_name() == loot.to_string())
+            {
                 return Err(format!(
                     "Loot type '{:?}' ('{}') does not exist as an item",
-                    loot,
-                    loot
+                    loot, loot
                 ));
             }
         }
@@ -94,14 +97,15 @@ impl Parser {
                 }
             }
             if let Some(needed) = room.get_item_needed()
-                && !self.items.values().any(|i| i.get_name() == needed) {
-                    return Err(format!(
-                        "Room {} ({}) requires item_needed '{}' which does not exist in items.json",
-                        room_id,
-                        room.get_name(),
-                        needed
-                    ));
-                }
+                && !self.items.values().any(|i| i.get_name() == needed)
+            {
+                return Err(format!(
+                    "Room {} ({}) requires item_needed '{}' which does not exist in items.json",
+                    room_id,
+                    room.get_name(),
+                    needed
+                ));
+            }
             for dest in room.get_exits().values() {
                 if !valid_room_names.contains(dest) {
                     return Err(format!(
@@ -116,14 +120,15 @@ impl Parser {
 
         for (item_id, item) in &self.items {
             if let Some(spawn_info) = item.get_spawn_info()
-                && !valid_room_names.contains(&spawn_info.room) {
-                    return Err(format!(
-                        "Item {} ({}) has an invalid spawn room '{}'",
-                        item_id,
-                        item.get_name(),
-                        spawn_info.room
-                    ));
-                }
+                && !valid_room_names.contains(&spawn_info.room)
+            {
+                return Err(format!(
+                    "Item {} ({}) has an invalid spawn room '{}'",
+                    item_id,
+                    item.get_name(),
+                    spawn_info.room
+                ));
+            }
         }
 
         for (npc_id, npc) in &self.npcs {
@@ -228,24 +233,31 @@ impl Parser {
                 let mut spawn_info = None;
                 if item.has_key("spawn_info") {
                     let info = &item["spawn_info"];
-                    let room = info["room"].as_str().ok_or("spawn_info must have a string 'room'")?;
-                    let cooldown = info["cooldown"].as_u64().ok_or("spawn_info must have a number 'cooldown'")?;
+                    let room = info["room"]
+                        .as_str()
+                        .ok_or("spawn_info must have a string 'room'")?;
+                    let cooldown = info["cooldown"]
+                        .as_u64()
+                        .ok_or("spawn_info must have a number 'cooldown'")?;
                     if cooldown < 1 {
-                        return Err(format!("spawn_info cooldown must be >= 1 for item '{}'", name));
+                        return Err(format!(
+                            "spawn_info cooldown must be >= 1 for item '{}'",
+                            name
+                        ));
                     }
-                    spawn_info = Some(SpawnInfo::new(
-                        room.to_string(),
-                        cooldown,
-                    ));
+                    spawn_info = Some(SpawnInfo::new(room.to_string(), cooldown));
                 }
 
-                let mut parsed_item = Item::new(id, name.to_string(), description.to_string(), spawn_info);
+                let mut parsed_item =
+                    Item::new(id, name.to_string(), description.to_string(), spawn_info);
                 if parsed_item.get_id() == LOST_ITEM as ItemId {
                     let lost_room = self
                         .rooms
                         .values()
                         .find(|r| r.get_name() == LOST_ITEM_SPAWN)
-                        .ok_or_else(|| format!("Room '{}' not found for LOST_ITEM", LOST_ITEM_SPAWN))?;
+                        .ok_or_else(|| {
+                            format!("Room '{}' not found for LOST_ITEM", LOST_ITEM_SPAWN)
+                        })?;
                     parsed_item.remove_despawn_in_room(lost_room.get_id());
                 }
 
@@ -304,8 +316,13 @@ impl Parser {
 
                 let item_needed = room["item_needed"].as_str().map(|s| s.to_string());
 
-                let mut parsed_room =
-                    Room::new(room_id, name.to_string(), description.to_string(), exits, item_needed);
+                let mut parsed_room = Room::new(
+                    room_id,
+                    name.to_string(),
+                    description.to_string(),
+                    exits,
+                    item_needed,
+                );
 
                 if room["items"].is_array() {
                     for item_id_json in room["items"].members() {

@@ -53,18 +53,8 @@ impl SaveInventory {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Default)]
 pub struct ServerSave {
     pub next_player_id: u32,
     pub rooms_inventory: HashMap<String, SaveInventory>,
 }
-
-impl Default for ServerSave {
-    fn default() -> Self {
-        Self {
-            next_player_id: 0,
-            rooms_inventory: HashMap::new(),
-        }
-    }
-}
-

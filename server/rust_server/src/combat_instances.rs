@@ -36,12 +36,11 @@ impl CombatInstanceManager {
 
     pub fn get_all_players_in_combat(&self, npc_id: NpcId) -> Vec<PlayerId> {
         let mut vec = Vec::new();
-        if let Some(instance) = self.instances.get(&npc_id){
+        if let Some(instance) = self.instances.get(&npc_id) {
             vec.extend(instance.get_grouped_players());
             vec.push(instance.leader);
             vec
-        }
-        else{
+        } else {
             warn!("No combat instance found for npc_id: {}", npc_id);
             vec
         }
@@ -88,7 +87,7 @@ pub struct CombatInstance {
     file_name: String,
     pub evaluating_players_count: u32,
     left_players: Vec<PlayerId>,
-    died_players: Vec<PlayerId>
+    died_players: Vec<PlayerId>,
 }
 
 impl CombatInstance {
@@ -114,7 +113,7 @@ impl CombatInstance {
             file_name,
             evaluating_players_count: 0,
             left_players: Vec::new(),
-            died_players: Vec::new()
+            died_players: Vec::new(),
         }
     }
 
@@ -159,7 +158,7 @@ impl CombatInstance {
     pub fn get_left_players(&self) -> &Vec<PlayerId> {
         &self.left_players
     }
-    
+
     pub fn all_players_finished(&self) -> bool {
         self.players_success.values().all(|s| s.is_some())
     }
