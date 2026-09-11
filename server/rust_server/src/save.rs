@@ -1,5 +1,6 @@
 use crate::constants::{PLAYER_ROOM_SPAWN, PLAYER_STARTING_HP, PLAYER_STARTING_MAX_HP};
 use crate::inventory::Inventory;
+use crate::items::ItemId;
 use crate::quests::{Loot, Questid};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -34,10 +35,28 @@ impl Default for Save {
     }
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub struct SavedItem {
+    pub id: ItemId,
+    pub remaining_secs: u64,
+}
+
+#[derive(Serialize, Deserialize, Clone, Default, Debug)]
+pub struct SaveInventory {
+    #[serde(default)]
+    pub items: Vec<SavedItem>,
+}
+
+impl SaveInventory {
+    pub fn new() -> Self {
+        Self { items: Vec::new() }
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone)]
 pub struct ServerSave {
     pub next_player_id: u32,
-    pub rooms_inventory: HashMap<String, Inventory>,
+    pub rooms_inventory: HashMap<String, SaveInventory>,
 }
 
 impl Default for ServerSave {
@@ -48,3 +67,4 @@ impl Default for ServerSave {
         }
     }
 }
+

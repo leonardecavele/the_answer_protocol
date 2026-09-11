@@ -2,8 +2,8 @@ use crate::combat_instances::{CombatInstance, CombatInstanceManager};
 use crate::commands::generate_json;
 use crate::constants::{
     CODE_NL_SEP, CODE_SP_SEP, Direction, ITEM_DESPAWN_TIME, LOST_ITEM, LOST_ITEM_SPAWN,
-    MAX_DMG_DEALT, MAX_TIME_FOR_COMBAT, MIN_DMG_DEALT, NPC_MAX_DMG, NPC_MIN_DMG,
-    NPC_RESPAWN_TIME, PLAYER_ROOM_SPAWN, T_SHIRT, TEST_FILES_DIR,
+    MAX_DMG_DEALT, MAX_TIME_FOR_COMBAT, MIN_DMG_DEALT, NPC_MAX_DMG, NPC_MIN_DMG, NPC_RESPAWN_TIME,
+    PLAYER_ROOM_SPAWN, T_SHIRT, TEST_FILES_DIR,
 };
 use rand::RngExt;
 
@@ -15,7 +15,7 @@ use crate::parser::Parser;
 use crate::player::{Player, PlayerCount, PlayerId};
 use crate::quests::{Loot, Quest, QuestInstance, Questid};
 use crate::room::{Room, RoomId, RoomName};
-use crate::save::{Save, SavedItem, ServerSave};
+use crate::save::{Save, SaveInventory, SavedItem, ServerSave};
 use crate::tester::test;
 use json::{JsonValue, object};
 use std::cmp::Reverse;
@@ -125,7 +125,7 @@ impl GameManager {
 
     fn save_player(&mut self, player_id: PlayerId) {
         if let Some(player) = self.players.get(&player_id) {
-            let mut inventory = crate::inventory::Inventory::new();
+            let mut inventory = Inventory::new();
             for item_id in player.get_items() {
                 if let Some(item) = self.all_items.get(item_id) {
                     inventory.add_item(item.get_model_id());
@@ -244,16 +244,25 @@ impl GameManager {
 
         let mut rooms_inventory = HashMap::new();
         for (room_id, room) in &self.all_rooms {
-            let mut inventory = crate::inventory::Inventory::new();
+            let mut inventory = SaveInventory::new();
             for item_id in room.get_inventory().get_items() {
                 if let Some(item) = self.get_item(*item_id) {
-                    inventory.add_item(item.get_model_id());
+                    let remaining_secs = match item.get_dropped_at() {
+                        Some(dropped_at) => ITEM_DESPAWN_TIME
+                            .saturating_sub(dropped_at.elapsed())
+                            .as_secs(),
+                        None => ITEM_DESPAWN_TIME.as_secs(),
+                    };
+                    inventory.items.push(SavedItem {
+                        id: item.get_model_id(),
+                        remaining_secs,
+                    });
                 }
             }
             rooms_inventory.insert(room_id.to_string(), inventory);
         }
 
-        let server_save = crate::save::ServerSave {
+        let server_save = ServerSave {
             next_player_id: self.next_player_id,
             rooms_inventory,
         };
@@ -268,44 +277,50 @@ impl GameManager {
         if !std::path::Path::new(path).exists() {
             return;
         }
-        let Ok(server_save) = confy::load_path::<ServerSave>(path) else {
-            self.set_default_ids();
-            return;
+        let server_save = match confy::load_path::<ServerSave>(path) {
+            Ok(save) => save,
+            Err(e) => {
+                warn!(
+                    "Failed to load server state from {}: {}. Ignoring save.",
+                    path, e
+                );
+                self.set_default_ids();
+                return;
+            }
         };
 
-        if server_save.next_player_id > 0 {
-            self.next_player_id = server_save.next_player_id;
-            for (room_id_str, mut inventory) in server_save.rooms_inventory {
-                let items_to_check: Vec<ItemId> = inventory.get_items().to_vec();
-                inventory.get_items_mut().clear();
-                for item_id in items_to_check {
-                    if item_id >= self.nb_models {
+        self.next_player_id = server_save.next_player_id;
+        for (room_id_str, inventory) in server_save.rooms_inventory {
+            if let Ok(room_id) = room_id_str.parse::<u32>() {
+                let mut new_inventory = Inventory::new();
+                for saved_item in inventory.items {
+                    if saved_item.id >= self.nb_models {
                         tracing::warn!(
                             "Removing invalid item {} from room {}",
-                            item_id,
+                            saved_item.id,
                             room_id_str
                         );
                     } else {
-                        inventory.add_item(self.instantiate_item(item_id));
+                        let new_id = self.instantiate_item(saved_item.id);
+                        new_inventory.add_item(new_id);
+
+                        let elapsed = ITEM_DESPAWN_TIME
+                            .saturating_sub(Duration::from_secs(saved_item.remaining_secs));
+                        let dropped_at = Instant::now()
+                            .checked_sub(elapsed)
+                            .unwrap_or_else(Instant::now);
+                        if let Some(item) = self.get_item_mut(new_id) {
+                            item.set_dropped_at(dropped_at);
+                        }
                     }
                 }
 
-                let mut items_to_start_timer = Vec::new();
-                if let Ok(room_id) = room_id_str.parse::<u32>() {
-                    if let Some(room) = self.all_rooms.get_mut(&room_id) {
-                        items_to_start_timer = inventory.get_items().clone();
-                        room.set_inventory(inventory);
-                    }
-                } else {
-                    self.set_default_ids();
+                if let Some(room) = self.all_rooms.get_mut(&room_id) {
+                    room.set_inventory(new_inventory);
                 }
-
-                for item_id in items_to_start_timer {
-                    self.start_dropped_at_for_item(item_id);
-                }
+            } else {
+                warn!("Invalid room id {} in server save", room_id_str);
             }
-        } else {
-            self.set_default_ids();
         }
     }
 
