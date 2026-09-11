@@ -1,8 +1,7 @@
 use std::time::Duration;
 
 use crate::constants::{
-    BASE_COMMAND_RESPONSE, CODE_NL_SEP, CODE_SP_SEP, ErrorCode, MAX_TIME_FOR_COMBAT, NPC_MOB,
-    SKIP_PLAYER_EXISTS_TEST, TEST_FILES_DIR,
+    BASE_COMMAND_RESPONSE, CODE_NL_SEP, CODE_SP_SEP, ErrorCode, MAX_TIME_FOR_COMBAT, NO_MORE_MESSAGES, NPC_MOB, SKIP_PLAYER_EXISTS_TEST, TEST_FILES_DIR,
 };
 use crate::game_manager::GameManager;
 use crate::items::{Item, ItemId};
@@ -836,7 +835,11 @@ impl GameManager {
                         }
                     };
                     info!("player {} talks with {}", player_name, npc.get_name());
-                    player.talk_with(&npc)
+                    let dialog = player.talk_with(&npc);
+                    if dialog == NO_MORE_MESSAGES {
+                        self.check_quest_talk_npc(player_name, &npc.get_name());
+                    }
+                    dialog
                 };
                 generate_json(
                     player_name,
