@@ -96,19 +96,19 @@ run:
 		ensure_stopped "$(RUST_SERVER_PID_FILE)" "rust server"
 	@$(MAKE) build-go-server build-rust-server build-client-tui
 	@$(HELPERS) info_log "starting Rust server in background"
-	@(cd $(RUST_SERVER_DIR) && exec ./target/debug/rust_server $(RUST_SERVER_ARGS)) < /dev/null > "$(RUST_SERVER_LOG)" 2>&1 & \
+	@(cd $(RUST_SERVER_DIR) && exec ./target/release/rust_server $(RUST_SERVER_ARGS)) < /dev/null > "$(RUST_SERVER_LOG)" 2>&1 & \
 		echo $$! > "$(RUST_SERVER_PID_FILE)"
 	@$(HELPERS) info_log "starting Go server in background"
 	@(cd $(GO_SERVER_DIR) && exec ./go_server $(GO_SERVER_ARGS)) < /dev/null > "$(GO_SERVER_LOG)" 2>&1 & \
 		echo $$! > "$(GO_SERVER_PID_FILE)"
 	@$(HELPERS) info_log "starting TUI client"
-	@cd $(CLIENT_DIR) && exec ./target/debug/tui $(CLIENT_ARGS)
+	@cd $(CLIENT_DIR) && exec ./target/release/tui $(CLIENT_ARGS)
 
 stop:
 	@$(HELPERS) \
 		stop_process "$(GO_SERVER_PID_FILE)" "go server" "$(abspath $(GO_SERVER_DIR)/go_server)"; \
 		go_status=$$?; \
-		stop_process "$(RUST_SERVER_PID_FILE)" "rust server" "$(abspath $(RUST_SERVER_DIR)/target/debug/rust_server)"; \
+		stop_process "$(RUST_SERVER_PID_FILE)" "rust server" "$(abspath $(RUST_SERVER_DIR)/target/release/rust_server)"; \
 		rust_status=$$?; \
 		test $$go_status -eq 0 && test $$rust_status -eq 0
 
@@ -125,19 +125,19 @@ clean:
 
 build-client-tui:
 	@$(HELPERS) ensure_cargo && info_log "building TUI client"
-	@cd $(CLIENT_DIR) && $(CARGO) build --package tui
+	@cd $(CLIENT_DIR) && $(CARGO) build --package tui --release
 
 build-client-gui:
 	@$(HELPERS) ensure_cargo && ensure_gui && info_log "building GUI client"
-	@cd $(CLIENT_DIR) && $(CARGO) build --package gui
+	@cd $(CLIENT_DIR) && $(CARGO) build --package gui --release
 
 run-client-tui: build-client-tui
 	@$(HELPERS) info_log "running TUI client"
-	@cd $(CLIENT_DIR) && ./target/debug/tui $(CLIENT_ARGS)
+	@cd $(CLIENT_DIR) && ./target/release/tui $(CLIENT_ARGS)
 
 run-client-gui: build-client-gui
 	@$(HELPERS) info_log "running GUI client"
-	@cd $(CLIENT_DIR) && ./target/debug/gui $(CLIENT_ARGS)
+	@cd $(CLIENT_DIR) && ./target/release/gui $(CLIENT_ARGS)
 
 lint-client:
 	@$(HELPERS) ensure_cargo && ensure_clippy && ensure_rustfmt && info_log "linting clients"
@@ -163,11 +163,11 @@ lint-go-server:
 
 build-rust-server:
 	@$(HELPERS) ensure_cargo && info_log "building Rust server"
-	@cd $(RUST_SERVER_DIR) && $(CARGO) build
+	@cd $(RUST_SERVER_DIR) && $(CARGO) build --release
 
 run-rust-server: build-rust-server
 	@$(HELPERS) info_log "running Rust server"
-	@cd $(RUST_SERVER_DIR) && ./target/debug/rust_server $(RUST_SERVER_ARGS)
+	@cd $(RUST_SERVER_DIR) && ./target/release/rust_server $(RUST_SERVER_ARGS)
 
 lint-rust-server:
 	@$(HELPERS) ensure_cargo && ensure_clippy && ensure_rustfmt && info_log "linting Rust server"
