@@ -68,6 +68,11 @@ impl InventoryPanel {
         InventoryPanelHit::None
     }
 
+    pub fn hide(&mut self) {
+        self.area = None;
+        self.refresh_button.hide();
+    }
+
     fn visible_count(&self) -> usize {
         self.rows * self.cols
     }

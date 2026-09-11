@@ -2,7 +2,7 @@ use crate::app::App;
 use crate::events::SendEvent;
 use crate::notification::{Notification, NotificationTopic};
 use client_api::ApiRequest;
-use client_api::commands::DropCommand;
+use client_api::commands::{DropCommand, TakeCommand, UseCommand};
 
 impl App {
     pub fn handle_send_event(&mut self, event: SendEvent) {
@@ -14,10 +14,15 @@ impl App {
 
     fn handle_raw_command(&mut self, command: String) {
         if let Some(mut request) = ApiRequest::parse(&command) {
-            if let ApiRequest::Drop(DropCommand { item_identifier }) = &mut request
-                && let Some(item) = self.state.game.player.find_item_by_name(item_identifier)
-            {
-                *item_identifier = item.id.clone();
+            match &mut request {
+                ApiRequest::Drop(DropCommand { item_identifier })
+                | ApiRequest::Use(UseCommand { item_identifier })
+                | ApiRequest::Take(TakeCommand { item_identifier }) => {
+                    if let Some(item) = self.state.game.player.find_item_by_name(item_identifier) {
+                        *item_identifier = item.id.clone();
+                    }
+                }
+                _ => {}
             }
 
             self.record_trace("user input", command);

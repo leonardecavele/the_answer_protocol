@@ -20,6 +20,7 @@ use ratatui::Frame;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use tokio::sync::mpsc;
 
+const INVENTORY_HEIGHT_PERCENT: u16 = 30;
 const LEFT_PANEL_WIDTH_PERCENT: u16 = 25;
 const RIGHT_PANEL_MIN_WIDTH_PERCENT: u16 = 20;
 const RIGHT_PANEL_MAX_WIDTH_PERCENT: u16 = 40;
@@ -402,14 +403,29 @@ impl Component for GameView {
         self.header.draw(state, frame, vertical_chunks[0]);
         self.left_panel.draw(state, frame, horizontal_chunks[0]);
 
+        let has_inventory = state.network.is_connected && state.game.room.is_some();
+        let inventory_percent = if has_inventory {
+            INVENTORY_HEIGHT_PERCENT
+        } else {
+            0
+        };
+
         let center_vertical_chunks = Layout::default()
             .direction(Direction::Vertical)
-            .constraints([Constraint::Percentage(70), Constraint::Percentage(30)])
+            .constraints([
+                Constraint::Fill(1),
+                Constraint::Percentage(inventory_percent),
+            ])
             .split(horizontal_chunks[1]);
 
         self.action_history
             .draw(state, frame, center_vertical_chunks[0]);
-        self.inventory.draw(state, frame, center_vertical_chunks[1]);
+
+        if has_inventory {
+            self.inventory.draw(state, frame, center_vertical_chunks[1]);
+        } else {
+            self.inventory.hide();
+        }
 
         self.right_panel.draw(state, frame, horizontal_chunks[2]);
         self.footer.draw(state, frame, vertical_chunks[2]);
