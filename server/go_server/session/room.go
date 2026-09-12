@@ -92,13 +92,18 @@ func (room *Room) Groups() []GroupInfo {
 	}
 
 	room.mutex.Lock()
-	groupsByPointer := make(map[*Group]struct{})
+	clients := make([]*Client, 0, len(room.clients))
 	for _, client := range room.clients {
-		if client.Group != nil {
-			groupsByPointer[client.Group] = struct{}{}
-		}
+		clients = append(clients, client)
 	}
 	room.mutex.Unlock()
+
+	groupsByPointer := make(map[*Group]struct{})
+	for _, client := range clients {
+		if group := client.GetGroup(); group != nil {
+			groupsByPointer[group] = struct{}{}
+		}
+	}
 
 	groups := make([]GroupInfo, 0, len(groupsByPointer))
 	for group := range groupsByPointer {

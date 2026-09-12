@@ -27,12 +27,13 @@ type Client struct {
 	Id                   string
 	Username             string
 	State                ClientState
-	Group                *Group
 	Room                 *Room
 	commandChan          chan game_conn.CommandFromGameServer
 	eventChan            chan protocol.Event
 	connectedAt          time.Time
 	stateMutex           sync.RWMutex
+	group                *Group
+	groupMutex           sync.RWMutex
 	writeMutex           sync.Mutex
 	disconnectedByServer bool
 }
@@ -85,7 +86,7 @@ func (c *Client) DeleteClient(gameServerManager *game_conn.GameServerManager) er
 	username := c.Username
 	state := c.GetState()
 
-	if state == AUTHENTICATED && c.Group != nil {
+	if state == AUTHENTICATED && c.GetGroup() != nil {
 		c.QuitGroup()
 		c.Room.BroadcastEvent(protocol.EventBatch{
 			IgnoredPlayers: []string{username},
@@ -136,6 +137,17 @@ func (c *Client) DeleteClient(gameServerManager *game_conn.GameServerManager) er
 		}
 	}
 	return closeErr
+}
+
+func (c *Client) GetGroup() *Group {
+	if c == nil {
+		return nil
+	}
+
+	c.groupMutex.RLock()
+	defer c.groupMutex.RUnlock()
+
+	return c.group
 }
 
 func (c *Client) GetState() ClientState {

@@ -83,7 +83,8 @@ func isOk(args string, client *session.Client, gameServerManager *game_conn.Game
 }
 
 func sendGroupedOrSolo(command string, args string, client *session.Client, gameServerManager *game_conn.GameServerManager) error {
-	if client.Group == nil {
+	group := client.GetGroup()
+	if group == nil {
 		return gameServerManager.WriteCommand(game_conn.CommandToGameServer{
 			Player:    client.Username,
 			Command:   command,
@@ -91,7 +92,7 @@ func sendGroupedOrSolo(command string, args string, client *session.Client, game
 		})
 	}
 
-	groupedClients := client.Group.GroupedClients()
+	groupedClients := group.GroupedClients()
 	groupedPlayers := make([]string, 0, len(groupedClients))
 	for _, groupedClient := range groupedClients {
 		if groupedClient == client {

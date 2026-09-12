@@ -61,7 +61,7 @@ func fightCreate(args string, client *session.Client, gameServerManager *game_co
 		return response, err
 	}
 
-	if client.Group != nil && !client.IsLeader() {
+	if client.GetGroup() != nil && !client.IsLeader() {
 		return protocol.ResponseNotGroupLeader, nil
 	}
 

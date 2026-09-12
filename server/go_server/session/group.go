@@ -37,7 +37,9 @@ func NewGroup(leader *Client) (*Group, error) {
 	}
 	group.Id = id
 	group.clients[leader.Username] = leader
-	leader.Group = &group
+	leader.groupMutex.Lock()
+	leader.group = &group
+	leader.groupMutex.Unlock()
 
 	return &group, nil
 }
@@ -135,7 +137,10 @@ func (group *Group) Invite(username string) string {
 }
 
 func (c *Client) JoinGroup(group *Group) string {
-	if c.Group != nil {
+	c.groupMutex.Lock()
+	defer c.groupMutex.Unlock()
+
+	if c.group != nil {
 		return protocol.ResponseAlreadyInGroup
 	}
 	if group == nil {
@@ -159,9 +164,8 @@ func (c *Client) JoinGroup(group *Group) string {
 	}
 	group.clients[c.Username] = c
 	delete(group.invites, c.Username)
+	c.group = group
 	group.mutex.Unlock()
-
-	c.Group = group
 
 	return ""
 }
@@ -193,8 +197,10 @@ func (group *Group) deleteInvite(username string) {
 }
 
 func (c *Client) QuitGroup() {
-	group := c.Group
+	c.groupMutex.Lock()
+	group := c.group
 	if group == nil {
+		c.groupMutex.Unlock()
 		return
 	}
 
@@ -207,9 +213,13 @@ func (c *Client) QuitGroup() {
 		group.deleteAllInvites()
 		group.clients = nil
 		group.mutex.Unlock()
+		c.group = nil
+		c.groupMutex.Unlock()
 
 		for _, client := range clients {
-			client.Group = nil
+			if client != c {
+				client.clearGroup(group)
+			}
 		}
 		return
 	}
@@ -220,14 +230,23 @@ func (c *Client) QuitGroup() {
 		group.clients = nil
 	}
 	group.mutex.Unlock()
-
-	c.Group = nil
+	c.group = nil
+	c.groupMutex.Unlock()
 }
 
 func (client *Client) IsLeader() bool {
-	if client.Group == nil {
+	group := client.GetGroup()
+	if group == nil {
 		return false
 	}
 
-	return client.Username == client.Group.leader
+	return client.Username == group.leader
+}
+
+func (c *Client) clearGroup(group *Group) {
+	c.groupMutex.Lock()
+	if c.group == group {
+		c.group = nil
+	}
+	c.groupMutex.Unlock()
 }

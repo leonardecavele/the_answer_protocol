@@ -95,7 +95,7 @@ func handleMoveCommand(args string, client *session.Client, gameServerManager *g
 		return response, err
 	}
 
-	if client.Group != nil && !client.IsLeader() {
+	if client.GetGroup() != nil && !client.IsLeader() {
 		return protocol.ResponseNotGroupLeader, nil
 	}
 

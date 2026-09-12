@@ -20,11 +20,12 @@ var chatScopes = map[string]chatScope{
 }
 
 func chatGroupScope(client *session.Client, message string, _ *game_conn.GameServerManager) (string, error) {
-	if client.Group == nil {
+	group := client.GetGroup()
+	if group == nil {
 		return protocol.ResponseNotInGroup, nil
 	}
 
-	client.Group.BroadcastEvent(protocol.EventBatch{
+	group.BroadcastEvent(protocol.EventBatch{
 		IgnoredPlayers: []string{client.Username},
 		Events: []protocol.Event{
 			{
