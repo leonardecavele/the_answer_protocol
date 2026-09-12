@@ -22,8 +22,12 @@ func parseCommand(msg string) (string, string, string) {
 		return "", "", protocol.ResponseEmptyCommand
 	}
 
-	command, args, _ := strings.Cut(msg, " ")
-	if _, ok := tap_commands.TapCommands[strings.ToUpper(command)]; ok {
+	command, args, hasArguments := strings.Cut(msg, " ")
+	command = strings.ToUpper(command)
+	if _, ok := tap_commands.TapCommands[command]; ok {
+		if hasArguments && args == "" {
+			return "", "", protocol.ResponseInvalidArguments
+		}
 		return command, args, ""
 	}
 

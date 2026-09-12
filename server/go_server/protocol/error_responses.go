@@ -151,7 +151,8 @@ var ErrorResponseByCommand = map[string]map[int]string{
 		serverError.InvalidCommandError:        ResponseInvalidCommand,
 	},
 	"DROP": {
-		serverError.ItemNotInInventoryError:    ResponseItemNotInInventory,
+		// ItemNotFoundError and ItemNotInInventoryError both use wire code 404.
+		serverError.ItemNotFoundError:          ResponseItemNotInInventory,
 		serverError.PlayerNotFoundError:        ResponsePlayerNotFound,
 		serverError.PlayerAlreadyInCombatError: ResponsePlayerAlreadyInCombat,
 		serverError.ConnectionFailedError:      ResponseConnectionFailed,
@@ -168,7 +169,8 @@ var ErrorResponseByCommand = map[string]map[int]string{
 		serverError.InvalidCommandError:        ResponseInvalidCommand,
 	},
 	"USE": {
-		serverError.ItemNotInInventoryError:    ResponseItemNotInInventory,
+		// ItemNotFoundError and ItemNotInInventoryError both use wire code 404.
+		serverError.ItemNotFoundError:          ResponseItemNotInInventory,
 		serverError.PlayerNotFoundError:        ResponsePlayerNotFound,
 		serverError.PlayerAlreadyInCombatError: ResponsePlayerAlreadyInCombat,
 		serverError.NotUsableError:             ResponseNotUsable,

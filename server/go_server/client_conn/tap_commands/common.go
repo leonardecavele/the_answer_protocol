@@ -7,6 +7,7 @@ import (
 	"go_server/protocol"
 	"go_server/session"
 	"strings"
+	"unicode/utf8"
 )
 
 type handleTapCommandArgs func(args string, client *session.Client, gameServerManager *game_conn.GameServerManager) (string, error)
@@ -80,6 +81,29 @@ func isOk(args string, client *session.Client, gameServerManager *game_conn.Game
 	}
 
 	return "", nil
+}
+
+func isASCIIAlpha(value string) bool {
+	if value == "" {
+		return false
+	}
+	for _, character := range []byte(value) {
+		if (character < 'A' || character > 'Z') && (character < 'a' || character > 'z') {
+			return false
+		}
+	}
+	return true
+}
+
+func startsWithVisibleCharacter(value string) bool {
+	if value == "" {
+		return false
+	}
+	character, size := utf8.DecodeRuneInString(value)
+	if character == utf8.RuneError && size == 1 {
+		return false
+	}
+	return (character >= '!' && character <= '~') || character >= utf8.RuneSelf
 }
 
 func sendGroupedOrSolo(command string, args string, client *session.Client, gameServerManager *game_conn.GameServerManager) error {

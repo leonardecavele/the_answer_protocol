@@ -78,7 +78,7 @@ func fightCreate(args string, client *session.Client, gameServerManager *game_co
 }
 
 func handleFightCommand(args string, client *session.Client, gameServerManager *game_conn.GameServerManager) (string, error) {
-	subCommand, subArgs, _ := strings.Cut(args, " ")
+	subCommand, subArgs, hasSubArguments := strings.Cut(args, " ")
 	if subCommand == "" {
 		return protocol.ResponseInvalidArguments, nil
 	}
@@ -86,6 +86,9 @@ func handleFightCommand(args string, client *session.Client, gameServerManager *
 	subCommandHandler, ok := fightCommands[strings.ToUpper(subCommand)]
 	if !ok {
 		return protocol.ResponseCommandNotFound, nil
+	}
+	if hasSubArguments && subArgs == "" {
+		return protocol.ResponseInvalidArguments, nil
 	}
 
 	return subCommandHandler(subArgs, client, gameServerManager)

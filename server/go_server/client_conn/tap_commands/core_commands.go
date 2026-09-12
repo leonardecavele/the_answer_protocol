@@ -44,6 +44,7 @@ func handleConnectCommand(args string, client *session.Client, gameServerManager
 		Command:   "CONNECT",
 		Arguments: "",
 	}); err != nil && !errors.Is(err, serverError.ErrGameServerNotConnected) {
+		client.Room.RollbackUsername(client)
 		return "", err
 	}
 
@@ -93,6 +94,9 @@ func handleLookCommand(args string, client *session.Client, gameServerManager *g
 func handleMoveCommand(args string, client *session.Client, gameServerManager *game_conn.GameServerManager) (string, error) {
 	if response, err := isOk(args, client, gameServerManager, true, true); response != "" || err != nil {
 		return response, err
+	}
+	if !isASCIIAlpha(args) {
+		return protocol.ResponseInvalidArguments, nil
 	}
 
 	if client.GetGroup() != nil && !client.IsLeader() {

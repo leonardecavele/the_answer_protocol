@@ -42,6 +42,19 @@ func (room *Room) SetUsername(client *Client, username string) string {
 	return ""
 }
 
+func (room *Room) RollbackUsername(client *Client) {
+	room.mutex.Lock()
+	defer room.mutex.Unlock()
+
+	username, state, _ := client.connectionInfo()
+	if state != AUTHENTICATED || room.clients[username] != client {
+		return
+	}
+
+	delete(room.clients, username)
+	client.rollbackAuthentication()
+}
+
 func (room *Room) DeleteUsername(client *Client) {
 	room.mutex.Lock()
 	if client.IsAuthenticated() {

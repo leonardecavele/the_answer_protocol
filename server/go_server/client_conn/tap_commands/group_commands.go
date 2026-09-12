@@ -82,17 +82,17 @@ func groupJoin(args string, client *session.Client, gameServerManager *game_conn
 		return protocol.ResponseAlreadyInGroup, nil
 	}
 
-	groupMember, ok := client.Room.GetClient(args)
+	groupLeader, ok := client.Room.GetClient(args)
 	if !ok {
 		return protocol.ResponseNoSuchUser, nil
 	}
-	group := groupMember.GetGroup()
-	if group == nil {
+	group := groupLeader.GetGroup()
+	if group == nil || !groupLeader.IsLeader() {
 		return protocol.ResponseGroupNotFound, nil
 	}
 
 	if gameServerManager.IsConnected() {
-		inSameRoom, err := client.InSameRoom([]*session.Client{groupMember}, gameServerManager)
+		inSameRoom, err := client.InSameRoom([]*session.Client{groupLeader}, gameServerManager)
 		if err != nil {
 			return "", err
 		}
@@ -151,7 +151,7 @@ func groupLeave(args string, client *session.Client, gameServerManager *game_con
 }
 
 func handleGroupCommand(args string, client *session.Client, gameServerManager *game_conn.GameServerManager) (string, error) {
-	subCommand, subArgs, _ := strings.Cut(args, " ")
+	subCommand, subArgs, hasSubArguments := strings.Cut(args, " ")
 	if subCommand == "" {
 		return protocol.ResponseInvalidArguments, nil
 	}
@@ -159,6 +159,9 @@ func handleGroupCommand(args string, client *session.Client, gameServerManager *
 	subCommandHandler, ok := groupCommands[strings.ToUpper(subCommand)]
 	if !ok {
 		return protocol.ResponseCommandNotFound, nil
+	}
+	if hasSubArguments && subArgs == "" {
+		return protocol.ResponseInvalidArguments, nil
 	}
 
 	return subCommandHandler(subArgs, client, gameServerManager)

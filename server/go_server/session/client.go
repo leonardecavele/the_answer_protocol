@@ -175,6 +175,13 @@ func (c *Client) authenticate(username string) {
 	c.stateMutex.Unlock()
 }
 
+func (c *Client) rollbackAuthentication() {
+	c.stateMutex.Lock()
+	c.Username = ""
+	c.State = CONNECTED
+	c.stateMutex.Unlock()
+}
+
 func (c *Client) Write(message string) error {
 	c.writeMutex.Lock()
 	defer c.writeMutex.Unlock()

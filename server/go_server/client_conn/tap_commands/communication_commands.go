@@ -96,7 +96,7 @@ func chatRoomScope(client *session.Client, message string, gameServerManager *ga
 
 func chatPrivateScope(client *session.Client, message string, _ *game_conn.GameServerManager) (string, error) {
 	username, privateMessage, ok := strings.Cut(message, " ")
-	if !ok || username == "" || strings.TrimSpace(privateMessage) == "" {
+	if !ok || username == "" || !startsWithVisibleCharacter(privateMessage) {
 		return protocol.ResponseInvalidArguments, nil
 	}
 
@@ -127,7 +127,7 @@ func handleChatCommand(args string, client *session.Client, gameServerManager *g
 		return protocol.ResponseInvalidScope, nil
 	}
 
-	if strings.TrimSpace(message) == "" {
+	if !startsWithVisibleCharacter(message) {
 		return protocol.ResponseInvalidArguments, nil
 	}
 

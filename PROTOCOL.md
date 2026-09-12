@@ -168,12 +168,12 @@ receives `EVT GROUP INVITE <leader>`.
 #### GROUP JOIN
 
 ```text
-GROUP JOIN <leader-or-member-username>
+GROUP JOIN <leader-name>
 OK group=<group-id>
 ```
 
-The argument can name any member of the invited group. Existing members
-receive `EVT GROUP JOIN <username>`.
+The argument must name the leader of the group that issued the invitation.
+Existing members receive `EVT GROUP JOIN <username>`.
 
 #### GROUP LEAVE
 
