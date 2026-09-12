@@ -23,7 +23,7 @@ func parseCommand(msg string) (string, string, string) {
 	}
 
 	command, args, _ := strings.Cut(msg, " ")
-	if _, ok := tap_commands.TapCommands[command]; ok {
+	if _, ok := tap_commands.TapCommands[strings.ToUpper(command)]; ok {
 		return command, args, ""
 	}
 
