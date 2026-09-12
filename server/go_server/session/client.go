@@ -86,17 +86,20 @@ func (c *Client) DeleteClient(gameServerManager *game_conn.GameServerManager) er
 	username := c.Username
 	state := c.GetState()
 
-	if state == AUTHENTICATED && c.GetGroup() != nil {
+	group := c.GetGroup()
+	if state == AUTHENTICATED && group != nil {
+		groupedClients := group.GroupedClients()
 		c.QuitGroup()
-		c.Room.BroadcastEvent(protocol.EventBatch{
-			IgnoredPlayers: []string{username},
-			Events: []protocol.Event{
-				{
-					EmittedBy: username,
-					EventName: "GROUP LEAVE",
-				},
-			},
-		})
+
+		for _, groupedClient := range groupedClients {
+			if groupedClient == c {
+				continue
+			}
+			c.Room.RouteEvent(groupedClient.Username, protocol.Event{
+				EmittedBy: username,
+				EventName: "GROUP LEAVE",
+			})
+		}
 	}
 
 	c.Room.DeleteUsername(c)
