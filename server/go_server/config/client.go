@@ -3,7 +3,7 @@ package config
 import "time"
 
 const (
-	MaxConnection           = RoomSize
+	MaxConnection           = RoomSize + 1
 	MaxCommandsPerWindow    = 25
 	CommandRateWindow       = time.Second
 	MaxConnectionAttempts   = 20

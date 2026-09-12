@@ -77,7 +77,8 @@ quest, and fight operations.
 
 | Limit | Value |
 | --- | --- |
-| Concurrent client connections | 20 |
+| Authenticated players | 20 |
+| Concurrent client connections | 21 (includes one room-full response slot) |
 | Maximum TAP frame | 4,096 bytes |
 | Authentication timeout | 30 seconds |
 | Client read timeout | 30 minutes |
