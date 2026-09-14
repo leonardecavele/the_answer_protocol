@@ -8,7 +8,6 @@ use std::collections::HashMap;
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Save {
     pub name: String,
-    pub id: u32,
     pub hp: u32,
     pub max_hp: u32,
     #[serde(default)]
@@ -24,7 +23,6 @@ impl Default for Save {
     fn default() -> Self {
         Self {
             name: String::new(),
-            id: 0,
             hp: PLAYER_STARTING_HP,
             max_hp: PLAYER_STARTING_MAX_HP,
             inventory: Inventory::new(),

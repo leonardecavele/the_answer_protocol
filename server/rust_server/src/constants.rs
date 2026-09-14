@@ -30,6 +30,7 @@ pub const TICK_RATE: u16 = 20;
 pub const TICK_TIME: Duration =
     Duration::from_millis((1000 * TICK_TIME_AMPLIFICATION) / TICK_RATE as u64);
 pub const BASE_COMMAND_RESPONSE: &str = "Duly noted.";
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TickResult {
     TickEnd,
     Exit,
