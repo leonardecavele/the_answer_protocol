@@ -12,6 +12,7 @@ use std::time::{Duration, Instant};
 use tokio::sync::mpsc::Sender;
 
 const CURSOR_BLINK_DURATION: Duration = Duration::from_millis(500);
+const MAX_INPUT_LENGTH: usize = 512;
 
 struct Cursor {
     index: usize,
@@ -29,13 +30,19 @@ impl Default for Cursor {
     }
 }
 
-#[derive(Default)]
 pub struct TextInput {
     pub label: String,
     pub value: String,
     pub is_focused: bool,
+    pub max_length: usize,
     cursor: Cursor,
     offset: usize,
+}
+
+impl Default for TextInput {
+    fn default() -> Self {
+        Self::new("")
+    }
 }
 
 impl TextInput {
@@ -44,6 +51,7 @@ impl TextInput {
             label: label.to_string(),
             value: String::new(),
             is_focused: false,
+            max_length: MAX_INPUT_LENGTH,
             cursor: Cursor::default(),
             offset: 0,
         }
@@ -67,6 +75,10 @@ impl TextInput {
     }
 
     fn add(&mut self, c: char) {
+        if self.value.chars().count() >= self.max_length {
+            return;
+        }
+
         let byte_index = self
             .value
             .char_indices()
