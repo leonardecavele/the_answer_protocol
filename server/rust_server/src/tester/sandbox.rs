@@ -20,6 +20,13 @@ pub(super) fn sandboxed_test(code: &str, tests: &str) -> io::Result<bool> {
     ensure_runtime_requirements()?;
 
     let directory = SandboxDirectory::create()?;
+
+    let code = if code.ends_with('\n') {
+        code.to_owned()
+    } else {
+        format!("{code}\n")
+    };
+
     write_private_file(&directory.path.join("submission.c"), code.as_bytes())?;
 
     let submission_status = run_limited(
@@ -128,7 +135,7 @@ fn trusted_start_source() -> io::Result<&'static str> {
         ud2
         .size _start, .-_start
         .section .note.GNU-stack,"",@progbits
-    "#);
+"#);
 
     #[cfg(target_arch = "aarch64")]
     return Ok(r#"
@@ -144,7 +151,7 @@ fn trusted_start_source() -> io::Result<&'static str> {
         brk #0
         .size _start, .-_start
         .section .note.GNU-stack,"",@progbits
-    "#);
+"#);
 
     #[allow(unreachable_code)]
     Err(io::Error::new(
@@ -184,7 +191,7 @@ fn compiler_command(work_directory: &Path, clang_arguments: &[&str]) -> Command 
         .arg("--bind")
         .arg(work_directory)
         .arg("/work")
-        .args(["--size", "33554432", "--tmpfs", "/tmp"])
+        .args(["--tmpfs", "/tmp"])
         .args(["--chdir", "/work", "--", CLANG])
         .args(clang_arguments);
     command
@@ -205,7 +212,6 @@ fn common_bwrap_arguments(command: &mut Command) {
     command.args([
         "--unshare-all",
         "--unshare-user",
-        "--disable-userns",
         "--die-with-parent",
         "--new-session",
         "--cap-drop",

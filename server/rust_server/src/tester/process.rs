@@ -1,8 +1,9 @@
-use std::io;
+use std::io::{self, Read};
 use std::os::unix::process::CommandExt;
 use std::process::{Command, ExitStatus, Stdio};
 use std::thread;
 use std::time::{Duration, Instant};
+use tracing::warn;
 
 const POLL_INTERVAL: Duration = Duration::from_millis(5);
 
@@ -47,7 +48,7 @@ pub(super) fn run_limited(
         .env_clear()
         .stdin(Stdio::null())
         .stdout(Stdio::null())
-        .stderr(Stdio::null());
+        .stderr(Stdio::piped());
 
     unsafe {
         command.pre_exec(move || {
@@ -75,10 +76,22 @@ pub(super) fn run_limited(
     }
 
     let mut child = command.spawn()?;
+    let mut stderr = child.stderr.take().expect("stderr was piped");
+    let stderr_thread = thread::spawn(move || {
+        let mut output = String::new();
+        match stderr.read_to_string(&mut output) {
+            Ok(_) if !output.trim().is_empty() => {
+                warn!(stderr = %output.trim(), "bubblewrap stderr")
+            }
+            Err(error) => warn!(%error, "could not read bubblewrap stderr"),
+            _ => {}
+        }
+    });
     let started_at = Instant::now();
 
     loop {
         if let Some(status) = child.try_wait()? {
+            let _ = stderr_thread.join();
             return Ok(status);
         }
         if started_at.elapsed() >= timeout {
@@ -86,7 +99,9 @@ pub(super) fn run_limited(
                 libc::kill(-(child.id() as i32), libc::SIGKILL);
             }
             let _ = child.kill();
-            return child.wait();
+            let status = child.wait();
+            let _ = stderr_thread.join();
+            return status;
         }
         thread::sleep(POLL_INTERVAL);
     }
