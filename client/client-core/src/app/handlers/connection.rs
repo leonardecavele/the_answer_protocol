@@ -20,7 +20,7 @@ impl App {
                     self.event_broker.sender(),
                     server_ip,
                     server_port,
-                    player_name.to_uppercase(),
+                    player_name,
                 ));
             }
             ConnectionEvent::Established {
