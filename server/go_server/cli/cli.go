@@ -4,11 +4,13 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/ergochat/readline"
+	"golang.org/x/term"
 
 	"go_server/game_conn"
 	"go_server/helper"
@@ -44,9 +46,15 @@ func Run(
 }
 
 func NewReader() (*readline.Instance, error) {
+	interactive := term.IsTerminal(int(os.Stdin.Fd())) && term.IsTerminal(int(os.Stdout.Fd()))
+	configuredPrompt := ""
+	if interactive {
+		configuredPrompt = prompt
+	}
 	return readline.NewEx(&readline.Config{
-		Prompt:          prompt,
+		Prompt:          configuredPrompt,
 		InterruptPrompt: "^C",
+		FuncIsTerminal:  func() bool { return interactive },
 	})
 }
 

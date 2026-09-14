@@ -124,15 +124,15 @@ func main() {
 
 		client := session.NewClient(conn, room)
 		if err := connectionManager.Subscribe(client); err != nil {
-			logger.AppLogger.Error("%s Connection rejected: %v", client.Id, err)
+			logger.AppLogger.Error("%s Connection rejected: %v", client.LogIdentity(), err)
 			response := protocol.ResponseTooManyRequests
 			if errors.Is(err, serverError.ErrMaxConnection) {
 				response = protocol.ResponseRoomFull
 			}
 			if writeErr := client.Write(response); writeErr != nil {
-				logger.AppLogger.Error("%s Rejection write error: %v", client.Id, writeErr)
+				logger.AppLogger.Error("%s Rejection write error: %v", client.LogIdentity(), writeErr)
 			} else {
-				logger.AppLogger.Info("%s Client Write: %s", client.Id, response)
+				logger.AppLogger.Info("%s Client Write: %s", client.LogIdentity(), response)
 			}
 			_ = conn.Close()
 			continue

@@ -61,6 +61,17 @@ func (c *Client) connectionInfo() (string, ClientState, time.Time) {
 	return c.Username, c.State, c.connectedAt
 }
 
+func (c *Client) LogIdentity() string {
+	if c == nil {
+		return ""
+	}
+	username, _, _ := c.connectionInfo()
+	if username == "" {
+		return c.Id
+	}
+	return fmt.Sprintf("%s username=%s", c.Id, username)
+}
+
 func (c *Client) Disconnect() error {
 	if c == nil || c.Conn == nil {
 		return nil
@@ -270,7 +281,7 @@ func (c *Client) SendEvent(event protocol.Event) bool {
 	case c.eventChan <- event:
 		return true
 	default:
-		logger.AppLogger.Error("%s Event dropped: event_name=%s data=%v", c.Id, event.EventName, event.Data)
+		logger.AppLogger.Error("%s Event dropped: event_name=%s data=%v", c.LogIdentity(), event.EventName, event.Data)
 		return false
 	}
 }

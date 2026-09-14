@@ -59,16 +59,16 @@ func handleClientEvents(client *session.Client, done <-chan struct{}) {
 		case event := <-client.Events():
 			message, err := protocol.FormatEvent(event)
 			if err != nil {
-				logger.AppLogger.Error("%s Invalid event: %v\n", client.Id, err)
+				logger.AppLogger.Error("%s Invalid event: %v\n", client.LogIdentity(), err)
 				return
 			}
 			if err := client.Write(message); err != nil {
 				if shouldLogClientIOError(client, err) {
-					logger.AppLogger.Error("%s Write error: %v\n", client.Id, err)
+					logger.AppLogger.Error("%s Write error: %v\n", client.LogIdentity(), err)
 				}
 				return
 			}
-			logger.AppLogger.Info("%s Client Write: %s\n", client.Id, message)
+			logger.AppLogger.Info("%s Client Write: %s\n", client.LogIdentity(), message)
 		}
 	}
 }
@@ -80,23 +80,23 @@ func shouldLogClientIOError(client *session.Client, err error) bool {
 func HandleClient(client *session.Client, gameServerManager *game_conn.GameServerManager, connectionManager *session.ConnectionManager) {
 	defer func() {
 		if err := client.DeleteClient(gameServerManager); err != nil {
-			logger.AppLogger.Error("%s Erase client error: %v\n", client.Id, err)
+			logger.AppLogger.Error("%s Erase client error: %v\n", client.LogIdentity(), err)
 		}
 	}()
 
 	stopListeningEvents := make(chan struct{})
 	defer close(stopListeningEvents)
 
-	logger.AppLogger.Info("%s Connected", client.Id)
-	defer logger.AppLogger.Info("%s Disconnected", client.Id)
+	logger.AppLogger.Info("%s Connected", client.LogIdentity())
+	defer func() { logger.AppLogger.Info("%s Disconnected", client.LogIdentity()) }()
 
 	if err := client.Write(protocol.ResponseHello); err != nil {
 		if shouldLogClientIOError(client, err) {
-			logger.AppLogger.Error("%s Client Write Error: %v\n", client.Id, err)
+			logger.AppLogger.Error("%s Client Write Error: %v\n", client.LogIdentity(), err)
 		}
 		return
 	}
-	logger.AppLogger.Info("%s Client Write: %s", client.Id, protocol.ResponseHello)
+	logger.AppLogger.Info("%s Client Write: %s", client.LogIdentity(), protocol.ResponseHello)
 
 	go handleClientEvents(client, stopListeningEvents)
 
@@ -104,7 +104,7 @@ func HandleClient(client *session.Client, gameServerManager *game_conn.GameServe
 	for {
 		if err := client.Conn.SetReadDeadline(time.Now().Add(config.ClientReadTimeout)); err != nil {
 			if shouldLogClientIOError(client, err) {
-				logger.AppLogger.Error("%s Failed to set read timeout: %v\n", client.Id, err)
+				logger.AppLogger.Error("%s Failed to set read timeout: %v\n", client.LogIdentity(), err)
 			}
 			return
 		}
@@ -113,13 +113,13 @@ func HandleClient(client *session.Client, gameServerManager *game_conn.GameServe
 		if err != nil {
 			if errors.Is(err, serverError.ErrReadStringTooLong) {
 				if writeErr := client.Write(protocol.ResponseTooManyRequests); writeErr != nil && shouldLogClientIOError(client, writeErr) {
-					logger.AppLogger.Error("%s Write error: %v\n", client.Id, writeErr)
+					logger.AppLogger.Error("%s Write error: %v\n", client.LogIdentity(), writeErr)
 				} else if writeErr == nil {
-					logger.AppLogger.Info("%s Client Write: %s", client.Id, protocol.ResponseTooManyRequests)
+					logger.AppLogger.Info("%s Client Write: %s", client.LogIdentity(), protocol.ResponseTooManyRequests)
 				}
 			}
 			if !errors.Is(err, io.EOF) && shouldLogClientIOError(client, err) {
-				logger.AppLogger.Error("%s Read error: %v\n", client.Id, err)
+				logger.AppLogger.Error("%s Read error: %v\n", client.LogIdentity(), err)
 			}
 			return
 		}
@@ -127,28 +127,28 @@ func HandleClient(client *session.Client, gameServerManager *game_conn.GameServe
 		if !connectionManager.AllowInput(client) {
 			if err := client.Write(protocol.ResponseTooManyRequests); err != nil {
 				if shouldLogClientIOError(client, err) {
-					logger.AppLogger.Error("%s Write error: %v\n", client.Id, err)
+					logger.AppLogger.Error("%s Write error: %v\n", client.LogIdentity(), err)
 				}
 			} else {
-				logger.AppLogger.Info("%s Client Write: %s", client.Id, protocol.ResponseTooManyRequests)
+				logger.AppLogger.Info("%s Client Write: %s", client.LogIdentity(), protocol.ResponseTooManyRequests)
 			}
 			return
 		}
 		if !connectionManager.IsInputValid(str) {
-			logger.AppLogger.Error("%s Invalid client input", client.Id)
+			logger.AppLogger.Error("%s Invalid client input", client.LogIdentity())
 			if err := client.Write(protocol.ResponseInvalidArguments); err != nil {
 				if shouldLogClientIOError(client, err) {
-					logger.AppLogger.Error("%s Write error: %v\n", client.Id, err)
+					logger.AppLogger.Error("%s Write error: %v\n", client.LogIdentity(), err)
 				}
 				return
 			}
 			continue
 		}
 
-		logger.AppLogger.Info("%s Client Read: %s", client.Id, str)
+		logger.AppLogger.Info("%s Client Read: %s", client.LogIdentity(), str)
 		response, err := handleTapCommand(str, client, gameServerManager)
 		if err != nil {
-			logger.AppLogger.Error("%s Command error: %v\n", client.Id, err)
+			logger.AppLogger.Error("%s Command error: %v\n", client.LogIdentity(), err)
 			response = protocol.ResponseGameServerClosed
 		}
 		if response == "" {
@@ -156,7 +156,7 @@ func HandleClient(client *session.Client, gameServerManager *game_conn.GameServe
 		}
 		if err := client.Write(response); err != nil {
 			if shouldLogClientIOError(client, err) {
-				logger.AppLogger.Error("%s Write error: %v\n", client.Id, err)
+				logger.AppLogger.Error("%s Write error: %v\n", client.LogIdentity(), err)
 			}
 			return
 		}
@@ -166,7 +166,7 @@ func HandleClient(client *session.Client, gameServerManager *game_conn.GameServe
 				Data:      "DISCONNECTED",
 			})
 		}
-		logger.AppLogger.Info("%s Client Write: %s", client.Id, response)
+		logger.AppLogger.Info("%s Client Write: %s", client.LogIdentity(), response)
 		if response == protocol.ResponseBye {
 			return
 		}
