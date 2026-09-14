@@ -52,8 +52,8 @@ func main() {
 		return
 	}
 	logger.AppLogger.SetOutputs(
-		io.MultiWriter(commandReader.Stdout(), logFile),
-		io.MultiWriter(commandReader.Stderr(), logFile),
+		io.MultiWriter(commandReader.Stdout(), logger.WithoutANSI(logFile)),
+		io.MultiWriter(commandReader.Stderr(), logger.WithoutANSI(logFile)),
 	)
 
 	validProtocol := false
