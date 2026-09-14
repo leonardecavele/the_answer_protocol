@@ -585,13 +585,16 @@ impl GameManager {
                             warn!("npc combat start hp not found for npc: {}", npc_id);
                             0
                         });
-                    let npc_hp = self.get_npc_hp(npc_id).unwrap_or_else(|| {
+                    let (npc_name, npc_hp) = if let Some(npc) = self.get_npc(npc_id) {
+                        (npc.get_name(), npc.get_hp().unwrap_or(0))
+                    } else {
                         warn!(
-                            "npc {} has no hp and yet he is in a combat instance!",
+                            "npc {} does not exist and yet he is in a combat instance!",
                             npc_id
                         );
-                        0
-                    });
+
+                        ("error".to_string(), 0)
+                    };
                     let dmg =
                         self.calculate_dmg(npc_combat_start_hp, instance_player_count, npc_hp);
 
@@ -628,6 +631,7 @@ impl GameManager {
                     self.check_complete_code_quest(
                         player,
                         assigned_file_name.as_str(),
+                        npc_name.as_str(),
                         time_took_to_succeed,
                     );
                 } else {
