@@ -97,12 +97,15 @@ impl GameView {
                 && mouse.kind
                     == crossterm::event::MouseEventKind::Down(crossterm::event::MouseButton::Left)
             {
-                let outside = self
+                let close_on_click_away = self
                     .overlay(kind)
                     .drawn_area()
-                    .is_some_and(|area| !is_mouse_in_rect(mouse.column, mouse.row, area));
+                    .is_some_and(|area| !is_mouse_in_rect(mouse.column, mouse.row, area))
+                    && !matches!(kind, OverlayKind::Dialogue);
 
-                if self.close_button.hit(mouse.column, mouse.row) || (kind.is_modal() && outside) {
+                if self.close_button.hit(mouse.column, mouse.row)
+                    || (kind.is_modal() && close_on_click_away)
+                {
                     state.game.close_top_overlay();
                     return EventFlow::Consumed;
                 }
@@ -447,6 +450,7 @@ impl Component for GameView {
             .game
             .overlays
             .top_kind()
+            .filter(|kind| !matches!(kind, OverlayKind::Dialogue))
             .and_then(|kind| self.overlay(kind).drawn_area())
         {
             Some(overlay_area) => self.close_button.draw(frame, overlay_area),
