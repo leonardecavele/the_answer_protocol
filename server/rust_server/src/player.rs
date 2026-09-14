@@ -49,11 +49,11 @@ impl Player {
         self.last_rooms = vec![PLAYER_ROOM_SPAWN.to_owned()];
     }
 
-    pub fn from_save(save: Save) -> Self {
+    pub fn from_save(save: Save, id: PlayerId) -> Self {
         let current_room = save.current_room;
         Self {
             name: save.name,
-            id: save.id,
+            id,
             hp: save.hp,
             max_hp: save.max_hp,
             inventory: save.inventory,

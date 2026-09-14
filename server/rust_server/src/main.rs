@@ -242,11 +242,15 @@ fn main() -> std::io::Result<()> {
             }
 
             let start = Instant::now(); // this tick time start
-            game_manager.update_game_state()?;
+            game_manager.update_game_state();
 
-            match game_manager.process_incoming_events(start)? {
+            match game_manager.process_incoming_events(start) {
                 TickResult::TickEnd => {
-                    game_manager.send_diff_to_players()?;
+                    let send_diff_result = game_manager.send_diff_to_players();
+                    if send_diff_result == TickResult::Exit {
+                        info!("Tcp server connection closed");
+                        break;
+                    }
                     game_manager.clear_diff();
                 }
                 TickResult::Exit => {
