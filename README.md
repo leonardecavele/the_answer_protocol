@@ -1,4 +1,4 @@
-_This project has been created as part of the 42 curriculum by cobussie, nlallema and ldecavel._
+_This project has been created as part of the 42 curriculum by cobussie, nlallema, ldecavel._
 
 ## Description
 
