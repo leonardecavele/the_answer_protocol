@@ -17,6 +17,22 @@ and rendering boundaries.
 The public frames shared with the servers are specified in the root
 [TAP protocol reference](../PROTOCOL.md).
 
+## Command syntax
+
+Both clients accept friendly commands and translate them into TAP frames,
+rather than asking the player to type raw protocol syntax. Typing `say hello`
+sends `CHAT GLOBAL hello`, and `inv` sends `INVENTORY`.
+
+Command names, subcommands, and aliases are case-insensitive, and every
+multi-word command has a short alias: `say` for `chat global`, `inv` for
+`inventory`, `gc` for `group create`. Items and NPCs can be named by their
+display name as well as their identifier, so `drop objet perdu` and
+`drop 0.objet_perdu` are equivalent.
+
+The full command list and alias table are in the
+[Client API README](client-api/README.md#requests-and-responses). In-game,
+`Ctrl + H` opens the same list.
+
 ## Shared application
 
 The [Client core README](client-core/README.md) explains application ownership,
