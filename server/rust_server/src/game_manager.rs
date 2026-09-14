@@ -3,7 +3,7 @@ use crate::commands::generate_json;
 use crate::constants::{
     CODE_NL_SEP, CODE_SP_SEP, Direction, ITEM_DESPAWN_TIME, LOST_ITEM, LOST_ITEM_SPAWN,
     MAX_DMG_DEALT, MAX_TIME_FOR_COMBAT, MIN_DMG_DEALT, NPC_MAX_DMG, NPC_MIN_DMG, NPC_RESPAWN_TIME,
-    PLAYER_ROOM_SPAWN, T_SHIRT, TEST_FILES_DIR, TickResult,
+    PLAYER_ROOM_SPAWN, PLAYER_SAVE_PATH, SERVER_SAVE_PATH, T_SHIRT, TEST_FILES_DIR, TickResult,
 };
 use rand::RngExt;
 
@@ -152,9 +152,10 @@ impl GameManager {
                 quests: player_quests,
                 completed_quests: player.get_completed_quests().clone(),
             };
-            if let Err(e) =
-                confy::store_path(format!("saves/{}.toml", player.get_name()), save_data)
-            {
+            if let Err(e) = confy::store_path(
+                format!("{}/{}.toml", PLAYER_SAVE_PATH, player.get_name()),
+                save_data,
+            ) {
                 error!("Failed to save player: {}", e);
             }
         } else {
@@ -266,13 +267,13 @@ impl GameManager {
             rooms_inventory,
         };
 
-        if let Err(e) = confy::store_path("saves/server_state.toml", server_save) {
+        if let Err(e) = confy::store_path(SERVER_SAVE_PATH, server_save) {
             tracing::error!("Failed to save server state: {}", e);
         }
     }
 
     fn restore_server_state(&mut self) {
-        let path = "saves/server_state.toml";
+        let path = SERVER_SAVE_PATH;
         match std::path::Path::new(path).try_exists() {
             Ok(false) => return,
             Err(e) => {
@@ -469,7 +470,7 @@ impl GameManager {
     }
 
     fn try_restore_player_save(&mut self, name: &str) -> Option<Player> {
-        let path = format!("saves/{}.toml", name);
+        let path = format!("{}/{}.toml", PLAYER_SAVE_PATH, name);
 
         if !std::path::Path::new(&path).exists() {
             return None;
