@@ -216,7 +216,7 @@ func (manager *ConnectionManager) IsInputValid(input string) bool {
 	input = strings.TrimSuffix(input, "\n")
 	input = strings.TrimSuffix(input, "\r")
 
-	return !strings.ContainsFunc(input, unicode.IsControl)
+	return strings.IndexFunc(input, unicode.IsControl) == -1
 }
 
 func (manager *ConnectionManager) registerFlood(host string, ignoredClient *Client) {
