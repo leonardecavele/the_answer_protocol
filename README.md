@@ -315,5 +315,5 @@ architecture, protocol decisions, implementation, and final verification.
 ## Thanks
 
 Special thanks to the friends who agreed to appear in the game as NPCs:
-`vquetier`, `faon`, `smenard`, `mdourdoi`, `gagulhon`, `gabach`, `enchevri`,
+`vquetier`, `smenard`, `mdourdoi`, `gagulhon`, `gabach`, `enchevri`,
 `acampion`, `mphippen`, `crappo`, `ayteyssi`, `ibady`, and `bokim`.
