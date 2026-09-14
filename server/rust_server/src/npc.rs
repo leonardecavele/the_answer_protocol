@@ -127,6 +127,9 @@ impl Npc {
     pub fn get_spawn_room(&self) -> &str {
         &self.room_spawn
     }
+    pub fn protocol_representation(id: NpcId, name: &str) -> String {
+        format!("{}.{}", id, name)
+    }
     pub fn parse_protocol_representation(protocol_name: &str) -> Option<(NpcId, String)> {
         if let Some((id, name)) = protocol_name.split_once('.') {
             id.parse::<NpcId>().ok().map(|id| (id, name.to_owned()))
