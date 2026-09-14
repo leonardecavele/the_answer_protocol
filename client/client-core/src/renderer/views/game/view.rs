@@ -450,7 +450,6 @@ impl Component for GameView {
             .game
             .overlays
             .top_kind()
-            .filter(|kind| !matches!(kind, OverlayKind::Dialogue))
             .and_then(|kind| self.overlay(kind).drawn_area())
         {
             Some(overlay_area) => self.close_button.draw(frame, overlay_area),
