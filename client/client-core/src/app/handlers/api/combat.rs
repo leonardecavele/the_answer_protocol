@@ -58,15 +58,12 @@ impl App {
             self.state.game.fight.resolve(fight_result.success);
 
             if !fight_result.success {
-                self.state
-                    .game
-                    .player
-                    .take_damage(fight_result.damage_dealt);
+                self.state.game.player.set_hp(fight_result.current_hp);
             }
         }
 
         if fight_result.success {
-            self.state.game.fight.damage_npc(fight_result.damage_dealt);
+            self.state.game.fight.set_npc_hp(fight_result.damage_dealt);
         }
 
         let who = match is_me {

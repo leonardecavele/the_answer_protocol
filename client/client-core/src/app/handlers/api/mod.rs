@@ -194,6 +194,9 @@ impl App {
             ServerEvent::FightResult(fight_result) => {
                 self.on_fight_result(fight_result);
             }
+            ServerEvent::CounterAttack(counter_attack) => {
+                self.on_counter_attack(counter_attack);
+            }
             ServerEvent::FightEnd => {
                 self.on_fight_end();
             }

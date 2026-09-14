@@ -5,8 +5,8 @@ use client_api::commands::{QuestData, QuestStatus};
 
 pub struct PlayerState {
     pub name: Option<String>,
-    pub hp: u32,
-    pub max_hp: u32,
+    pub hp: u16,
+    pub max_hp: u16,
     pub inventory: SelectableList<ItemStack>,
     pub quests: SelectableList<Quest>,
     next_quest_id: u64,
@@ -34,16 +34,16 @@ impl PlayerState {
             .is_some_and(|name| name.eq_ignore_ascii_case(player_name))
     }
 
-    pub fn set_vitals(&mut self, hp: u32, max_hp: u32) {
+    pub fn set_vitals(&mut self, hp: u16, max_hp: u16) {
         self.max_hp = max_hp;
         self.hp = hp.min(max_hp);
     }
 
-    pub fn set_hp(&mut self, hp: u32) {
+    pub fn set_hp(&mut self, hp: u16) {
         self.hp = hp.min(self.max_hp);
     }
 
-    pub fn take_damage(&mut self, amount: u32) {
+    pub fn take_damage(&mut self, amount: u16) {
         self.hp = self.hp.saturating_sub(amount);
     }
 

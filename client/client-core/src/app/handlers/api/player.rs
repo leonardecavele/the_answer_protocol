@@ -6,7 +6,7 @@ use client_api::commands::{
     DropResponse, InventoryResponse, LookCommand, QuestData, QuestResponse, QuestsResponse,
     StatusResponse, TakeResponse, UseResponse,
 };
-use client_api::events::{QuestCompleteData, QuestStepData};
+use client_api::events::{CounterAttackData, QuestCompleteData, QuestStepData};
 use std::time::Duration;
 
 impl App {
@@ -18,11 +18,11 @@ impl App {
                 let healed = response
                     .context
                     .get("healed")
-                    .and_then(|amount| amount.parse::<u32>().ok());
+                    .and_then(|amount| amount.parse::<u16>().ok());
                 let health = response
                     .context
                     .get("health")
-                    .and_then(|amount| amount.parse::<u32>().ok());
+                    .and_then(|amount| amount.parse::<u16>().ok());
 
                 let (Some(healed), Some(health)) = (healed, health) else {
                     self.record_trace(
@@ -232,5 +232,21 @@ impl App {
         ));
 
         self.send(ApiRequest::Look(LookCommand))
+    }
+
+    pub fn on_counter_attack(&mut self, counter_attack: CounterAttackData) {
+        let npc_name = self.state.game.manifest.npc_name(&counter_attack.npc_id);
+        let message = format!(
+            "{} dealt {} damage to you.",
+            npc_name, counter_attack.dealt_damage
+        );
+
+        self.state.game.log_action(message.clone());
+        self.state
+            .ui
+            .notifications
+            .push(Notification::error(message));
+
+        self.state.game.player.set_hp(counter_attack.current_hp);
     }
 }

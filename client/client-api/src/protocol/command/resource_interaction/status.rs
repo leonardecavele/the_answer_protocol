@@ -8,8 +8,8 @@ pub struct StatusCommand;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PlayerStatus {
-    pub hp: u32,
-    pub max_hp: u32,
+    pub hp: u16,
+    pub max_hp: u16,
     pub status: String,
 }
 

@@ -27,17 +27,21 @@ impl FightPhase {
 }
 
 pub struct NpcHealth {
-    pub current: u64,
-    pub max: u64,
+    pub current: u16,
+    pub max: u16,
 }
 
 impl NpcHealth {
-    fn new(current: u64, max: u64) -> Self {
+    fn new(current: u16, max: u16) -> Self {
         Self { current, max }
     }
 
-    fn take_damage(&mut self, damage: u32) {
-        self.current = self.current.saturating_sub(damage as u64);
+    fn set_hp(&mut self, hp: u16) {
+        self.current = hp;
+    }
+
+    fn take_damage(&mut self, damage: u16) {
+        self.current = self.current.saturating_sub(damage);
     }
 
     pub fn percent(&self) -> u16 {
@@ -45,7 +49,7 @@ impl NpcHealth {
             return 0;
         }
 
-        (self.current as f64 / self.max as f64 * 100.0) as u16
+        (f64::from(self.current) / f64::from(self.max) * 100.0) as u16
     }
 }
 
@@ -56,7 +60,7 @@ pub struct FightState {
 }
 
 impl FightState {
-    pub fn start(&mut self, npc_hp: u64, npc_max_hp: u64) {
+    pub fn start(&mut self, npc_hp: u16, npc_max_hp: u16) {
         self.phase.reset();
         self.npc_health = Some(NpcHealth::new(npc_hp, npc_max_hp));
     }
@@ -74,9 +78,15 @@ impl FightState {
         self.phase.resolve(success);
     }
 
-    pub fn damage_npc(&mut self, damage: u32) {
+    pub fn damage_npc(&mut self, damage: u16) {
         if let Some(health) = &mut self.npc_health {
             health.take_damage(damage);
+        }
+    }
+
+    pub fn set_npc_hp(&mut self, hp: u16) {
+        if let Some(health) = &mut self.npc_health {
+            health.set_hp(hp);
         }
     }
 
