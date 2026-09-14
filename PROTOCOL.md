@@ -144,7 +144,7 @@ Relevant errors include `INVALID_SCOPE`, `NOT_IN_GROUP`, and `NO_SUCH_USER`.
 
 ### Groups
 
-Groups contain at most three players. Invitations expire after five minutes.
+Groups contain at most five players. Invitations expire after five minutes.
 
 #### GROUP CREATE
 
@@ -362,7 +362,7 @@ client retains both the number and symbolic name.
 | `400` | `NOT_CONNECTED` | The command requires authentication. |
 | `400` | `INVALID_USERNAME` | The username violates the accepted grammar. |
 | `400` | `ROOM_FULL` | The authenticated-player limit has been reached. |
-| `400` | `GROUP_FULL` | The group already contains three players. |
+| `400` | `GROUP_FULL` | The group already contains five players. |
 | `400` | `EMPTY_COMMAND` | The submitted command line is empty. |
 | `400` | `COMMAND_NOT_FOUND` | The command or subcommand is unknown. |
 | `400` | `INVALID_ARGUMENTS` | Arguments are missing, unexpected, or malformed. |
@@ -511,7 +511,7 @@ to implementations. This project standardizes them as follows:
 - `LOOK`, `STATUS`, quest responses, inventory contents, and fight payloads use
   compact JSON after the leading TAP frame.
 - The server supports global, room, group, and private chat scopes.
-- Groups contain up to three players; invitations last five minutes.
+- Groups contain up to five players; invitations last five minutes.
 - `GROUP QUIT` aliases `GROUP LEAVE`.
 - `USE` applies inventory-item behavior through the authoritative game engine.
 - `QUEST` supports individual and grouped quest assignment.
