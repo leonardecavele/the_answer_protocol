@@ -7,7 +7,6 @@ import (
 	"go_server/game_conn"
 	"go_server/protocol"
 	"go_server/session"
-	"strings"
 )
 
 func handleConnectCommand(args string, client *session.Client, gameServerManager *game_conn.GameServerManager) (string, error) {
@@ -35,7 +34,7 @@ func handleConnectCommand(args string, client *session.Client, gameServerManager
 		return protocol.ResponseInvalidUsername, nil
 	}
 
-	if response := client.Room.SetUsername(client, strings.ToUpper(args)); response != "" {
+	if response := client.Room.SetUsername(client, args); response != "" {
 		return response, nil
 	}
 

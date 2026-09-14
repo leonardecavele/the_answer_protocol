@@ -36,7 +36,7 @@ func NewGroup(leader *Client) (*Group, error) {
 		return nil, err
 	}
 	group.Id = id
-	group.clients[leader.Username] = leader
+	group.clients[usernameKey(leader.Username)] = leader
 	leader.groupMutex.Lock()
 	leader.group = &group
 	leader.groupMutex.Unlock()
@@ -47,13 +47,13 @@ func NewGroup(leader *Client) (*Group, error) {
 func (group *Group) BroadcastEvent(eventBatch protocol.EventBatch) {
 	ignored := make(map[string]struct{}, len(eventBatch.IgnoredPlayers))
 	for _, username := range eventBatch.IgnoredPlayers {
-		username = strings.ToUpper(strings.TrimSpace(username))
+		username = usernameKey(username)
 		if username != "" {
 			ignored[username] = struct{}{}
 		}
 	}
 
-	target := strings.ToUpper(strings.TrimSpace(eventBatch.Player))
+	target := usernameKey(eventBatch.Player)
 	group.mutex.Lock()
 	clients := make([]*Client, 0, len(group.clients))
 	if target != "" {
@@ -103,8 +103,8 @@ func (group *Group) Info() (GroupInfo, bool) {
 	}
 
 	members := make([]string, 0, len(group.clients))
-	for username := range group.clients {
-		members = append(members, username)
+	for _, client := range group.clients {
+		members = append(members, client.Username)
 	}
 	sort.Strings(members)
 
@@ -122,7 +122,8 @@ func (group *Group) Invite(username string) string {
 	if group.clients == nil {
 		return protocol.ResponseGroupNotFound
 	}
-	if _, ok := group.clients[username]; ok {
+	key := usernameKey(username)
+	if _, ok := group.clients[key]; ok {
 		return protocol.ResponseAlreadyInGroup
 	}
 	if len(group.clients) >= config.GroupSize {
@@ -131,7 +132,7 @@ func (group *Group) Invite(username string) string {
 
 	now := time.Now()
 	group.deleteExpiredInvites(now)
-	group.invites[username] = now.Add(config.GroupInviteTTL)
+	group.invites[key] = now.Add(config.GroupInviteTTL)
 
 	return ""
 }
@@ -152,9 +153,10 @@ func (c *Client) JoinGroup(group *Group) string {
 		group.mutex.Unlock()
 		return protocol.ResponseGroupNotFound
 	}
-	expiresAt, ok := group.invites[c.Username]
+	key := usernameKey(c.Username)
+	expiresAt, ok := group.invites[key]
 	if !ok || time.Now().After(expiresAt) {
-		delete(group.invites, c.Username)
+		delete(group.invites, key)
 		group.mutex.Unlock()
 		return protocol.ResponseNotInvited
 	}
@@ -162,8 +164,8 @@ func (c *Client) JoinGroup(group *Group) string {
 		group.mutex.Unlock()
 		return protocol.ResponseGroupFull
 	}
-	group.clients[c.Username] = c
-	delete(group.invites, c.Username)
+	group.clients[key] = c
+	delete(group.invites, key)
 	c.group = group
 	group.mutex.Unlock()
 
@@ -186,7 +188,7 @@ func (group *Group) deleteAllInvites() {
 
 func (group *Group) deleteInvite(username string) {
 	delete(group.invites, username)
-	leader := group.clients[group.leader]
+	leader := group.clients[usernameKey(group.leader)]
 	if leader != nil && leader.Room != nil {
 		leader.Room.RouteEvent(username, protocol.Event{
 			EmittedBy: group.leader,
@@ -205,7 +207,7 @@ func (c *Client) QuitGroup() {
 	}
 
 	group.mutex.Lock()
-	if c.Username == group.leader {
+	if strings.EqualFold(c.Username, group.leader) {
 		clients := make([]*Client, 0, len(group.clients))
 		for _, client := range group.clients {
 			clients = append(clients, client)
@@ -224,7 +226,7 @@ func (c *Client) QuitGroup() {
 		return
 	}
 
-	delete(group.clients, c.Username)
+	delete(group.clients, usernameKey(c.Username))
 	isEmpty := len(group.clients) == 0
 	if isEmpty {
 		group.clients = nil
@@ -240,7 +242,7 @@ func (client *Client) IsLeader() bool {
 		return false
 	}
 
-	return client.Username == group.leader
+	return strings.EqualFold(client.Username, group.leader)
 }
 
 func (c *Client) clearGroup(group *Group) {

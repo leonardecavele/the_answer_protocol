@@ -15,6 +15,10 @@ type Room struct {
 	mutex   sync.Mutex
 }
 
+func usernameKey(username string) string {
+	return strings.ToUpper(strings.TrimSpace(username))
+}
+
 func NewRoom() *Room {
 	return &Room{
 		clients: make(map[string]*Client, config.RoomSize),
@@ -33,11 +37,12 @@ func (room *Room) SetUsername(client *Client, username string) string {
 		return protocol.ResponseRoomFull
 	}
 
-	if _, ok := room.clients[username]; ok {
+	key := usernameKey(username)
+	if _, ok := room.clients[key]; ok {
 		return protocol.ResponseUsernameAlreadyUsed
 	}
 	client.authenticate(username)
-	room.clients[username] = client
+	room.clients[key] = client
 
 	return ""
 }
@@ -47,18 +52,19 @@ func (room *Room) RollbackUsername(client *Client) {
 	defer room.mutex.Unlock()
 
 	username, state, _ := client.connectionInfo()
-	if state != AUTHENTICATED || room.clients[username] != client {
+	key := usernameKey(username)
+	if state != AUTHENTICATED || room.clients[key] != client {
 		return
 	}
 
-	delete(room.clients, username)
+	delete(room.clients, key)
 	client.rollbackAuthentication()
 }
 
 func (room *Room) DeleteUsername(client *Client) {
 	room.mutex.Lock()
 	if client.IsAuthenticated() {
-		delete(room.clients, client.Username)
+		delete(room.clients, usernameKey(client.Username))
 	}
 	room.mutex.Unlock()
 }
@@ -68,8 +74,8 @@ func (room *Room) ConnectedUsernames() []string {
 	defer room.mutex.Unlock()
 
 	usernames := make([]string, 0, len(room.clients))
-	for username := range room.clients {
-		usernames = append(usernames, username)
+	for _, client := range room.clients {
+		usernames = append(usernames, client.Username)
 	}
 
 	return usernames
@@ -83,7 +89,7 @@ func (room *Room) Count() int {
 
 func (room *Room) GetClient(username string) (*Client, bool) {
 	room.mutex.Lock()
-	client, ok := room.clients[strings.ToUpper(username)]
+	client, ok := room.clients[usernameKey(username)]
 	room.mutex.Unlock()
 
 	return client, ok
@@ -149,7 +155,7 @@ func (room *Room) Groups() []GroupInfo {
 
 func (room *Room) RouteCommand(username string, command game_conn.CommandFromGameServer) bool {
 	room.mutex.Lock()
-	client, ok := room.clients[strings.ToUpper(username)]
+	client, ok := room.clients[usernameKey(username)]
 	room.mutex.Unlock()
 
 	if !ok {
@@ -161,7 +167,7 @@ func (room *Room) RouteCommand(username string, command game_conn.CommandFromGam
 }
 
 func (room *Room) RouteEvent(username string, event protocol.Event) bool {
-	username = strings.ToUpper(username)
+	username = usernameKey(username)
 
 	room.mutex.Lock()
 	client, ok := room.clients[username]
@@ -178,13 +184,13 @@ func (room *Room) RouteEvent(username string, event protocol.Event) bool {
 func (room *Room) BroadcastEvent(eventBatch protocol.EventBatch) {
 	ignored := make(map[string]struct{}, len(eventBatch.IgnoredPlayers))
 	for _, username := range eventBatch.IgnoredPlayers {
-		username = strings.ToUpper(strings.TrimSpace(username))
+		username = usernameKey(username)
 		if username != "" {
 			ignored[username] = struct{}{}
 		}
 	}
 
-	target := strings.ToUpper(strings.TrimSpace(eventBatch.Player))
+	target := usernameKey(eventBatch.Player)
 	room.mutex.Lock()
 	clients := make([]*Client, 0, len(room.clients))
 	if target != "" {

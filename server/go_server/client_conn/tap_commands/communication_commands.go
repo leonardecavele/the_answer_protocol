@@ -76,7 +76,7 @@ func chatRoomScope(client *session.Client, message string, gameServerManager *ga
 	routed := make(map[string]struct{}, len(usernames))
 	for _, username := range usernames {
 		username = strings.ToUpper(strings.TrimSpace(username))
-		if username == "" || username == client.Username {
+		if username == "" || strings.EqualFold(username, client.Username) {
 			continue
 		}
 		if _, ok := routed[username]; ok {

@@ -11,6 +11,7 @@ import (
 	"go_server/game_conn"
 	"go_server/helper"
 	"go_server/logger"
+	"go_server/protocol"
 	"go_server/session"
 	"io"
 	"net"
@@ -72,6 +73,11 @@ func main() {
 
 	listener, listenErr := net.Listen("tcp", serverOptions.GoServerAddress())
 	if listenErr != nil {
+		if errors.Is(listenErr, syscall.EADDRINUSE) {
+			if owner := helper.PortOwner(serverOptions.GoServerPort); owner != "" {
+				listenErr = fmt.Errorf("%w by %s", listenErr, owner)
+			}
+		}
 		logger.AppLogger.Error(fmt.Sprint(listenErr))
 		os.Exit(int(serverError.CodeListenerError))
 	}
@@ -119,6 +125,13 @@ func main() {
 		client := session.NewClient(conn, room)
 		if err := connectionManager.Subscribe(client); err != nil {
 			logger.AppLogger.Error("%s Connection rejected: %v", client.Id, err)
+			response := protocol.ResponseTooManyRequests
+			if errors.Is(err, serverError.ErrMaxConnection) {
+				response = protocol.ResponseRoomFull
+			}
+			if writeErr := client.Write(response); writeErr != nil {
+				logger.AppLogger.Error("%s Rejection write error: %v", client.Id, writeErr)
+			}
 			_ = conn.Close()
 			continue
 		}

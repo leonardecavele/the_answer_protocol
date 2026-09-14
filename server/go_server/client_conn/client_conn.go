@@ -5,6 +5,7 @@ import (
 	"errors"
 	"go_server/client_conn/tap_commands"
 	"go_server/config"
+	serverError "go_server/error"
 	"go_server/game_conn"
 	"go_server/helper"
 	"go_server/logger"
@@ -110,6 +111,11 @@ func HandleClient(client *session.Client, gameServerManager *game_conn.GameServe
 
 		str, err := helper.ReadStringWithLimit(reader, '\n', config.ReadStringMaxSize)
 		if err != nil {
+			if errors.Is(err, serverError.ErrReadStringTooLong) {
+				if writeErr := client.Write(protocol.ResponseTooManyRequests); writeErr != nil && shouldLogClientIOError(client, writeErr) {
+					logger.AppLogger.Error("%s Write error: %v\n", client.Id, writeErr)
+				}
+			}
 			if !errors.Is(err, io.EOF) && shouldLogClientIOError(client, err) {
 				logger.AppLogger.Error("%s Read error: %v\n", client.Id, err)
 			}
