@@ -114,6 +114,8 @@ func HandleClient(client *session.Client, gameServerManager *game_conn.GameServe
 			if errors.Is(err, serverError.ErrReadStringTooLong) {
 				if writeErr := client.Write(protocol.ResponseTooManyRequests); writeErr != nil && shouldLogClientIOError(client, writeErr) {
 					logger.AppLogger.Error("%s Write error: %v\n", client.Id, writeErr)
+				} else if writeErr == nil {
+					logger.AppLogger.Info("%s Client Write: %s", client.Id, protocol.ResponseTooManyRequests)
 				}
 			}
 			if !errors.Is(err, io.EOF) && shouldLogClientIOError(client, err) {
@@ -127,6 +129,8 @@ func HandleClient(client *session.Client, gameServerManager *game_conn.GameServe
 				if shouldLogClientIOError(client, err) {
 					logger.AppLogger.Error("%s Write error: %v\n", client.Id, err)
 				}
+			} else {
+				logger.AppLogger.Info("%s Client Write: %s", client.Id, protocol.ResponseTooManyRequests)
 			}
 			return
 		}

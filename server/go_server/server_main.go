@@ -131,6 +131,8 @@ func main() {
 			}
 			if writeErr := client.Write(response); writeErr != nil {
 				logger.AppLogger.Error("%s Rejection write error: %v", client.Id, writeErr)
+			} else {
+				logger.AppLogger.Info("%s Client Write: %s", client.Id, response)
 			}
 			_ = conn.Close()
 			continue
