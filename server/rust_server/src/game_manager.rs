@@ -1549,9 +1549,10 @@ impl GameManager {
         &mut self,
         player_name: &str,
         assigned_file_name: &str,
+        npc_attacked_name: &str,
         time_took_in_seconds: u64,
     ) {
-        let possibilities: HashMap<&str, (&str, u64)> = HashMap::from([
+        let possibilities_code_quests: HashMap<&str, (&str, u64)> = HashMap::from([
             ("is_sorted_ascending.c", ("Kaizen", 55)),
             ("string_equals.c", ("Tu peux le faire", 50)),
             ("middle_of_three.c", ("Entrequote", 45)),
@@ -1564,18 +1565,25 @@ impl GameManager {
             ("array_contains.c", ("Mais que contient-elle ?", 35)),
         ]);
 
-        let Some(&(quest_name, actual_time_allowed)) = possibilities.get(assigned_file_name) else {
-            // not an error just there is not a quest for each file name
-            return;
-        };
-        if time_took_in_seconds > actual_time_allowed {
-            return;
-        }
-        let Some(player_id) = self.get_player_id(player_name).copied() else {
-            return;
-        };
+        let possibilities_npc_quest: HashMap<&str, (&str, u64)> = HashMap::from([
+            ("test", ("", 222)),
+        ]);
 
-        self.add_one_step_to_quest(player_id, quest_name);
+        // not an error if there is not just there is not a quest for each file name
+        if let Some(&(quest_name, actual_time_allowed)) = possibilities_code_quests.get(assigned_file_name) {
+            if time_took_in_seconds <= actual_time_allowed {
+                if let Some(player_id) = self.get_player_id(player_name).copied() {
+                    self.add_one_step_to_quest(player_id, quest_name);
+                }
+            }
+        };
+        if let Some(&(quest_name, actual_time_allowed)) = possibilities_npc_quest.get(npc_attacked_name) {
+            if time_took_in_seconds <= actual_time_allowed {
+                if let Some(player_id) = self.get_player_id(player_name).copied() {
+                    self.add_one_step_to_quest(player_id, quest_name);
+                }
+            }
+        };
     }
 
     pub fn add_one_step_to_quest(&mut self, player_id: PlayerId, quest_name: &str) {
