@@ -65,20 +65,12 @@ impl GameManager {
             let players = self.get_all_players_at_room(&room_name);
             let data = format!("type={} id={}", "ITEM", item_rep);
 
-            let event_despawn =
-                GameManager::generate_no_player_event_json(&players, "DESPAWN", &data);
-
-            self.add_diff_to_tick(event_despawn);
+            self.send_no_player_event(&players, "DESPAWN", &data);
 
             if is_lost_item {
                 let lost_item_spawn_players = self.get_all_players_at_room(LOST_ITEM_SPAWN);
                 self.add_item_to_room(LOST_ITEM_SPAWN, item_id);
-                let event_spawn = GameManager::generate_no_player_event_json(
-                    &lost_item_spawn_players,
-                    "SPAWN",
-                    &data,
-                );
-                self.add_diff_to_tick(event_spawn);
+                self.send_no_player_event(&lost_item_spawn_players, "SPAWN", &data);
             } else {
                 // Completely despawned from the world, we can recycle the ID
                 self.recycle_item_id(item_id);

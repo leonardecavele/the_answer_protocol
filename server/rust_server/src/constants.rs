@@ -11,6 +11,8 @@ pub const NPC_MIN_DMG: u32 = 25;
 pub const RESTART_ITEM_TIMER_BATCH: u32 = 10;
 pub const MINUTE: u64 = 60;
 pub const PLAYER_ATTACK_DMG: u32 = 1;
+pub const NPC_COUNTER_DMG: u32 = 1;
+pub const NPC_COUNTER_ATTACK_CHANCE: u32 = 10;
 pub const MIN_DMG_DEALT: u32 = 5;
 pub const MAX_DMG_DEALT: u32 = u32::MAX;
 pub const LOST_ITEM: u64 = 0;
@@ -38,25 +40,12 @@ pub type Direction = String;
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ErrorCode {
     NoError,
-    NameInUse,
     NoExit,
-    AlreadyConnected,
-    InvalidScope,
-    NotInGroup,
-    NotGroupLeader,
-    AlreadyInGroup,
-    NoSuchUser,
-    NotInvited,
     ItemNotFound,
     ItemNotInInventory,
     NpcNotFound,
-    NpcNotInRoom,
-    GroupNotFound,
-    NoSuchGroup,
     NpcNotHostile,
     NoQuestAvailable,
-    ConnectionFailed,
-    SendFailed,
     InvalidCommand,
     InvalidQuestion,
     InvalidGroupCommand,
@@ -66,7 +55,6 @@ pub enum ErrorCode {
     PlayerAlreadyInCombat,
     PlayerNotInCombat,
     FileNotFound,
-    NoContent,
     RoomNotFound,
     MissingItem,
     NotUsable,
@@ -76,22 +64,10 @@ impl ErrorCode {
     pub fn code(&self) -> u16 {
         match self {
             Self::NoError => 0,
-            Self::NameInUse => 201,
-            Self::NoContent => 204,
             Self::NoExit => 301,
-            Self::AlreadyConnected | Self::InvalidScope => 400,
-            Self::NotInGroup => 401,
-            Self::AlreadyInGroup => 402,
-            Self::NoSuchUser | Self::NotInvited | Self::NotGroupLeader => 403,
-            Self::ItemNotFound
-            | Self::ItemNotInInventory
-            | Self::NpcNotFound
-            | Self::GroupNotFound
-            | Self::NoSuchGroup => 404,
-            Self::PlayerNotFound => 405,
-            Self::NpcNotHostile => 405,
+            Self::ItemNotFound | Self::ItemNotInInventory | Self::NpcNotFound => 404,
+            Self::PlayerNotFound | Self::NpcNotHostile => 405,
             Self::NoQuestAvailable => 406,
-            Self::NpcNotInRoom => 407,
             Self::NpcInCombat => 408,
             Self::ActionAlreadyTaken => 409,
             Self::PlayerAlreadyInCombat => 410,
@@ -100,8 +76,6 @@ impl ErrorCode {
             Self::RoomNotFound => 413,
             Self::MissingItem => 414,
             Self::NotUsable => 415,
-            Self::ConnectionFailed => 900,
-            Self::SendFailed => 901,
             Self::InvalidGroupCommand => 997,
             Self::InvalidQuestion => 998,
             Self::InvalidCommand => 999,

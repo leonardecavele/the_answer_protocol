@@ -29,12 +29,11 @@ impl GameManager {
                                 let item_repr =
                                     Item::protocol_representation(new_item_id, item_name);
                                 self.add_item_to_player(player_id, new_item_id);
-                                let event = GameManager::generate_no_player_event_json(
+                                self.send_no_player_event(
                                     &vec![player_name.to_string()],
                                     "ITEM ADD",
                                     item_repr.as_str(),
                                 );
-                                self.add_diff_to_tick(event);
                                 info!("gave item {} to player {}", item_name, player_name);
                             } else {
                                 warn!("Cannot give objet_perdu");

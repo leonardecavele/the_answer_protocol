@@ -1,6 +1,5 @@
 use crate::constants::{
-    BASE_COMMAND_RESPONSE, CODE_NL_SEP, CODE_SP_SEP, ErrorCode, MAX_TIME_FOR_COMBAT,
-    NO_MORE_MESSAGES, NPC_MOB, PLAYER_ATTACK_DMG, SKIP_PLAYER_EXISTS_TEST, TEST_FILES_DIR,
+    BASE_COMMAND_RESPONSE, CODE_NL_SEP, CODE_SP_SEP, ErrorCode, MAX_TIME_FOR_COMBAT, NO_MORE_MESSAGES, NPC_COUNTER_ATTACK_CHANCE, NPC_COUNTER_DMG, NPC_MOB, PLAYER_ATTACK_DMG, SKIP_PLAYER_EXISTS_TEST, TEST_FILES_DIR,
 };
 use crate::game_manager::GameManager;
 use crate::items::{Item, ItemId};
@@ -81,6 +80,24 @@ impl GameManager {
         }
     }
 
+    pub fn send_event_json(
+        &mut self,
+        players: &mut Vec<String>,
+        emitted_by: &str,
+        event_name: &str,
+        data: &str,
+        ignore_emitted_by: bool,
+    ) {
+        let diff =
+            self.generate_event_json(players, emitted_by, event_name, data, ignore_emitted_by);
+        self.add_diff_to_tick(diff);
+    }
+
+    pub fn send_no_player_event(&mut self, players: &Vec<String>, event_name: &str, data: &str) {
+        let diff = GameManager::generate_no_player_event_json(players, event_name, data);
+        self.add_diff_to_tick(diff);
+    }
+
     fn validate_grouped_command(&self, parsed_json: &JsonValue) -> ErrorCode {
         if !parsed_json.has_key("leader")
             || !parsed_json.has_key("grouped_players")
@@ -144,6 +161,20 @@ impl GameManager {
             .collect();
 
         let file_name = self.get_random_test_file_name();
+        let file_path = format!("{}/{}", TEST_FILES_DIR, file_name);
+        let Ok(code) = std::fs::read_to_string(&file_path) else {
+            error!("Failed to read code from file: {:?}", file_name);
+            return generate_json(leader, command_name, ErrorCode::FileNotFound, "").dump();
+        };
+
+        let npc_representation = match self.all_npcs.get(&npc_id) {
+            Some(npc) => npc.get_protocol_representation(),
+            None => {
+                warn!("NPC not found in all_npcs for id: {}", npc_id);
+                return generate_json(leader, command_name, ErrorCode::NpcNotFound, "").dump();
+            }
+        };
+
         self.combat_instances.add_instance(
             leader_id,
             npc_id,
@@ -154,19 +185,6 @@ impl GameManager {
             grouped_players_ids,
             file_name.clone(),
         );
-        let npc_representation = match self.all_npcs.get(&npc_id) {
-            Some(npc) => npc.get_protocol_representation(),
-            None => {
-                warn!("NPC not found in all_npcs for id: {}", npc_id);
-                return generate_json(leader, command_name, ErrorCode::NpcNotFound, "").dump();
-            }
-        };
-
-        let file_path = format!("{}/{}", TEST_FILES_DIR, file_name);
-        let Ok(code) = std::fs::read_to_string(&file_path) else {
-            error!("Failed to read code from file: {:?}", file_name);
-            return generate_json(leader, command_name, ErrorCode::FileNotFound, "").dump();
-        };
 
         let code_without_nl_sp = code.replace(" ", CODE_SP_SEP).replace("\n", CODE_NL_SEP);
         let mut players_to_notify = players.clone();
@@ -179,12 +197,7 @@ impl GameManager {
         "npc_hp": self.get_npc_hp(npc_id).unwrap_or_else(|| {warn!("No NPC HP for npc_id: {}", npc_id); 0}),
         "npc_max_hp": self.get_npc_max_hp(npc_id).unwrap_or_else(|| {warn!("No NPC MAX HP for npc_id: {}", npc_id); 0})}
         .dump();
-        let event = GameManager::generate_no_player_event_json(
-            &players_to_notify,
-            "FIGHT START",
-            args_to_send.as_str(),
-        );
-        self.add_diff_to_tick(event);
+        self.send_no_player_event(&players_to_notify, "FIGHT START", args_to_send.as_str());
 
         generate_json(leader, command_name, ErrorCode::NoError, "FIGHT CREATED").dump()
     }
@@ -196,10 +209,11 @@ impl GameManager {
         additional_players: Vec<String>,
         direction: &str,
     ) -> String {
-        if direction != "NORTH"
-            && direction != "SOUTH"
-            && direction != "EAST"
-            && direction != "WEST"
+        let direction_uncased = direction.to_uppercase();
+        if direction_uncased != "NORTH"
+            && direction_uncased != "SOUTH"
+            && direction_uncased != "EAST"
+            && direction_uncased != "WEST"
         {
             return generate_json(&leader, "GROUP", ErrorCode::NoExit, "").dump();
         }
@@ -273,12 +287,15 @@ impl GameManager {
 
         for p in &all_moving_players {
             let mut lrp = spectators_leave.clone();
-            let leave_diff = self.generate_event_json(&mut lrp, p, "ROOM", "PRESENCE LEAVE", true);
-            self.add_diff_to_tick(leave_diff);
+            lrp.retain(|p| p != p);
+            //actually it is a player event but to avoid re coding a function we use it
+            self.send_no_player_event(&mut lrp, "ROOM", format!("PRESENCE LEAVE {}",p).as_str());
+
 
             let mut crp = spectators_enter.clone();
-            let enter_diff = self.generate_event_json(&mut crp, p, "ROOM", "PRESENCE ENTER", true);
-            self.add_diff_to_tick(enter_diff);
+            crp.retain(|p| p != p);
+            //actually it is a player event but to avoid re coding a function we use it
+            self.send_no_player_event(&mut crp, "ROOM", format!("PRESENCE ENTER {}",p).as_str());
 
             if p != &leader {
                 let move_event = object! {
@@ -405,12 +422,11 @@ impl GameManager {
                         .iter()
                         .map(|(name, _)| name.clone())
                         .collect();
-                    let event = GameManager::generate_no_player_event_json(
+                    self.send_no_player_event(
                         &eligible_names,
                         "QUEST ADD",
                         quest_json_str.as_str(),
                     );
-                    self.add_diff_to_tick(event);
                 }
 
                 self.create_quest_instance(leader_id, quest_id.clone());
@@ -462,7 +478,14 @@ impl GameManager {
         };
         if !self.npc_is_in_room(npc_id, player_room) {
             return Err(
-                generate_json(player_name, command_name, ErrorCode::NpcNotInRoom, "").dump(),
+                generate_json(player_name, command_name, ErrorCode::NpcNotFound, "").dump(),
+            );
+        }
+        if let Some(npc) = self.get_npc(npc_id)
+            && npc.get_death().is_some()
+        {
+            return Err(
+                generate_json(player_name, command_name, ErrorCode::NpcNotFound, "").dump(),
             );
         }
         let npc_type = self.get_npc_type(npc_id);
@@ -508,14 +531,14 @@ impl GameManager {
                 generate_json(player_name, command_name, ErrorCode::NpcNotFound, "").dump(),
             );
         };
-        if npc.get_name() != npc_name {
+        if npc.get_name() != npc_name || npc.get_death().is_some() {
             return Err(
                 generate_json(player_name, command_name, ErrorCode::NpcNotFound, "").dump(),
             );
         }
         if !self.npc_is_in_room(npc_id, player_room) {
             return Err(
-                generate_json(player_name, command_name, ErrorCode::NpcNotInRoom, "").dump(),
+                generate_json(player_name, command_name, ErrorCode::NpcNotFound, "").dump(),
             );
         }
         Ok(npc.clone())
@@ -589,13 +612,12 @@ impl GameManager {
                             );
                             vec![]
                         });
-                    let event = GameManager::generate_no_player_event_json(
+                    self.send_no_player_event(
                         &players_in_instance,
                         "FIGHT RESULT",
                         object! { "player_name": player.to_string(), "success": true, "damage_dealt": dmg}.dump().as_str(),
                     );
-                    self.add_diff_to_tick(event);
-                    self.player_attacks_npc(dmg, player_id, npc_id);
+                    let _ = self.player_attacks_npc(dmg, player_id, npc_id);
 
                     let (time_took_to_succeed, assigned_file_name) = self
                         .combat_instances
@@ -627,12 +649,11 @@ impl GameManager {
                     let nb_t_shirt =
                         self.get_nb_t_shirt_bde_for_player(player.to_string().as_str());
                     let npc_dmg = self.generate_npc_dmg(nb_t_shirt);
-                    let event = GameManager::generate_no_player_event_json(
+                    self.send_no_player_event(
                         &players_in_instance,
                         "FIGHT RESULT",
                         object! { "player_name": player.to_string(), "success": false, "damage_dealt": npc_dmg}.dump().as_str(),
                     );
-                    self.add_diff_to_tick(event);
                     self.npc_attacks_player(npc_dmg, player_id, npc_id);
                 }
             }
@@ -713,14 +734,13 @@ impl GameManager {
                     }
                 };
                 let mut room_players = self.get_all_players_at_room(player_room);
-                let enter_diff = self.generate_event_json(
+                self.send_event_json(
                     &mut room_players,
                     player_name,
                     "ROOM",
                     "PRESENCE ENTER",
                     true,
                 );
-                self.add_diff_to_tick(enter_diff);
 
                 BASE_COMMAND_RESPONSE.to_owned()
             }
@@ -889,9 +909,7 @@ impl GameManager {
                 self.reset_dropped_at_for_item(item_id);
 
                 let mut players_to_send = self.get_all_players_at_room(player_room.as_str());
-                let events_json =
-                    self.generate_event_json(&mut players_to_send, player_name, "TAKE", item, true);
-                self.add_diff_to_tick(events_json);
+                self.send_event_json(&mut players_to_send, player_name, "TAKE", item, true);
 
                 generate_json(
                     player_name,
@@ -942,9 +960,7 @@ impl GameManager {
 
                 let item_repr = Item::protocol_representation(item_id, &item_name);
                 let mut players_to_send = self.get_all_players_at_room(room_name.as_str());
-                let events_json =
-                    self.generate_event_json(&mut players_to_send, player_name, "DROP", item, true);
-                self.add_diff_to_tick(events_json);
+                self.send_event_json(&mut players_to_send, player_name, "DROP", item, true);
 
                 generate_json(
                     player_name,
@@ -992,7 +1008,7 @@ impl GameManager {
                     {
                         let file_name = instance.get_assigned_file_name().to_string();
                         let npc_id = instance.get_npc_id();
-                        if self.check_action_already_taken(player_id, npc_id) {
+                        if self.check_action_already_taken(player_id) {
                             return generate_json(
                                 player_name,
                                 command_name,
@@ -1042,7 +1058,13 @@ impl GameManager {
                     }
                 };
 
-                let combat_result = self.player_attacks_npc(PLAYER_ATTACK_DMG, player_id, npc_id);
+                let combat_result =
+                    match self.player_attacks_npc(PLAYER_ATTACK_DMG, player_id, npc_id) {
+                        Ok(result) => result,
+                        Err(err) => {
+                            return generate_json(player_name, command_name, err, "").dump();
+                        }
+                    };
 
                 info!(
                     "Player {} attacks NPC {} -> result: {}",
@@ -1050,6 +1072,28 @@ impl GameManager {
                     npc_id,
                     combat_result.as_str()
                 );
+
+                let mut rng = rand::rng();
+                let npc_counter_attacks = rng.random_range(1..=100) <= NPC_COUNTER_ATTACK_CHANCE;
+                if npc_counter_attacks {
+                    let player_hp = if let Some(player) = self.get_player(player_id) {
+                        player.get_hp()
+                    } else {
+                        return generate_json(player_name, command_name, ErrorCode::PlayerNotFound, "").dump();
+                    };
+                    let hp_after_hit = if player_hp - NPC_COUNTER_DMG <= 0 {
+                        0
+                    } else {
+                        player_hp - NPC_COUNTER_DMG
+                    };
+                    
+                    let counter_attack_json = object! {
+                        "dealt_damage" => NPC_COUNTER_DMG,
+                        "current_hp" => hp_after_hit.to_string()
+                    }.dump();
+                    self.send_no_player_event(&vec![player_name.to_string()], "COUNTER ATTACK", counter_attack_json.as_str());
+                    self.npc_attacks_player(NPC_COUNTER_DMG, player_id, npc_id);
+                }
                 generate_json(
                     player_name,
                     command_name,
