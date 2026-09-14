@@ -75,7 +75,8 @@ where
                 std::process::exit(1);
             }
 
-            if msg.contains("ERROR") {
+            //ERROR format in tracing
+            if msg.contains("\x1b[31mERROR\x1b[0m") {
                 eprint!("{}", msg);
             } else if let Some(ref mut p) = printer {
                 p.print(msg).ok();
