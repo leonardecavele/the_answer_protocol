@@ -2,13 +2,13 @@ use client_core::{App, ApplicationEvent, Assets, ClientError};
 use crossterm::event::{DisableMouseCapture, EnableMouseCapture, EventStream};
 use crossterm::execute;
 use crossterm::terminal::{
-    disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen,
+    EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode,
 };
 use futures::StreamExt;
-use ratatui::backend::CrosstermBackend;
 use ratatui::Terminal;
+use ratatui::backend::CrosstermBackend;
 use std::io;
-use tokio::signal::unix::{signal, Signal, SignalKind};
+use tokio::signal::unix::{Signal, SignalKind, signal};
 
 type TerminalScreen = Terminal<CrosstermBackend<io::Stdout>>;
 
