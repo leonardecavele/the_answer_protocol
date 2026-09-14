@@ -3,7 +3,7 @@ use crate::commands::generate_json;
 use crate::constants::{
     CODE_NL_SEP, CODE_SP_SEP, Direction, ITEM_DESPAWN_TIME, LOST_ITEM, LOST_ITEM_SPAWN,
     MAX_DMG_DEALT, MAX_TIME_FOR_COMBAT, MIN_DMG_DEALT, NPC_MAX_DMG, NPC_MIN_DMG, NPC_RESPAWN_TIME,
-    PLAYER_ROOM_SPAWN, T_SHIRT, TEST_FILES_DIR,
+    PLAYER_ROOM_SPAWN, T_SHIRT, TEST_FILES_DIR, TickResult,
 };
 use rand::RngExt;
 
@@ -145,7 +145,6 @@ impl GameManager {
                 .collect();
             let save_data = Save {
                 name: player.get_name().to_owned(),
-                id: player.get_id(),
                 hp: player.get_hp(),
                 max_hp: player.get_max_hp(),
                 inventory,
@@ -600,21 +599,16 @@ impl GameManager {
             );
             save_data.hp = save_data.max_hp;
         }
-        let player_id = save_data.id;
-        if self.get_player(player_id).is_some() {
-            warn!(
-                "Player with id {} already exists, skipping restore",
-                save_data.id
-            );
-            return None;
-        }
+        let player_id = self.next_player_id;
+        self.next_player_id += 1;
+
         for (quest_id, _, current_step) in save_data.quests.iter() {
             let quest_instance =
                 QuestInstance::new_with_step(player_id, quest_id.clone(), *current_step);
             self.quest_instances.push(quest_instance);
         }
 
-        Some(Player::from_save(save_data))
+        Some(Player::from_save(save_data, player_id))
     }
 
     fn add_player_to_game(&mut self, player: Player) {
@@ -848,9 +842,16 @@ impl GameManager {
         }
     }
 
-    pub fn send_msg_to_client(&mut self, msg: String) -> std::io::Result<()> {
-        self.writer_stream.write_all((msg + "\n").as_bytes())?;
-        Ok(())
+    pub fn send_msg_to_client(&mut self, msg: String) -> TickResult {
+        if let Err(e) = self.writer_stream.write_all((msg + "\n").as_bytes()) {
+            warn!(
+                "failed to send message to client, treating as disconnect: {}",
+                e
+            );
+            TickResult::Exit
+        } else {
+            TickResult::TickEnd
+        }
     }
 
     pub fn receive_data_timeout(

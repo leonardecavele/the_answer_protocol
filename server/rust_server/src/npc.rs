@@ -9,7 +9,6 @@ use crate::room::RoomName;
 type NpcType = u8;
 pub type NpcId = u32;
 
-// for now, use this. later create Dialog and Questid structs
 pub type Dialog = Vec<String>;
 
 #[derive(Clone)]

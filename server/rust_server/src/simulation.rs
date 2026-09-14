@@ -7,10 +7,10 @@ use std::sync::mpsc;
 use std::time::Instant;
 
 impl GameManager {
-    pub fn process_incoming_events(&mut self, tick_timer: Instant) -> std::io::Result<TickResult> {
+    pub fn process_incoming_events(&mut self, tick_timer: Instant) -> TickResult {
         loop {
             // Process any pending responses from the code tester thread
-            self.process_tester_responses()?;
+            self.process_tester_responses();
             self.process_admin_commands();
 
             if tick_timer.elapsed() >= TICK_TIME {
@@ -20,16 +20,18 @@ impl GameManager {
                 Ok(msg) => {
                     let command_response = self.handle_message(msg);
                     debug!("sent response to client: {}", command_response);
-                    self.send_msg_to_client(command_response)?;
+                    if self.send_msg_to_client(command_response) == TickResult::Exit {
+                        return TickResult::Exit;
+                    }
                 }
                 Err(mpsc::RecvTimeoutError::Timeout) => break,
-                Err(mpsc::RecvTimeoutError::Disconnected) => return Ok(TickResult::Exit),
+                Err(mpsc::RecvTimeoutError::Disconnected) => return TickResult::Exit,
             };
         }
-        Ok(TickResult::TickEnd)
+        TickResult::TickEnd
     }
 
-    pub fn update_game_state(&mut self) -> std::io::Result<()> {
+    pub fn update_game_state(&mut self) {
         self.remove_finished_combat_instances();
 
         self.check_finished_quests();
@@ -72,11 +74,9 @@ impl GameManager {
                 self.add_item_to_room(LOST_ITEM_SPAWN, item_id);
                 self.send_no_player_event(&lost_item_spawn_players, "SPAWN", &data);
             } else {
-                // Completely despawned from the world, we can recycle the ID
+                // despawned from the world, we can recycle the ID
                 self.recycle_item_id(item_id);
             }
         }
-
-        Ok(())
     }
 }

@@ -231,7 +231,7 @@ impl GameManager {
         let (room_to_go, room_to_go_id) = {
             let current_player_room_name = player.get_current_room();
             let room_to_go = match self
-                .get_neighbor_room_name(current_player_room_name, &direction.to_owned())
+                .get_neighbor_room_name(current_player_room_name, &direction_uncased)
             {
                 Some(name) => name.clone(),
                 None => return generate_json(&leader, command_name, ErrorCode::NoExit, "").dump(),
@@ -561,7 +561,7 @@ impl GameManager {
         self.get_quest(quest_id).cloned()
     }
 
-    pub fn process_tester_responses(&mut self) -> std::io::Result<()> {
+    pub fn process_tester_responses(&mut self) {
         while let Ok(response) = self.tester_receiver.try_recv() {
             debug!("received tester response: {}", response);
             let json = json::parse(&response).unwrap_or(json::JsonValue::Null);
@@ -669,7 +669,6 @@ impl GameManager {
                 }
             }
         }
-        Ok(())
     }
 
     pub fn handle_message(&mut self, msg: String) -> String {
@@ -1104,7 +1103,7 @@ impl GameManager {
 
                     let counter_attack_json = object! {
                         "dealt_damage" => NPC_COUNTER_DMG,
-                        "current_hp" => hp_after_hit.to_string(),
+                        "current_hp" => hp_after_hit,
                         "npc_id" => npc_repr
                     }
                     .dump();
