@@ -155,11 +155,12 @@ impl From<ServerResponse> for ServerEvent {
                 }
             },
 
-            ["SPAWN", r#type, id] => {
+            ["SPAWN", r#type, id @ ..] => {
                 let arg_type = r#type
                     .strip_prefix("type=")
                     .and_then(|s| s.parse::<String>().ok());
                 let arg_id = id
+                    .join(" ")
                     .strip_prefix("id=")
                     .and_then(|s| s.parse::<String>().ok());
 
@@ -174,11 +175,12 @@ impl From<ServerResponse> for ServerEvent {
                     ServerEvent::Unknown(args.join(" "))
                 }
             }
-            ["DESPAWN", r#type, id] => {
+            ["DESPAWN", r#type, id @ ..] => {
                 let arg_type = r#type
                     .strip_prefix("type=")
                     .and_then(|s| s.parse::<String>().ok());
                 let arg_id = id
+                    .join(" ")
                     .strip_prefix("id=")
                     .and_then(|s| s.parse::<String>().ok());
 
@@ -194,12 +196,13 @@ impl From<ServerResponse> for ServerEvent {
                 }
             }
 
-            ["KILL", player_name, npc_id] => ServerEvent::Kill(KillData {
+            ["KILL", player_name, npc_id @ ..] => ServerEvent::Kill(KillData {
                 player: player_name.to_string(),
-                npc_id: npc_id.to_string(),
+                npc_id: npc_id.join(" "),
             }),
-            ["DEATH", player_name, respawn_room] => {
+            ["DEATH", player_name, respawn_room @ ..] => {
                 let arg_respawn_room_id = respawn_room
+                    .join(" ")
                     .strip_prefix("respawn_room_id=")
                     .and_then(|s| s.parse::<String>().ok());
 
@@ -240,10 +243,10 @@ impl From<ServerResponse> for ServerEvent {
             }
 
             // Room events
-            ["ROOM", name, "PRESENCE", "ENTER"] => {
+            ["ROOM", "PRESENCE", "ENTER", name] => {
                 ServerEvent::Room(RoomEvent::PresenceEnter(name.to_string()))
             }
-            ["ROOM", name, "PRESENCE", "LEAVE"] => {
+            ["ROOM", "PRESENCE", "LEAVE", name] => {
                 ServerEvent::Room(RoomEvent::PresenceLeave(name.to_string()))
             }
             ["ROOM", "CHAT", sender, message @ ..] => {
