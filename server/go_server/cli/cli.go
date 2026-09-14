@@ -1,17 +1,20 @@
 package cli
 
 import (
-	"bufio"
+	"errors"
 	"fmt"
+	"io"
+	"strconv"
+	"strings"
+	"time"
+
+	"github.com/ergochat/readline"
+
 	"go_server/game_conn"
 	"go_server/helper"
 	"go_server/logger"
 	"go_server/protocol"
 	"go_server/session"
-	"os"
-	"strconv"
-	"strings"
-	"time"
 )
 
 type serverCLI struct {
@@ -23,11 +26,13 @@ type serverCLI struct {
 }
 
 func Run(
+	reader *readline.Instance,
 	connectionManager *session.ConnectionManager,
 	room *session.Room,
 	gameServerManager *game_conn.GameServerManager,
 	shutdown func(),
 ) {
+	defer reader.Close()
 	console := serverCLI{
 		connectionManager: connectionManager,
 		room:              room,
@@ -35,28 +40,31 @@ func Run(
 		shutdown:          shutdown,
 		startedAt:         time.Now(),
 	}
-	console.readCommands()
+	console.readCommands(reader)
 }
 
-func (console *serverCLI) readCommands() {
-	scanner := bufio.NewScanner(os.Stdin)
-	interactive := isInteractive(os.Stdin)
-	if interactive {
-		logger.AppLogger.EnablePrompt(prompt, os.Stdout)
-		defer logger.AppLogger.DisablePrompt()
-	}
+func NewReader() (*readline.Instance, error) {
+	return readline.NewEx(&readline.Config{
+		Prompt:          prompt,
+		InterruptPrompt: "^C",
+	})
+}
+
+func (console *serverCLI) readCommands(reader *readline.Instance) {
 	for {
-		if interactive {
-			logger.AppLogger.PrintPrompt()
+		line, err := reader.Readline()
+		if errors.Is(err, readline.ErrInterrupt) {
+			continue
 		}
-		if !scanner.Scan() {
-			break
+		if errors.Is(err, io.EOF) {
+			return
 		}
-		if interactive {
-			logger.AppLogger.ConsumePrompt()
+		if err != nil {
+			logger.AppLogger.Error("CLI input error: %v", err)
+			return
 		}
 
-		command, arguments := splitCommand(scanner.Text())
+		command, arguments := splitCommand(line)
 		if command == "" {
 			continue
 		}
@@ -64,15 +72,6 @@ func (console *serverCLI) readCommands() {
 			return
 		}
 	}
-
-	if err := scanner.Err(); err != nil {
-		logger.AppLogger.Error("CLI input error: %v", err)
-	}
-}
-
-func isInteractive(input *os.File) bool {
-	info, err := input.Stat()
-	return err == nil && info.Mode()&os.ModeCharDevice != 0
 }
 
 func splitCommand(input string) (string, string) {

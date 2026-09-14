@@ -46,9 +46,14 @@ func main() {
 		return
 	}
 	defer logFile.Close()
+	commandReader, cliErr := cli.NewReader()
+	if cliErr != nil {
+		fmt.Fprintln(os.Stderr, "CLI initialization error:", cliErr)
+		return
+	}
 	logger.AppLogger.SetOutputs(
-		io.MultiWriter(os.Stdout, logFile),
-		io.MultiWriter(os.Stderr, logFile),
+		io.MultiWriter(commandReader.Stdout(), logFile),
+		io.MultiWriter(commandReader.Stderr(), logFile),
 	)
 
 	validProtocol := false
@@ -85,7 +90,7 @@ func main() {
 	connectionManager := session.NewConnectionManager()
 	room := session.NewRoom()
 
-	go cli.Run(connectionManager, room, gameServerManager, func() {
+	go cli.Run(commandReader, connectionManager, room, gameServerManager, func() {
 		shutdownServer(quit, listener, &stopOnce)
 	})
 	go connectionManager.RunFloodPointDecay(quit)
