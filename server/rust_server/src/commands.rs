@@ -917,15 +917,25 @@ impl GameManager {
                 self.remove_item_from_room(room_name.as_str(), item_id);
                 self.add_item_to_player(player_id, item_id);
                 self.reset_dropped_at_for_item(item_id);
-
+                let Some(item_obj) = self.get_item(item_id) else {
+                    return generate_json(player_name, command_name, ErrorCode::ItemNotFound, "")
+                        .dump();
+                };
+                let item_repr = item_obj.get_protocol_representation();
                 let mut players_to_send = self.get_all_players_at_room(player_room.as_str());
-                self.send_event_json(&mut players_to_send, player_name, "TAKE", item, true);
+                self.send_event_json(
+                    &mut players_to_send,
+                    player_name,
+                    "TAKE",
+                    item_repr.as_str(),
+                    true,
+                );
 
                 generate_json(
                     player_name,
                     command_name,
                     ErrorCode::NoError,
-                    self.get_item_repr_from_id(item_id).to_string().as_str(),
+                    item_repr.as_str(),
                 )
                 .dump()
             }
@@ -970,7 +980,7 @@ impl GameManager {
 
                 let item_repr = Item::protocol_representation(item_id, &item_name);
                 let mut players_to_send = self.get_all_players_at_room(room_name.as_str());
-                self.send_event_json(&mut players_to_send, player_name, "DROP", item, true);
+                self.send_event_json(&mut players_to_send, player_name, "DROP", item_repr.as_str(), true);
 
                 generate_json(
                     player_name,
