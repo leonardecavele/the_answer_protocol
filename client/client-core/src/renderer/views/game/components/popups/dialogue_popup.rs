@@ -128,6 +128,12 @@ impl Lifecycle for DialoguePopup {
 
         match event {
             CrosstermEvent::Key(key) => {
+                if key.code == KeyCode::Esc {
+                    state.game.close_dialogue();
+
+                    return EventFlow::Consumed;
+                }
+
                 if key.code != KeyCode::Enter {
                     return EventFlow::Ignored;
                 }
