@@ -249,7 +249,7 @@ and message:
 15:04:05.123456 INFO client connected remote=127.0.0.1:52144
 ```
 
-The same ANSI-colored records are written to the console and log file.
+The same records are written to the console and log file; ANSI colors are only used in the console.
 Consumers that need plain text must strip the escape sequences. The file is
 reset at process start.
 
