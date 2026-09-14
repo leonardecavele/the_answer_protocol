@@ -1285,11 +1285,16 @@ impl GameManager {
         } else {
             warn!("tried to reset non-existent player: {}", player_id);
         }
+        let death_respawn_room_repr = if let Some(room) = self.get_room_by_name(PLAYER_ROOM_SPAWN) {
+            room.get_protocol_representation()
+        } else {
+            "0.error"
+        };
         self.send_event_json(
             &mut players_to_send_death_info,
             player_name.as_str(),
             "DEATH",
-            format!("respawn_room_id={}", PLAYER_ROOM_SPAWN).as_str(),
+            format!("respawn_room_id={}", death_respawn_room_repr).as_str(),
             false,
         );
         if let Some(instance) = self.combat_instances.get_mut_instance_for_player(player_id) {
