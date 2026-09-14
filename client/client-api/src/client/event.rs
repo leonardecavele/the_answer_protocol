@@ -58,15 +58,23 @@ pub struct FightStartData {
     pub nl_sep: String,
     pub sp_sep: String,
     pub npc_id: String,
-    pub npc_hp: u64,
-    pub npc_max_hp: u64,
+    pub npc_hp: u16,
+    pub npc_max_hp: u16,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct FightResultData {
     pub player_name: String,
     pub success: bool,
-    pub damage_dealt: u32,
+    pub damage_dealt: u16,
+    pub current_hp: u16,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct CounterAttackData {
+    pub npc_id: String,
+    pub dealt_damage: u16,
+    pub current_hp: u16,
 }
 
 #[derive(Debug, Clone)]
@@ -114,6 +122,7 @@ pub enum ServerEvent {
     Despawn(SpawnData),
     Kill(KillData),
     Death(DeathData),
+    CounterAttack(CounterAttackData),
     FightStart(FightStartData),
     FightResult(FightResultData),
     FightEnd,
@@ -221,6 +230,14 @@ impl From<ServerResponse> for ServerEvent {
                 }
             }
             ["FIGHT", "END"] => ServerEvent::FightEnd,
+            ["COUNTER", "ATTACK", args @ ..] => {
+                let payload = args.join(" ");
+
+                match parse_payload::<CounterAttackData>("COUNTER ATTACK", &payload) {
+                    Some(data) => ServerEvent::CounterAttack(data),
+                    None => ServerEvent::Unknown(payload),
+                }
+            }
 
             // Room events
             ["ROOM", name, "PRESENCE", "ENTER"] => {

@@ -10,9 +10,9 @@ pub struct AttackCommand {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CombatResult {
-    pub attacker_hp: u32,
-    pub target_hp: u32,
-    pub damage: u32,
+    pub attacker_hp: u16,
+    pub target_hp: u16,
+    pub damage: u16,
     pub status: String,
 }
 
