@@ -6,9 +6,10 @@ import (
 )
 
 const (
-	colorRed   = "\033[31m"
-	colorGreen = "\033[32m"
-	colorReset = "\033[0m"
+	colorRed    = "\033[31m"
+	colorGreen  = "\033[32m"
+	colorYellow = "\033[33m"
+	colorReset  = "\033[0m"
 )
 
 var ansiSequence = regexp.MustCompile(`\x1b\[[0-?]*[ -/]*[@-~]`)
