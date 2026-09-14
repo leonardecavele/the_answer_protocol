@@ -40,6 +40,25 @@ impl DialoguePopup {
             shown_npc: None,
         }
     }
+
+    pub fn next(
+        &mut self,
+        state: &mut AppState,
+        dialog: &DialogueState,
+        sender: &Sender<ApplicationEvent>,
+    ) {
+        if self.chars_shown < dialog.char_count() {
+            self.chars_shown = dialog.char_count();
+        } else if dialog.ends_dialog {
+            state.game.close_dialogue();
+        } else {
+            let request = ApiRequest::Talk(TalkCommand {
+                npc_name: dialog.npc_id.clone(),
+            });
+
+            let _ = sender.try_send(ApplicationEvent::Send(SendEvent::ApiRequest(request)));
+        }
+    }
 }
 
 impl ScrollableComponent for DialoguePopup {
@@ -107,27 +126,31 @@ impl Lifecycle for DialoguePopup {
             return EventFlow::Ignored;
         };
 
-        let CrosstermEvent::Key(key) = event else {
-            return EventFlow::Ignored;
-        };
+        match event {
+            CrosstermEvent::Key(key) => {
+                if key.code != KeyCode::Enter {
+                    return EventFlow::Ignored;
+                }
 
-        if key.code != KeyCode::Enter {
-            return EventFlow::Ignored;
+                self.next(state, &dialog, sender);
+
+                return EventFlow::Consumed;
+            }
+            CrosstermEvent::Mouse(mouse) => {
+                if mouse.kind
+                    != crossterm::event::MouseEventKind::Down(crossterm::event::MouseButton::Left)
+                {
+                    return EventFlow::Ignored;
+                }
+
+                self.next(state, &dialog, sender);
+
+                return EventFlow::Consumed;
+            }
+            _ => {}
         }
 
-        if self.chars_shown < dialog.char_count() {
-            self.chars_shown = dialog.char_count();
-        } else if dialog.ends_dialog {
-            state.game.close_dialogue();
-        } else {
-            let request = ApiRequest::Talk(TalkCommand {
-                npc_name: dialog.npc_id.clone(),
-            });
-
-            let _ = sender.try_send(ApplicationEvent::Send(SendEvent::ApiRequest(request)));
-        }
-
-        EventFlow::Consumed
+        EventFlow::Ignored
     }
 
     fn on_tick(&mut self, state: &mut AppState, _sender: &Sender<ApplicationEvent>) {

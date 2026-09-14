@@ -144,6 +144,12 @@ impl<T: ScrollableComponent> Lifecycle for Scrollable<T> {
             }
         }
 
+        if let CrosstermEvent::Mouse(mouse) = event
+            && matches!(self.hit(mouse.column, mouse.row), ScrollableHit::None)
+        {
+            return EventFlow::Ignored;
+        }
+
         self.inner.handle_device_event(state, event, sender)
     }
 
