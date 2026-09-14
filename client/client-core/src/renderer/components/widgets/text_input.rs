@@ -35,6 +35,7 @@ pub struct TextInput {
     pub value: String,
     pub is_focused: bool,
     cursor: Cursor,
+    offset: usize,
 }
 
 impl TextInput {
@@ -44,6 +45,20 @@ impl TextInput {
             value: String::new(),
             is_focused: false,
             cursor: Cursor::default(),
+            offset: 0,
+        }
+    }
+
+    fn clamp_offset(&mut self, visible_count: usize) {
+        if visible_count == 0 {
+            self.offset = 0;
+            return;
+        }
+
+        if self.cursor.index < self.offset {
+            self.offset = self.cursor.index;
+        } else if self.cursor.index >= self.offset + visible_count {
+            self.offset = self.cursor.index - visible_count + 1;
         }
     }
 
@@ -105,19 +120,23 @@ impl TextInput {
         }
     }
 
-    fn line(&self) -> Line<'static> {
-        if !self.is_focused || !self.cursor.is_visible {
-            return Line::from(self.value.clone());
-        }
-
-        let before: String = self.value.chars().take(self.cursor.index).collect();
-        let after: String = self.value.chars().skip(self.cursor.index + 1).collect();
-        let under = self
+    fn line(&self, visible_count: usize) -> Line<'static> {
+        let visible: String = self
             .value
             .chars()
-            .nth(self.cursor.index)
-            .unwrap_or(' ')
-            .to_string();
+            .skip(self.offset)
+            .take(visible_count)
+            .collect();
+
+        if !self.is_focused || !self.cursor.is_visible {
+            return Line::from(visible);
+        }
+
+        let index = self.cursor.index.saturating_sub(self.offset);
+
+        let before: String = visible.chars().take(index).collect();
+        let after: String = visible.chars().skip(index + 1).collect();
+        let under = visible.chars().nth(index).unwrap_or(' ').to_string();
 
         Line::from(vec![
             Span::raw(before),
@@ -139,7 +158,10 @@ impl InteractiveComponent for TextInput {
             .title(format!(" {} ", self.label.as_str()))
             .style(text_style);
 
-        let paragraph = Paragraph::new(self.line()).block(block);
+        let visible_count = block.inner(area).width as usize;
+        self.clamp_offset(visible_count);
+
+        let paragraph = Paragraph::new(self.line(visible_count)).block(block);
         frame.render_widget(paragraph, area);
     }
 
