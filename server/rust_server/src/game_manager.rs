@@ -1333,7 +1333,7 @@ impl GameManager {
         None
     }
 
-    pub fn check_action_already_taken(&self, player_id: PlayerId, npc_id: NpcId) -> bool {
+    pub fn check_action_already_taken(&self, player_id: PlayerId) -> bool {
         if let Some(instance) = self.combat_instances.get_instance_for_player(player_id)
             && let Some(_player) = instance.get_player_success(player_id)
             && let Some(_success) = _player
