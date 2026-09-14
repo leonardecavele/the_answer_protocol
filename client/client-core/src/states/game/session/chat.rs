@@ -18,3 +18,14 @@ pub enum ChatChannel {
     Room,
     Group,
 }
+
+impl ChatChannel {
+    pub fn prefix(&self) -> &'static str {
+        match self {
+            ChatChannel::Global => "[GLOBAL]",
+            ChatChannel::Group => "[GROUP]",
+            ChatChannel::Room => "[ROOM]",
+            ChatChannel::Private(_) => "[PRIVATE]",
+        }
+    }
+}

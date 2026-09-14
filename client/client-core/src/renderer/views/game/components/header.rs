@@ -52,6 +52,8 @@ impl Header {
     }
 
     fn draw_buttons(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
+        self.chat.set_highlighted(state.game.is_chat_unread);
+
         let group = if state.game.group.is_in_group() {
             self.group_create.hide();
             &mut self.group_leave
@@ -209,6 +211,7 @@ impl Lifecycle for Header {
 
         if self.chat.hit(mouse.column, mouse.row) {
             state.game.overlays.toggle(Overlay::Chat(ChatState));
+            state.game.is_chat_unread = false;
             return EventFlow::Consumed;
         }
 

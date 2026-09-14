@@ -7,6 +7,7 @@ use crate::renderer::theme::{
 use crate::states::AppState;
 use crate::states::game::{ChatChannel, ChatSender};
 use ratatui::layout::Rect;
+use ratatui::style::Style;
 use ratatui::text::Line;
 use ratatui::widgets::Block;
 
@@ -47,11 +48,13 @@ impl ScrollableComponent for ChatOverlay {
         let mut visual_lines = Vec::new();
 
         for msg in &state.game.chat_log {
-            let (prefix, _) = match &msg.channel {
-                ChatChannel::Global => ("[GLOBAL]", CHAT_GLOBAL_COLOR),
-                ChatChannel::Group => ("[GROUP]", CHAT_GROUP_COLOR),
-                ChatChannel::Room => ("[ROOM]", CHAT_ROOM_COLOR),
-                ChatChannel::Private(_) => ("[PRIVATE]", CHAT_PRIVATE_COLOR),
+            let prefix = msg.channel.prefix();
+
+            let color = match &msg.channel {
+                ChatChannel::Global => CHAT_GLOBAL_COLOR,
+                ChatChannel::Group => CHAT_GROUP_COLOR,
+                ChatChannel::Room => CHAT_ROOM_COLOR,
+                ChatChannel::Private(_) => CHAT_PRIVATE_COLOR,
             };
 
             let full_text = match (&msg.channel, &msg.sender) {
@@ -68,7 +71,11 @@ impl ScrollableComponent for ChatOverlay {
                 (_, ChatSender::Other(from)) => format!("{} ({}): {}", prefix, from, msg.content),
             };
 
-            visual_lines.extend(wrap_str_to_lines(&full_text, max_width));
+            visual_lines.extend(
+                wrap_str_to_lines(&full_text, max_width)
+                    .into_iter()
+                    .map(|line| line.style(Style::default().fg(color))),
+            );
         }
 
         visual_lines
