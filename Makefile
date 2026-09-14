@@ -41,10 +41,13 @@ HELPERS = \
 	ensure_stopped() { \
 		pid_file="$$1"; \
 		name="$$2"; \
+		expected_exe="$$3"; \
 		test -f "$$pid_file" || return 0; \
 		pid=$$(cat "$$pid_file"); \
 		is_pid "$$pid" || { clear_pid "$$pid_file"; return 0; }; \
 		is_running "$$pid" || { clear_pid "$$pid_file"; return 0; }; \
+		actual_exe=$$(process_exe "$$pid"); \
+		case "$$actual_exe" in "$$expected_exe"|"$$expected_exe (deleted)") ;; *) clear_pid "$$pid_file"; info_log "removed stale PID file for $$name"; return 0;; esac; \
 		error_log "$$name is already running (PID $$pid)"; \
 		return 1; \
 	}; \
@@ -56,7 +59,8 @@ HELPERS = \
 		pid=$$(cat "$$pid_file"); \
 		is_pid "$$pid" || { error_log "invalid PID for $$name"; return 1; }; \
 		is_running "$$pid" || { clear_pid "$$pid_file"; info_log "$$name is not running"; return 0; }; \
-		test "$$(process_exe "$$pid")" = "$$expected_exe" || { error_log "refusing to stop $$name: PID $$pid belongs to another process"; return 1; }; \
+		actual_exe=$$(process_exe "$$pid"); \
+		case "$$actual_exe" in "$$expected_exe"|"$$expected_exe (deleted)") ;; *) clear_pid "$$pid_file"; info_log "removed stale PID file for $$name"; return 0;; esac; \
 		kill "$$pid" || { error_log "could not stop $$name (PID $$pid)"; return 1; }; \
 		clear_pid "$$pid_file"; \
 		info_log "$$name stopped"; \
@@ -92,8 +96,8 @@ build: build-go-server build-rust-server build-client-tui build-client-gui
 run:
 	@mkdir -p "$(RUN_DIR)"
 	@$(HELPERS) \
-		ensure_stopped "$(GO_SERVER_PID_FILE)" "go server" && \
-		ensure_stopped "$(RUST_SERVER_PID_FILE)" "rust server"
+		ensure_stopped "$(GO_SERVER_PID_FILE)" "go server" "$(abspath $(GO_SERVER_DIR)/go_server)" && \
+		ensure_stopped "$(RUST_SERVER_PID_FILE)" "rust server" "$(abspath $(RUST_SERVER_DIR)/target/release/rust_server)"
 	@$(MAKE) build-go-server build-rust-server build-client-tui
 	@$(HELPERS) info_log "starting Rust server in background"
 	@(cd $(RUST_SERVER_DIR) && exec ./target/release/rust_server $(RUST_SERVER_ARGS)) < /dev/null > "$(RUST_SERVER_LOG)" 2>&1 & \
