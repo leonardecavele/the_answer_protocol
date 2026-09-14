@@ -1051,10 +1051,12 @@ impl GameManager {
                 generate_json(player_name, command_name, ErrorCode::NoError, "Processing").dump()
             }
             "ATTACK" => {
-                let npc_id = match self.verify_combat_target(player_name, command_name, data) {
+                let npc_name = data;
+                let npc_id = match self.verify_combat_target(player_name, command_name, npc_name) {
                     Ok(id) => id,
                     Err(json_response) => return json_response,
                 };
+                let npc_repr = Npc::protocol_representation(npc_id, npc_name);
                 let player_id = match self.get_player_id(player_name) {
                     Some(id) => *id,
                     None => {
@@ -1102,7 +1104,8 @@ impl GameManager {
 
                     let counter_attack_json = object! {
                         "dealt_damage" => NPC_COUNTER_DMG,
-                        "current_hp" => hp_after_hit.to_string()
+                        "current_hp" => hp_after_hit.to_string(),
+                        "npc_id" => npc_repr
                     }
                     .dump();
                     self.send_no_player_event(
