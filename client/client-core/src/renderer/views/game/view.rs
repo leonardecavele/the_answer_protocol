@@ -191,6 +191,7 @@ impl GameView {
 
             if key.code == KeyCode::F(1) {
                 state.game.overlays.toggle(Overlay::Chat(ChatState));
+                state.game.is_chat_unread = false;
                 return EventFlow::Consumed;
             }
         }
