@@ -194,19 +194,23 @@ impl LeftPanel {
             .enumerate()
             .skip(room.players.offset())
             .map(|(index, name)| {
-                let color = if Some(name) == state.game.player.name.as_ref() {
-                    PLAYER_COLOR
-                } else {
-                    Color::Reset
-                };
+                let is_me = state.game.player.is_me(name);
 
+                let color = if is_me { PLAYER_COLOR } else { Color::Reset };
                 let style = selection_style(color, focused && room.players.is_selected(index));
 
-                ListItem::new(Span::styled(format!("• {}", name), style))
+                let label = if is_me {
+                    format!("• {} (You)", name)
+                } else {
+                    format!("• {}", name)
+                };
+
+                ListItem::new(Span::styled(label, style))
             })
             .collect();
 
-        let list = List::new(items).block(panel_block(" Room Players ", focused));
+        let title = format!(" Room Players ({}) ", room.players.len());
+        let list = List::new(items).block(panel_block(title, focused));
         frame.render_widget(list, area);
         self.players_area = Some(area);
     }
@@ -416,7 +420,8 @@ impl Lifecycle for LeftPanel {
                         .room
                         .as_ref()
                         .and_then(|room| room.players.selected())
-                        .cloned();
+                        .cloned()
+                        .filter(|player_name| !state.game.player.is_me(player_name));
 
                     match selected {
                         Some(player_name) => {

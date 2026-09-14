@@ -279,17 +279,20 @@ impl GameView {
             match left_hit {
                 LeftPanelHit::Player(index) => {
                     if room.players.is_selected(index) {
-                        let can_invite = state
+                        let selected = room.players.selected().cloned();
+                        let is_leader = state
                             .game
                             .group
                             .is_leader(state.game.player.name.as_deref());
 
-                        requested = room.players.selected().map(|player_name| {
-                            Overlay::PlayerActions(PlayerActionsState::new(
-                                player_name.clone(),
-                                can_invite,
-                            ))
-                        });
+                        requested = selected
+                            .filter(|player_name| !state.game.player.is_me(player_name))
+                            .map(|player_name| {
+                                Overlay::PlayerActions(PlayerActionsState::new(
+                                    player_name,
+                                    is_leader,
+                                ))
+                            });
                     } else {
                         room.players.select_index(index);
                     }
