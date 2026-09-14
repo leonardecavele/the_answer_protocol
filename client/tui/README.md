@@ -98,9 +98,7 @@ The frontend writes to `tui.log` using the core's
 RUST_LOG=info make run-client-tui
 ```
 
-## Validation
+## Linting
 
-```bash
-cargo test --manifest-path client/tui/Cargo.toml
-cargo clippy --manifest-path client/tui/Cargo.toml --all-targets -- -D warnings
-```
+Formatting and static analysis are documented in the
+[client workspace instructions](../README.md#linting).

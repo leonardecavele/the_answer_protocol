@@ -85,9 +85,9 @@ When `App` requests shutdown, the GUI closes the native viewport.
 
 The software terminal starts at 120 columns by 40 rows and uses 9-by-18 regular
 and bold monospace atlases. The native window cannot shrink below the 80-by-24
-application minimum, and the zoom factor is capped so that minimum grid remains
-visible. Cells with an unset background are normalized to black before display.
-The drawable area is also clamped to the graphics texture limit.
+application minimum. Cells with an unset background or foreground receive the
+default colors `#231129` and `#E6E1EA` before display. The drawable area is also
+clamped to the graphics texture limit.
 
 ## Input translation
 
@@ -138,9 +138,7 @@ RUST_LOG=info make run-client-gui
 | `src/input.rs` | Egui-to-Crossterm keyboard and pointer conversion. |
 | `src/screen.rs` | Software terminal, cell grid, fonts, and Egui sizing. |
 
-## Validation
+## Linting
 
-```bash
-cargo test --manifest-path client/gui/Cargo.toml
-cargo clippy --manifest-path client/gui/Cargo.toml --all-targets -- -D warnings
-```
+Formatting and static analysis are documented in the
+[client workspace instructions](../README.md#linting).

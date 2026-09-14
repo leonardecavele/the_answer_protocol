@@ -67,11 +67,16 @@ make run-client-gui CLIENT_ARGS="--ip 192.0.2.10 --port 38800 --assets ./assets"
 
 Both connect to `127.0.0.1:38800` and use their embedded assets by default.
 
+Build details, runtime behavior, and controls are documented by the component
+READMEs linked above.
+
+## Linting
+
 Run client-wide formatting and static analysis with:
 
 ```bash
 make lint-client
 ```
 
-Build details, runtime behavior, and controls are documented by the component
-READMEs linked above.
+It runs Clippy over every workspace target, then checks formatting with
+`cargo fmt`.

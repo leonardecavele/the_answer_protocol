@@ -57,9 +57,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 `Client::connect`:
 
 1. opens the TCP connection within the configured deadline;
-2. reads `OK hello proto=<version>`;
-3. validates protocol version 1;
-4. creates bounded request, event, and frame channels;
+2. creates bounded request, event, and frame channels;
+3. reads `OK hello proto=<version>`;
+4. validates protocol version 1;
 5. starts one background bridge task;
 6. returns the client and initial subscriptions.
 
@@ -86,14 +86,30 @@ The values are `Connected`, `Closed`, and `Lost(String)`.
 `ApiRequest::parse` accepts full commands and TUI-friendly aliases without
 case sensitivity:
 
-| Area | Accepted input |
+| Area | Commands |
 | --- | --- |
 | Core | `connect`, `quit`, `look`, `move`, `who` |
-| Fight | `fight create` / `fc`, `fight attack` / `fa` |
-| Chat | `chat global` / `say`, `chat room` / `cr`, `chat group` / `cg`, `chat private` / `msg` |
-| Resources | `take`, `drop`, `inventory` / `inv`, `status`, `talk`, `attack` |
+| Fight | `fight create`, `fight attack` |
+| Chat | `chat global`, `chat room`, `chat group`, `chat private` |
+| Resources | `take`, `drop`, `inventory`, `use`, `status`, `talk`, `attack` |
 | Quests | `quest`, `quests` |
-| Groups | `group create` / `gc`, `group join` / `gj`, `group leave` / `gl`, `group invite` / `gi` |
+| Groups | `group create`, `group join`, `group leave`, `group invite` |
+
+Every multi-word command and `inventory` also accept a short alias:
+
+| Alias | Command |
+| --- | --- |
+| `fc` | `fight create` |
+| `fa` | `fight attack` |
+| `say` | `chat global` |
+| `cr` | `chat room` |
+| `cg` | `chat group` |
+| `msg` | `chat private` |
+| `inv` | `inventory` |
+| `gc` | `group create` |
+| `gj` | `group join` |
+| `gl` | `group leave` |
+| `gi` | `group invite` |
 
 `Client::execute_request` returns the matching `ApiResponse` variant. Typed
 command structures and response data are re-exported from
@@ -158,11 +174,7 @@ commands remain within that server-side limit.
 clean exit. Dropping the client also aborts its background task, making resource
 cleanup deterministic when an owning application exits early.
 
-## Validation
+## Linting
 
-From the repository root:
-
-```bash
-cargo test --manifest-path client/client-api/Cargo.toml
-cargo clippy --manifest-path client/client-api/Cargo.toml --all-targets -- -D warnings
-```
+Formatting and static analysis are documented in the
+[client workspace instructions](../README.md#linting).
