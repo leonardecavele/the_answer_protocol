@@ -2,12 +2,13 @@ use client_core::{App, ApplicationEvent, Assets, ClientError};
 use crossterm::event::{DisableMouseCapture, EnableMouseCapture, EventStream};
 use crossterm::execute;
 use crossterm::terminal::{
-    EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode,
+    disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen,
 };
 use futures::StreamExt;
-use ratatui::Terminal;
 use ratatui::backend::CrosstermBackend;
+use ratatui::Terminal;
 use std::io;
+use tokio::signal::unix::{signal, Signal, SignalKind};
 
 type TerminalScreen = Terminal<CrosstermBackend<io::Stdout>>;
 
@@ -15,14 +16,19 @@ pub struct TuiApp {
     app: App,
     terminal: TerminalScreen,
     device_events: EventStream,
+    shutdown_signal: Signal,
 }
 
 impl TuiApp {
-    pub fn new(ip: String, port: String, assets: Assets) -> io::Result<Self> {
+    pub fn new(ip: String, port: String, assets: Assets) -> Result<Self, ClientError> {
+        let shutdown_signal =
+            signal(SignalKind::terminate()).map_err(|err| ClientError::General(err.to_string()))?;
+
         Ok(Self {
             app: App::new(ip, port, assets),
             terminal: terminal_setup()?,
             device_events: EventStream::new(),
+            shutdown_signal,
         })
     }
 
@@ -49,6 +55,9 @@ impl TuiApp {
 
     async fn next_events(&mut self) -> Result<(), ClientError> {
         tokio::select! {
+            _shutdown_signal = self.shutdown_signal.recv() => {
+                self.app.state.should_quit = true;
+            }
             event = self.app.event_broker.next_event() => self.app.update(event?),
             Some(Ok(device_event)) = self.device_events.next() => {
                 self.app.update(ApplicationEvent::DeviceEvent(device_event));
