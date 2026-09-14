@@ -1565,24 +1565,23 @@ impl GameManager {
             ("array_contains.c", ("Mais que contient-elle ?", 35)),
         ]);
 
-        let possibilities_npc_quest: HashMap<&str, (&str, u64)> = HashMap::from([
-            ("test", ("", 222)),
-        ]);
+        let possibilities_npc_quest: HashMap<&str, (&str, u64)> =
+            HashMap::from([("test", ("", 222))]);
 
         // not an error if there is not just there is not a quest for each file name
-        if let Some(&(quest_name, actual_time_allowed)) = possibilities_code_quests.get(assigned_file_name) {
-            if time_took_in_seconds <= actual_time_allowed {
-                if let Some(player_id) = self.get_player_id(player_name).copied() {
-                    self.add_one_step_to_quest(player_id, quest_name);
-                }
-            }
+        if let Some(&(quest_name, actual_time_allowed)) =
+            possibilities_code_quests.get(assigned_file_name)
+            && time_took_in_seconds <= actual_time_allowed
+            && let Some(player_id) = self.get_player_id(player_name).copied()
+        {
+            self.add_one_step_to_quest(player_id, quest_name);
         };
-        if let Some(&(quest_name, actual_time_allowed)) = possibilities_npc_quest.get(npc_attacked_name) {
-            if time_took_in_seconds <= actual_time_allowed {
-                if let Some(player_id) = self.get_player_id(player_name).copied() {
-                    self.add_one_step_to_quest(player_id, quest_name);
-                }
-            }
+        if let Some(&(quest_name, actual_time_allowed)) =
+            possibilities_npc_quest.get(npc_attacked_name)
+            && time_took_in_seconds <= actual_time_allowed
+            && let Some(player_id) = self.get_player_id(player_name).copied()
+        {
+            self.add_one_step_to_quest(player_id, quest_name);
         };
     }
 

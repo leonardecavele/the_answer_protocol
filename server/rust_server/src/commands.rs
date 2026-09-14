@@ -586,16 +586,13 @@ impl GameManager {
                             0
                         });
                     let (npc_name, npc_hp) = if let Some(npc) = self.get_npc(npc_id) {
-                        (
-                            npc.get_name(),
-                            npc.get_hp().unwrap_or(0),
-                        )
+                        (npc.get_name(), npc.get_hp().unwrap_or(0))
                     } else {
                         warn!(
                             "npc {} does not exist and yet he is in a combat instance!",
                             npc_id
                         );
-                    
+
                         ("error".to_string(), 0)
                     };
                     let dmg =
