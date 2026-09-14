@@ -1,11 +1,42 @@
 The `gui` crate provides the native graphical interface for The Answer
 Protocol. It reuses `client_core::App`, including its screens, state,
-networking, focus model, commands, and widgets. Egui supplies the window and
-input events; a software Ratatui backend supplies the character-cell display.
+networking, focus model, commands, and widgets. Eframe owns the native window
+and its GPU surface; the application rasterises every pixel it displays,
+including room photographs and animated character sprites.
 
 Public command behavior and server frames are defined in the root
 [TAP protocol reference](../../PROTOCOL.md). The transport layer is documented
 in the [Client API README](../client-api/README.md).
+
+## A graphical application, not a terminal
+
+This client does not use `curses`, `ncurses`, or any terminal emulation. It
+never allocates a pseudo-terminal and never emits ANSI escape sequences. It does not draw inside the terminal that launches it: it opens
+its own window.
+
+What actually runs:
+
+- `eframe` and `winit` own a native operating-system window, titled
+  `The Answer Protocol`, whose minimum size the application declares itself.
+- `wgpu` owns a GPU surface. Every frame is rasterised by the application into
+  an in-memory pixmap and uploaded as a texture.
+- The application supplies its own font. Glyphs come from bitmap atlases
+  compiled into the binary, so the application decides how text is drawn. A
+  terminal application cannot: the font belongs to the terminal emulator and is
+  chosen by the user.
+
+The fixed 9-by-18 character grid is a layout system the application chose and
+rasterises itself, the way a tile-based game chooses a tile size. It is not
+inherited from a terminal. Ratatui is used here as a layout library rather than
+a terminal library, which is what lets the GUI and the
+[TUI](../tui/README.md) share a single `client-core`.
+
+| | GUI | TUI |
+| --- | --- | --- |
+| Display surface | Eframe window on a `wgpu` GPU surface | A real terminal |
+| Pixels | Rasterized by the application | Drawn by the terminal emulator |
+| Fonts | Bitmap atlases embedded in the binary | The terminal's own font |
+| Shared logic | `client-core` | `client-core` |
 
 ## Rendering pipeline
 

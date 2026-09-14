@@ -12,6 +12,8 @@ use ratatui::Frame;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use tokio::sync::mpsc;
 
+const MAX_PLAYER_NAME_LENGTH: usize = 20;
+
 pub struct LoginView {
     pub focus: LoginFocus,
     pub name_input: Interactive<TextInput>,
@@ -32,6 +34,7 @@ impl LoginView {
             quit_button: Interactive::new(Button::new("Quit")),
         };
 
+        view.name_input.inner.max_length = MAX_PLAYER_NAME_LENGTH;
         view.ip_input.inner.value = ip;
         view.port_input.inner.value = port;
         view.update_focus();

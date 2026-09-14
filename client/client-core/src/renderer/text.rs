@@ -9,6 +9,19 @@ pub fn wrap_str_to_lines<'b>(text: &str, max_width: usize) -> Vec<Line<'b>> {
         .collect()
 }
 
+/// Shorten text to the given width, marking the cut with an ellipsis.
+pub fn truncate_to_width(text: &str, max_width: usize) -> String {
+    if text.chars().count() <= max_width {
+        return text.to_string();
+    }
+
+    if max_width == 0 {
+        return String::new();
+    }
+
+    text.chars().take(max_width - 1).chain(['…']).collect()
+}
+
 /// Helper to wrap a slice of strings into a continuous vector of lines.
 pub fn wrap_slice_to_lines(strs: &[String], max_width: usize) -> Vec<Line<'static>> {
     let mut visual_lines = Vec::new();

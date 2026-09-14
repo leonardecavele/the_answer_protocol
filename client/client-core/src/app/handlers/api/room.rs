@@ -9,10 +9,7 @@ use client_api::events::{DeathData, SpawnData};
 impl App {
     pub fn on_look(&mut self, response: LookResponse) {
         let manifest = &self.state.game.manifest;
-        let self_name = self.state.game.player.name.as_deref();
-
-        let mut players = response.players;
-        players.retain(|player| Some(player.as_str()) != self_name);
+        let players = response.players;
 
         let room = Room {
             id: response.room.id,

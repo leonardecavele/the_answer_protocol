@@ -7,7 +7,8 @@ use client_core::{Assets, Cli, logging};
 use crossterm::event::DisableMouseCapture;
 use crossterm::execute;
 use crossterm::terminal::{LeaveAlternateScreen, disable_raw_mode};
-use std::{io, panic};
+use std::io::IsTerminal;
+use std::{io, panic, process};
 
 const LOG_FILE: &str = "tui.log";
 
@@ -23,6 +24,11 @@ fn setup_panic_hook(deferred_errors: DeferredErrors) {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    if !io::stdout().is_terminal() {
+        eprintln!("This program requires a terminal. Use the GUI client instead.");
+        process::exit(1);
+    }
+
     let deferred_errors = logging::setup(LOG_FILE)?;
     setup_panic_hook(deferred_errors.clone());
 

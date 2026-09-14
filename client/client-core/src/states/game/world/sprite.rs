@@ -13,8 +13,7 @@ pub enum Sprite {
 impl Sprite {
     pub fn of_npc(id: &str, manifest: &Manifest) -> Sprite {
         manifest
-            .npcs
-            .get(id)
+            .npc_entry(id)
             .map(Sprite::from)
             .unwrap_or(Sprite::None)
     }

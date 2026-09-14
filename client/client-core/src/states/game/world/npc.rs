@@ -10,7 +10,7 @@ pub struct Npc {
 
 impl Npc {
     pub fn from_manifest(id: String, manifest: &Manifest) -> Self {
-        match manifest.npcs.get(&id) {
+        match manifest.npc_entry(&id) {
             Some(entry) => Self {
                 name: entry.name.clone(),
                 kind: entry.kind.clone(),

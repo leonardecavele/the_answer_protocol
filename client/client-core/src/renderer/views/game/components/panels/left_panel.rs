@@ -4,6 +4,7 @@ use crate::manifest::NpcKind;
 use crate::renderer::components::{
     Component, EventFlow, LabelButton, Lifecycle, is_mouse_in_rect, scroll_direction,
 };
+use crate::renderer::text::truncate_to_width;
 use crate::renderer::theme::{
     ERROR_COLOR, INFORMATION_COLOR, INVITATION_COLOR, ITEM_COLOR, MUTED_COLOR, PLAYER_COLOR,
     WARNING_COLOR, panel_block, quest_status, selection_style,
@@ -194,19 +195,26 @@ impl LeftPanel {
             .enumerate()
             .skip(room.players.offset())
             .map(|(index, name)| {
-                let color = if Some(name) == state.game.player.name.as_ref() {
-                    PLAYER_COLOR
-                } else {
-                    Color::Reset
-                };
+                let is_me = state.game.player.is_me(name);
 
+                let color = if is_me { PLAYER_COLOR } else { Color::Reset };
                 let style = selection_style(color, focused && room.players.is_selected(index));
 
-                ListItem::new(Span::styled(format!("• {}", name), style))
+                let label = if is_me {
+                    format!("• {} (You)", name)
+                } else {
+                    format!("• {}", name)
+                };
+
+                ListItem::new(Span::styled(
+                    truncate_to_width(&label, area.width.saturating_sub(2) as usize),
+                    style,
+                ))
             })
             .collect();
 
-        let list = List::new(items).block(panel_block(" Room Players ", focused));
+        let title = format!(" Room Players ({}) ", room.players.len());
+        let list = List::new(items).block(panel_block(title, focused));
         frame.render_widget(list, area);
         self.players_area = Some(area);
     }
@@ -227,8 +235,12 @@ impl LeftPanel {
                     NpcKind::Normal => Color::Reset,
                 };
                 let style = selection_style(color, focused && room.npcs.is_selected(index));
+                let label = format!("• {} ({})", npc.name, npc.id);
 
-                ListItem::new(Span::styled(format!("• {} ({})", npc.name, npc.id), style))
+                ListItem::new(Span::styled(
+                    truncate_to_width(&label, area.width.saturating_sub(2) as usize),
+                    style,
+                ))
             })
             .collect();
 
@@ -247,9 +259,10 @@ impl LeftPanel {
             .skip(room.items.offset())
             .map(|(index, item)| {
                 let style = selection_style(ITEM_COLOR, focused && room.items.is_selected(index));
+                let label = format!("• {} ({})", item.name, item.id);
 
                 ListItem::new(Span::styled(
-                    format!("• {} ({})", item.name, item.id),
+                    truncate_to_width(&label, area.width.saturating_sub(2) as usize),
                     style,
                 ))
             })
@@ -271,8 +284,12 @@ impl LeftPanel {
             .map(|(index, leader)| {
                 let style =
                     selection_style(INVITATION_COLOR, focused && invitations.is_selected(index));
+                let label = format!("• {}", leader);
 
-                ListItem::new(Span::styled(format!("• {}", leader), style))
+                ListItem::new(Span::styled(
+                    truncate_to_width(&label, area.width.saturating_sub(2) as usize),
+                    style,
+                ))
             })
             .collect();
 
@@ -306,9 +323,10 @@ impl LeftPanel {
                 };
 
                 let style = selection_style(color, selected);
+                let label = format!("• {} ({})", quest.data.name, progress);
 
                 ListItem::new(Span::styled(
-                    format!("• {} ({})", quest.data.name, progress),
+                    truncate_to_width(&label, area.width.saturating_sub(2) as usize),
                     style,
                 ))
             })
@@ -416,7 +434,8 @@ impl Lifecycle for LeftPanel {
                         .room
                         .as_ref()
                         .and_then(|room| room.players.selected())
-                        .cloned();
+                        .cloned()
+                        .filter(|player_name| !state.game.player.is_me(player_name));
 
                     match selected {
                         Some(player_name) => {
