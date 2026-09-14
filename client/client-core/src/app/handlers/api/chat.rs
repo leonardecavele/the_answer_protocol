@@ -1,6 +1,6 @@
 use crate::app::App;
 use crate::notification::Notification;
-use crate::states::game::{ChatChannel, ChatMessage, ChatSender};
+use crate::states::game::{ChatChannel, ChatMessage, ChatSender, ChatState};
 
 impl App {
     pub fn on_global_chat_sent(&mut self, message: String) {
@@ -45,6 +45,14 @@ impl App {
                 "New private message from {}.",
                 sender
             )));
+        }
+
+        self.state
+            .game
+            .log_action(format!("{} ({}): {}", channel.prefix(), sender, content));
+
+        if !self.state.game.overlays.is_open::<ChatState>() {
+            self.state.game.is_chat_unread = true;
         }
 
         self.state.game.chat_log.push(ChatMessage {

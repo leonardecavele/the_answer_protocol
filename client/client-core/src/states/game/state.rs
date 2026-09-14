@@ -23,6 +23,7 @@ pub struct GameState {
 
     pub chat_log: BoundedLog<ChatMessage>,
     pub action_log: BoundedLog<String>,
+    pub is_chat_unread: bool,
 
     pub inspected_npc: Option<String>,
     focus: GameFocus,
@@ -42,6 +43,7 @@ impl GameState {
             assets,
             chat_log: BoundedLog::with_max_capacity(200),
             action_log: BoundedLog::with_max_capacity(50),
+            is_chat_unread: false,
             focus: GameFocus::default(),
             inspected_npc: None,
             dialogue_closed_at: None,

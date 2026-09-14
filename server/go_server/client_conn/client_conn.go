@@ -117,7 +117,6 @@ func HandleClient(client *session.Client, gameServerManager *game_conn.GameServe
 		}
 
 		if !connectionManager.AllowInput(client) {
-			logger.AppLogger.Error("%s Client input rate limit exceeded", client.Id)
 			if err := client.Write(protocol.ResponseTooManyRequests); err != nil {
 				if shouldLogClientIOError(client, err) {
 					logger.AppLogger.Error("%s Write error: %v\n", client.Id, err)

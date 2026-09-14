@@ -4,6 +4,7 @@ import (
 	"go_server/config"
 	serverError "go_server/error"
 	"go_server/helper"
+	"go_server/logger"
 	"net"
 	"sort"
 	"strings"
@@ -202,6 +203,9 @@ func (manager *ConnectionManager) AllowInput(client *Client) bool {
 
 	host := remoteHost(client)
 	allowed, banned := manager.floodManager.AllowInput(host)
+	if !allowed {
+		manager.logFlood(host, "client_input")
+	}
 	if banned {
 		manager.disconnectHost(host, client)
 	}
@@ -224,10 +228,24 @@ func (manager *ConnectionManager) registerFlood(host string, ignoredClient *Clie
 		return
 	}
 
-	if !manager.floodManager.AddFloodPoint(host) {
+	banned := manager.floodManager.AddFloodPoint(host)
+	manager.logFlood(host, "connection_attempt")
+	if !banned {
 		return
 	}
 	manager.disconnectHost(host, ignoredClient)
+}
+
+func (manager *ConnectionManager) logFlood(host string, source string) {
+	info := manager.floodManager.Info(host)
+	logger.AppLogger.Warn(
+		"Flood detected: ip=%s source=%s points=%d/%d banned=%t",
+		info.IP,
+		source,
+		info.Points,
+		info.MaxPoints,
+		info.Banned,
+	)
 }
 
 func (manager *ConnectionManager) disconnectHost(host string, ignoredClient *Client) {

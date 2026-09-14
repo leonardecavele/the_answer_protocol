@@ -8,6 +8,7 @@ use ratatui::widgets::{Clear, Paragraph};
 pub struct LabelButton {
     label: String,
     area: Option<Rect>,
+    is_highlighted: bool,
 }
 
 impl LabelButton {
@@ -15,7 +16,12 @@ impl LabelButton {
         Self {
             label: format!(" [{}] ", label),
             area: None,
+            is_highlighted: false,
         }
+    }
+
+    pub fn set_highlighted(&mut self, is_highlighted: bool) {
+        self.is_highlighted = is_highlighted;
     }
 
     pub fn width(&self) -> u16 {
@@ -25,9 +31,13 @@ impl LabelButton {
     pub fn draw(&mut self, frame: &mut Frame, area: Rect) {
         self.area = Some(area);
 
-        let style = Style::default()
+        let mut style = Style::default()
             .fg(WARNING_COLOR)
             .add_modifier(Modifier::BOLD);
+
+        if self.is_highlighted {
+            style = style.add_modifier(Modifier::REVERSED);
+        }
 
         frame.render_widget(Clear, area);
         frame.render_widget(Paragraph::new(self.label.as_str()).style(style), area);

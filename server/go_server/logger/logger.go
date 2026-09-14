@@ -12,12 +12,22 @@ import (
 
 type Logger struct {
 	info         *log.Logger
+	warn         *log.Logger
 	error        *log.Logger
 	mutex        sync.Mutex
 	prompt       string
 	promptOutput io.Writer
 	promptActive bool
 	promptShown  bool
+}
+
+func (l *Logger) Warn(format string, v ...any) {
+	l.mutex.Lock()
+	defer l.mutex.Unlock()
+
+	l.clearPrompt()
+	l.warn.Printf(time.Now().Format(config.LogFormat)+" "+colorYellow+"WARN"+colorReset+" "+format, v...)
+	l.showPrompt()
 }
 
 func (l *Logger) Info(format string, v ...any) {
@@ -43,6 +53,7 @@ func (l *Logger) SetOutputs(infoOutput, errorOutput io.Writer) {
 	defer l.mutex.Unlock()
 
 	l.info.SetOutput(infoOutput)
+	l.warn.SetOutput(infoOutput)
 	l.error.SetOutput(errorOutput)
 }
 
@@ -109,5 +120,6 @@ func (l *Logger) showPrompt() {
 
 var AppLogger = Logger{
 	info:  log.New(os.Stdout, "", 0),
+	warn:  log.New(os.Stdout, "", 0),
 	error: log.New(os.Stderr, "", 0),
 }

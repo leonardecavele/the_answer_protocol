@@ -89,6 +89,23 @@ func (room *Room) GetClient(username string) (*Client, bool) {
 	return client, ok
 }
 
+func (room *Room) GetGroup(id string) (*Group, bool) {
+	room.mutex.Lock()
+	clients := make([]*Client, 0, len(room.clients))
+	for _, client := range room.clients {
+		clients = append(clients, client)
+	}
+	room.mutex.Unlock()
+
+	for _, client := range clients {
+		group := client.GetGroup()
+		if group != nil && strings.EqualFold(group.Id, id) {
+			return group, true
+		}
+	}
+	return nil, false
+}
+
 func (room *Room) Disconnect(username string) bool {
 	client, ok := room.GetClient(username)
 	if !ok {

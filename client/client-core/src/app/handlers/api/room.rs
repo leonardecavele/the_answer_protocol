@@ -145,7 +145,7 @@ impl App {
             .game
             .room
             .as_ref()
-            .is_some_and(|room| room.name == death.respawn_room_id);
+            .is_some_and(|room| room.id == death.respawn_room_id);
 
         if !is_me && let Some(room) = &mut self.state.game.room {
             if respawn_here {
