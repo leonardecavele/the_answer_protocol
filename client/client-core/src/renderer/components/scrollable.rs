@@ -42,7 +42,7 @@ impl<T: ScrollableComponent> Scrollable<T> {
     pub fn new(inner: T) -> Self {
         Self {
             inner,
-            scroll_offset: 0,
+            scroll_offset: u16::MAX,
             last_max_scroll: 0,
             area: None,
         }
