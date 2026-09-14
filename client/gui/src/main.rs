@@ -13,7 +13,7 @@ const WINDOW_TITLE: &str = "The Answer Protocol";
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    logging::setup(LOG_FILE)?;
+    let deferred_errors = logging::setup(LOG_FILE)?;
 
     let cli = Cli::parse();
     let screen = screen::build();
@@ -38,7 +38,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Assets::new(cli.assets),
     );
 
-    eframe::run_native(WINDOW_TITLE, options, Box::new(|_cc| Ok(Box::new(gui))))?;
+    let res = eframe::run_native(WINDOW_TITLE, options, Box::new(|_cc| Ok(Box::new(gui))));
+
+    let _ = deferred_errors.flush();
+
+    res?;
 
     Ok(())
 }
