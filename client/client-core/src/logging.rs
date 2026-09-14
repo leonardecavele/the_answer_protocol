@@ -8,6 +8,8 @@ use tracing_subscriber::util::SubscriberInitExt;
 use tracing_subscriber::{EnvFilter, Layer, fmt};
 
 const MAX_LOG_SIZE: u64 = 5 * 1024 * 1024;
+const MAX_LOG_GENERATIONS: u32 = 5;
+const DEFAULT_LOG_FILTER: &str = "warn,client_core=debug,client_api=debug";
 
 struct DeferredStderr(Arc<Mutex<Vec<u8>>>);
 
@@ -72,9 +74,12 @@ pub fn setup(path: &str) -> Result<DeferredErrors, ClientError> {
     });
 
     tracing_subscriber::registry()
-        .with(fmt::layer().with_writer(file).with_ansi(false).with_filter(
-            EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("debug")),
-        ))
+        .with(
+            fmt::layer().with_writer(file).with_ansi(false).with_filter(
+                EnvFilter::try_from_default_env()
+                    .unwrap_or_else(|_| EnvFilter::new(DEFAULT_LOG_FILTER)),
+            ),
+        )
         .with(deferred_layer)
         .with(immediate_layer)
         .init();
@@ -93,7 +98,9 @@ fn rotate(path: &str) {
 
     let mut generation = 1;
 
-    while fs::metadata(format!("{}.{}", path, generation)).is_ok() {
+    while generation < MAX_LOG_GENERATIONS
+        && fs::metadata(format!("{}.{}", path, generation)).is_ok()
+    {
         generation += 1;
     }
 
