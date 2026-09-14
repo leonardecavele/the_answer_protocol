@@ -67,23 +67,12 @@ where
     P: ExternalPrinter + Send + 'static,
 {
     thread::spawn(move || {
-        let mut file = std::fs::OpenOptions::new()
-            .create(true)
-            .append(true)
-            .open("app.log")
-            .ok();
-
         log_receiver.into_iter().for_each(|msg| {
             if msg == "FLUSH_EXIT" {
                 if printer.is_some() {
                     let _ = std::process::Command::new("stty").arg("sane").status();
                 }
                 std::process::exit(1);
-            }
-
-            if let Some(f) = file.as_mut() {
-                use std::io::Write;
-                let _ = write!(f, "{}", msg);
             }
 
             if msg.contains("ERROR") {

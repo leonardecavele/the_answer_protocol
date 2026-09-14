@@ -274,8 +274,14 @@ impl GameManager {
 
     fn restore_server_state(&mut self) {
         let path = "saves/server_state.toml";
-        if !std::path::Path::new(path).exists() {
-            return;
+        match std::path::Path::new(path).try_exists() {
+            Ok(false) => return,
+            Err(e) => {
+                error!("Permission or IO error accessing '{}': {}", path, e);
+                self.set_default_ids();
+                return;
+            }
+            Ok(true) => {}
         }
         let server_save = match confy::load_path::<ServerSave>(path) {
             Ok(save) => save,
@@ -415,13 +421,10 @@ impl GameManager {
         player.add_completed_quest(quest_name.to_string(), loots_won);
         let reward_items_vec_json =
             JsonValue::Array(given_items_vec.into_iter().map(JsonValue::String).collect());
-        info!(
-            "player {} completed quest {}",
-            player.get_name(),
-            quest_name
-        );
-        let event = GameManager::generate_no_player_event_json(
-            &vec![player.get_name().to_string()],
+        let player_name = player.get_name().to_string();
+        info!("player {} completed quest {}", player_name, quest_name);
+        self.send_no_player_event(
+            &vec![player_name],
             "QUEST COMPLETE",
             object! {
                 "name" => quest_name,
@@ -430,7 +433,6 @@ impl GameManager {
             .dump()
             .as_str(),
         );
-        self.add_diff_to_tick(event);
     }
 
     pub fn check_finished_quests(&mut self) {
@@ -655,7 +657,7 @@ impl GameManager {
             };
             let mut players = self.get_all_players_at_room(LOST_ITEM_SPAWN);
             let lost_item_name = self.get_item_name(LOST_ITEM);
-            let event = self.generate_event_json(
+            self.send_event_json(
                 &mut players,
                 &player_name,
                 "DROP",
@@ -665,7 +667,6 @@ impl GameManager {
             );
             self.remove_item_from_player(player_id, LOST_ITEM);
             self.add_item_to_room(LOST_ITEM_SPAWN, LOST_ITEM);
-            self.add_diff_to_tick(event);
         }
 
         self.save_player(player_id);
@@ -963,7 +964,7 @@ impl GameManager {
 
     pub fn npc_is_in_room(&self, npc_id: NpcId, room_name: &str) -> bool {
         self.get_npc(npc_id)
-            .is_some_and(|npc| npc.get_spawn_room() == room_name)
+            .is_some_and(|npc| npc.get_spawn_room() == room_name && npc.get_death().is_none())
     }
 
     pub fn move_player_to_room(&mut self, player_name: &str, room_name: &str) {
@@ -1022,15 +1023,13 @@ impl GameManager {
                 "fight_result: player {} didnt respond during fight instance",
                 player_name
             );
-            let event = GameManager::generate_no_player_event_json(
+            self.send_no_player_event(
                 &players_as_strings,
                 "FIGHT RESULT",
                 object! { "player_name": player_name, "success": false, "damage_dealt": npc_dmg}
                     .dump()
                     .as_str(),
             );
-
-            self.add_diff_to_tick(event);
         }
     }
 
@@ -1071,9 +1070,7 @@ impl GameManager {
             };
             let players_to_send_event = self.get_all_players_at_room(&room_name);
             let data = format!("type=NPC id={}", ncp_rep);
-            let event =
-                GameManager::generate_no_player_event_json(&players_to_send_event, "SPAWN", &data);
-            self.add_diff_to_tick(event);
+            self.send_no_player_event(&players_to_send_event, "SPAWN", &data);
         }
     }
 
@@ -1089,12 +1086,19 @@ impl GameManager {
     pub fn parse_npc(&self, npc_rep: &str, room_needed: RoomName) -> Option<(NpcId, String)> {
         if let Some(npc_wrapped) = Npc::parse_protocol_representation(npc_rep) {
             let npc = self.get_npc(npc_wrapped.0)?;
+            if npc.get_death().is_some() {
+                return None;
+            }
             return Some((npc.get_id(), npc.get_name()));
         }
 
         self.all_npcs
             .iter()
-            .find(|(_, npc)| npc.get_spawn_room() == room_needed && npc.get_name() == npc_rep)
+            .find(|(_, npc)| {
+                npc.get_spawn_room() == room_needed
+                    && npc.get_name() == npc_rep
+                    && npc.get_death().is_none()
+            })
             .map(|(npc_id, npc)| (*npc_id, npc.get_name().clone()))
     }
 
@@ -1239,12 +1243,17 @@ impl GameManager {
     }
 
     pub fn kill_player(&mut self, player_id: PlayerId) {
-        let (mut players_to_send_death_info, player_name) = {
+        let (mut players_to_send_death_info, player_name, current_room, player_items) = {
             if let Some(player) = self.get_player(player_id) {
                 let mut players = self.get_all_players_at_room(player.get_current_room());
                 players.extend(self.get_all_players_at_room(PLAYER_ROOM_SPAWN));
 
-                (players, player.get_name().to_owned())
+                (
+                    players,
+                    player.get_name().to_owned(),
+                    player.get_current_room().to_owned(),
+                    player.get_items().clone(),
+                )
             } else {
                 warn!("tried to kill non-existent player: {}", player_id);
                 return;
@@ -1255,19 +1264,32 @@ impl GameManager {
         // ignore error because the save may not exist yet
         // (in which case we do not need to delete the save)
         info!("deleted player {} save", player_name);
+
+        for item_id in player_items {
+            if item_id == LOST_ITEM {
+                self.add_item_to_room(&current_room, item_id);
+                self.start_dropped_at_for_item(item_id);
+                let mut players_at_room = self.get_all_players_at_room(&current_room);
+                let item_name = self.get_item_name(item_id);
+                let item_repr = Item::protocol_representation(item_id, &item_name);
+                self.send_event_json(&mut players_at_room, &player_name, "DROP", &item_repr, true);
+            } else {
+                self.recycle_item_id(item_id);
+            }
+        }
+
         if let Some(player) = self.get_mut_player(player_id) {
             player.reset();
         } else {
             warn!("tried to reset non-existent player: {}", player_id);
         }
-        let event = self.generate_event_json(
+        self.send_event_json(
             &mut players_to_send_death_info,
             player_name.as_str(),
             "DEATH",
             format!("respawn_room_id={}", PLAYER_ROOM_SPAWN).as_str(),
             false,
         );
-        self.add_diff_to_tick(event);
         if let Some(instance) = self.combat_instances.get_mut_instance_for_player(player_id) {
             instance.player_died(player_id);
         }
@@ -1311,7 +1333,7 @@ impl GameManager {
         None
     }
 
-    pub fn check_action_already_taken(&self, player_id: PlayerId, _npc_id: NpcId) -> bool {
+    pub fn check_action_already_taken(&self, player_id: PlayerId, npc_id: NpcId) -> bool {
         if let Some(instance) = self.combat_instances.get_instance_for_player(player_id)
             && let Some(_player) = instance.get_player_success(player_id)
             && let Some(_success) = _player
@@ -1320,13 +1342,21 @@ impl GameManager {
         }
         false
     }
-    pub fn npc_attacks_player(&mut self, damage: u32, player_id: NpcId, npc_id: PlayerId) {
+    pub fn npc_attacks_player(&mut self, damage: u32, player_id: PlayerId, npc_id: NpcId) {
+        let npc_repr = if let Some(npc) = self.get_npc(npc_id) {
+            npc.get_protocol_representation().to_owned()
+        } else {
+            return;
+        };
+
         let player = if let Some(player) = self.get_mut_player(player_id) {
             player
         } else {
             return;
         };
-        let _player_name = player.get_name().to_owned();
+
+        let player_name = player.get_name().to_owned();
+        info!("npc {} attacks {}", npc_repr, player_name);
         let player_hp = player.get_hp();
         let new_player_hp = player_hp.saturating_sub(damage);
 
@@ -1334,15 +1364,6 @@ impl GameManager {
 
         //does nothing if no the player is not in a combat instance
         self.set_success_for_player(player_id, false);
-        let _players_to_send_event = self
-            .combat_instances
-            .get_all_players_in_combat(npc_id)
-            .iter()
-            .filter_map(|player_id| {
-                self.get_player(*player_id)
-                    .map(|player| player.get_name().to_owned())
-            })
-            .collect::<Vec<String>>();
 
         if new_player_hp == 0 {
             self.kill_player(player_id);
@@ -1366,32 +1387,29 @@ impl GameManager {
         damage: u32,
         player_id: PlayerId,
         npc_id: NpcId,
-    ) -> String {
-        let error_return =
-            "{{\"attacker_hp\":error, \"target_hp\":error, \"damage\":0, \"status\":\"combat\"}}"
-                .to_string();
+    ) -> Result<String, ErrorCode> {
         let (player_name, player_hp) = if let Some(player) = self.get_player(player_id) {
             (player.get_name().to_owned(), player.get_hp())
         } else {
-            return error_return;
+            return Err(ErrorCode::PlayerNotFound);
         };
 
         let npc_room = if let Some(npc) = self.get_npc(npc_id) {
             npc.get_spawn_room().to_owned()
         } else {
-            return error_return;
+            return Err(ErrorCode::NpcNotFound);
         };
         let mut players_in_room = self.get_all_players_at_room(npc_room.as_str()).clone();
         let npc = if let Some(npc) = self.get_mut_npc(npc_id) {
             npc
         } else {
-            return error_return;
+            return Err(ErrorCode::NpcNotFound);
         };
         let npc_repr = npc.get_protocol_representation();
         let hp = if let Some(hp) = npc.get_hp() {
             hp
         } else {
-            return error_return;
+            return Err(ErrorCode::NpcNotHostile);
         };
         let mut dealt_damage = damage;
         let new_npc_hp = if hp > damage {
@@ -1406,33 +1424,23 @@ impl GameManager {
 
         //does nothing if no the player is not in a combat instance
         self.set_success_for_player(player_id, true);
-        // if let Some(mut players_to_send_event) = self.get_player_instance_group(player_id) {
-        //     let event = self.generate_event_json(
-        //         &mut players_to_send_event,
-        //         &player_name,
-        //         "ATTACK",
-        //         dealt_damage.to_string().as_str(),
-        //         true,
-        //     );
-        //     self.add_diff_to_tick(event);
-        // }
+
         debug!("npc hp:{}", new_npc_hp);
         if new_npc_hp == 0 {
             debug!("killed npc");
             self.kill_npc(npc_id);
-            let event = self.generate_event_json(
+            self.send_event_json(
                 &mut players_in_room,
                 &player_name,
                 "KILL",
                 npc_repr.as_str(),
                 false,
             );
-            self.add_diff_to_tick(event);
         }
-        format!(
+        Ok(format!(
             "{{\"attacker_hp\":{}, \"target_hp\":{}, \"damage\":{}, \"status\":\"{}\"}}",
             player_hp, new_npc_hp, dealt_damage, status
-        )
+        ))
     }
 
     pub fn player_has_quest(&self, player_id: PlayerId, quest_id: Questid) -> bool {
@@ -1588,7 +1596,7 @@ impl GameManager {
                 player_name, quest_name
             );
 
-            let event = GameManager::generate_no_player_event_json(
+            self.send_no_player_event(
                 &vec![player_name.to_string()],
                 "QUEST STEP",
                 object! {
@@ -1598,7 +1606,6 @@ impl GameManager {
                 .dump()
                 .as_str(),
             );
-            self.add_diff_to_tick(event);
         }
     }
 
@@ -1687,24 +1694,38 @@ impl GameManager {
                         }
                     }
                 }
-                let fight_end_event = GameManager::generate_no_player_event_json(
-                    &grouped_players_strings,
-                    "FIGHT END",
-                    "",
-                );
-                self.add_diff_to_tick(fight_end_event);
+                self.send_no_player_event(&grouped_players_strings, "FIGHT END", "");
 
-                for player in &send_teleport_event_players {
-                    if let Some(player) = self.get_mut_player_from_name(player) {
-                        player.move_to_room(&PLAYER_ROOM_SPAWN.to_owned());
-                    }
+                for p in &send_teleport_event_players {
+                    let old_room = if let Some(player) = self.get_player_from_name(p) {
+                        player.get_current_room().to_owned()
+                    } else {
+                        continue;
+                    };
+
+                    let last_room_players = self.get_all_players_at_room(&old_room);
+                    let mut spectators_leave: Vec<String> = last_room_players
+                        .into_iter()
+                        .filter(|p_name| !send_teleport_event_players.contains(p_name))
+                        .collect();
+
+                    spectators_leave.retain(|p| p != p);
+                    // actually it is a player event but to avoid re coding a function we use it
+                    self.send_no_player_event(&mut spectators_leave, "ROOM", format!("PRESENCE LEAVE {}", p).as_str());
+
+                    self.move_player_to_room(p, PLAYER_ROOM_SPAWN);
+
+                    let current_room_players = self.get_all_players_at_room(PLAYER_ROOM_SPAWN);
+                    let mut spectators_enter: Vec<String> = current_room_players
+                        .into_iter()
+                        .filter(|p_name| !send_teleport_event_players.contains(p_name))
+                        .collect();
+
+                    spectators_enter.retain(|p| p != p);
+                    // actually it is a player event but to avoid re coding a function we use it
+                    self.send_no_player_event(&mut spectators_enter, "ROOM", format!("PRESENCE ENTER {}", p).as_str());
                 }
-                let teleport_event = GameManager::generate_no_player_event_json(
-                    &send_teleport_event_players,
-                    "TELEPORT",
-                    "",
-                );
-                self.add_diff_to_tick(teleport_event);
+                self.send_no_player_event(&send_teleport_event_players, "TELEPORT", "");
             }
         }
         self.combat_instances.remove_finished_instances();
@@ -1761,8 +1782,7 @@ impl GameManager {
             let players = self.get_all_players_at_room(&room_name);
             if let Some(item) = self.get_item(new_item_id) {
                 let data = format!("type=ITEM id={}", item.get_protocol_representation());
-                let event = GameManager::generate_no_player_event_json(&players, "SPAWN", &data);
-                self.add_diff_to_tick(event);
+                self.send_no_player_event(&players, "SPAWN", &data);
             }
         }
     }
