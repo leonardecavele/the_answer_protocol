@@ -4,6 +4,7 @@ import (
 	"errors"
 	serverError "go_server/error"
 	"go_server/game_conn"
+	"go_server/helper"
 	"go_server/protocol"
 	"go_server/session"
 	"strings"
@@ -82,13 +83,28 @@ func groupJoin(args string, client *session.Client, gameServerManager *game_conn
 		return protocol.ResponseAlreadyInGroup, nil
 	}
 
+	var group *session.Group
 	groupLeader, ok := client.Room.GetClient(args)
-	if !ok {
+	if ok {
+		group = groupLeader.GetGroup()
+		if group == nil || !groupLeader.IsLeader() {
+			return protocol.ResponseGroupNotFound, nil
+		}
+	} else if helper.IsValidID(args) {
+		group, ok = client.Room.GetGroup(args)
+		if !ok {
+			return protocol.ResponseGroupNotFound, nil
+		}
+		groupInfo, active := group.Info()
+		if !active {
+			return protocol.ResponseGroupNotFound, nil
+		}
+		groupLeader, ok = client.Room.GetClient(groupInfo.Leader)
+		if !ok {
+			return protocol.ResponseGroupNotFound, nil
+		}
+	} else {
 		return protocol.ResponseNoSuchUser, nil
-	}
-	group := groupLeader.GetGroup()
-	if group == nil || !groupLeader.IsLeader() {
-		return protocol.ResponseGroupNotFound, nil
 	}
 
 	if gameServerManager.IsConnected() {
