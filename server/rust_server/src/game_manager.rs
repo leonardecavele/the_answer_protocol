@@ -1004,14 +1004,14 @@ impl GameManager {
         for (player_id, npc_id) in players_to_punish {
             let nb_t_shirt = self.get_nb_t_shirt_bde_for_player_id(player_id);
             let npc_dmg = self.generate_npc_dmg(nb_t_shirt);
-            self.npc_attacks_player(npc_dmg, player_id, npc_id);
-            let player_name = {
+            let (player_name, player_hp) = {
                 let Some(player) = self.players.get(&player_id) else {
                     warn!("tried to punish non-existent player: {}", player_id);
                     continue;
                 };
-                player.get_name()
+                (player.get_name(), player.get_hp())
             };
+            let hp_after_hit = player_hp.saturating_sub(npc_dmg);
             let mut players_as_strings = Vec::new();
             let player_ids = self.combat_instances.get_all_players_in_combat(npc_id);
             for player_id in player_ids {
@@ -1026,10 +1026,11 @@ impl GameManager {
             self.send_no_player_event(
                 &players_as_strings,
                 "FIGHT RESULT",
-                object! { "player_name": player_name, "success": false, "damage_dealt": npc_dmg}
+                object! { "player_name": player_name, "success": false, "damage_dealt": npc_dmg, "current_hp": hp_after_hit }
                     .dump()
-                    .as_str(),
+                    .as_str()
             );
+            self.npc_attacks_player(npc_dmg, player_id, npc_id);
         }
     }
 
@@ -1709,9 +1710,13 @@ impl GameManager {
                         .filter(|p_name| !send_teleport_event_players.contains(p_name))
                         .collect();
 
-                    spectators_leave.retain(|p| p != p);
+                    spectators_leave.retain(|player| player != p);
                     // actually it is a player event but to avoid re coding a function we use it
-                    self.send_no_player_event(&mut spectators_leave, "ROOM", format!("PRESENCE LEAVE {}", p).as_str());
+                    self.send_no_player_event(
+                        &spectators_leave,
+                        "ROOM",
+                        format!("PRESENCE LEAVE {}", p).as_str(),
+                    );
 
                     self.move_player_to_room(p, PLAYER_ROOM_SPAWN);
 
@@ -1721,9 +1726,13 @@ impl GameManager {
                         .filter(|p_name| !send_teleport_event_players.contains(p_name))
                         .collect();
 
-                    spectators_enter.retain(|p| p != p);
+                    spectators_enter.retain(|player| player != p);
                     // actually it is a player event but to avoid re coding a function we use it
-                    self.send_no_player_event(&mut spectators_enter, "ROOM", format!("PRESENCE ENTER {}", p).as_str());
+                    self.send_no_player_event(
+                        &spectators_enter,
+                        "ROOM",
+                        format!("PRESENCE ENTER {}", p).as_str(),
+                    );
                 }
                 self.send_no_player_event(&send_teleport_event_players, "TELEPORT", "");
             }

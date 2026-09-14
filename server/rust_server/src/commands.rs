@@ -1,5 +1,7 @@
 use crate::constants::{
-    BASE_COMMAND_RESPONSE, CODE_NL_SEP, CODE_SP_SEP, ErrorCode, MAX_TIME_FOR_COMBAT, NO_MORE_MESSAGES, NPC_COUNTER_ATTACK_CHANCE, NPC_COUNTER_DMG, NPC_MOB, PLAYER_ATTACK_DMG, SKIP_PLAYER_EXISTS_TEST, TEST_FILES_DIR,
+    BASE_COMMAND_RESPONSE, CODE_NL_SEP, CODE_SP_SEP, ErrorCode, MAX_TIME_FOR_COMBAT,
+    NO_MORE_MESSAGES, NPC_COUNTER_ATTACK_CHANCE, NPC_COUNTER_DMG, NPC_MOB, PLAYER_ATTACK_DMG,
+    SKIP_PLAYER_EXISTS_TEST, TEST_FILES_DIR,
 };
 use crate::game_manager::GameManager;
 use crate::items::{Item, ItemId};
@@ -287,15 +289,14 @@ impl GameManager {
 
         for p in &all_moving_players {
             let mut lrp = spectators_leave.clone();
-            lrp.retain(|p| p != p);
+            lrp.retain(|player| player != p);
             //actually it is a player event but to avoid re coding a function we use it
-            self.send_no_player_event(&mut lrp, "ROOM", format!("PRESENCE LEAVE {}",p).as_str());
-
+            self.send_no_player_event(&lrp, "ROOM", format!("PRESENCE LEAVE {}", p).as_str());
 
             let mut crp = spectators_enter.clone();
-            crp.retain(|p| p != p);
+            crp.retain(|player| player != p);
             //actually it is a player event but to avoid re coding a function we use it
-            self.send_no_player_event(&mut crp, "ROOM", format!("PRESENCE ENTER {}",p).as_str());
+            self.send_no_player_event(&crp, "ROOM", format!("PRESENCE ENTER {}", p).as_str());
 
             if p != &leader {
                 let move_event = object! {
@@ -603,6 +604,8 @@ impl GameManager {
                     let dmg =
                         self.calculate_dmg(npc_combat_start_hp, instance_player_count, npc_hp);
 
+                    let npc_hp_after_hit = npc_hp.saturating_sub(dmg);
+
                     let players_in_instance = self
                         .get_player_instance_group(player_id)
                         .unwrap_or_else(|| {
@@ -615,7 +618,7 @@ impl GameManager {
                     self.send_no_player_event(
                         &players_in_instance,
                         "FIGHT RESULT",
-                        object! { "player_name": player.to_string(), "success": true, "damage_dealt": dmg}.dump().as_str(),
+                        object! { "player_name": player.to_string(), "success": true, "damage_dealt": dmg, "current_hp": npc_hp_after_hit}.dump().as_str(),
                     );
                     let _ = self.player_attacks_npc(dmg, player_id, npc_id);
 
@@ -648,11 +651,19 @@ impl GameManager {
                         });
                     let nb_t_shirt =
                         self.get_nb_t_shirt_bde_for_player(player.to_string().as_str());
+                    let player_hp = if let Some(player) =
+                        self.get_player_from_name(player.to_string().as_str())
+                    {
+                        player.get_hp()
+                    } else {
+                        0
+                    };
                     let npc_dmg = self.generate_npc_dmg(nb_t_shirt);
+                    let player_hp_after_hit = player_hp.saturating_sub(npc_dmg);
                     self.send_no_player_event(
                         &players_in_instance,
                         "FIGHT RESULT",
-                        object! { "player_name": player.to_string(), "success": false, "damage_dealt": npc_dmg}.dump().as_str(),
+                        object! { "player_name": player.to_string(), "success": false, "damage_dealt": npc_dmg, "current_hp": player_hp_after_hit}.dump().as_str(),
                     );
                     self.npc_attacks_player(npc_dmg, player_id, npc_id);
                 }
@@ -1079,19 +1090,26 @@ impl GameManager {
                     let player_hp = if let Some(player) = self.get_player(player_id) {
                         player.get_hp()
                     } else {
-                        return generate_json(player_name, command_name, ErrorCode::PlayerNotFound, "").dump();
+                        return generate_json(
+                            player_name,
+                            command_name,
+                            ErrorCode::PlayerNotFound,
+                            "",
+                        )
+                        .dump();
                     };
-                    let hp_after_hit = if player_hp - NPC_COUNTER_DMG <= 0 {
-                        0
-                    } else {
-                        player_hp - NPC_COUNTER_DMG
-                    };
-                    
+                    let hp_after_hit = player_hp.saturating_sub(NPC_COUNTER_DMG);
+
                     let counter_attack_json = object! {
                         "dealt_damage" => NPC_COUNTER_DMG,
                         "current_hp" => hp_after_hit.to_string()
-                    }.dump();
-                    self.send_no_player_event(&vec![player_name.to_string()], "COUNTER ATTACK", counter_attack_json.as_str());
+                    }
+                    .dump();
+                    self.send_no_player_event(
+                        &vec![player_name.to_string()],
+                        "COUNTER ATTACK",
+                        counter_attack_json.as_str(),
+                    );
                     self.npc_attacks_player(NPC_COUNTER_DMG, player_id, npc_id);
                 }
                 generate_json(
