@@ -284,8 +284,7 @@ events, damage, death, safe respawn, kill broadcast, and NPC respawn.
 
 For quests, obtain a quest from a quest-giver, confirm individual and grouped
 assignment, list it with `QUESTS`, reconnect, and verify that the active quest
-state was restored. Component-specific automated commands are listed in each
-child README.
+state was restored.
 
 ## Resources
 

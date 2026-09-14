@@ -184,7 +184,7 @@ input conversion and terminal/window setup stay in their frontend crates.
 | --- | --- |
 | `Ctrl+C` | Quit the application. |
 | `Ctrl+H` | Toggle help. |
-| `Ctrl+E` | Toggle the event and trace overlay. |
+| `Ctrl+T` | Toggle the event and trace overlay. |
 | `F1` | Toggle the chat overlay. |
 | `Tab` / `Shift+Tab` | Cycle focus across interactive panels. |
 | Arrow keys on navigation | Move north, south, west, or east. |
@@ -201,8 +201,8 @@ lists are skipped when cycling focus.
 ## Command input
 
 The input and contextual actions use the same typed requests. The
-[API command and alias table](../client-api/README.md#requests-and-responses)
-is the reference for accepted text. Room, inventory, NPC, player, invitation,
+[API command and alias tables](../client-api/README.md#requests-and-responses)
+are the reference for accepted text. Room, inventory, NPC, player, invitation,
 quest, chat, and navigation panels expose actions without requiring the full
 command to be typed.
 
@@ -224,8 +224,8 @@ a warning and leaves the editor locally.
 [`client/assets/manifest.json`](../assets/manifest.json) associates server identifiers with presentation
 metadata:
 
-- NPC display names, roles, contextual actions, and sprites;
-- item display names, descriptions, and sprites;
+- NPC display names, roles that select the contextual actions, and sprites;
+- item display names, descriptions, sprites, and the `useable` flag;
 - room illustrations and navigation orientation;
 
 Static images use `image_path`. Animated NPCs use an ordered `image_paths`
@@ -245,13 +245,16 @@ A new notification with a topic replaces the previous one with that topic.
 Ticks remove expired entries; notification timing supports pause and resume.
 
 The trace overlay records sent/received frames, connection changes, invalid
-input, dropped requests, and failures with millisecond timestamps.
-`ApiEvent::Lagged` reports lost broadcast entries in this trace; it is separate
-from the response-time `LAG` badge.
+input, dropped requests, and failures with millisecond timestamps, keeping the
+last 100 entries. `ApiEvent::Lagged` reports lost broadcast entries in this
+trace; it is separate from the response-time `LAG` badge.
 
 `logging::setup(path)` configures file-based `tracing`, appending records
-without ANSI coloring. `RUST_LOG` selects the filter, defaulting to `debug`.
-The frontend chooses the file path; its README documents that destination.
+without ANSI coloring, and adds a second layer that writes `ERROR` records to
+standard error. `RUST_LOG` selects the file filter, defaulting to `debug`. At
+startup, a log that has reached 5 MiB is renamed to `<path>.1` and the existing
+generations are shifted to higher numbers. The frontend chooses the file path;
+its README documents that destination.
 
 ## Source layout
 
@@ -266,21 +269,15 @@ The frontend chooses the file path; its README documents that destination.
 | `src/renderer/view.rs` | Active view and global overlay routing. |
 | `src/renderer/views/` | Login, game panels/popups, and C editor. |
 | `src/renderer/components/` | Shared component traits, wrappers, and widgets. |
+| `src/renderer/layout.rs`, `src/renderer/theme.rs` | Size limits, centering, and shared colors and blocks. |
+| `src/renderer/image.rs`, `src/renderer/text.rs` | Cached sprite protocols and text wrapping. |
 | `src/assets.rs`, `src/manifest.rs` | Embedded/directory assets and presentation metadata. |
 | `src/collections.rs` | Selectable lists and bounded histories. |
 | `src/notification.rs`, `src/logging.rs` | Notifications and tracing setup. |
 | `src/cli.rs` | Shared command-line options consumed by the frontends. |
+| `src/errors.rs` | `ClientError`, the crate's I/O, network, and event-channel errors. |
 
-## Validation
+## Linting
 
-From the repository root:
-
-```bash
-cargo test --manifest-path client/client-core/Cargo.toml
-cargo clippy --manifest-path client/client-core/Cargo.toml --all-targets -- -D warnings
-```
-
-The first command runs the crate's tests; the second checks all its targets
-with Clippy and treats warnings as errors. To validate integration, run either
-frontend and exercise login, movement chains, a failed chain, the lag badge,
-group events, and a fight through the shared application.
+Formatting and static analysis are documented in the
+[client workspace instructions](../README.md#linting).
