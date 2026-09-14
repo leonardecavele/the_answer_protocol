@@ -4,7 +4,7 @@ use crate::constants::{
     SKIP_PLAYER_EXISTS_TEST, TEST_FILES_DIR,
 };
 use crate::game_manager::GameManager;
-use crate::items::{Item, ItemId};
+use crate::items::Item;
 use crate::npc::{Npc, NpcId};
 use crate::quests::Quest;
 use crate::room::Room;
@@ -30,15 +30,6 @@ fn generate_question_json(question: &str, data: &str, id: &str) -> JsonValue {
 }
 
 impl GameManager {
-    fn get_item_repr_from_id(&mut self, item_id: ItemId) -> String {
-        if let Some(item_wrap) = self.get_all_items().get(&item_id) {
-            return format!("{}.{}", item_id, item_wrap.get_name());
-        }
-
-        warn!("No item found for item_id: {}", item_id);
-        format!("{}.item_not_found", item_id)
-    }
-
     fn validate_command_json(&self, parsed_json: &JsonValue) -> ErrorCode {
         if !parsed_json.has_key("command")
             || !parsed_json.has_key("player")
@@ -743,13 +734,11 @@ impl GameManager {
                         return BASE_COMMAND_RESPONSE.to_owned();
                     }
                 };
-                let mut room_players = self.get_all_players_at_room(player_room);
-                self.send_event_json(
-                    &mut room_players,
-                    player_name,
+                let room_players = self.get_all_players_at_room(player_room);
+                self.send_no_player_event(
+                    &room_players,
                     "ROOM",
-                    "PRESENCE ENTER",
-                    true,
+                    format!("PRESENCE ENTER {}", player_name).as_str(),
                 );
 
                 BASE_COMMAND_RESPONSE.to_owned()
@@ -980,7 +969,13 @@ impl GameManager {
 
                 let item_repr = Item::protocol_representation(item_id, &item_name);
                 let mut players_to_send = self.get_all_players_at_room(room_name.as_str());
-                self.send_event_json(&mut players_to_send, player_name, "DROP", item_repr.as_str(), true);
+                self.send_event_json(
+                    &mut players_to_send,
+                    player_name,
+                    "DROP",
+                    item_repr.as_str(),
+                    true,
+                );
 
                 generate_json(
                     player_name,
@@ -1060,12 +1055,16 @@ impl GameManager {
                 generate_json(player_name, command_name, ErrorCode::NoError, "Processing").dump()
             }
             "ATTACK" => {
-                let npc_name = data;
-                let npc_id = match self.verify_combat_target(player_name, command_name, npc_name) {
+                let npc = data;
+                let npc_id = match self.verify_combat_target(player_name, command_name, npc) {
                     Ok(id) => id,
                     Err(json_response) => return json_response,
                 };
-                let npc_repr = Npc::protocol_representation(npc_id, npc_name);
+                let Some(npc_obj) = self.get_npc(npc_id) else {
+                    return generate_json(player_name, command_name, ErrorCode::NpcNotFound, "")
+                        .dump();
+                };
+                let npc_repr = npc_obj.get_protocol_representation();
                 let player_id = match self.get_player_id(player_name) {
                     Some(id) => *id,
                     None => {
