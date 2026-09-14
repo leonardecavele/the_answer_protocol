@@ -62,9 +62,18 @@ impl Manifest {
         Ok(manifest)
     }
 
-    pub fn npc_name(&self, id: &str) -> String {
+    pub fn npc_entry(&self, id: &str) -> Option<&NpcEntry> {
+        if let Some(entry) = self.npcs.get(id) {
+            return Some(entry);
+        }
+
         self.npcs
-            .get(id)
+            .values()
+            .find(|entry| entry.name.eq_ignore_ascii_case(id))
+    }
+
+    pub fn npc_name(&self, id: &str) -> String {
+        self.npc_entry(id)
             .map(|n| n.name.clone())
             .unwrap_or_else(|| id.to_string())
     }
