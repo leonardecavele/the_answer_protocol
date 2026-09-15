@@ -6,4 +6,7 @@ const (
 	CodeNoError CodeError = iota
 	CodeListenerError
 	CodeProtocolError
+	CodeInvalidArgumentsError
+	CodeLogFileError
+	CodeCLIInitializationError
 )

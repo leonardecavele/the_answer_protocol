@@ -31,26 +31,26 @@ func shutdownServer(quit chan struct{}, listener net.Listener, stopOnce *sync.On
 	})
 }
 
-func main() {
+func run() serverError.CodeError {
 	serverOptions, err := config.ParseServerOptions(os.Args[1:])
 	if err != nil {
 		if errors.Is(err, flag.ErrHelp) {
-			return
+			return serverError.CodeNoError
 		}
 		fmt.Fprintln(os.Stderr, "Invalid arguments:", err)
-		os.Exit(2)
+		return serverError.CodeInvalidArgumentsError
 	}
 
 	logFile, logErr := os.Create("app.log")
 	if logErr != nil {
 		logger.AppLogger.Error("Log file error: %v", logErr)
-		return
+		return serverError.CodeLogFileError
 	}
 	defer logFile.Close()
 	commandReader, cliErr := cli.NewReader()
 	if cliErr != nil {
 		fmt.Fprintln(os.Stderr, "CLI initialization error:", cliErr)
-		return
+		return serverError.CodeCLIInitializationError
 	}
 	logger.AppLogger.SetOutputs(
 		io.MultiWriter(commandReader.Stdout(), logger.WithoutANSI(logFile)),
@@ -65,7 +65,7 @@ func main() {
 	}
 	if !validProtocol {
 		logger.AppLogger.Error(fmt.Sprintf("Invalid protocol: %d", config.ProtocolVersion))
-		os.Exit(int(serverError.CodeProtocolError))
+		return serverError.CodeProtocolError
 	}
 
 	quit := make(chan struct{})
@@ -79,7 +79,7 @@ func main() {
 			}
 		}
 		logger.AppLogger.Error(fmt.Sprint(listenErr))
-		os.Exit(int(serverError.CodeListenerError))
+		return serverError.CodeListenerError
 	}
 	defer listener.Close()
 
@@ -115,7 +115,7 @@ func main() {
 		if err != nil {
 			select {
 			case <-quit:
-				return
+				return serverError.CodeNoError
 			default:
 				logger.AppLogger.Error("Accept error:", err)
 				continue
@@ -143,4 +143,8 @@ func main() {
 			client_conn.HandleClient(client, gameServerManager, clientConnectionManager)
 		}()
 	}
+}
+
+func main() {
+	os.Exit(int(run()))
 }
