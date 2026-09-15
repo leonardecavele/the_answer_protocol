@@ -565,7 +565,10 @@ impl GameManager {
             let npc_id = json["npc_id"].as_u32().unwrap_or(0);
             let player_success = json["success"].as_bool().unwrap_or(false);
             let response_time = json["response_time"].as_u64().unwrap_or(0);
-            let code = json["code"].as_str().unwrap_or("no code submitted".replace(" ", CODE_SP_SEP).as_str()).to_string();
+            let code = json["code"]
+                .as_str()
+                .unwrap_or("no code submitted".replace(" ", CODE_SP_SEP).as_str())
+                .to_string();
             info!(
                 "fight result: player: {}, npc_id: {}, player_success: {}",
                 player, npc_id, player_success

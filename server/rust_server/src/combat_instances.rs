@@ -198,7 +198,9 @@ impl CombatInstance {
     }
 
     pub fn get_player_success(&self, player_id: PlayerId) -> Option<Option<bool>> {
-        self.players_info.get(&player_id).map(|info| info.as_ref().map(|i| i.success))
+        self.players_info
+            .get(&player_id)
+            .map(|info| info.as_ref().map(|i| i.success))
     }
 
     pub fn get_npc_combat_start_hp(&self) -> u32 {

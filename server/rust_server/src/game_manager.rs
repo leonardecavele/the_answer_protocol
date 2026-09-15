@@ -1,4 +1,4 @@
-use crate::combat_instances::{CombatInstance, CombatInstanceManager, PlayerCombatInfo};
+use crate::combat_instances::{CombatInstanceManager, PlayerCombatInfo};
 use crate::commands::generate_json;
 use crate::constants::{
     CODE_NL_SEP, CODE_SP_SEP, Direction, ITEM_DESPAWN_TIME, LOST_ITEM, LOST_ITEM_SPAWN,
@@ -1039,7 +1039,7 @@ impl GameManager {
                     response_time: crate::constants::MAX_TIME_FOR_COMBAT.as_millis() as u64,
                     code: String::from("no code submitted"),
                     damage_dealt: npc_dmg,
-                }
+                },
             );
             self.npc_attacks_player(npc_dmg, player_id, npc_id);
         }
@@ -1535,8 +1535,13 @@ impl GameManager {
                 self.get_room_id_from_name(PLAYER_ROOM_SPAWN)
             })
     }
-    pub fn get_finished_instances_players(&mut self) -> Vec<Vec<(PlayerId, bool, crate::combat_instances::PlayerCombatInfo)>> {
-        fn can_send_teleport_event(instance: &crate::combat_instances::CombatInstance, player: PlayerId) -> bool {
+    pub fn get_finished_instances_players(
+        &mut self,
+    ) -> Vec<Vec<(PlayerId, bool, crate::combat_instances::PlayerCombatInfo)>> {
+        fn can_send_teleport_event(
+            instance: &crate::combat_instances::CombatInstance,
+            player: PlayerId,
+        ) -> bool {
             let left_players = instance.get_left_players();
             let died_players = instance.get_died_players();
             !died_players.is_empty()
@@ -1544,16 +1549,30 @@ impl GameManager {
                 && !died_players.contains(&player)
         }
 
-        let mut vec: Vec<Vec<(PlayerId, bool, crate::combat_instances::PlayerCombatInfo)>> = Vec::new();
+        let mut vec: Vec<Vec<(PlayerId, bool, crate::combat_instances::PlayerCombatInfo)>> =
+            Vec::new();
         for instance in self.combat_instances.instances.values() {
             if instance.all_players_finished() {
-                let mut players_info: Vec<(PlayerId, bool, crate::combat_instances::PlayerCombatInfo)> = Vec::new();
+                let mut players_info: Vec<(
+                    PlayerId,
+                    bool,
+                    crate::combat_instances::PlayerCombatInfo,
+                )> = Vec::new();
                 let mut all_players = instance.get_grouped_players().clone();
                 all_players.push(instance.get_leader());
 
                 for player in all_players {
-                    let combat_info = instance.players_info.get(&player).cloned().flatten().unwrap_or_default();
-                    players_info.push((player, can_send_teleport_event(instance, player), combat_info));
+                    let combat_info = instance
+                        .players_info
+                        .get(&player)
+                        .cloned()
+                        .flatten()
+                        .unwrap_or_default();
+                    players_info.push((
+                        player,
+                        can_send_teleport_event(instance, player),
+                        combat_info,
+                    ));
                 }
 
                 vec.push(players_info);
@@ -1725,7 +1744,7 @@ impl GameManager {
                         if can_send {
                             send_teleport_event_players.push(p_name.clone());
                         }
-                        fight_end_players_data.push(object!{
+                        fight_end_players_data.push(object! {
                             "name": p_name,
                             "code": combat_info.code,
                             "success": combat_info.success,
@@ -1734,13 +1753,17 @@ impl GameManager {
                         });
                     }
                 }
-                
+
                 let fight_end_data = object! {
                     "players": fight_end_players_data,
                     "nl_sep": CODE_NL_SEP,
                     "sp_sep": CODE_SP_SEP
                 };
-                self.send_no_player_event(&grouped_players_strings, "FIGHT END", fight_end_data.dump().as_str());
+                self.send_no_player_event(
+                    &grouped_players_strings,
+                    "FIGHT END",
+                    fight_end_data.dump().as_str(),
+                );
 
                 for p in &send_teleport_event_players {
                     let old_room = if let Some(player) = self.get_player_from_name(p) {
@@ -1801,11 +1824,11 @@ impl GameManager {
                 return;
             };
         instance.evaluating_players_count += 1;
-        
+
         let response_time = instance.get_combat_duration_in_ms();
         let mut response = object! {
-            "player": player, 
-            "npc_id": npc_id, 
+            "player": player,
+            "npc_id": npc_id,
             "success": false,
             "response_time": response_time,
             "code": sent_code
