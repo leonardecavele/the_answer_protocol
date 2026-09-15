@@ -78,10 +78,34 @@ pub struct CounterAttackData {
 }
 
 #[derive(Debug, Clone)]
+pub enum SessionEvent {
+    Connect(String),
+    Quit(String),
+    Stats(u32),
+    Broadcast(String),
+}
+
+#[derive(Debug, Clone)]
+pub enum ChatEvent {
+    Global(ChatMessage),
+    Room(ChatMessage),
+    Group(ChatMessage),
+    Private(ChatMessage),
+}
+
+#[derive(Debug, Clone)]
+pub enum FightEvent {
+    Start(FightStartData),
+    Result(FightResultData),
+    End,
+}
+
+#[derive(Debug, Clone)]
 pub enum RoomEvent {
     PresenceEnter(String),
     PresenceLeave(String),
-    Chat(ChatMessage),
+    Spawn(SpawnData),
+    Despawn(SpawnData),
     Take(String, String),
     Drop(String, String),
 }
@@ -92,7 +116,6 @@ pub enum GroupEvent {
     InviteRemoved(String),
     Join(String),
     Leave(String),
-    Chat(ChatMessage),
     Move(String),
 }
 
@@ -116,26 +139,18 @@ pub enum ItemEvent {
 
 #[derive(Debug, Clone)]
 pub enum ServerEvent {
-    Connect(String),
+    Session(SessionEvent),
     GameServer(GameServerEvent),
-    Spawn(SpawnData),
-    Despawn(SpawnData),
+    Room(RoomEvent),
+    Group(GroupEvent),
+    Chat(ChatEvent),
+    Fight(FightEvent),
+    Quest(QuestEvent),
+    Item(ItemEvent),
     Kill(KillData),
     Death(DeathData),
     CounterAttack(CounterAttackData),
-    FightStart(FightStartData),
-    FightResult(FightResultData),
-    FightEnd,
-    Quit(String),
-    Room(RoomEvent),
-    Group(GroupEvent),
-    GlobalChat(ChatMessage),
-    PrivateChat(ChatMessage),
-    Stats(u32),
-    Quest(QuestEvent),
     Teleport,
-    Item(ItemEvent),
-    Broadcast(String),
     Unknown(String),
 }
 
@@ -144,7 +159,7 @@ impl From<ServerResponse> for ServerEvent {
         let args: Vec<&str> = response.arguments.iter().map(|s| s.as_str()).collect();
 
         match args.as_slice() {
-            ["CONNECT", name] => ServerEvent::Connect(name.to_string()),
+            ["CONNECT", name] => ServerEvent::Session(SessionEvent::Connect(name.to_string())),
             ["GAME", "SERVER", status] => match status.to_uppercase().as_str() {
                 "CONNECTED" => ServerEvent::GameServer(GameServerEvent::Connected),
                 "DISCONNECTED" => ServerEvent::GameServer(GameServerEvent::Disconnected),
@@ -167,10 +182,10 @@ impl From<ServerResponse> for ServerEvent {
                 if let Some(v_type) = arg_type
                     && let Some(v_id) = arg_id
                 {
-                    ServerEvent::Spawn(SpawnData {
+                    ServerEvent::Room(RoomEvent::Spawn(SpawnData {
                         r#type: v_type.to_uppercase(),
                         id: v_id,
-                    })
+                    }))
                 } else {
                     ServerEvent::Unknown(args.join(" "))
                 }
@@ -187,10 +202,10 @@ impl From<ServerResponse> for ServerEvent {
                 if let Some(v_type) = arg_type
                     && let Some(v_id) = arg_id
                 {
-                    ServerEvent::Despawn(SpawnData {
+                    ServerEvent::Room(RoomEvent::Despawn(SpawnData {
                         r#type: v_type.to_uppercase(),
                         id: v_id,
-                    })
+                    }))
                 } else {
                     ServerEvent::Unknown(args.join(" "))
                 }
@@ -220,7 +235,7 @@ impl From<ServerResponse> for ServerEvent {
                 let payload = args.join(" ");
 
                 match parse_payload::<FightStartData>("FIGHT START", &payload) {
-                    Some(data) => ServerEvent::FightStart(data),
+                    Some(data) => ServerEvent::Fight(FightEvent::Start(data)),
                     None => ServerEvent::Unknown(payload),
                 }
             }
@@ -228,11 +243,11 @@ impl From<ServerResponse> for ServerEvent {
                 let payload = args.join(" ");
 
                 match parse_payload::<FightResultData>("FIGHT RESULT", &payload) {
-                    Some(data) => ServerEvent::FightResult(data),
+                    Some(data) => ServerEvent::Fight(FightEvent::Result(data)),
                     None => ServerEvent::Unknown(payload),
                 }
             }
-            ["FIGHT", "END"] => ServerEvent::FightEnd,
+            ["FIGHT", "END"] => ServerEvent::Fight(FightEvent::End),
             ["COUNTER", "ATTACK", args @ ..] => {
                 let payload = args.join(" ");
 
@@ -250,7 +265,7 @@ impl From<ServerResponse> for ServerEvent {
                 ServerEvent::Room(RoomEvent::PresenceLeave(name.to_string()))
             }
             ["ROOM", "CHAT", sender, message @ ..] => {
-                ServerEvent::Room(RoomEvent::Chat(ChatMessage {
+                ServerEvent::Chat(ChatEvent::Room(ChatMessage {
                     sender: sender.to_string(),
                     message: message.join(" "),
                 }))
@@ -264,16 +279,20 @@ impl From<ServerResponse> for ServerEvent {
             }
 
             // Global events
-            ["GLOBAL", "CHAT", sender, message @ ..] => ServerEvent::GlobalChat(ChatMessage {
-                sender: sender.to_string(),
-                message: message.join(" "),
-            }),
+            ["GLOBAL", "CHAT", sender, message @ ..] => {
+                ServerEvent::Chat(ChatEvent::Global(ChatMessage {
+                    sender: sender.to_string(),
+                    message: message.join(" "),
+                }))
+            }
 
             // Private events
-            ["PRIVATE", "CHAT", sender, message @ ..] => ServerEvent::PrivateChat(ChatMessage {
-                sender: sender.to_string(),
-                message: message.join(" "),
-            }),
+            ["PRIVATE", "CHAT", sender, message @ ..] => {
+                ServerEvent::Chat(ChatEvent::Private(ChatMessage {
+                    sender: sender.to_string(),
+                    message: message.join(" "),
+                }))
+            }
 
             // Group events
             ["GROUP", "INVITE", leader, "REMOVED"] => {
@@ -285,7 +304,7 @@ impl From<ServerResponse> for ServerEvent {
             ["GROUP", "JOIN", user] => ServerEvent::Group(GroupEvent::Join(user.to_string())),
             ["GROUP", "LEAVE", user, ..] => ServerEvent::Group(GroupEvent::Leave(user.to_string())),
             ["GROUP", "CHAT", sender, message @ ..] => {
-                ServerEvent::Group(GroupEvent::Chat(ChatMessage {
+                ServerEvent::Chat(ChatEvent::Group(ChatMessage {
                     sender: sender.to_string(),
                     message: message.join(" "),
                 }))
@@ -300,7 +319,7 @@ impl From<ServerResponse> for ServerEvent {
                     .strip_prefix("players=")
                     .and_then(|s| s.parse::<u32>().ok())
                 {
-                    ServerEvent::Stats(count)
+                    ServerEvent::Session(SessionEvent::Stats(count))
                 } else {
                     ServerEvent::Unknown(args.join(" "))
                 }
@@ -332,12 +351,14 @@ impl From<ServerResponse> for ServerEvent {
             }
 
             ["TELEPORT"] => ServerEvent::Teleport,
-            ["QUIT", name] => ServerEvent::Quit(name.to_string()),
+            ["QUIT", name] => ServerEvent::Session(SessionEvent::Quit(name.to_string())),
 
             ["ITEM", "ADD", item_identifier @ ..] => {
                 ServerEvent::Item(ItemEvent::Add(item_identifier.join(" ")))
             }
-            ["BROADCAST", message @ ..] => ServerEvent::Broadcast(message.join(" ")),
+            ["BROADCAST", message @ ..] => {
+                ServerEvent::Session(SessionEvent::Broadcast(message.join(" ")))
+            }
 
             _ => {
                 let raw = args.join(" ");
