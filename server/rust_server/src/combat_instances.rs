@@ -77,13 +77,21 @@ impl CombatInstanceManager {
     }
 }
 
+#[derive(Debug, Clone, Default)]
+pub struct PlayerCombatInfo {
+    pub success: bool,
+    pub response_time: u64,
+    pub code: String,
+    pub damage_dealt: u32,
+}
+
 pub struct CombatInstance {
     leader: PlayerId,
     grouped_players: Vec<PlayerId>,
     npc_id: NpcId,
-    pub players_success: HashMap<PlayerId, Option<bool>>,
+    pub players_info: HashMap<PlayerId, Option<PlayerCombatInfo>>,
     npc_combat_start_hp: u32,
-    pub combat_start_time: Instant, // Option<bool> because the success is None until the player played
+    pub combat_start_time: Instant,
     file_name: String,
     pub evaluating_players_count: u32,
     left_players: Vec<PlayerId>,
@@ -98,16 +106,16 @@ impl CombatInstance {
         grouped_players: Vec<PlayerId>,
         file_name: String,
     ) -> Self {
-        let mut player_success = grouped_players
+        let mut players_info = grouped_players
             .iter()
             .map(|player| (*player, None))
-            .collect::<HashMap<PlayerId, Option<bool>>>();
-        player_success.insert(leader, None);
+            .collect::<HashMap<PlayerId, Option<PlayerCombatInfo>>>();
+        players_info.insert(leader, None);
         Self {
             leader,
             grouped_players,
             npc_id,
-            players_success: player_success,
+            players_info,
             npc_combat_start_hp: npc_hp,
             combat_start_time: Instant::now(),
             file_name,
@@ -132,6 +140,10 @@ impl CombatInstance {
         self.combat_start_time.elapsed().as_secs()
     }
 
+    pub fn get_combat_duration_in_ms(&self) -> u64 {
+        self.combat_start_time.elapsed().as_millis() as u64
+    }
+
     pub fn get_assigned_file_name(&self) -> &str {
         &self.file_name
     }
@@ -145,9 +157,12 @@ impl CombatInstance {
     }
 
     pub fn force_finish(&mut self) {
-        for success in self.players_success.values_mut() {
-            if success.is_none() {
-                *success = Some(true);
+        for info in self.players_info.values_mut() {
+            if info.is_none() {
+                *info = Some(PlayerCombatInfo {
+                    success: true,
+                    ..Default::default()
+                });
             }
         }
     }
@@ -160,15 +175,30 @@ impl CombatInstance {
     }
 
     pub fn all_players_finished(&self) -> bool {
-        self.players_success.values().all(|s| s.is_some())
+        self.players_info.values().all(|s| s.is_some())
+    }
+
+    pub fn set_player_info(&mut self, player_id: PlayerId, info: PlayerCombatInfo) {
+        if let Some(player_info) = self.players_info.get_mut(&player_id) {
+            *player_info = Some(info);
+        }
     }
 
     pub fn set_player_success(&mut self, player_id: PlayerId, success: bool) {
-        self.players_success.insert(player_id, Some(success));
+        if let Some(info) = self.players_info.get_mut(&player_id) {
+            if let Some(combat_info) = info {
+                combat_info.success = success;
+            } else {
+                *info = Some(PlayerCombatInfo {
+                    success,
+                    ..Default::default()
+                });
+            }
+        }
     }
 
     pub fn get_player_success(&self, player_id: PlayerId) -> Option<Option<bool>> {
-        self.players_success.get(&player_id).copied()
+        self.players_info.get(&player_id).map(|info| info.as_ref().map(|i| i.success))
     }
 
     pub fn get_npc_combat_start_hp(&self) -> u32 {

@@ -1,3 +1,4 @@
+use crate::combat_instances::PlayerCombatInfo;
 use crate::constants::{
     BASE_COMMAND_RESPONSE, CODE_NL_SEP, CODE_SP_SEP, ErrorCode, MAX_TIME_FOR_COMBAT,
     NO_MORE_MESSAGES, NPC_COUNTER_ATTACK_CHANCE, NPC_COUNTER_DMG, NPC_MOB, PLAYER_ATTACK_DMG,
@@ -563,6 +564,8 @@ impl GameManager {
             let player = json["player"].as_str().unwrap_or("");
             let npc_id = json["npc_id"].as_u32().unwrap_or(0);
             let player_success = json["success"].as_bool().unwrap_or(false);
+            let response_time = json["response_time"].as_u64().unwrap_or(0);
+            let code = json["code"].as_str().unwrap_or("no code submitted".replace(" ", CODE_SP_SEP).as_str()).to_string();
             info!(
                 "fight result: player: {}, npc_id: {}, player_success: {}",
                 player, npc_id, player_success
@@ -614,6 +617,15 @@ impl GameManager {
                         "FIGHT RESULT",
                         object! { "player_name": player.to_string(), "success": true, "damage_dealt": dmg, "current_hp": npc_hp_after_hit}.dump().as_str(),
                     );
+                    self.set_combat_info_for_player(
+                        player_id,
+                        PlayerCombatInfo {
+                            success: player_success,
+                            response_time,
+                            code: code.clone(),
+                            damage_dealt: dmg,
+                        },
+                    );
                     let _ = self.player_attacks_npc(dmg, player_id, npc_id);
 
                     let (time_took_to_succeed, assigned_file_name) = self
@@ -659,6 +671,15 @@ impl GameManager {
                         &players_in_instance,
                         "FIGHT RESULT",
                         object! { "player_name": player.to_string(), "success": false, "damage_dealt": npc_dmg, "current_hp": player_hp_after_hit}.dump().as_str(),
+                    );
+                    self.set_combat_info_for_player(
+                        player_id,
+                        PlayerCombatInfo {
+                            success: player_success,
+                            response_time,
+                            code: code.clone(),
+                            damage_dealt: npc_dmg,
+                        },
                     );
                     self.npc_attacks_player(npc_dmg, player_id, npc_id);
                 }
