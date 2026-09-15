@@ -2,9 +2,11 @@ mod chat;
 mod combat;
 mod dialogue;
 mod group;
+mod item;
 mod player;
+mod quest;
 mod room;
-mod server;
+mod session;
 
 use crate::app::App;
 use crate::events::ApiEvent;

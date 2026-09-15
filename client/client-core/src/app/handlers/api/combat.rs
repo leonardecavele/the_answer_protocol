@@ -1,11 +1,72 @@
 use crate::app::App;
+use crate::network::RequestChain;
 use crate::notification::{Notification, NotificationTopic};
 use crate::renderer::views::{EditorView, GameView};
 use crate::states::game::DialogueState;
-use client_api::commands::AttackResponse;
-use client_api::events::{FightEndData, FightResultData, FightStartData, KillData};
+use client_api::ApiRequest;
+use client_api::commands::{AttackResponse, LookCommand, StatusCommand};
+use client_api::events::{
+    CounterAttackData, DeathData, FightEndData, FightResultData, FightStartData, KillData,
+};
 
 impl App {
+    pub fn on_death(&mut self, death: DeathData) {
+        let is_me = self.state.game.player.is_me(&death.player_name);
+        let respawn_here = self
+            .state
+            .game
+            .room
+            .as_ref()
+            .is_some_and(|room| room.id == death.respawn_room_id);
+
+        if !is_me && let Some(room) = &mut self.state.game.room {
+            if respawn_here {
+                room.player_entered(death.player_name.clone());
+            } else {
+                room.player_left(&death.player_name);
+            }
+        }
+
+        let message = match (is_me, respawn_here) {
+            (true, true) => "You died and respawned here".to_string(),
+            (true, false) => {
+                format!("You died and respawned in {}", death.respawn_room_id)
+            }
+            (false, true) => {
+                format!("{} died and respawned here", death.player_name)
+            }
+            (false, false) => format!(
+                "{} died and respawned in {}",
+                death.player_name, death.respawn_room_id
+            ),
+        };
+
+        if is_me {
+            self.send_chain(RequestChain::new(vec![
+                ApiRequest::Look(LookCommand),
+                ApiRequest::Status(StatusCommand),
+            ]));
+        }
+
+        self.state.game.log_action(message);
+    }
+
+    pub fn on_counter_attack(&mut self, counter_attack: CounterAttackData) {
+        let npc_name = self.state.game.manifest.npc_name(&counter_attack.npc_id);
+        let message = format!(
+            "{} dealt {} damage to you.",
+            npc_name, counter_attack.dealt_damage
+        );
+
+        self.state.game.log_action(message.clone());
+        self.state
+            .ui
+            .notifications
+            .push(Notification::error(message));
+
+        self.state.game.player.set_hp(counter_attack.current_hp);
+    }
+
     pub fn on_kill(&mut self, kill: KillData) {
         let npc_name = self.state.game.manifest.npc_name(&kill.npc_id);
         let is_me = self.state.game.player.is_me(&kill.player);
