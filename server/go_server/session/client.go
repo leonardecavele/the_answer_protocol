@@ -7,6 +7,7 @@ import (
 	"go_server/config"
 	serverError "go_server/error"
 	"go_server/game_conn"
+	"go_server/helper"
 	"go_server/logger"
 	"go_server/protocol"
 	"net"
@@ -48,6 +49,18 @@ func NewClient(conn net.Conn, room *Room) *Client {
 		eventChan:   make(chan protocol.Event, 64),
 		connectedAt: time.Now(),
 	}
+}
+
+func clientIP(client *Client) string {
+	address := client.Conn.RemoteAddr().String()
+	ip, _, err := net.SplitHostPort(address)
+	if err != nil {
+		return address
+	}
+	if normalizedIP := helper.NormalizeIP(ip); normalizedIP != "" {
+		return normalizedIP
+	}
+	return ip
 }
 
 func (c *Client) connectionInfo() (string, ClientState, time.Time) {

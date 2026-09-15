@@ -3,9 +3,6 @@ package session
 import (
 	"go_server/config"
 	serverError "go_server/error"
-	"go_server/helper"
-	"go_server/logger"
-	"net"
 	"sort"
 	"strings"
 	"sync"
@@ -45,18 +42,6 @@ func newClientConnectionManager(maxConnection int, authenticationTimeout time.Du
 	}
 }
 
-func remoteHost(client *Client) string {
-	address := client.Conn.RemoteAddr().String()
-	host, _, err := net.SplitHostPort(address)
-	if err != nil {
-		return address
-	}
-	if normalizedHost := helper.NormalizeIP(host); normalizedHost != "" {
-		return normalizedHost
-	}
-	return host
-}
-
 func (manager *ClientConnectionManager) Subscribe(client *Client) error {
 	if manager == nil {
 		return serverError.ErrClientConnectionManagerMissing
@@ -67,27 +52,27 @@ func (manager *ClientConnectionManager) Subscribe(client *Client) error {
 
 	manager.mutex.Lock()
 
-	host := remoteHost(client)
-	if manager.floodManager.IsBanned(host) {
+	ip := clientIP(client)
+	if manager.floodManager.IsBanned(ip) {
 		manager.mutex.Unlock()
 		return serverError.ErrIPBanned
 	}
 
 	now := time.Now()
 	if now.Sub(manager.lastAttemptCleanup) >= config.ConnectionAttemptWindow {
-		for host, window := range manager.connectionAttempts {
+		for ip, window := range manager.connectionAttempts {
 			if window.isExpired(now, config.ConnectionAttemptWindow) {
-				delete(manager.connectionAttempts, host)
+				delete(manager.connectionAttempts, ip)
 			}
 		}
 		manager.lastAttemptCleanup = now
 	}
-	if manager.connectionAttempts[host] == nil {
-		manager.connectionAttempts[host] = &rateWindow{}
+	if manager.connectionAttempts[ip] == nil {
+		manager.connectionAttempts[ip] = &rateWindow{}
 	}
-	if !manager.connectionAttempts[host].allow(now, config.MaxConnectionAttempts, config.ConnectionAttemptWindow) {
+	if !manager.connectionAttempts[ip].allow(now, config.MaxConnectionAttempts, config.ConnectionAttemptWindow) {
 		manager.mutex.Unlock()
-		manager.registerFlood(host, nil)
+		manager.registerFlood(ip, nil)
 		return serverError.ErrRateLimitExceeded
 	}
 
@@ -108,66 +93,6 @@ func (manager *ClientConnectionManager) Subscribe(client *Client) error {
 	return nil
 }
 
-func (manager *ClientConnectionManager) RunFloodPointDecay(quit <-chan struct{}) {
-	if manager == nil {
-		return
-	}
-	manager.floodManager.RunDecay(quit)
-}
-
-func (manager *ClientConnectionManager) BanIP(ip string) bool {
-	if manager == nil {
-		return false
-	}
-
-	normalizedHost := helper.NormalizeIP(ip)
-	if normalizedHost == "" {
-		return false
-	}
-
-	manager.floodManager.BanIP(normalizedHost)
-	manager.disconnectHost(normalizedHost, nil)
-	return true
-}
-
-func (manager *ClientConnectionManager) UnbanIP(ip string) bool {
-	if manager == nil {
-		return false
-	}
-
-	normalizedHost := helper.NormalizeIP(ip)
-	if normalizedHost == "" {
-		return false
-	}
-
-	manager.floodManager.ClearIP(normalizedHost)
-
-	manager.mutex.Lock()
-	delete(manager.connectionAttempts, normalizedHost)
-	manager.mutex.Unlock()
-
-	return true
-}
-
-func (manager *ClientConnectionManager) BannedIPs() []IPFloodInfo {
-	if manager == nil {
-		return nil
-	}
-	return manager.floodManager.BannedIPs()
-}
-
-func (manager *ClientConnectionManager) FloodInfo(ip string) (IPFloodInfo, bool) {
-	if manager == nil {
-		return IPFloodInfo{}, false
-	}
-
-	normalizedHost := helper.NormalizeIP(ip)
-	if normalizedHost == "" {
-		return IPFloodInfo{}, false
-	}
-	return manager.floodManager.Info(normalizedHost), true
-}
-
 func (manager *ClientConnectionManager) Clients() []ClientConnectionInfo {
 	if manager == nil {
 		return nil
@@ -180,7 +105,7 @@ func (manager *ClientConnectionManager) Clients() []ClientConnectionInfo {
 		username, state, connectedAt := client.connectionInfo()
 		clients = append(clients, ClientConnectionInfo{
 			Username:     username,
-			IP:           remoteHost(client),
+			IP:           clientIP(client),
 			State:        state,
 			ConnectedFor: now.Sub(connectedAt).Round(time.Second),
 		})
@@ -196,22 +121,6 @@ func (manager *ClientConnectionManager) Clients() []ClientConnectionInfo {
 	return clients
 }
 
-func (manager *ClientConnectionManager) AllowInput(client *Client) bool {
-	if manager == nil || client == nil || client.Conn == nil {
-		return false
-	}
-
-	host := remoteHost(client)
-	allowed, banned := manager.floodManager.AllowInput(host)
-	if !allowed {
-		manager.logFlood(host, "client_input")
-	}
-	if banned {
-		manager.disconnectHost(host, client)
-	}
-	return allowed
-}
-
 func (manager *ClientConnectionManager) IsInputValid(input string) bool {
 	if manager == nil || !utf8.ValidString(input) || !strings.HasSuffix(input, "\n") {
 		return false
@@ -221,46 +130,6 @@ func (manager *ClientConnectionManager) IsInputValid(input string) bool {
 	input = strings.TrimSuffix(input, "\r")
 
 	return strings.IndexFunc(input, unicode.IsControl) == -1
-}
-
-func (manager *ClientConnectionManager) registerFlood(host string, ignoredClient *Client) {
-	if manager == nil || host == "" {
-		return
-	}
-
-	banned := manager.floodManager.AddFloodPoint(host)
-	manager.logFlood(host, "connection_attempt")
-	if !banned {
-		return
-	}
-	manager.disconnectHost(host, ignoredClient)
-}
-
-func (manager *ClientConnectionManager) logFlood(host string, source string) {
-	info := manager.floodManager.Info(host)
-	logger.AppLogger.Warn(
-		"Flood detected: ip=%s source=%s points=%d/%d banned=%t",
-		info.IP,
-		source,
-		info.Points,
-		info.MaxPoints,
-		info.Banned,
-	)
-}
-
-func (manager *ClientConnectionManager) disconnectHost(host string, ignoredClient *Client) {
-	manager.mutex.Lock()
-	clients := make([]*Client, 0)
-	for connectedClient := range manager.connections {
-		if connectedClient != ignoredClient && remoteHost(connectedClient) == host {
-			clients = append(clients, connectedClient)
-		}
-	}
-	manager.mutex.Unlock()
-
-	for _, client := range clients {
-		_ = client.Disconnect()
-	}
 }
 
 func (manager *ClientConnectionManager) Release(client *Client) {
