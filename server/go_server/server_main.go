@@ -93,13 +93,13 @@ func main() {
 	}()
 
 	gameServerManager := &game_conn.GameServerManager{}
-	connectionManager := session.NewConnectionManager()
+	clientConnectionManager := session.NewClientConnectionManager()
 	room := session.NewRoom()
 
-	go cli.Run(commandReader, connectionManager, room, gameServerManager, func() {
+	go cli.Run(commandReader, clientConnectionManager, room, gameServerManager, func() {
 		shutdownServer(quit, listener, &stopOnce)
 	})
-	go connectionManager.RunFloodPointDecay(quit)
+	go clientConnectionManager.RunFloodPointDecay(quit)
 	go gameServerManager.HandleGameServer(
 		quit,
 		serverOptions.RustServerAddress(),
@@ -123,7 +123,7 @@ func main() {
 		}
 
 		client := session.NewClient(conn, room)
-		if err := connectionManager.Subscribe(client); err != nil {
+		if err := clientConnectionManager.Subscribe(client); err != nil {
 			logger.AppLogger.Error("%s Connection rejected: %v", client.LogIdentity(), err)
 			response := protocol.ResponseTooManyRequests
 			if errors.Is(err, serverError.ErrMaxConnection) {
@@ -139,8 +139,8 @@ func main() {
 		}
 
 		go func() {
-			defer connectionManager.Release(client)
-			client_conn.HandleClient(client, gameServerManager, connectionManager)
+			defer clientConnectionManager.Release(client)
+			client_conn.HandleClient(client, gameServerManager, clientConnectionManager)
 		}()
 	}
 }

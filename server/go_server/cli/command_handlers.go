@@ -22,9 +22,9 @@ func (console *serverCLI) handleCommand(command string, arguments string) bool {
 
 	switch command {
 	case CommandBan:
-		handleIPCommand(arguments, "ban <ip>", console.connectionManager.BanIP, "banned")
+		handleIPCommand(arguments, "ban <ip>", console.clientConnectionManager.BanIP, "banned")
 	case CommandUnban:
-		handleIPCommand(arguments, "deban <ip>", console.connectionManager.UnbanIP, "unbanned")
+		handleIPCommand(arguments, "deban <ip>", console.clientConnectionManager.UnbanIP, "unbanned")
 	case CommandStatus:
 		console.showStatus(arguments)
 	case CommandClients:
@@ -92,10 +92,10 @@ func (console *serverCLI) showStatus(arguments string) {
 	logger.AppLogger.Info(
 		"Server status: uptime=%s connections=%d clients=%d groups=%d bans=%d game_server=%s",
 		time.Since(console.startedAt).Round(time.Second),
-		console.connectionManager.Count(),
+		console.clientConnectionManager.Count(),
 		console.room.Count(),
 		len(console.room.Groups()),
-		len(console.connectionManager.BannedIPs()),
+		len(console.clientConnectionManager.BannedIPs()),
 		gameServerStatus,
 	)
 }
@@ -105,7 +105,7 @@ func (console *serverCLI) showClients(arguments string) {
 		return
 	}
 
-	clients := console.connectionManager.Clients()
+	clients := console.clientConnectionManager.Clients()
 	if len(clients) == 0 {
 		logger.AppLogger.Info("No clients connected")
 		return
@@ -145,7 +145,7 @@ func (console *serverCLI) showBans(arguments string) {
 		return
 	}
 
-	bans := console.connectionManager.BannedIPs()
+	bans := console.clientConnectionManager.BannedIPs()
 	if len(bans) == 0 {
 		logger.AppLogger.Info("No banned IP addresses")
 		return
@@ -162,7 +162,7 @@ func (console *serverCLI) showFlood(arguments string) {
 		return
 	}
 
-	info, ok := console.connectionManager.FloodInfo(fields[0])
+	info, ok := console.clientConnectionManager.FloodInfo(fields[0])
 	if !ok {
 		logger.AppLogger.Error("Invalid IP address: %s", fields[0])
 		return

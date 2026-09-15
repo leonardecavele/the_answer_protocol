@@ -14,14 +14,14 @@ import (
 	"unicode/utf8"
 )
 
-type ClientInfo struct {
+type ClientConnectionInfo struct {
 	Username     string
 	IP           string
 	State        ClientState
 	ConnectedFor time.Duration
 }
 
-type ConnectionManager struct {
+type ClientConnectionManager struct {
 	mutex                 sync.Mutex
 	connections           map[*Client]*time.Timer
 	maxConnection         int
@@ -31,12 +31,12 @@ type ConnectionManager struct {
 	floodManager          *FloodManager
 }
 
-func NewConnectionManager() *ConnectionManager {
-	return newConnectionManager(config.MaxConnection, config.AuthenticationTimeout)
+func NewClientConnectionManager() *ClientConnectionManager {
+	return newClientConnectionManager(config.MaxConnection, config.AuthenticationTimeout)
 }
 
-func newConnectionManager(maxConnection int, authenticationTimeout time.Duration) *ConnectionManager {
-	return &ConnectionManager{
+func newClientConnectionManager(maxConnection int, authenticationTimeout time.Duration) *ClientConnectionManager {
+	return &ClientConnectionManager{
 		connections:           make(map[*Client]*time.Timer, maxConnection),
 		maxConnection:         maxConnection,
 		authenticationTimeout: authenticationTimeout,
@@ -57,9 +57,9 @@ func remoteHost(client *Client) string {
 	return host
 }
 
-func (manager *ConnectionManager) Subscribe(client *Client) error {
+func (manager *ClientConnectionManager) Subscribe(client *Client) error {
 	if manager == nil {
-		return serverError.ErrConnectionManagerMissing
+		return serverError.ErrClientConnectionManagerMissing
 	}
 	if client == nil || client.Conn == nil {
 		return serverError.ErrInvalidConnection
@@ -76,7 +76,7 @@ func (manager *ConnectionManager) Subscribe(client *Client) error {
 	now := time.Now()
 	if now.Sub(manager.lastAttemptCleanup) >= config.ConnectionAttemptWindow {
 		for host, window := range manager.connectionAttempts {
-			if window.expired(now, config.ConnectionAttemptWindow) {
+			if window.isExpired(now, config.ConnectionAttemptWindow) {
 				delete(manager.connectionAttempts, host)
 			}
 		}
@@ -108,14 +108,14 @@ func (manager *ConnectionManager) Subscribe(client *Client) error {
 	return nil
 }
 
-func (manager *ConnectionManager) RunFloodPointDecay(quit <-chan struct{}) {
+func (manager *ClientConnectionManager) RunFloodPointDecay(quit <-chan struct{}) {
 	if manager == nil {
 		return
 	}
 	manager.floodManager.RunDecay(quit)
 }
 
-func (manager *ConnectionManager) BanIP(ip string) bool {
+func (manager *ClientConnectionManager) BanIP(ip string) bool {
 	if manager == nil {
 		return false
 	}
@@ -130,7 +130,7 @@ func (manager *ConnectionManager) BanIP(ip string) bool {
 	return true
 }
 
-func (manager *ConnectionManager) UnbanIP(ip string) bool {
+func (manager *ClientConnectionManager) UnbanIP(ip string) bool {
 	if manager == nil {
 		return false
 	}
@@ -149,14 +149,14 @@ func (manager *ConnectionManager) UnbanIP(ip string) bool {
 	return true
 }
 
-func (manager *ConnectionManager) BannedIPs() []IPFloodInfo {
+func (manager *ClientConnectionManager) BannedIPs() []IPFloodInfo {
 	if manager == nil {
 		return nil
 	}
 	return manager.floodManager.BannedIPs()
 }
 
-func (manager *ConnectionManager) FloodInfo(ip string) (IPFloodInfo, bool) {
+func (manager *ClientConnectionManager) FloodInfo(ip string) (IPFloodInfo, bool) {
 	if manager == nil {
 		return IPFloodInfo{}, false
 	}
@@ -168,17 +168,17 @@ func (manager *ConnectionManager) FloodInfo(ip string) (IPFloodInfo, bool) {
 	return manager.floodManager.Info(normalizedHost), true
 }
 
-func (manager *ConnectionManager) Clients() []ClientInfo {
+func (manager *ClientConnectionManager) Clients() []ClientConnectionInfo {
 	if manager == nil {
 		return nil
 	}
 
 	now := time.Now()
 	manager.mutex.Lock()
-	clients := make([]ClientInfo, 0, len(manager.connections))
+	clients := make([]ClientConnectionInfo, 0, len(manager.connections))
 	for client := range manager.connections {
 		username, state, connectedAt := client.connectionInfo()
-		clients = append(clients, ClientInfo{
+		clients = append(clients, ClientConnectionInfo{
 			Username:     username,
 			IP:           remoteHost(client),
 			State:        state,
@@ -196,7 +196,7 @@ func (manager *ConnectionManager) Clients() []ClientInfo {
 	return clients
 }
 
-func (manager *ConnectionManager) AllowInput(client *Client) bool {
+func (manager *ClientConnectionManager) AllowInput(client *Client) bool {
 	if manager == nil || client == nil || client.Conn == nil {
 		return false
 	}
@@ -212,7 +212,7 @@ func (manager *ConnectionManager) AllowInput(client *Client) bool {
 	return allowed
 }
 
-func (manager *ConnectionManager) IsInputValid(input string) bool {
+func (manager *ClientConnectionManager) IsInputValid(input string) bool {
 	if manager == nil || !utf8.ValidString(input) || !strings.HasSuffix(input, "\n") {
 		return false
 	}
@@ -223,7 +223,7 @@ func (manager *ConnectionManager) IsInputValid(input string) bool {
 	return strings.IndexFunc(input, unicode.IsControl) == -1
 }
 
-func (manager *ConnectionManager) registerFlood(host string, ignoredClient *Client) {
+func (manager *ClientConnectionManager) registerFlood(host string, ignoredClient *Client) {
 	if manager == nil || host == "" {
 		return
 	}
@@ -236,7 +236,7 @@ func (manager *ConnectionManager) registerFlood(host string, ignoredClient *Clie
 	manager.disconnectHost(host, ignoredClient)
 }
 
-func (manager *ConnectionManager) logFlood(host string, source string) {
+func (manager *ClientConnectionManager) logFlood(host string, source string) {
 	info := manager.floodManager.Info(host)
 	logger.AppLogger.Warn(
 		"Flood detected: ip=%s source=%s points=%d/%d banned=%t",
@@ -248,7 +248,7 @@ func (manager *ConnectionManager) logFlood(host string, source string) {
 	)
 }
 
-func (manager *ConnectionManager) disconnectHost(host string, ignoredClient *Client) {
+func (manager *ClientConnectionManager) disconnectHost(host string, ignoredClient *Client) {
 	manager.mutex.Lock()
 	clients := make([]*Client, 0)
 	for connectedClient := range manager.connections {
@@ -263,7 +263,7 @@ func (manager *ConnectionManager) disconnectHost(host string, ignoredClient *Cli
 	}
 }
 
-func (manager *ConnectionManager) Release(client *Client) {
+func (manager *ClientConnectionManager) Release(client *Client) {
 	if manager == nil || client == nil {
 		return
 	}
@@ -280,7 +280,7 @@ func (manager *ConnectionManager) Release(client *Client) {
 	}
 }
 
-func (manager *ConnectionManager) Count() int {
+func (manager *ClientConnectionManager) Count() int {
 	if manager == nil {
 		return 0
 	}
@@ -291,7 +291,7 @@ func (manager *ConnectionManager) Count() int {
 	return len(manager.connections)
 }
 
-func (manager *ConnectionManager) timeoutUnauthenticated(client *Client) {
+func (manager *ClientConnectionManager) timeoutUnauthenticated(client *Client) {
 	manager.mutex.Lock()
 	if _, ok := manager.connections[client]; !ok {
 		manager.mutex.Unlock()

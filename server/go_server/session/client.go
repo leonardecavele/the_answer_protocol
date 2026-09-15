@@ -113,7 +113,7 @@ func (c *Client) DeleteClient(gameServerManager *game_conn.GameServerManager) er
 		}
 	}
 
-	c.Room.DeleteUsername(c)
+	c.Room.UnregisterClient(c)
 
 	if state == AUTHENTICATED {
 		c.Room.BroadcastEvent(protocol.EventBatch{

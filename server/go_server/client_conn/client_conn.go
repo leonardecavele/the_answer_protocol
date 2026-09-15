@@ -77,7 +77,7 @@ func shouldLogClientIOError(client *session.Client, err error) bool {
 	return err != nil && (client == nil || !client.WasDisconnectedByServer())
 }
 
-func HandleClient(client *session.Client, gameServerManager *game_conn.GameServerManager, connectionManager *session.ConnectionManager) {
+func HandleClient(client *session.Client, gameServerManager *game_conn.GameServerManager, clientConnectionManager *session.ClientConnectionManager) {
 	defer func() {
 		if err := client.DeleteClient(gameServerManager); err != nil {
 			logger.AppLogger.Error("%s Erase client error: %v\n", client.LogIdentity(), err)
@@ -124,7 +124,7 @@ func HandleClient(client *session.Client, gameServerManager *game_conn.GameServe
 			return
 		}
 
-		if !connectionManager.AllowInput(client) {
+		if !clientConnectionManager.AllowInput(client) {
 			if err := client.Write(protocol.ResponseTooManyRequests); err != nil {
 				if shouldLogClientIOError(client, err) {
 					logger.AppLogger.Error("%s Write error: %v\n", client.LogIdentity(), err)
@@ -134,7 +134,7 @@ func HandleClient(client *session.Client, gameServerManager *game_conn.GameServe
 			}
 			return
 		}
-		if !connectionManager.IsInputValid(str) {
+		if !clientConnectionManager.IsInputValid(str) {
 			logger.AppLogger.Error("%s Invalid client input", client.LogIdentity())
 			if err := client.Write(protocol.ResponseInvalidArguments); err != nil {
 				if shouldLogClientIOError(client, err) {

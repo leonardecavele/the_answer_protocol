@@ -61,7 +61,7 @@ func (room *Room) RollbackUsername(client *Client) {
 	client.rollbackAuthentication()
 }
 
-func (room *Room) DeleteUsername(client *Client) {
+func (room *Room) UnregisterClient(client *Client) {
 	room.mutex.Lock()
 	if client.IsAuthenticated() {
 		delete(room.clients, usernameKey(client.Username))

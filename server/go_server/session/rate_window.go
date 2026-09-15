@@ -20,6 +20,6 @@ func (window *rateWindow) allow(now time.Time, limit int, duration time.Duration
 	return true
 }
 
-func (window *rateWindow) expired(now time.Time, duration time.Duration) bool {
+func (window *rateWindow) isExpired(now time.Time, duration time.Duration) bool {
 	return !window.startedAt.IsZero() && now.Sub(window.startedAt) >= duration
 }

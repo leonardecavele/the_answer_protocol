@@ -16,27 +16,27 @@ import (
 )
 
 type serverCLI struct {
-	connectionManager *session.ConnectionManager
-	room              *session.Room
-	gameServerManager *game_conn.GameServerManager
-	shutdown          func()
-	startedAt         time.Time
+	clientConnectionManager *session.ClientConnectionManager
+	room                    *session.Room
+	gameServerManager       *game_conn.GameServerManager
+	shutdown                func()
+	startedAt               time.Time
 }
 
 func Run(
 	reader *readline.Instance,
-	connectionManager *session.ConnectionManager,
+	clientConnectionManager *session.ClientConnectionManager,
 	room *session.Room,
 	gameServerManager *game_conn.GameServerManager,
 	shutdown func(),
 ) {
 	defer reader.Close()
 	console := serverCLI{
-		connectionManager: connectionManager,
-		room:              room,
-		gameServerManager: gameServerManager,
-		shutdown:          shutdown,
-		startedAt:         time.Now(),
+		clientConnectionManager: clientConnectionManager,
+		room:                    room,
+		gameServerManager:       gameServerManager,
+		shutdown:                shutdown,
+		startedAt:               time.Now(),
 	}
 	console.readCommands(reader)
 }

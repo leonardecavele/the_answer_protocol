@@ -179,7 +179,7 @@ func (manager *FloodManager) decreaseFloodPoints() {
 
 	now := time.Now()
 	for ip, window := range manager.inputsByIP {
-		if window.expired(now, manager.inputWindow) {
+		if window.isExpired(now, manager.inputWindow) {
 			delete(manager.inputsByIP, ip)
 		}
 	}
