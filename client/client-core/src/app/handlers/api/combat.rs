@@ -3,7 +3,7 @@ use crate::notification::{Notification, NotificationTopic};
 use crate::renderer::views::{EditorView, GameView};
 use crate::states::game::DialogueState;
 use client_api::commands::AttackResponse;
-use client_api::events::{FightResultData, FightStartData, KillData};
+use client_api::events::{FightEndData, FightResultData, FightStartData, KillData};
 
 impl App {
     pub fn on_kill(&mut self, kill: KillData) {
@@ -86,7 +86,11 @@ impl App {
         self.state.ui.notifications.push(notification.with_ms(3000));
     }
 
-    pub fn on_fight_end(&mut self) {
+    pub fn on_fight_end(&mut self, _fight_end: FightEndData) {
+        //TODO: ajouter les donnees du combat dans l'etat globale
+        //TODO: afficher sur la vue du jeu un access a ces donnees (clique souris + clavier)
+        //TODO: permettre de selectionner un combat dans la liste et mettre en forme le resultat (popup ?)
+
         self.state.game.fight.end();
         self.state.game.log_action("The fight ended.".to_string());
         self.view_manager.set_view(Box::new(GameView::new()));
@@ -98,7 +102,11 @@ impl App {
                 .with_topic(NotificationTopic::Fight),
         );
 
-        self.on_fight_end();
+        self.state.game.fight.end();
+        self.state
+            .game
+            .log_action("The fight ended. (timeout)".to_string());
+        self.view_manager.set_view(Box::new(GameView::new()));
     }
 
     pub fn on_attacked(&mut self, response: AttackResponse, npc_id: String) {

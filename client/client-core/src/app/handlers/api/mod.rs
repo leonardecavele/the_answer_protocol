@@ -215,7 +215,7 @@ impl App {
             ServerEvent::Fight(fight_event) => match fight_event {
                 FightEvent::Start(data) => self.on_fight_start(data),
                 FightEvent::Result(data) => self.on_fight_result(data),
-                FightEvent::End => self.on_fight_end(),
+                FightEvent::End(data) => self.on_fight_end(data),
             },
             ServerEvent::Quest(quest_event) => match quest_event {
                 QuestEvent::Add(data) => self.on_quest_add(data),

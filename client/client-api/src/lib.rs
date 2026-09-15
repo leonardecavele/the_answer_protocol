@@ -12,9 +12,10 @@ pub use protocol::response::{Opcode, ServerResponse};
 
 pub mod events {
     pub use crate::client::event::{
-        ChatEvent, ChatMessage, CounterAttackData, DeathData, FightEvent, FightResultData,
-        FightStartData, GameServerEvent, GroupEvent, ItemEvent, KillData, QuestCompleteData,
-        QuestEvent, QuestStepData, RoomEvent, ServerEvent, SessionEvent, SpawnData,
+        ChatEvent, ChatMessage, CounterAttackData, DeathData, FightEndData, FightEvent,
+        FightResultData, FightStartData, GameServerEvent, GroupEvent, ItemEvent, KillData,
+        QuestCompleteData, QuestEvent, QuestStepData, RoomEvent, ServerEvent, SessionEvent,
+        SpawnData,
     };
 }
 

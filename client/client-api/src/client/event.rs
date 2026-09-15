@@ -71,6 +71,22 @@ pub struct FightResultData {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct FightEndPlayerData {
+    pub name: String,
+    pub code: String,
+    pub success: bool,
+    pub damage_dealt: u16,
+    pub elapsed_ms: u32,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct FightEndData {
+    pub players: Vec<FightEndPlayerData>,
+    pub nl_sep: String,
+    pub sp_sep: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct CounterAttackData {
     pub npc_id: String,
     pub dealt_damage: u16,
@@ -97,7 +113,7 @@ pub enum ChatEvent {
 pub enum FightEvent {
     Start(FightStartData),
     Result(FightResultData),
-    End,
+    End(FightEndData),
 }
 
 #[derive(Debug, Clone)]
@@ -247,7 +263,14 @@ impl From<ServerResponse> for ServerEvent {
                     None => ServerEvent::Unknown(payload),
                 }
             }
-            ["FIGHT", "END"] => ServerEvent::Fight(FightEvent::End),
+            ["FIGHT", "END", args @ ..] => {
+                let payload = args.join(" ");
+
+                match parse_payload::<FightEndData>("FIGHT END", &payload) {
+                    Some(data) => ServerEvent::Fight(FightEvent::End(data)),
+                    None => ServerEvent::Unknown(payload),
+                }
+            }
             ["COUNTER", "ATTACK", args @ ..] => {
                 let payload = args.join(" ");
 
