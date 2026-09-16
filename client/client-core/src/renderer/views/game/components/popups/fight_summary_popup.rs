@@ -63,6 +63,19 @@ impl FightSummaryPopup {
         count.checked_sub(1)?.checked_sub(row_index)
     }
 
+    fn selected_fight(state: &AppState) -> Option<(usize, &FightEndData)> {
+        let fight_summary_state = state.game.overlays.get::<FightSummaryState>()?;
+        let selected = fight_summary_state.selected;
+
+        Some((selected, state.game.fight.history().get(selected)?))
+    }
+
+    fn column_block<'a>() -> Block<'a> {
+        Block::default()
+            .borders(Borders::RIGHT)
+            .border_style(dim_style())
+    }
+
     fn ranked_players(fight: &FightEndData) -> Vec<&FightEndPlayerData> {
         let mut players: Vec<&FightEndPlayerData> = fight.players.iter().collect();
 
@@ -78,12 +91,13 @@ impl FightSummaryPopup {
         }
     }
 
-    fn local_player_outcome(state: &AppState, fight: &FightEndData) -> Option<bool> {
+    fn local_player_color(state: &AppState, fight: &FightEndData) -> Color {
         fight
             .players
             .iter()
             .find(|player| state.game.player.is_me(&player.name))
-            .map(|player| player.success)
+            .map(|player| Self::outcome(player).1)
+            .unwrap_or(Color::Reset)
     }
 
     fn gap_label(elapsed_ms: u32, leader_ms: u32) -> Option<String> {
@@ -134,23 +148,14 @@ impl FightSummaryPopup {
             .enumerate()
             .rev()
             .map(|(index, fight)| {
-                let color = match Self::local_player_outcome(state, fight) {
-                    Some(true) => SUCCESS_COLOR,
-                    Some(false) => ERROR_COLOR,
-                    None => Color::Reset,
-                };
-
+                let color = Self::local_player_color(state, fight);
                 let style = selection_style(color, fight_summary_state.selected == index);
 
                 ListItem::new(Span::styled(format!(" Fight #{}", index + 1), style))
             })
             .collect();
 
-        let block = Block::default()
-            .borders(Borders::RIGHT)
-            .border_style(dim_style());
-
-        frame.render_widget(List::new(items).block(block), area);
+        frame.render_widget(List::new(items).block(Self::column_block()), area);
     }
 
     fn player_lines(
@@ -196,25 +201,16 @@ impl FightSummaryPopup {
         lines
     }
 
-    fn draw_ranking(&self, state: &AppState, frame: &mut Frame, area: Rect) {
-        let Some(fight_summary_state) = state.game.overlays.get::<FightSummaryState>() else {
-            return;
-        };
-
-        let Some(fight) = state.game.fight.history().get(fight_summary_state.selected) else {
-            return;
-        };
-
+    fn ranking_lines(
+        state: &AppState,
+        fight: &FightEndData,
+        max_width: usize,
+    ) -> Vec<Line<'static>> {
         let players = Self::ranked_players(fight);
 
         let Some(leader) = players.first() else {
-            return;
+            return Vec::new();
         };
-
-        let block = Block::default()
-            .borders(Borders::RIGHT)
-            .border_style(dim_style());
-        let max_width = block.inner(area).width as usize;
 
         let mut lines = vec![
             Line::from(Span::styled(
@@ -228,7 +224,6 @@ impl FightSummaryPopup {
 
         for (rank, player) in players.iter().enumerate() {
             let (label, color) = Self::outcome(player);
-            let is_me = state.game.player.is_me(&player.name);
 
             let rank_style = match rank {
                 0 => Style::default()
@@ -237,22 +232,18 @@ impl FightSummaryPopup {
                 _ => dim_style(),
             };
 
-            let name_style = match is_me {
-                true => Style::default()
-                    .fg(PLAYER_COLOR)
-                    .add_modifier(Modifier::BOLD),
-                false => Style::default().add_modifier(Modifier::BOLD),
+            let (name, name_style) = match state.game.player.is_me(&player.name) {
+                true => (
+                    format!("{} (You)", player.name),
+                    Style::default()
+                        .fg(PLAYER_COLOR)
+                        .add_modifier(Modifier::BOLD),
+                ),
+                false => (
+                    player.name.clone(),
+                    Style::default().add_modifier(Modifier::BOLD),
+                ),
             };
-
-            let name = match is_me {
-                true => format!("{} (You)", player.name),
-                false => player.name.clone(),
-            };
-
-            lines.push(Line::from(vec![
-                Span::styled(format!(" #{} ", rank + 1), rank_style),
-                Span::styled(truncate_to_width(&name, max_width - 5), name_style),
-            ]));
 
             let mut details = vec![
                 Span::styled(
@@ -266,9 +257,24 @@ impl FightSummaryPopup {
                 details.push(Span::styled(gap, dim_style()));
             }
 
+            lines.push(Line::from(vec![
+                Span::styled(format!(" #{} ", rank + 1), rank_style),
+                Span::styled(truncate_to_width(&name, max_width - 5), name_style),
+            ]));
             lines.push(Line::from(details));
             lines.push(Line::from(""));
         }
+
+        lines
+    }
+
+    fn draw_ranking(&self, state: &AppState, frame: &mut Frame, area: Rect) {
+        let Some((_, fight)) = Self::selected_fight(state) else {
+            return;
+        };
+
+        let block = Self::column_block();
+        let lines = Self::ranking_lines(state, fight, block.inner(area).width as usize);
 
         frame.render_widget(Paragraph::new(lines).block(block), area);
     }
@@ -276,15 +282,11 @@ impl FightSummaryPopup {
     fn draw_detail(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
         self.detail_area = Some(area);
 
-        let Some(fight_summary_state) = state.game.overlays.get::<FightSummaryState>() else {
+        let Some((selected, fight)) = Self::selected_fight(state) else {
             return;
         };
 
-        self.sync_selection(fight_summary_state.selected);
-
-        let Some(fight) = state.game.fight.history().get(fight_summary_state.selected) else {
-            return;
-        };
+        self.sync_selection(selected);
 
         let block = Block::default().padding(Padding::horizontal(1));
         let inner_area = block.inner(area);
