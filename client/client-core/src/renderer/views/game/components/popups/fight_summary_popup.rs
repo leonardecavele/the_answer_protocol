@@ -6,7 +6,8 @@ use crate::renderer::components::{
 use crate::renderer::layout::{centered_rect, percent_of};
 use crate::renderer::text::wrap_str_to_lines;
 use crate::renderer::theme::{
-    ERROR_COLOR, MUTED_COLOR, SUCCESS_COLOR, close_hint, dim_style, popup_block, selection_style,
+    ERROR_COLOR, MUTED_COLOR, SUCCESS_COLOR, WARNING_COLOR, close_hint, dim_style, popup_block,
+    selection_style,
 };
 use crate::states::AppState;
 use crate::states::game::FightSummaryState;
@@ -26,6 +27,7 @@ const POPUP_HEIGHT_PERCENT: u16 = 80;
 const MIN_WIDTH: u16 = 40;
 const MIN_HEIGHT: u16 = 10;
 const LIST_WIDTH: u16 = 13;
+const RANKING_WIDTH: u16 = 30;
 const FOOTER_HEIGHT: u16 = 2;
 const EMPTY_HISTORY: &str = " No fight has ended yet. ";
 
@@ -59,6 +61,21 @@ impl FightSummaryPopup {
         let count = state.game.fight.history().len();
 
         count.checked_sub(1)?.checked_sub(row_index)
+    }
+
+    fn ranked_players(fight: &FightEndData) -> Vec<&FightEndPlayerData> {
+        let mut players: Vec<&FightEndPlayerData> = fight.players.iter().collect();
+
+        players.sort_by_key(|player| (!player.success, player.elapsed_ms));
+
+        players
+    }
+
+    fn outcome(player: &FightEndPlayerData) -> (&'static str, Color) {
+        match player.success {
+            true => ("won", SUCCESS_COLOR),
+            false => ("lost", ERROR_COLOR),
+        }
     }
 
     fn local_player_outcome(state: &AppState, fight: &FightEndData) -> Option<bool> {
@@ -125,26 +142,29 @@ impl FightSummaryPopup {
         fight: &FightEndData,
         max_width: usize,
     ) -> Vec<Line<'static>> {
-        let (label, color) = match player.success {
-            true => ("won", SUCCESS_COLOR),
-            false => ("lost", ERROR_COLOR),
-        };
-
+        let (label, color) = Self::outcome(player);
         let verb = if player.success { "deals" } else { "takes" };
-        let message = format!("  {verb} {} damage", player.damage_dealt);
 
-        let mut lines = vec![Line::from(vec![
-            Span::styled(
-                player.name.clone(),
-                Style::default().add_modifier(Modifier::BOLD),
-            ),
-            Span::styled(format!("  {}", label), Style::default().fg(color)),
-            Span::styled(message, Style::default().fg(color)),
-            Span::styled(
-                format!("  {}", Self::duration_label(player.elapsed_ms)),
-                Style::default().fg(MUTED_COLOR),
-            ),
-        ])];
+        let mut lines = vec![
+            Line::from(Span::styled(
+                format!(" {} ", player.name),
+                Style::default()
+                    .fg(color)
+                    .add_modifier(Modifier::REVERSED | Modifier::BOLD),
+            )),
+            Line::from(vec![
+                Span::styled(label, Style::default().fg(color)),
+                Span::styled(
+                    format!("  {verb} {} damage", player.damage_dealt),
+                    Style::default().fg(color),
+                ),
+                Span::styled(
+                    format!("  {}", Self::duration_label(player.elapsed_ms)),
+                    Style::default().fg(MUTED_COLOR),
+                ),
+            ]),
+            Line::from(""),
+        ];
 
         let code = player
             .code
@@ -158,6 +178,54 @@ impl FightSummaryPopup {
         lines.push(Line::from(""));
 
         lines
+    }
+
+    fn draw_ranking(&self, state: &AppState, frame: &mut Frame, area: Rect) {
+        let Some(fight_summary_state) = state.game.overlays.get::<FightSummaryState>() else {
+            return;
+        };
+
+        let Some(fight) = state.game.fight.history().get(fight_summary_state.selected) else {
+            return;
+        };
+
+        let mut lines = vec![
+            Line::from(Span::styled(
+                " Ranking ",
+                Style::default()
+                    .fg(WARNING_COLOR)
+                    .add_modifier(Modifier::BOLD),
+            )),
+            Line::from(""),
+        ];
+
+        for (rank, player) in Self::ranked_players(fight).into_iter().enumerate() {
+            let (label, color) = Self::outcome(player);
+
+            lines.push(Line::from(vec![
+                Span::styled(format!(" {}. ", rank + 1), dim_style()),
+                Span::styled(
+                    player.name.clone(),
+                    Style::default().add_modifier(Modifier::BOLD),
+                ),
+            ]));
+
+            lines.push(Line::from(vec![
+                Span::styled(
+                    format!("    {}", Self::duration_label(player.elapsed_ms)),
+                    dim_style(),
+                ),
+                Span::styled(format!("  {}", label), Style::default().fg(color)),
+            ]));
+
+            lines.push(Line::from(""));
+        }
+
+        let block = Block::default()
+            .borders(Borders::RIGHT)
+            .border_style(dim_style());
+
+        frame.render_widget(Paragraph::new(lines).block(block), area);
     }
 
     fn draw_detail(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
@@ -176,11 +244,17 @@ impl FightSummaryPopup {
         let block = Block::default().padding(Padding::horizontal(1));
         let inner_area = block.inner(area);
 
-        let lines: Vec<Line> = fight
-            .players
-            .iter()
-            .flat_map(|player| Self::player_lines(player, fight, inner_area.width as usize))
-            .collect();
+        let max_width = inner_area.width as usize;
+        let mut lines: Vec<Line> = Vec::new();
+
+        for (rank, player) in Self::ranked_players(fight).into_iter().enumerate() {
+            if rank > 0 {
+                lines.push(Line::from(Span::styled("─".repeat(max_width), dim_style())));
+                lines.push(Line::from(""));
+            }
+
+            lines.extend(Self::player_lines(player, fight, max_width));
+        }
 
         self.scroll.fit(lines.len() as u16, inner_area.height);
 
@@ -232,11 +306,16 @@ impl Component for FightSummaryPopup {
 
         let columns = Layout::default()
             .direction(Direction::Horizontal)
-            .constraints([Constraint::Length(LIST_WIDTH), Constraint::Min(1)])
+            .constraints([
+                Constraint::Length(LIST_WIDTH),
+                Constraint::Length(RANKING_WIDTH),
+                Constraint::Min(1),
+            ])
             .split(rows[0]);
 
         self.draw_list(state, frame, columns[0]);
-        self.draw_detail(state, frame, columns[1]);
+        self.draw_ranking(state, frame, columns[1]);
+        self.draw_detail(state, frame, columns[2]);
 
         frame.render_widget(close_hint(), rows[1]);
     }
