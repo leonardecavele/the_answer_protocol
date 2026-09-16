@@ -213,7 +213,7 @@ impl Lifecycle for LoginView {
                         state.ui.notifications.push(
                             Notification::info("Connecting...")
                                 .with_topic(NotificationTopic::Connection)
-                                .with_ms(60_000),
+                                .with_ms(5_000),
                         );
                         let _ = event_sender.try_send(ApplicationEvent::Connection(
                             ConnectionEvent::AttemptStarted {
