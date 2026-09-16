@@ -19,8 +19,6 @@ RUST_SERVER_ARGS ?=
 RUN_DIR ?= /tmp/the_answer_protocol-$(shell id -u)
 GO_SERVER_PID_FILE := $(RUN_DIR)/go-server.pid
 RUST_SERVER_PID_FILE := $(RUN_DIR)/rust-server.pid
-GO_SERVER_LOG := $(RUN_DIR)/go-server.log
-RUST_SERVER_LOG := $(RUN_DIR)/rust-server.log
 
 HELPERS = \
 	error_log() { printf '$(RED)error: %s$(RESET)\n' "$$*" >&2; }; \
@@ -100,10 +98,10 @@ run:
 		ensure_stopped "$(RUST_SERVER_PID_FILE)" "rust server" "$(abspath $(RUST_SERVER_DIR)/target/release/rust_server)"
 	@$(MAKE) build-go-server build-rust-server build-client-tui
 	@$(HELPERS) info_log "starting Rust server in background"
-	@(cd $(RUST_SERVER_DIR) && exec ./target/release/rust_server $(RUST_SERVER_ARGS)) < /dev/null > "$(RUST_SERVER_LOG)" 2>&1 & \
+	@(cd $(RUST_SERVER_DIR) && exec ./target/release/rust_server $(RUST_SERVER_ARGS)) < /dev/null > /dev/null 2>&1 & \
 		echo $$! > "$(RUST_SERVER_PID_FILE)"
 	@$(HELPERS) info_log "starting Go server in background"
-	@(cd $(GO_SERVER_DIR) && exec ./go_server $(GO_SERVER_ARGS)) < /dev/null > "$(GO_SERVER_LOG)" 2>&1 & \
+	@(cd $(GO_SERVER_DIR) && exec ./go_server $(GO_SERVER_ARGS)) < /dev/null > /dev/null 2>&1 & \
 		echo $$! > "$(GO_SERVER_PID_FILE)"
 	@$(HELPERS) info_log "starting TUI client"
 	@cd $(CLIENT_DIR) && exec ./target/release/tui $(CLIENT_ARGS)

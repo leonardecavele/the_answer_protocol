@@ -127,9 +127,9 @@ make run-client-gui
 | `make build-rust-server` | Build the authoritative game engine. |
 | `make run-rust-server` | Build and run the game engine. |
 
-`make run` stores PID files and redirected server output in
-`/tmp/the_answer_protocol-<uid>` by default. Set `RUN_DIR` to select another
-directory. The Go server writes `server/go_server/app.log`; the Rust server
+`make run` stores PID files in `/tmp/the_answer_protocol-<uid>` by default.
+Set `RUN_DIR` to select another directory. The Go server writes
+`server/go_server/app.log`; the Rust server
 loads its assets and saves relative to `server/rust_server`.
 
 ## Protocol Implementation
@@ -244,13 +244,6 @@ commands and parameters, responses and error codes, internal server traffic,
 world actions, combat, quest activity, reconnects, and abuse rejection. The
 Rust engine uses `tracing` for startup, parsing, command dispatch, world saves,
 tester activity, combat, and shutdown.
-
-`make run` also captures both server streams below
-`/tmp/the_answer_protocol-<uid>`. Monitor them with:
-
-```bash
-tail -f /tmp/the_answer_protocol-$(id -u)/*-server.log
-```
 
 Connection-attempt limits, the 20-player ceiling, and the 25-input-per-second
 per-IP limit detect and reject flooding. Filtering the structured level and message
