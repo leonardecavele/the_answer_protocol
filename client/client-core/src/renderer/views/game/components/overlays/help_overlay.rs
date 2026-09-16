@@ -3,7 +3,7 @@ use crate::renderer::components::{EventFlow, Lifecycle, ScrollableComponent};
 use crate::renderer::theme::{WARNING_COLOR, overlay_block};
 use crate::states::AppState;
 use crate::states::game::HelpState;
-use crossterm::event::{Event as CrosstermEvent, KeyCode};
+use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use mpsc::Sender;
 use ratatui::{
     layout::{Alignment, Rect},
@@ -157,29 +157,22 @@ impl ScrollableComponent for HelpOverlay {
 }
 
 impl Lifecycle for HelpOverlay {
-    fn handle_device_event(
+    fn on_key(
         &mut self,
         state: &mut AppState,
-        event: &CrosstermEvent,
+        key: &KeyEvent,
         _sender: &Sender<ApplicationEvent>,
     ) -> EventFlow {
-        if let CrosstermEvent::Key(key) = event {
-            match key.code {
-                KeyCode::Esc | KeyCode::Char('q') => {
-                    state.game.overlays.close::<HelpState>();
-                    return EventFlow::Consumed;
-                }
-                KeyCode::Char('h')
-                    if key
-                        .modifiers
-                        .contains(crossterm::event::KeyModifiers::CONTROL) =>
-                {
-                    state.game.overlays.close::<HelpState>();
-                    return EventFlow::Consumed;
-                }
-                _ => {}
+        match key.code {
+            KeyCode::Esc | KeyCode::Char('q') => {
+                state.game.overlays.close::<HelpState>();
+                EventFlow::Consumed
             }
+            KeyCode::Char('h') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                state.game.overlays.close::<HelpState>();
+                EventFlow::Consumed
+            }
+            _ => EventFlow::Ignored,
         }
-        EventFlow::Ignored
     }
 }
