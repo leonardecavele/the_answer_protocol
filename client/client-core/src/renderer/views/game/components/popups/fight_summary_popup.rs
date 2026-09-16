@@ -1,17 +1,18 @@
 use crate::collections::Step;
 use crate::events::ApplicationEvent;
 use crate::renderer::components::{
-    Component, EventFlow, Lifecycle, hit_row, is_mouse_in_rect, scroll_direction,
+    Component, EventFlow, Lifecycle, ScrollOffset, hit_row, is_mouse_in_rect,
 };
 use crate::renderer::layout::{centered_rect, percent_of};
-use crate::renderer::text::wrap_str_to_lines;
+use crate::renderer::text::{truncate_to_width, wrap_str_to_lines};
 use crate::renderer::theme::{
-    ERROR_COLOR, MUTED_COLOR, SUCCESS_COLOR, close_hint, dim_style, popup_block, selection_style,
+    ERROR_COLOR, MUTED_COLOR, PLAYER_COLOR, SUCCESS_COLOR, WARNING_COLOR, close_hint, dim_style,
+    popup_block, selection_style,
 };
 use crate::states::AppState;
 use crate::states::game::FightSummaryState;
 use client_api::events::{FightEndData, FightEndPlayerData};
-use crossterm::event::{Event as CrosstermEvent, KeyCode, MouseButton, MouseEventKind};
+use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect},
@@ -26,16 +27,19 @@ const POPUP_HEIGHT_PERCENT: u16 = 80;
 const MIN_WIDTH: u16 = 40;
 const MIN_HEIGHT: u16 = 10;
 const LIST_WIDTH: u16 = 13;
+const RANKING_WIDTH: u16 = 34;
 const FOOTER_HEIGHT: u16 = 2;
+const RANKING_HEADER_HEIGHT: usize = 2;
+const RANKING_ENTRY_HEIGHT: usize = 3;
 const EMPTY_HISTORY: &str = " No fight has ended yet. ";
 
 pub struct FightSummaryPopup {
     area: Option<Rect>,
     list_area: Option<Rect>,
+    ranking_area: Option<Rect>,
     detail_area: Option<Rect>,
-    scroll_offset: u16,
-    last_max_scroll: u16,
-    shown_fight: Option<usize>,
+    scroll: ScrollOffset,
+    shown_selection: Option<(usize, usize)>,
 }
 
 impl Default for FightSummaryPopup {
@@ -49,59 +53,114 @@ impl FightSummaryPopup {
         Self {
             area: None,
             list_area: None,
+            ranking_area: None,
             detail_area: None,
-            scroll_offset: u16::MAX,
-            last_max_scroll: 0,
-            shown_fight: None,
+            scroll: ScrollOffset::new(),
+            shown_selection: None,
         }
     }
 
-    pub fn hit_fight(&self, state: &AppState, column: u16, row: u16) -> Option<usize> {
+    fn hit_list(&self, state: &AppState, column: u16, row: u16) -> Option<usize> {
         let row_index = hit_row(self.list_area, column, row)?;
         let count = state.game.fight.history().len();
 
         count.checked_sub(1)?.checked_sub(row_index)
     }
 
-    fn local_player_outcome(state: &AppState, fight: &FightEndData) -> Option<bool> {
+    fn hit_ranking(&self, state: &AppState, column: u16, row: u16) -> Option<usize> {
+        let row_index = hit_row(self.ranking_area, column, row)?;
+        let rank = row_index.checked_sub(RANKING_HEADER_HEIGHT)? / RANKING_ENTRY_HEIGHT;
+        let fight = Self::current_fight(state)?;
+
+        (rank < fight.players.len()).then_some(rank)
+    }
+
+    fn current_fight(state: &AppState) -> Option<&FightEndData> {
+        let fight_summary_state = state.game.overlays.get::<FightSummaryState>()?;
+
+        state
+            .game
+            .fight
+            .history()
+            .get(fight_summary_state.selected_fight)
+    }
+
+    fn current_player(state: &AppState) -> Option<&FightEndPlayerData> {
+        let fight_summary_state = state.game.overlays.get::<FightSummaryState>()?;
+        let fight = Self::current_fight(state)?;
+
+        Self::ranked_players(fight)
+            .get(fight_summary_state.selected_player)
+            .copied()
+    }
+
+    fn column_block<'a>() -> Block<'a> {
+        Block::default()
+            .borders(Borders::RIGHT)
+            .border_style(dim_style())
+    }
+
+    fn ranked_players(fight: &FightEndData) -> Vec<&FightEndPlayerData> {
+        let mut players: Vec<&FightEndPlayerData> = fight.players.iter().collect();
+
+        players.sort_by_key(|player| (!player.success, player.elapsed_ms));
+
+        players
+    }
+
+    fn outcome(player: &FightEndPlayerData) -> (&'static str, Color) {
+        match player.success {
+            true => ("won", SUCCESS_COLOR),
+            false => ("lost", ERROR_COLOR),
+        }
+    }
+
+    fn local_player_color(state: &AppState, fight: &FightEndData) -> Color {
         fight
             .players
             .iter()
             .find(|player| state.game.player.is_me(&player.name))
-            .map(|player| player.success)
+            .map(|player| Self::outcome(player).1)
+            .unwrap_or(Color::Reset)
+    }
+
+    fn gap_label(elapsed_ms: u32, leader_ms: u32) -> Option<String> {
+        if elapsed_ms == leader_ms {
+            return None;
+        }
+
+        let gap = i64::from(elapsed_ms) - i64::from(leader_ms);
+        let sign = if gap > 0 { '+' } else { '-' };
+
+        Some(format!(
+            "{}{}",
+            sign,
+            Self::duration_label(gap.unsigned_abs() as u32)
+        ))
     }
 
     fn duration_label(elapsed_ms: u32) -> String {
         let seconds = elapsed_ms / 1000;
+        let millis = elapsed_ms % 1000;
 
         if seconds < 60 {
-            return format!("{}s", seconds);
+            return format!("{}.{:03}s", seconds, millis);
         }
 
-        format!("{}m {:02}s", seconds / 60, seconds % 60)
+        format!("{}m {:02}.{:03}s", seconds / 60, seconds % 60, millis)
     }
 
-    fn sync_selection(&mut self, selected: usize) {
-        if self.shown_fight != Some(selected) {
-            self.shown_fight = Some(selected);
-            self.scroll_offset = u16::MAX;
+    fn sync_selection(&mut self, selection: (usize, usize)) {
+        if self.shown_selection != Some(selection) {
+            self.shown_selection = Some(selection);
+            self.scroll.reset();
         }
-    }
-
-    fn scroll(&mut self, step: Step, amount: u16) {
-        self.scroll_offset = match step {
-            Step::Previous => self
-                .scroll_offset
-                .saturating_add(amount)
-                .min(self.last_max_scroll),
-            Step::Next => self.scroll_offset.saturating_sub(amount),
-        };
     }
 
     fn draw_list(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
         self.list_area = Some(area);
 
-        let Some(overlay) = state.game.overlays.get::<FightSummaryState>() else {
+        let Some(fight_summary_state) = state.game.overlays.get::<FightSummaryState>() else {
             return;
         };
 
@@ -113,23 +172,14 @@ impl FightSummaryPopup {
             .enumerate()
             .rev()
             .map(|(index, fight)| {
-                let color = match Self::local_player_outcome(state, fight) {
-                    Some(true) => SUCCESS_COLOR,
-                    Some(false) => ERROR_COLOR,
-                    None => Color::Reset,
-                };
-
-                let style = selection_style(color, overlay.selected == index);
+                let color = Self::local_player_color(state, fight);
+                let style = selection_style(color, fight_summary_state.selected_fight == index);
 
                 ListItem::new(Span::styled(format!(" Fight #{}", index + 1), style))
             })
             .collect();
 
-        let block = Block::default()
-            .borders(Borders::RIGHT)
-            .border_style(dim_style());
-
-        frame.render_widget(List::new(items).block(block), area);
+        frame.render_widget(List::new(items).block(Self::column_block()), area);
     }
 
     fn player_lines(
@@ -137,26 +187,29 @@ impl FightSummaryPopup {
         fight: &FightEndData,
         max_width: usize,
     ) -> Vec<Line<'static>> {
-        let (label, color) = match player.success {
-            true => ("won", SUCCESS_COLOR),
-            false => ("lost", ERROR_COLOR),
-        };
-
+        let (label, color) = Self::outcome(player);
         let verb = if player.success { "deals" } else { "takes" };
-        let message = format!("  {verb} {} damage", player.damage_dealt);
 
-        let mut lines = vec![Line::from(vec![
-            Span::styled(
-                player.name.clone(),
-                Style::default().add_modifier(Modifier::BOLD),
-            ),
-            Span::styled(format!("  {}", label), Style::default().fg(color)),
-            Span::styled(message, Style::default().fg(color)),
-            Span::styled(
-                format!("  {}", Self::duration_label(player.elapsed_ms)),
-                Style::default().fg(MUTED_COLOR),
-            ),
-        ])];
+        let mut lines = vec![
+            Line::from(Span::styled(
+                format!(" {} ", player.name),
+                Style::default()
+                    .fg(color)
+                    .add_modifier(Modifier::REVERSED | Modifier::BOLD),
+            )),
+            Line::from(vec![
+                Span::styled(label, Style::default().fg(color)),
+                Span::styled(
+                    format!("  {verb} {} damage", player.damage_dealt),
+                    Style::default().fg(color),
+                ),
+                Span::styled(
+                    format!("  {}", Self::duration_label(player.elapsed_ms)),
+                    Style::default().fg(MUTED_COLOR),
+                ),
+            ]),
+            Line::from(""),
+        ];
 
         let code = player
             .code
@@ -172,39 +225,116 @@ impl FightSummaryPopup {
         lines
     }
 
-    fn draw_detail(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
-        self.detail_area = Some(area);
+    fn ranking_lines(
+        state: &AppState,
+        fight: &FightEndData,
+        max_width: usize,
+    ) -> Vec<Line<'static>> {
+        let players = Self::ranked_players(fight);
 
-        let Some(overlay) = state.game.overlays.get::<FightSummaryState>() else {
+        let Some(leader) = players.first() else {
+            return Vec::new();
+        };
+
+        let mut lines = vec![
+            Line::from(Span::styled(
+                " RANKING ",
+                Style::default()
+                    .fg(WARNING_COLOR)
+                    .add_modifier(Modifier::REVERSED | Modifier::BOLD),
+            )),
+            Line::from(""),
+        ];
+
+        let selected_player = state
+            .game
+            .overlays
+            .get::<FightSummaryState>()
+            .map(|fight_summary_state| fight_summary_state.selected_player);
+
+        for (rank, player) in players.iter().enumerate() {
+            let (label, color) = Self::outcome(player);
+            let is_selected = selected_player == Some(rank);
+
+            let rank_style = match rank {
+                0 => Style::default()
+                    .fg(WARNING_COLOR)
+                    .add_modifier(Modifier::BOLD),
+                _ => dim_style(),
+            };
+
+            let (name, name_color) = match state.game.player.is_me(&player.name) {
+                true => (format!("{} (You)", player.name), PLAYER_COLOR),
+                false => (player.name.clone(), Color::Reset),
+            };
+
+            let name_style = selection_style(name_color, is_selected).add_modifier(Modifier::BOLD);
+
+            let mut details = vec![
+                Span::styled(
+                    format!("     {:>10}", Self::duration_label(player.elapsed_ms)),
+                    dim_style(),
+                ),
+                Span::styled(format!("  {:<4}", label), Style::default().fg(color)),
+            ];
+
+            if let Some(gap) = Self::gap_label(player.elapsed_ms, leader.elapsed_ms) {
+                details.push(Span::styled(gap, dim_style()));
+            }
+
+            lines.push(Line::from(vec![
+                Span::styled(format!(" #{} ", rank + 1), rank_style),
+                Span::styled(truncate_to_width(&name, max_width - 5), name_style),
+            ]));
+            lines.push(Line::from(details));
+            lines.push(Line::from(""));
+        }
+
+        lines
+    }
+
+    fn draw_ranking(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
+        let block = Self::column_block();
+
+        self.ranking_area = Some(block.inner(area));
+
+        let Some(fight) = Self::current_fight(state) else {
             return;
         };
 
-        self.sync_selection(overlay.selected);
+        let lines = Self::ranking_lines(state, fight, block.inner(area).width as usize);
 
-        let Some(fight) = state.game.fight.history().get(overlay.selected) else {
+        frame.render_widget(Paragraph::new(lines).block(block), area);
+    }
+
+    fn draw_detail(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
+        self.detail_area = Some(area);
+
+        let Some(fight_summary_state) = state.game.overlays.get::<FightSummaryState>() else {
+            return;
+        };
+
+        self.sync_selection((
+            fight_summary_state.selected_fight,
+            fight_summary_state.selected_player,
+        ));
+
+        let (Some(fight), Some(player)) = (Self::current_fight(state), Self::current_player(state))
+        else {
             return;
         };
 
         let block = Block::default().padding(Padding::horizontal(1));
         let inner_area = block.inner(area);
 
-        let lines: Vec<Line> = fight
-            .players
-            .iter()
-            .flat_map(|player| Self::player_lines(player, fight, inner_area.width as usize))
-            .collect();
+        let lines = Self::player_lines(player, fight, inner_area.width as usize);
 
-        let max_scroll = (lines.len() as u16).saturating_sub(inner_area.height);
-
-        self.last_max_scroll = max_scroll;
-        self.scroll_offset = self.scroll_offset.min(max_scroll);
-
-        let actual_scroll = max_scroll.saturating_sub(self.scroll_offset);
+        self.scroll.fit(lines.len() as u16, inner_area.height);
 
         frame.render_widget(
             Paragraph::new(lines)
                 .block(block)
-                .scroll((actual_scroll, 0)),
+                .scroll((self.scroll.row(), 0)),
             area,
         );
     }
@@ -249,82 +379,60 @@ impl Component for FightSummaryPopup {
 
         let columns = Layout::default()
             .direction(Direction::Horizontal)
-            .constraints([Constraint::Length(LIST_WIDTH), Constraint::Min(1)])
+            .constraints([
+                Constraint::Length(LIST_WIDTH),
+                Constraint::Length(RANKING_WIDTH),
+                Constraint::Min(1),
+            ])
             .split(rows[0]);
 
         self.draw_list(state, frame, columns[0]);
-        self.draw_detail(state, frame, columns[1]);
+        self.draw_ranking(state, frame, columns[1]);
+        self.draw_detail(state, frame, columns[2]);
 
         frame.render_widget(close_hint(), rows[1]);
     }
 }
 
 impl Lifecycle for FightSummaryPopup {
-    fn handle_device_event(
+    fn on_key(
         &mut self,
         state: &mut AppState,
-        event: &CrosstermEvent,
-        _event_sender: &Sender<ApplicationEvent>,
+        key: &KeyEvent,
+        _sender: &Sender<ApplicationEvent>,
     ) -> EventFlow {
         if !state.game.overlays.is_open::<FightSummaryState>() {
             return EventFlow::Ignored;
         }
 
-        let count = state.game.fight.history().len();
-
-        if let CrosstermEvent::Mouse(mouse) = event {
-            if mouse.kind == MouseEventKind::Down(MouseButton::Left)
-                && let Some(index) = self.hit_fight(state, mouse.column, mouse.row)
-                && let Some(overlay) = state.game.overlays.get_mut::<FightSummaryState>()
-            {
-                overlay.selected = index;
-                return EventFlow::Consumed;
-            }
-
-            let Some(step) = scroll_direction(mouse.kind) else {
-                return EventFlow::Ignored;
-            };
-
-            if self
-                .detail_area
-                .is_some_and(|area| is_mouse_in_rect(mouse.column, mouse.row, area))
-            {
-                self.scroll(step, 1);
-                return EventFlow::Consumed;
-            }
-
-            if self
-                .list_area
-                .is_some_and(|area| is_mouse_in_rect(mouse.column, mouse.row, area))
-            {
-                let selection_step = match step {
-                    Step::Previous => Step::Next,
-                    Step::Next => Step::Previous,
-                };
-
-                if let Some(overlay) = state.game.overlays.get_mut::<FightSummaryState>() {
-                    overlay.move_selection(selection_step, count);
-                }
-
-                return EventFlow::Consumed;
-            }
-
-            return EventFlow::Ignored;
-        }
-
-        let CrosstermEvent::Key(key) = event else {
-            return EventFlow::Ignored;
-        };
+        let fight_count = state.game.fight.history().len();
+        let player_count = Self::current_fight(state).map_or(0, |fight| fight.players.len());
 
         match key.code {
             KeyCode::Up | KeyCode::Down => {
                 let step = match key.code {
-                    KeyCode::Up => Step::Next,
+                    KeyCode::Up => Step::Previous,
+                    _ => Step::Next,
+                };
+
+                if let Some(fight_summary_state) =
+                    state.game.overlays.get_mut::<FightSummaryState>()
+                {
+                    fight_summary_state.move_player_selection(step, player_count);
+                }
+
+                EventFlow::Consumed
+            }
+            KeyCode::Left | KeyCode::Right => {
+                let step = match key.code {
+                    KeyCode::Right => Step::Next,
                     _ => Step::Previous,
                 };
 
-                if let Some(overlay) = state.game.overlays.get_mut::<FightSummaryState>() {
-                    overlay.move_selection(step, count);
+                if let Some(fight_summary_state) =
+                    state.game.overlays.get_mut::<FightSummaryState>()
+                {
+                    fight_summary_state.move_fight_selection(step, fight_count);
                 }
 
                 EventFlow::Consumed
@@ -335,5 +443,68 @@ impl Lifecycle for FightSummaryPopup {
             }
             _ => EventFlow::Ignored,
         }
+    }
+
+    fn on_click(
+        &mut self,
+        state: &mut AppState,
+        column: u16,
+        row: u16,
+        _sender: &Sender<ApplicationEvent>,
+    ) -> EventFlow {
+        if !state.game.overlays.is_open::<FightSummaryState>() {
+            return EventFlow::Ignored;
+        }
+
+        if let Some(rank) = self.hit_ranking(state, column, row) {
+            if let Some(fight_summary_state) = state.game.overlays.get_mut::<FightSummaryState>() {
+                fight_summary_state.selected_player = rank;
+            }
+
+            return EventFlow::Consumed;
+        }
+
+        let Some(index) = self.hit_list(state, column, row) else {
+            return EventFlow::Ignored;
+        };
+
+        if let Some(fight_summary_state) = state.game.overlays.get_mut::<FightSummaryState>() {
+            fight_summary_state.select_fight(index);
+        }
+
+        EventFlow::Consumed
+    }
+
+    fn on_scroll(&mut self, state: &mut AppState, step: Step, column: u16, row: u16) -> EventFlow {
+        if !state.game.overlays.is_open::<FightSummaryState>() {
+            return EventFlow::Ignored;
+        }
+
+        if self
+            .detail_area
+            .is_some_and(|area| is_mouse_in_rect(column, row, area))
+        {
+            self.scroll.scroll(step, 1);
+            return EventFlow::Consumed;
+        }
+
+        if !self
+            .list_area
+            .is_some_and(|area| is_mouse_in_rect(column, row, area))
+        {
+            return EventFlow::Ignored;
+        }
+
+        let count = state.game.fight.history().len();
+        let selection_step = match step {
+            Step::Previous => Step::Next,
+            Step::Next => Step::Previous,
+        };
+
+        if let Some(fight_summary_state) = state.game.overlays.get_mut::<FightSummaryState>() {
+            fight_summary_state.move_fight_selection(selection_step, count);
+        }
+
+        EventFlow::Consumed
     }
 }

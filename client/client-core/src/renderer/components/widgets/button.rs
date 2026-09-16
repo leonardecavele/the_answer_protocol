@@ -1,7 +1,8 @@
-use crate::renderer::components::{EventFlow, InteractiveComponent, Lifecycle};
+use crate::events::ApplicationEvent;
+use crate::renderer::components::{Component, EventFlow, Lifecycle};
 use crate::renderer::theme::{SUCCESS_COLOR, default_block, dim_style};
 use crate::states::AppState;
-use crossterm::event::{Event as CrosstermEvent, KeyCode, KeyEvent};
+use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::Frame;
 use ratatui::layout::{Alignment, Rect};
 use ratatui::style::{Modifier, Style};
@@ -9,9 +10,10 @@ use ratatui::widgets::Paragraph;
 use tokio::sync::mpsc::Sender;
 
 pub struct Button {
-    pub label: String,
-    pub is_focused: bool,
-    pub is_pressed: bool,
+    label: String,
+    is_focused: bool,
+    is_pressed: bool,
+    area: Option<Rect>,
 }
 
 impl Button {
@@ -20,7 +22,24 @@ impl Button {
             label: label.to_string(),
             is_focused: false,
             is_pressed: false,
+            area: None,
         }
+    }
+
+    pub fn hide(&mut self) {
+        self.area = None;
+    }
+
+    pub fn focus(&mut self) {
+        self.is_focused = true;
+    }
+
+    pub fn blur(&mut self) {
+        self.is_focused = false;
+    }
+
+    pub fn press(&mut self) {
+        self.is_pressed = true;
     }
 
     /// Returns true if the button was just pressed, and resets the pressed state.
@@ -34,8 +53,14 @@ impl Button {
     }
 }
 
-impl InteractiveComponent for Button {
-    fn render(&mut self, _state: &AppState, frame: &mut Frame, area: Rect) {
+impl Component for Button {
+    fn drawn_area(&self) -> Option<Rect> {
+        self.area
+    }
+
+    fn draw(&mut self, _state: &AppState, frame: &mut Frame, area: Rect) {
+        self.area = Some(area);
+
         let style = if self.is_focused {
             Style::default()
                 .fg(SUCCESS_COLOR)
@@ -58,27 +83,21 @@ impl InteractiveComponent for Button {
 
         frame.render_widget(paragraph, area);
     }
+}
 
-    fn handle_interactive_event(
+impl Lifecycle for Button {
+    fn on_key(
         &mut self,
         _state: &mut AppState,
-        event: &CrosstermEvent,
-        _event_sender: &Sender<crate::events::ApplicationEvent>,
-        _is_hovered: bool,
+        key: &KeyEvent,
+        _sender: &Sender<ApplicationEvent>,
     ) -> EventFlow {
-        if !self.is_focused {
+        if !self.is_focused || key.code != KeyCode::Enter {
             return EventFlow::Ignored;
         }
 
-        if let CrosstermEvent::Key(KeyEvent { code, .. }) = event
-            && *code == KeyCode::Enter
-        {
-            self.is_pressed = true;
-            return EventFlow::Consumed;
-        }
+        self.is_pressed = true;
 
-        EventFlow::Ignored
+        EventFlow::Consumed
     }
 }
-
-impl Lifecycle for Button {}

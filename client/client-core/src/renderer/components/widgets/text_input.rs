@@ -1,8 +1,8 @@
 use crate::events::ApplicationEvent;
-use crate::renderer::components::{EventFlow, InteractiveComponent, Lifecycle};
+use crate::renderer::components::{Component, EventFlow, Lifecycle};
 use crate::renderer::theme::{ITEM_COLOR, default_block, dim_style};
 use crate::states::AppState;
-use crossterm::event::{Event as CrosstermEvent, KeyCode, KeyEvent, KeyModifiers};
+use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use ratatui::Frame;
 use ratatui::layout::Rect;
 use ratatui::style::{Modifier, Style};
@@ -31,12 +31,13 @@ impl Default for Cursor {
 }
 
 pub struct TextInput {
-    pub label: String,
-    pub value: String,
-    pub is_focused: bool,
-    pub max_length: usize,
+    label: String,
+    value: String,
+    is_focused: bool,
+    max_length: usize,
     cursor: Cursor,
     offset: usize,
+    area: Option<Rect>,
 }
 
 impl Default for TextInput {
@@ -54,6 +55,7 @@ impl TextInput {
             max_length: MAX_INPUT_LENGTH,
             cursor: Cursor::default(),
             offset: 0,
+            area: None,
         }
     }
 
@@ -70,7 +72,35 @@ impl TextInput {
         }
     }
 
-    pub fn cursor_to_end(&mut self) {
+    pub fn value(&self) -> &str {
+        &self.value
+    }
+
+    pub fn set_value(&mut self, value: String) {
+        self.value = value;
+        self.cursor_to_end();
+    }
+
+    pub fn focus(&mut self) {
+        self.is_focused = true;
+    }
+
+    pub fn blur(&mut self) {
+        self.is_focused = false;
+    }
+
+    pub fn set_max_length(&mut self, max_length: usize) {
+        self.max_length = max_length;
+
+        if self.value.chars().count() <= max_length {
+            return;
+        }
+
+        self.value = self.value.chars().take(max_length).collect();
+        self.cursor.index = self.cursor.index.min(max_length);
+    }
+
+    fn cursor_to_end(&mut self) {
         self.cursor.index = self.value.chars().count();
     }
 
@@ -158,8 +188,14 @@ impl TextInput {
     }
 }
 
-impl InteractiveComponent for TextInput {
-    fn render(&mut self, _state: &AppState, frame: &mut Frame, area: Rect) {
+impl Component for TextInput {
+    fn drawn_area(&self) -> Option<Rect> {
+        self.area
+    }
+
+    fn draw(&mut self, _state: &AppState, frame: &mut Frame, area: Rect) {
+        self.area = Some(area);
+
         let text_style = if self.is_focused {
             Style::default().fg(ITEM_COLOR)
         } else {
@@ -176,60 +212,52 @@ impl InteractiveComponent for TextInput {
         let paragraph = Paragraph::new(self.line(visible_count)).block(block);
         frame.render_widget(paragraph, area);
     }
+}
 
-    fn handle_interactive_event(
+impl Lifecycle for TextInput {
+    fn on_key(
         &mut self,
         _state: &mut AppState,
-        event: &CrosstermEvent,
-        _event_sender: &Sender<ApplicationEvent>,
-        _is_hovered: bool,
+        key: &KeyEvent,
+        _sender: &Sender<ApplicationEvent>,
     ) -> EventFlow {
         if !self.is_focused {
             return EventFlow::Ignored;
         }
 
-        if let CrosstermEvent::Key(KeyEvent {
-            code, modifiers, ..
-        }) = event
-        {
-            match code {
-                KeyCode::Char('a' | 'A') if modifiers.contains(KeyModifiers::CONTROL) => {
-                    self.cursor.index = 0;
-                    EventFlow::Consumed
-                }
-                KeyCode::Char('e' | 'E') if modifiers.contains(KeyModifiers::CONTROL) => {
-                    self.cursor_to_end();
-                    EventFlow::Consumed
-                }
-                KeyCode::Char(c) => {
-                    self.add(*c);
-                    EventFlow::Consumed
-                }
-                KeyCode::Delete => {
-                    self.delete();
-                    EventFlow::Consumed
-                }
-                KeyCode::Backspace => {
-                    self.suppr();
-                    EventFlow::Consumed
-                }
-                KeyCode::Left => {
-                    self.cursor_left();
-                    EventFlow::Consumed
-                }
-                KeyCode::Right => {
-                    self.cursor_right();
-                    EventFlow::Consumed
-                }
-                _ => EventFlow::Ignored,
+        match key.code {
+            KeyCode::Char('a' | 'A') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                self.cursor.index = 0;
+                EventFlow::Consumed
             }
-        } else {
-            EventFlow::Ignored
+            KeyCode::Char('e' | 'E') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                self.cursor_to_end();
+                EventFlow::Consumed
+            }
+            KeyCode::Char(c) => {
+                self.add(c);
+                EventFlow::Consumed
+            }
+            KeyCode::Delete => {
+                self.delete();
+                EventFlow::Consumed
+            }
+            KeyCode::Backspace => {
+                self.suppr();
+                EventFlow::Consumed
+            }
+            KeyCode::Left => {
+                self.cursor_left();
+                EventFlow::Consumed
+            }
+            KeyCode::Right => {
+                self.cursor_right();
+                EventFlow::Consumed
+            }
+            _ => EventFlow::Ignored,
         }
     }
-}
 
-impl Lifecycle for TextInput {
     fn on_tick(&mut self, _state: &mut AppState, _sender: &Sender<ApplicationEvent>) {
         if self.cursor.last_blink_instant.elapsed() > CURSOR_BLINK_DURATION {
             self.cursor.is_visible = !self.cursor.is_visible;

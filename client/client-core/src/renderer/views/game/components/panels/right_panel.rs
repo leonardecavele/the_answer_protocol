@@ -7,7 +7,7 @@ use crate::states::AppState;
 use crate::states::game::{Direction, GameFocus, Sprite};
 use client_api::ApiRequest;
 use client_api::commands::LookCommand;
-use crossterm::event::{Event as CrosstermEvent, KeyCode, MouseButton, MouseEventKind};
+use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::style::Stylize;
 use ratatui::widgets::{Block, BorderType, Borders};
 use ratatui::{
@@ -101,11 +101,6 @@ impl RightPanel {
             look_button: LabelButton::new("LOOK"),
             image_renderer: ImageRenderer::new(),
         }
-    }
-
-    pub fn hit(&self, column: u16, row: u16) -> bool {
-        self.area
-            .is_some_and(|area| is_mouse_in_rect(column, row, area))
     }
 
     pub fn hit_exit(&self, column: u16, row: u16) -> Option<Direction> {
@@ -283,6 +278,10 @@ impl RightPanel {
 }
 
 impl Component for RightPanel {
+    fn drawn_area(&self) -> Option<Rect> {
+        self.area
+    }
+
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
         self.area = Some(area);
         self.exits.clear();
@@ -327,17 +326,15 @@ impl Component for RightPanel {
 }
 
 impl Lifecycle for RightPanel {
-    fn handle_device_event(
+    fn on_click(
         &mut self,
         state: &mut AppState,
-        event: &CrosstermEvent,
-        event_sender: &Sender<ApplicationEvent>,
+        column: u16,
+        row: u16,
+        sender: &Sender<ApplicationEvent>,
     ) -> EventFlow {
-        if let CrosstermEvent::Mouse(mouse) = event
-            && mouse.kind == MouseEventKind::Down(MouseButton::Left)
-            && self.look_button.hit(mouse.column, mouse.row)
-        {
-            let _ = event_sender.try_send(ApplicationEvent::Send(SendEvent::ApiRequest(
+        if self.look_button.hit(column, row) {
+            let _ = sender.try_send(ApplicationEvent::Send(SendEvent::ApiRequest(
                 ApiRequest::Look(LookCommand),
             )));
             return EventFlow::Consumed;
@@ -351,52 +348,58 @@ impl Lifecycle for RightPanel {
             return EventFlow::Ignored;
         }
 
-        match event {
-            CrosstermEvent::Mouse(mouse)
-                if mouse.kind == MouseEventKind::Down(MouseButton::Left) =>
-            {
-                let Some(direction) = self.hit_exit(mouse.column, mouse.row) else {
-                    return EventFlow::Ignored;
-                };
+        let Some(direction) = self.hit_exit(column, row) else {
+            return EventFlow::Ignored;
+        };
 
-                Self::send_move(direction, event_sender);
-                EventFlow::Consumed
-            }
-            CrosstermEvent::Key(key) => {
-                if state.game.focus() != GameFocus::RightPanel {
-                    return EventFlow::Ignored;
-                }
+        Self::send_move(direction, sender);
 
-                if key.code == KeyCode::Enter {
-                    state.game.set_focus(GameFocus::NpcList);
-                    return EventFlow::Consumed;
-                }
+        EventFlow::Consumed
+    }
 
-                let slot = match key.code {
-                    KeyCode::Up => 0,
-                    KeyCode::Right => 1,
-                    KeyCode::Down => 2,
-                    KeyCode::Left => 3,
-                    _ => return EventFlow::Ignored,
-                };
-
-                let facing = self.room_facing(state);
-                let direction = Direction::from_quarter_turns(slot + facing.quarter_turns());
-
-                let has_exit = state
-                    .game
-                    .room
-                    .as_ref()
-                    .is_some_and(|room| room.has_exit(direction));
-
-                if !has_exit {
-                    return EventFlow::Ignored;
-                }
-
-                Self::send_move(direction, event_sender);
-                EventFlow::Consumed
-            }
-            _ => EventFlow::Ignored,
+    fn on_key(
+        &mut self,
+        state: &mut AppState,
+        key: &KeyEvent,
+        sender: &Sender<ApplicationEvent>,
+    ) -> EventFlow {
+        if !state
+            .game
+            .group
+            .allows_move_by(state.game.player.name.as_deref())
+            || state.game.focus() != GameFocus::RightPanel
+        {
+            return EventFlow::Ignored;
         }
+
+        if key.code == KeyCode::Enter {
+            state.game.set_focus(GameFocus::NpcList);
+            return EventFlow::Consumed;
+        }
+
+        let slot = match key.code {
+            KeyCode::Up => 0,
+            KeyCode::Right => 1,
+            KeyCode::Down => 2,
+            KeyCode::Left => 3,
+            _ => return EventFlow::Ignored,
+        };
+
+        let facing = self.room_facing(state);
+        let direction = Direction::from_quarter_turns(slot + facing.quarter_turns());
+
+        let has_exit = state
+            .game
+            .room
+            .as_ref()
+            .is_some_and(|room| room.has_exit(direction));
+
+        if !has_exit {
+            return EventFlow::Ignored;
+        }
+
+        Self::send_move(direction, sender);
+
+        EventFlow::Consumed
     }
 }

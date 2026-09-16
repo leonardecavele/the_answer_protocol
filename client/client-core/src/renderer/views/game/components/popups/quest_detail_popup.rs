@@ -6,7 +6,7 @@ use crate::renderer::theme::{WARNING_COLOR, close_hint, dim_style, popup_block, 
 use crate::states::AppState;
 use crate::states::game::QuestDetailState;
 use client_api::commands::{QuestData, QuestReward};
-use crossterm::event::{Event as CrosstermEvent, KeyCode};
+use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::widgets::{Borders, Padding};
 use ratatui::{
     Frame,
@@ -141,7 +141,7 @@ impl Component for QuestDetailPopup {
 
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
         let quest_id = match state.game.overlays.get::<QuestDetailState>() {
-            Some(overlay) => overlay.id,
+            Some(quest_detail_state) => quest_detail_state.id,
             None => return,
         };
 
@@ -191,19 +191,15 @@ impl Component for QuestDetailPopup {
 }
 
 impl Lifecycle for QuestDetailPopup {
-    fn handle_device_event(
+    fn on_key(
         &mut self,
         state: &mut AppState,
-        event: &CrosstermEvent,
-        _event_sender: &Sender<ApplicationEvent>,
+        key: &KeyEvent,
+        _sender: &Sender<ApplicationEvent>,
     ) -> EventFlow {
         if !state.game.overlays.is_open::<QuestDetailState>() {
             return EventFlow::Ignored;
         }
-
-        let CrosstermEvent::Key(key) = event else {
-            return EventFlow::Ignored;
-        };
 
         match key.code {
             KeyCode::Esc | KeyCode::Enter | KeyCode::Char('q') => {

@@ -1,8 +1,6 @@
 use crate::collections::{SelectableList, Step};
 use crate::events::{ApplicationEvent, SendEvent};
-use crate::renderer::components::{
-    Component, EventFlow, LabelButton, Lifecycle, is_mouse_in_rect, scroll_direction,
-};
+use crate::renderer::components::{Component, EventFlow, LabelButton, Lifecycle, is_mouse_in_rect};
 use crate::renderer::theme::{SURFACE_COLOR, panel_block, selection_style};
 use crate::states::AppState;
 use crate::states::game::{GameFocus, ItemActionsState, ItemLocation, ItemStack, Overlay};
@@ -49,23 +47,20 @@ impl InventoryPanel {
     }
 
     pub fn hit(&self, state: &AppState, column: u16, row: u16) -> InventoryPanelHit {
-        if let Some(area) = self.area
-            && is_mouse_in_rect(column, row, area)
-        {
-            let rel_x = column.saturating_sub(area.x);
-            let rel_y = row.saturating_sub(area.y);
-            if rel_x > 0 && rel_y > 0 {
-                let col = (rel_x - 1) as usize / INVENTORY_ITEM_WIDTH as usize;
-                let row = (rel_y - 1) as usize / INVENTORY_ITEM_HEIGHT as usize;
-                let cols = self.cols.max(1);
-                let index = state.game.player.inventory.offset() + row * cols + col;
-                return InventoryPanelHit::Item(Some(index));
-            }
+        let Some(area) = self.area else {
+            return InventoryPanelHit::None;
+        };
 
-            return InventoryPanelHit::Item(None);
+        if !is_mouse_in_rect(column, row, area) {
+            return InventoryPanelHit::None;
         }
 
-        InventoryPanelHit::None
+        let col = column.saturating_sub(area.x) as usize / INVENTORY_ITEM_WIDTH as usize;
+        let row = row.saturating_sub(area.y) as usize / INVENTORY_ITEM_HEIGHT as usize;
+        let cols = self.cols.max(1);
+        let index = state.game.player.inventory.offset() + row * cols + col;
+
+        InventoryPanelHit::Item(Some(index))
     }
 
     pub fn hide(&mut self) {
@@ -98,13 +93,17 @@ impl InventoryPanel {
 }
 
 impl Component for InventoryPanel {
-    fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
-        self.area = Some(area);
+    fn drawn_area(&self) -> Option<Rect> {
+        self.area
+    }
 
+    fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
         let focused = state.game.focus() == GameFocus::InventoryGrid;
         let inv_block = panel_block(" Inventory ", focused);
 
         let inv_inner = inv_block.inner(area);
+
+        self.area = Some(inv_inner);
         frame.render_widget(inv_block, area);
 
         let button_width = self.refresh_button.width();
@@ -168,11 +167,12 @@ impl Component for InventoryPanel {
 }
 
 impl Lifecycle for InventoryPanel {
-    fn handle_device_event(
+    fn on_click(
         &mut self,
         state: &mut AppState,
-        event: &crossterm::event::Event,
-        event_sender: &Sender<ApplicationEvent>,
+        column: u16,
+        row: u16,
+        sender: &Sender<ApplicationEvent>,
     ) -> EventFlow {
         state
             .game
@@ -180,28 +180,45 @@ impl Lifecycle for InventoryPanel {
             .inventory
             .set_visible_count(self.visible_count());
 
-        if let crossterm::event::Event::Mouse(mouse) = event
-            && mouse.kind
-                == crossterm::event::MouseEventKind::Down(crossterm::event::MouseButton::Left)
-            && self.refresh_button.hit(mouse.column, mouse.row)
-        {
-            let _ = event_sender.try_send(ApplicationEvent::Send(SendEvent::ApiRequest(
+        if self.refresh_button.hit(column, row) {
+            let _ = sender.try_send(ApplicationEvent::Send(SendEvent::ApiRequest(
                 ApiRequest::Inventory(InventoryCommand),
             )));
             return EventFlow::Consumed;
         }
 
-        if let crossterm::event::Event::Mouse(mouse) = event
-            && let Some(step) = scroll_direction(mouse.kind)
-            && let InventoryPanelHit::Item(_) = self.hit(state, mouse.column, mouse.row)
-        {
-            state.game.player.inventory.scroll(step, self.cols.max(1));
-            return EventFlow::Consumed;
-        }
+        EventFlow::Ignored
+    }
 
-        if state.game.focus() == GameFocus::InventoryGrid
-            && let crossterm::event::Event::Key(key) = event
-        {
+    fn on_scroll(&mut self, state: &mut AppState, step: Step, column: u16, row: u16) -> EventFlow {
+        state
+            .game
+            .player
+            .inventory
+            .set_visible_count(self.visible_count());
+
+        let InventoryPanelHit::Item(_) = self.hit(state, column, row) else {
+            return EventFlow::Ignored;
+        };
+
+        state.game.player.inventory.scroll(step, self.cols.max(1));
+
+        EventFlow::Consumed
+    }
+
+    fn on_key(
+        &mut self,
+        state: &mut AppState,
+        key: &crossterm::event::KeyEvent,
+        _sender: &Sender<ApplicationEvent>,
+    ) -> EventFlow {
+        state
+            .game
+            .player
+            .inventory
+            .set_visible_count(self.visible_count());
+
+        if state.game.focus() == GameFocus::InventoryGrid {
             let inv_count = state.game.player.inventory.len();
             if inv_count > 0 {
                 let cols = self.cols.max(1);

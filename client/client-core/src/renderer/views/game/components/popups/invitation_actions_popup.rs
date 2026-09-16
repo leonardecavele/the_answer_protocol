@@ -5,7 +5,7 @@ use crate::renderer::layout::centered_rect;
 use crate::renderer::theme::{popup_block, selection_style};
 use crate::states::AppState;
 use crate::states::game::InvitationActionsState;
-use crossterm::event::{Event as CrosstermEvent, KeyCode, MouseButton, MouseEventKind};
+use crossterm::event::{KeyCode, KeyEvent};
 use mpsc::Sender;
 use ratatui::{
     Frame,
@@ -29,7 +29,7 @@ impl InvitationActionsPopup {
         Self::default()
     }
 
-    pub fn hit(&self, column: u16, row: u16) -> Option<usize> {
+    fn hit_action(&self, column: u16, row: u16) -> Option<usize> {
         hit_row(self.list_area, column, row)
     }
 
@@ -38,7 +38,7 @@ impl InvitationActionsPopup {
             .game
             .overlays
             .get::<InvitationActionsState>()
-            .and_then(|overlay| overlay.selected_request());
+            .and_then(|invitation_actions_state| invitation_actions_state.selected_request());
 
         if let Some(request) = request {
             let _ = event_sender.try_send(ApplicationEvent::Send(SendEvent::ApiRequest(request)));
@@ -55,21 +55,29 @@ impl Component for InvitationActionsPopup {
     }
 
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
-        let Some(overlay) = state.game.overlays.get::<InvitationActionsState>() else {
+        let Some(invitation_actions_state) = state.game.overlays.get::<InvitationActionsState>()
+        else {
             return;
         };
 
-        let title = format!(" {} ", overlay.leader);
-        let popup_area = centered_rect(area, POPUP_WIDTH, overlay.actions.len() as u16 + 2);
+        let title = format!(" {} ", invitation_actions_state.leader);
+        let popup_area = centered_rect(
+            area,
+            POPUP_WIDTH,
+            invitation_actions_state.actions.len() as u16 + 2,
+        );
 
         frame.render_widget(Clear, popup_area);
 
-        let items: Vec<ListItem> = overlay
+        let items: Vec<ListItem> = invitation_actions_state
             .actions
             .iter()
             .enumerate()
             .map(|(index, action)| {
-                let style = selection_style(Color::Reset, overlay.actions.is_selected(index));
+                let style = selection_style(
+                    Color::Reset,
+                    invitation_actions_state.actions.is_selected(index),
+                );
 
                 ListItem::new(Span::styled(format!(" {}", action.label()), style))
             })
@@ -86,52 +94,62 @@ impl Component for InvitationActionsPopup {
 }
 
 impl Lifecycle for InvitationActionsPopup {
-    fn handle_device_event(
+    fn on_key(
         &mut self,
         state: &mut AppState,
-        event: &CrosstermEvent,
-        event_sender: &Sender<ApplicationEvent>,
+        key: &KeyEvent,
+        sender: &Sender<ApplicationEvent>,
     ) -> EventFlow {
         if !state.game.overlays.is_open::<InvitationActionsState>() {
             return EventFlow::Ignored;
         }
 
-        match event {
-            CrosstermEvent::Key(key) => match key.code {
-                KeyCode::Up | KeyCode::Down => {
-                    let step = if key.code == KeyCode::Up {
-                        Step::Previous
-                    } else {
-                        Step::Next
-                    };
-
-                    if let Some(overlay) = state.game.overlays.get_mut::<InvitationActionsState>() {
-                        overlay.actions.move_selection(step);
-                    }
-
-                    EventFlow::Consumed
-                }
-                KeyCode::Esc => {
-                    state.game.close_top_overlay();
-                    EventFlow::Consumed
-                }
-                KeyCode::Enter => self.activate(state, event_sender),
-                _ => EventFlow::Ignored,
-            },
-            CrosstermEvent::Mouse(mouse)
-                if mouse.kind == MouseEventKind::Down(MouseButton::Left) =>
-            {
-                let Some(index) = self.hit(mouse.column, mouse.row) else {
-                    return EventFlow::Ignored;
+        match key.code {
+            KeyCode::Up | KeyCode::Down => {
+                let step = if key.code == KeyCode::Up {
+                    Step::Previous
+                } else {
+                    Step::Next
                 };
 
-                if let Some(overlay) = state.game.overlays.get_mut::<InvitationActionsState>() {
-                    overlay.actions.select_index(index);
+                if let Some(invitation_actions_state) =
+                    state.game.overlays.get_mut::<InvitationActionsState>()
+                {
+                    invitation_actions_state.actions.move_selection(step);
                 }
 
-                self.activate(state, event_sender)
+                EventFlow::Consumed
             }
+            KeyCode::Esc => {
+                state.game.close_top_overlay();
+                EventFlow::Consumed
+            }
+            KeyCode::Enter => self.activate(state, sender),
             _ => EventFlow::Ignored,
         }
+    }
+
+    fn on_click(
+        &mut self,
+        state: &mut AppState,
+        column: u16,
+        row: u16,
+        sender: &Sender<ApplicationEvent>,
+    ) -> EventFlow {
+        if !state.game.overlays.is_open::<InvitationActionsState>() {
+            return EventFlow::Ignored;
+        }
+
+        let Some(index) = self.hit_action(column, row) else {
+            return EventFlow::Ignored;
+        };
+
+        if let Some(invitation_actions_state) =
+            state.game.overlays.get_mut::<InvitationActionsState>()
+        {
+            invitation_actions_state.actions.select_index(index);
+        }
+
+        self.activate(state, sender)
     }
 }

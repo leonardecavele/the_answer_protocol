@@ -1,5 +1,5 @@
 use crate::events::{ApplicationEvent, CustomEvent, SendEvent};
-use crate::renderer::components::{Button, Component, EventFlow, Interactive, Lifecycle};
+use crate::renderer::components::{Button, Component, EventFlow, Lifecycle};
 use crate::renderer::image::ImageRenderer;
 use crate::renderer::layout::percent_of;
 use crate::renderer::theme::{ERROR_COLOR, SUCCESS_COLOR, WARNING_COLOR, default_block, dim_style};
@@ -8,9 +8,7 @@ use crate::states::game::{FightPhase, Sprite};
 use client_api::ApiRequest;
 use client_api::commands::FightAttackCommand;
 use client_api::events::FightStartData;
-use crossterm::event::{
-    Event as CrosstermEvent, KeyCode, KeyEvent, KeyModifiers, MouseButton, MouseEventKind,
-};
+use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use mpsc::Sender;
 use ratatui::Frame;
 use ratatui::layout::{Alignment, Constraint, Direction, Layout, Position, Rect};
@@ -53,7 +51,7 @@ pub struct EditorView {
     editor_area: Rect,
     timed_out: bool,
     image_renderer: ImageRenderer,
-    submit_button: Interactive<Button>,
+    submit_button: Button,
     mode: EditorMode,
     pending: Option<char>,
     register: Option<String>,
@@ -79,7 +77,7 @@ impl EditorView {
             editor_area: Rect::default(),
             timed_out: false,
             image_renderer: ImageRenderer::new(),
-            submit_button: Interactive::new(Button::new("SUBMIT")),
+            submit_button: Button::new("SUBMIT"),
             mode: EditorMode::Insert,
             pending: None,
             register: None,
@@ -372,7 +370,7 @@ impl EditorView {
         if is_editing {
             self.submit_button.draw(state, frame, chunks[1]);
         } else {
-            self.submit_button.last_area = None;
+            self.submit_button.hide();
         }
     }
 
@@ -458,31 +456,38 @@ impl Lifecycle for EditorView {
         let _ = sender.try_send(ApplicationEvent::Custom(CustomEvent::FightTimedOut));
     }
 
-    fn handle_device_event(
+    fn on_click(
         &mut self,
         state: &mut AppState,
-        event: &CrosstermEvent,
-        event_sender: &Sender<ApplicationEvent>,
+        column: u16,
+        row: u16,
+        sender: &Sender<ApplicationEvent>,
     ) -> EventFlow {
         if state.game.fight.phase() != FightPhase::Editing {
             return EventFlow::Ignored;
         }
 
-        if let CrosstermEvent::Mouse(mouse) = event
-            && mouse.kind == MouseEventKind::Down(MouseButton::Left)
-            && self.submit_button.is_mouse_over(mouse.column, mouse.row)
-        {
-            self.submit(state, event_sender);
+        if self.submit_button.hit(column, row) {
+            self.submit(state, sender);
 
             return EventFlow::Consumed;
         }
 
-        let CrosstermEvent::Key(key) = event else {
+        EventFlow::Ignored
+    }
+
+    fn on_key(
+        &mut self,
+        state: &mut AppState,
+        key: &KeyEvent,
+        sender: &Sender<ApplicationEvent>,
+    ) -> EventFlow {
+        if state.game.fight.phase() != FightPhase::Editing {
             return EventFlow::Ignored;
-        };
+        }
 
         if key.code == KeyCode::Char('s') && key.modifiers.contains(KeyModifiers::CONTROL) {
-            self.submit(state, event_sender);
+            self.submit(state, sender);
 
             return EventFlow::Consumed;
         }

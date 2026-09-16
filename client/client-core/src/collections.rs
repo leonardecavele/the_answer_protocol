@@ -7,6 +7,8 @@ pub enum Step {
     Previous,
 }
 
+/// Steps an index through a collection, wrapping past either end. `count` is the collection
+/// length, not a distance: the index always moves by one.
 pub fn move_index(current: usize, count: usize, step: Step) -> usize {
     if count == 0 {
         return 0;
