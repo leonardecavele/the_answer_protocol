@@ -144,7 +144,7 @@
           "Je n'arrive pas à faire fonctionner la calculette lumineuse !"
         ]
       ],
-      "quests": [],
+      "quests": ["Détrôner le Sensei"],
       "spawns": "cluster_du_bas"
     },
     {
@@ -246,7 +246,7 @@
           "Je suis très très beau"
         ]
       ],
-      "quests": [],
+      "quests": ["Bel homme"],
       "spawns": "cluster_du_haut"
     },
     {
@@ -260,7 +260,7 @@
           "Moi j'ai travaillé à m'en arracher les cheveux pour devenir meilleur."
         ]
       ],
-      "quests": [],
+      "quests": ["Chauve qui peut !"],
       "spawns": "afk"
     },
     {
@@ -294,7 +294,7 @@
           "ALLEZ VIENS QUE JE T'ECLATE !"
         ]
       ],
-      "quests": [],
+      "quests": ["Un baby ?"],
       "spawns": "entree"
     },
     {
@@ -315,7 +315,7 @@
           "Affronte moi et goûte à ma puissance."
         ]
       ],
-      "quests": [],
+      "quests": ["Quoi? Feur."],
       "spawns": "cantina"
     },
     {
@@ -341,7 +341,7 @@
           "Allez on se magne et au fourneau !"
         ]
       ],
-      "quests": [],
+      "quests": ["Pause dej"],
       "spawns": "foyer"
     },
     {

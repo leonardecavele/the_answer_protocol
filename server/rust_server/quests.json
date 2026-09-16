@@ -104,6 +104,54 @@
       "loots": {
         "merci": { "qty": 8, "chance": 100.0 }
       }
+    },
+    {
+      "name": "Chauve qui peut !",
+      "description": "Battez acampion.",
+      "nb_steps": 1,
+      "loots": {
+        "merci": { "qty": 6, "chance": 42.0 }
+      }
+    },
+    {
+      "name": "Un baby ?",
+      "description": "Battez crappo.",
+      "nb_steps": 1,
+      "loots": {
+        "merci": { "qty": 6, "chance": 42.0 }
+      }
+    },
+    {
+      "name": "Bel homme",
+      "description": "Battez enchevri.",
+      "nb_steps": 1,
+      "loots": {
+        "merci": { "qty": 6, "chance": 42.0 }
+      }
+    },
+    {
+      "name": "Pause dej",
+      "description": "Battez ibady.",
+      "nb_steps": 1,
+      "loots": {
+        "merci": { "qty": 6, "chance": 42.0 }
+      }
+    },
+    {
+      "name": "Quoi? Feur.",
+      "description": "Battez ldecavel.",
+      "nb_steps": 1,
+      "loots": {
+        "merci": { "qty": 6, "chance": 42.0 }
+      }
+    },
+    {
+      "name": "Détrôner le Sensei",
+      "description": "Battez mdourdoi.",
+      "nb_steps": 1,
+      "loots": {
+        "merci": { "qty": 6, "chance": 42.0 }
+      }
     }
   ]
 }
