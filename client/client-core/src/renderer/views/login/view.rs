@@ -32,9 +32,9 @@ impl LoginView {
             quit_button: Button::new("Quit"),
         };
 
-        view.name_input.max_length = MAX_PLAYER_NAME_LENGTH;
-        view.ip_input.value = ip;
-        view.port_input.value = port;
+        view.name_input.set_max_length(MAX_PLAYER_NAME_LENGTH);
+        view.ip_input.set_value(ip);
+        view.port_input.set_value(port);
         view.update_focus();
 
         view
@@ -54,11 +54,19 @@ impl LoginView {
     }
 
     fn update_focus(&mut self) {
-        self.name_input.is_focused = self.focus == LoginFocus::PlayerName;
-        self.ip_input.is_focused = self.focus == LoginFocus::ServerIp;
-        self.port_input.is_focused = self.focus == LoginFocus::ServerPort;
-        self.connect_button.is_focused = self.focus == LoginFocus::ConnectButton;
-        self.quit_button.is_focused = self.focus == LoginFocus::QuitButton;
+        self.name_input.blur();
+        self.ip_input.blur();
+        self.port_input.blur();
+        self.connect_button.blur();
+        self.quit_button.blur();
+
+        match self.focus {
+            LoginFocus::PlayerName => self.name_input.focus(),
+            LoginFocus::ServerIp => self.ip_input.focus(),
+            LoginFocus::ServerPort => self.port_input.focus(),
+            LoginFocus::ConnectButton => self.connect_button.focus(),
+            LoginFocus::QuitButton => self.quit_button.focus(),
+        }
     }
 }
 
@@ -165,10 +173,10 @@ impl Lifecycle for LoginView {
                         return EventFlow::Consumed;
                     } else if self.connect_button.hit(*column, *row) {
                         self.set_focus(LoginFocus::ConnectButton);
-                        self.connect_button.is_pressed = true;
+                        self.connect_button.press();
                     } else if self.quit_button.hit(*column, *row) {
                         self.set_focus(LoginFocus::QuitButton);
-                        self.quit_button.is_pressed = true;
+                        self.quit_button.press();
                     }
                 }
             _ => {}
@@ -192,9 +200,9 @@ impl Lifecycle for LoginView {
                     .handle_device_event(state, event, event_sender);
 
                 if self.connect_button.take_pressed() {
-                    let name = self.name_input.value.clone();
-                    let ip = self.ip_input.value.clone();
-                    let port = self.port_input.value.clone();
+                    let name = self.name_input.value().to_string();
+                    let ip = self.ip_input.value().to_string();
+                    let port = self.port_input.value().to_string();
 
                     if name.is_empty() || ip.is_empty() || port.is_empty() {
                         state.ui.notifications.push(

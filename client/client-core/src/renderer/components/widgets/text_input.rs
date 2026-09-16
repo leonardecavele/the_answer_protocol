@@ -31,10 +31,10 @@ impl Default for Cursor {
 }
 
 pub struct TextInput {
-    pub label: String,
-    pub value: String,
-    pub is_focused: bool,
-    pub max_length: usize,
+    label: String,
+    value: String,
+    is_focused: bool,
+    max_length: usize,
     cursor: Cursor,
     offset: usize,
     area: Option<Rect>,
@@ -72,7 +72,35 @@ impl TextInput {
         }
     }
 
-    pub fn cursor_to_end(&mut self) {
+    pub fn value(&self) -> &str {
+        &self.value
+    }
+
+    pub fn set_value(&mut self, value: String) {
+        self.value = value;
+        self.cursor_to_end();
+    }
+
+    pub fn focus(&mut self) {
+        self.is_focused = true;
+    }
+
+    pub fn blur(&mut self) {
+        self.is_focused = false;
+    }
+
+    pub fn set_max_length(&mut self, max_length: usize) {
+        self.max_length = max_length;
+
+        if self.value.chars().count() <= max_length {
+            return;
+        }
+
+        self.value = self.value.chars().take(max_length).collect();
+        self.cursor.index = self.cursor.index.min(max_length);
+    }
+
+    fn cursor_to_end(&mut self) {
         self.cursor.index = self.value.chars().count();
     }
 

@@ -10,9 +10,9 @@ use ratatui::widgets::Paragraph;
 use tokio::sync::mpsc::Sender;
 
 pub struct Button {
-    pub label: String,
-    pub is_focused: bool,
-    pub is_pressed: bool,
+    label: String,
+    is_focused: bool,
+    is_pressed: bool,
     area: Option<Rect>,
 }
 
@@ -28,6 +28,18 @@ impl Button {
 
     pub fn hide(&mut self) {
         self.area = None;
+    }
+
+    pub fn focus(&mut self) {
+        self.is_focused = true;
+    }
+
+    pub fn blur(&mut self) {
+        self.is_focused = false;
+    }
+
+    pub fn press(&mut self) {
+        self.is_pressed = true;
     }
 
     /// Returns true if the button was just pressed, and resets the pressed state.
