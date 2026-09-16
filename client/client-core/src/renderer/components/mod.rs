@@ -7,7 +7,7 @@ mod widgets;
 
 pub use component::Component;
 pub use lifecycle::{EventFlow, Lifecycle};
-pub use mouse::{hit_row, is_mouse_in_rect, scroll_direction};
+pub use mouse::{hit_row, is_mouse_in_rect};
 pub use overlays::{NotificationsOverlay, TraceOverlay};
 pub use scrollable::{ScrollOffset, Scrollable, ScrollableComponent};
 pub use widgets::{Button, CloseButton, LabelButton, TextInput};

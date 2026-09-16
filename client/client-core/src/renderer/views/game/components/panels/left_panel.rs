@@ -304,6 +304,11 @@ impl LeftPanel {
 
     fn draw_players(&mut self, state: &AppState, room: &Room, frame: &mut Frame, area: Rect) {
         let focused = state.game.focus() == GameFocus::PlayerList;
+        let title = format!(" Room Players ({}) ", room.players.len());
+        let block = panel_block(title, focused);
+        let inner_area = block.inner(area);
+
+        self.players_area = Some(inner_area);
 
         let items: Vec<ListItem> = room
             .players
@@ -323,21 +328,21 @@ impl LeftPanel {
                 };
 
                 ListItem::new(Span::styled(
-                    truncate_to_width(&label, area.width.saturating_sub(2) as usize),
+                    truncate_to_width(&label, inner_area.width as usize),
                     style,
                 ))
             })
             .collect();
 
-        let title = format!(" Room Players ({}) ", room.players.len());
-        let block = panel_block(title, focused);
-
-        self.players_area = Some(block.inner(area));
         frame.render_widget(List::new(items).block(block), area);
     }
 
     fn draw_npcs(&mut self, state: &AppState, room: &Room, frame: &mut Frame, area: Rect) {
         let focused = state.game.focus() == GameFocus::NpcList;
+        let block = panel_block(" Room NPCs ", focused);
+        let inner_area = block.inner(area);
+
+        self.npcs_area = Some(inner_area);
 
         let items: Vec<ListItem> = room
             .npcs
@@ -355,20 +360,21 @@ impl LeftPanel {
                 let label = format!("• {} ({})", npc.name, npc.id);
 
                 ListItem::new(Span::styled(
-                    truncate_to_width(&label, area.width.saturating_sub(2) as usize),
+                    truncate_to_width(&label, inner_area.width as usize),
                     style,
                 ))
             })
             .collect();
 
-        let block = panel_block(" Room NPCs ", focused);
-
-        self.npcs_area = Some(block.inner(area));
         frame.render_widget(List::new(items).block(block), area);
     }
 
     fn draw_items(&mut self, state: &AppState, room: &Room, frame: &mut Frame, area: Rect) {
         let focused = state.game.focus() == GameFocus::RoomItemsList;
+        let block = panel_block(" Room Items ", focused);
+        let inner_area = block.inner(area);
+
+        self.items_area = Some(inner_area);
 
         let items: Vec<ListItem> = room
             .items
@@ -380,21 +386,22 @@ impl LeftPanel {
                 let label = format!("• {} ({})", item.name, item.id);
 
                 ListItem::new(Span::styled(
-                    truncate_to_width(&label, area.width.saturating_sub(2) as usize),
+                    truncate_to_width(&label, inner_area.width as usize),
                     style,
                 ))
             })
             .collect();
 
-        let block = panel_block(" Room Items ", focused);
-
-        self.items_area = Some(block.inner(area));
         frame.render_widget(List::new(items).block(block), area);
     }
 
     fn draw_invitations(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
         let focused = state.game.focus() == GameFocus::InvitationList;
         let invitations = &state.game.group.invitations;
+        let block = panel_block(" Invited By ", focused);
+        let inner_area = block.inner(area);
+
+        self.invitations_area = Some(inner_area);
 
         let items: Vec<ListItem> = invitations
             .iter()
@@ -406,21 +413,22 @@ impl LeftPanel {
                 let label = format!("• {}", leader);
 
                 ListItem::new(Span::styled(
-                    truncate_to_width(&label, area.width.saturating_sub(2) as usize),
+                    truncate_to_width(&label, inner_area.width as usize),
                     style,
                 ))
             })
             .collect();
 
-        let block = panel_block(" Invited By ", focused);
-
-        self.invitations_area = Some(block.inner(area));
         frame.render_widget(List::new(items).block(block), area);
     }
 
     fn draw_quests(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
         let focused = state.game.focus() == GameFocus::QuestList;
         let quests = &state.game.player.quests;
+        let block = panel_block(" Quests ", focused);
+        let inner_area = block.inner(area);
+
+        self.quests_area = Some(inner_area);
 
         let items: Vec<ListItem> = quests
             .iter()
@@ -446,15 +454,12 @@ impl LeftPanel {
                 let label = format!("• {} ({})", quest.data.name, progress);
 
                 ListItem::new(Span::styled(
-                    truncate_to_width(&label, area.width.saturating_sub(2) as usize),
+                    truncate_to_width(&label, inner_area.width as usize),
                     style,
                 ))
             })
             .collect();
 
-        let block = panel_block(" Quests ", focused);
-
-        self.quests_area = Some(block.inner(area));
         frame.render_widget(List::new(items).block(block), area);
 
         let width = self.quests_button.width();
