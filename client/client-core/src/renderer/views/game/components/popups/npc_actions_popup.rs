@@ -34,11 +34,11 @@ impl NpcActionsPopup {
     }
 
     fn close_stale_overlay(&self, state: &mut AppState) -> Option<EventFlow> {
-        let Some(overlay) = state.game.overlays.get::<NpcActionsState>() else {
+        let Some(npc_actions_state) = state.game.overlays.get::<NpcActionsState>() else {
             return Some(EventFlow::Ignored);
         };
 
-        let npc_id = overlay.npc_id.clone();
+        let npc_id = npc_actions_state.npc_id.clone();
 
         if state.game.find_npc(&npc_id).is_some() {
             return None;
@@ -54,7 +54,7 @@ impl NpcActionsPopup {
             .game
             .overlays
             .get::<NpcActionsState>()
-            .and_then(|overlay| overlay.selected_request());
+            .and_then(|npc_actions_state| npc_actions_state.selected_request());
 
         if let Some(request) = request {
             let _ = event_sender.try_send(ApplicationEvent::Send(SendEvent::ApiRequest(request)));
@@ -71,25 +71,30 @@ impl Component for NpcActionsPopup {
     }
 
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
-        let Some(overlay) = state.game.overlays.get::<NpcActionsState>() else {
+        let Some(npc_actions_state) = state.game.overlays.get::<NpcActionsState>() else {
             return;
         };
 
-        let Some(npc) = state.game.find_npc(&overlay.npc_id) else {
+        let Some(npc) = state.game.find_npc(&npc_actions_state.npc_id) else {
             return;
         };
 
         let title = format!(" {} ", npc.name);
-        let popup_area = centered_rect(area, POPUP_WIDTH, overlay.actions.len() as u16 + 2);
+        let popup_area = centered_rect(
+            area,
+            POPUP_WIDTH,
+            npc_actions_state.actions.len() as u16 + 2,
+        );
 
         frame.render_widget(Clear, popup_area);
 
-        let items: Vec<ListItem> = overlay
+        let items: Vec<ListItem> = npc_actions_state
             .actions
             .iter()
             .enumerate()
             .map(|(index, action)| {
-                let style = selection_style(Color::Reset, overlay.actions.is_selected(index));
+                let style =
+                    selection_style(Color::Reset, npc_actions_state.actions.is_selected(index));
 
                 ListItem::new(Span::styled(format!(" {}", action.label()), style))
             })
@@ -124,8 +129,8 @@ impl Lifecycle for NpcActionsPopup {
                     Step::Next
                 };
 
-                if let Some(overlay) = state.game.overlays.get_mut::<NpcActionsState>() {
-                    overlay.actions.move_selection(step);
+                if let Some(npc_actions_state) = state.game.overlays.get_mut::<NpcActionsState>() {
+                    npc_actions_state.actions.move_selection(step);
                 }
 
                 EventFlow::Consumed
@@ -154,8 +159,8 @@ impl Lifecycle for NpcActionsPopup {
             return EventFlow::Ignored;
         };
 
-        if let Some(overlay) = state.game.overlays.get_mut::<NpcActionsState>() {
-            overlay.actions.select_index(index);
+        if let Some(npc_actions_state) = state.game.overlays.get_mut::<NpcActionsState>() {
+            npc_actions_state.actions.select_index(index);
         }
 
         self.activate(state, sender)

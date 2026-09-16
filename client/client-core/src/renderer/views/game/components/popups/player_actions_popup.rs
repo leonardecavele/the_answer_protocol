@@ -38,7 +38,7 @@ impl PlayerActionsPopup {
             .game
             .overlays
             .get::<PlayerActionsState>()
-            .and_then(|overlay| overlay.selected_request());
+            .and_then(|player_actions_state| player_actions_state.selected_request());
 
         if let Some(request) = request {
             let _ = event_sender.try_send(ApplicationEvent::Send(SendEvent::ApiRequest(request)));
@@ -55,21 +55,28 @@ impl Component for PlayerActionsPopup {
     }
 
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
-        let Some(overlay) = state.game.overlays.get::<PlayerActionsState>() else {
+        let Some(player_actions_state) = state.game.overlays.get::<PlayerActionsState>() else {
             return;
         };
 
-        let title = format!(" {} ", overlay.player_name);
-        let popup_area = centered_rect(area, POPUP_WIDTH, overlay.actions.len() as u16 + 2);
+        let title = format!(" {} ", player_actions_state.player_name);
+        let popup_area = centered_rect(
+            area,
+            POPUP_WIDTH,
+            player_actions_state.actions.len() as u16 + 2,
+        );
 
         frame.render_widget(Clear, popup_area);
 
-        let items: Vec<ListItem> = overlay
+        let items: Vec<ListItem> = player_actions_state
             .actions
             .iter()
             .enumerate()
             .map(|(index, action)| {
-                let style = selection_style(Color::Reset, overlay.actions.is_selected(index));
+                let style = selection_style(
+                    Color::Reset,
+                    player_actions_state.actions.is_selected(index),
+                );
 
                 ListItem::new(Span::styled(format!(" {}", action.label()), style))
             })
@@ -104,8 +111,10 @@ impl Lifecycle for PlayerActionsPopup {
                     Step::Next
                 };
 
-                if let Some(overlay) = state.game.overlays.get_mut::<PlayerActionsState>() {
-                    overlay.actions.move_selection(step);
+                if let Some(player_actions_state) =
+                    state.game.overlays.get_mut::<PlayerActionsState>()
+                {
+                    player_actions_state.actions.move_selection(step);
                 }
 
                 EventFlow::Consumed
@@ -134,8 +143,8 @@ impl Lifecycle for PlayerActionsPopup {
             return EventFlow::Ignored;
         };
 
-        if let Some(overlay) = state.game.overlays.get_mut::<PlayerActionsState>() {
-            overlay.actions.select_index(index);
+        if let Some(player_actions_state) = state.game.overlays.get_mut::<PlayerActionsState>() {
+            player_actions_state.actions.select_index(index);
         }
 
         self.activate(state, sender)

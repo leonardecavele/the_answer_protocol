@@ -44,7 +44,7 @@ impl Component for ItemDetailPopup {
 
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
         let item_id = match state.game.overlays.get::<ItemDetailState>() {
-            Some(overlay) => overlay.item_id.as_str(),
+            Some(item_detail_state) => item_detail_state.item_id.as_str(),
             None => return,
         };
 

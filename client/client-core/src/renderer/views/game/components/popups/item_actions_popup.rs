@@ -45,7 +45,7 @@ impl ItemActionsPopup {
             .game
             .overlays
             .get::<ItemActionsState>()
-            .and_then(|overlay| overlay.actions.selected().cloned());
+            .and_then(|item_actions_state| item_actions_state.actions.selected().cloned());
 
         match selected.as_deref() {
             Some(ItemActionsState::VIEW) => {
@@ -93,25 +93,30 @@ impl Component for ItemActionsPopup {
     }
 
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
-        let Some(overlay) = state.game.overlays.get::<ItemActionsState>() else {
+        let Some(item_actions_state) = state.game.overlays.get::<ItemActionsState>() else {
             return;
         };
 
-        let Some(item) = state.game.find_item(&overlay.item_id) else {
+        let Some(item) = state.game.find_item(&item_actions_state.item_id) else {
             return;
         };
 
         let title = format!(" {} ", item.name);
-        let popup_area = centered_rect(area, POPUP_WIDTH, overlay.actions.len() as u16 + 2);
+        let popup_area = centered_rect(
+            area,
+            POPUP_WIDTH,
+            item_actions_state.actions.len() as u16 + 2,
+        );
 
         frame.render_widget(Clear, popup_area);
 
-        let items: Vec<ListItem> = overlay
+        let items: Vec<ListItem> = item_actions_state
             .actions
             .iter()
             .enumerate()
             .map(|(index, action)| {
-                let style = selection_style(Color::Reset, overlay.actions.is_selected(index));
+                let style =
+                    selection_style(Color::Reset, item_actions_state.actions.is_selected(index));
 
                 ListItem::new(Span::styled(format!(" {}", action), style))
             })
@@ -134,11 +139,11 @@ impl Lifecycle for ItemActionsPopup {
         key: &KeyEvent,
         sender: &Sender<ApplicationEvent>,
     ) -> EventFlow {
-        let Some(overlay) = state.game.overlays.get::<ItemActionsState>() else {
+        let Some(item_actions_state) = state.game.overlays.get::<ItemActionsState>() else {
             return EventFlow::Ignored;
         };
 
-        let item_id = overlay.item_id.clone();
+        let item_id = item_actions_state.item_id.clone();
 
         match key.code {
             KeyCode::Up | KeyCode::Down => {
@@ -148,8 +153,9 @@ impl Lifecycle for ItemActionsPopup {
                     Step::Next
                 };
 
-                if let Some(overlay) = state.game.overlays.get_mut::<ItemActionsState>() {
-                    overlay.actions.move_selection(step);
+                if let Some(item_actions_state) = state.game.overlays.get_mut::<ItemActionsState>()
+                {
+                    item_actions_state.actions.move_selection(step);
                 }
 
                 EventFlow::Consumed
@@ -170,18 +176,18 @@ impl Lifecycle for ItemActionsPopup {
         row: u16,
         sender: &Sender<ApplicationEvent>,
     ) -> EventFlow {
-        let Some(overlay) = state.game.overlays.get::<ItemActionsState>() else {
+        let Some(item_actions_state) = state.game.overlays.get::<ItemActionsState>() else {
             return EventFlow::Ignored;
         };
 
-        let item_id = overlay.item_id.clone();
+        let item_id = item_actions_state.item_id.clone();
 
         let Some(index) = self.hit(column, row) else {
             return EventFlow::Ignored;
         };
 
-        if let Some(overlay) = state.game.overlays.get_mut::<ItemActionsState>() {
-            overlay.actions.select_index(index);
+        if let Some(item_actions_state) = state.game.overlays.get_mut::<ItemActionsState>() {
+            item_actions_state.actions.select_index(index);
         }
 
         self.activate(state, &item_id, sender)

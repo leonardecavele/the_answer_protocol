@@ -54,7 +54,7 @@ impl FightSummaryPopup {
         }
     }
 
-    pub fn hit_fight(&self, state: &AppState, column: u16, row: u16) -> Option<usize> {
+    pub fn hit_list(&self, state: &AppState, column: u16, row: u16) -> Option<usize> {
         let row_index = hit_row(self.list_area, column, row)?;
         let count = state.game.fight.history().len();
 
@@ -89,7 +89,7 @@ impl FightSummaryPopup {
     fn draw_list(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
         self.list_area = Some(area);
 
-        let Some(overlay) = state.game.overlays.get::<FightSummaryState>() else {
+        let Some(fight_summary_state) = state.game.overlays.get::<FightSummaryState>() else {
             return;
         };
 
@@ -107,7 +107,7 @@ impl FightSummaryPopup {
                     None => Color::Reset,
                 };
 
-                let style = selection_style(color, overlay.selected == index);
+                let style = selection_style(color, fight_summary_state.selected == index);
 
                 ListItem::new(Span::styled(format!(" Fight #{}", index + 1), style))
             })
@@ -163,13 +163,13 @@ impl FightSummaryPopup {
     fn draw_detail(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
         self.detail_area = Some(area);
 
-        let Some(overlay) = state.game.overlays.get::<FightSummaryState>() else {
+        let Some(fight_summary_state) = state.game.overlays.get::<FightSummaryState>() else {
             return;
         };
 
-        self.sync_selection(overlay.selected);
+        self.sync_selection(fight_summary_state.selected);
 
-        let Some(fight) = state.game.fight.history().get(overlay.selected) else {
+        let Some(fight) = state.game.fight.history().get(fight_summary_state.selected) else {
             return;
         };
 
@@ -262,8 +262,10 @@ impl Lifecycle for FightSummaryPopup {
                     _ => Step::Previous,
                 };
 
-                if let Some(overlay) = state.game.overlays.get_mut::<FightSummaryState>() {
-                    overlay.move_selection(step, count);
+                if let Some(fight_summary_state) =
+                    state.game.overlays.get_mut::<FightSummaryState>()
+                {
+                    fight_summary_state.move_selection(step, count);
                 }
 
                 EventFlow::Consumed
@@ -287,12 +289,12 @@ impl Lifecycle for FightSummaryPopup {
             return EventFlow::Ignored;
         }
 
-        let Some(index) = self.hit_fight(state, column, row) else {
+        let Some(index) = self.hit_list(state, column, row) else {
             return EventFlow::Ignored;
         };
 
-        if let Some(overlay) = state.game.overlays.get_mut::<FightSummaryState>() {
-            overlay.selected = index;
+        if let Some(fight_summary_state) = state.game.overlays.get_mut::<FightSummaryState>() {
+            fight_summary_state.selected = index;
         }
 
         EventFlow::Consumed
@@ -324,8 +326,8 @@ impl Lifecycle for FightSummaryPopup {
             Step::Next => Step::Previous,
         };
 
-        if let Some(overlay) = state.game.overlays.get_mut::<FightSummaryState>() {
-            overlay.move_selection(selection_step, count);
+        if let Some(fight_summary_state) = state.game.overlays.get_mut::<FightSummaryState>() {
+            fight_summary_state.move_selection(selection_step, count);
         }
 
         EventFlow::Consumed

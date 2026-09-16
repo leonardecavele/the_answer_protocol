@@ -141,7 +141,7 @@ impl Component for QuestDetailPopup {
 
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
         let quest_id = match state.game.overlays.get::<QuestDetailState>() {
-            Some(overlay) => overlay.id,
+            Some(quest_detail_state) => quest_detail_state.id,
             None => return,
         };
 

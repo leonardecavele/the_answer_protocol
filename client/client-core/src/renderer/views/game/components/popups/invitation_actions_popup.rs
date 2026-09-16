@@ -38,7 +38,7 @@ impl InvitationActionsPopup {
             .game
             .overlays
             .get::<InvitationActionsState>()
-            .and_then(|overlay| overlay.selected_request());
+            .and_then(|invitation_actions_state| invitation_actions_state.selected_request());
 
         if let Some(request) = request {
             let _ = event_sender.try_send(ApplicationEvent::Send(SendEvent::ApiRequest(request)));
@@ -55,21 +55,29 @@ impl Component for InvitationActionsPopup {
     }
 
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
-        let Some(overlay) = state.game.overlays.get::<InvitationActionsState>() else {
+        let Some(invitation_actions_state) = state.game.overlays.get::<InvitationActionsState>()
+        else {
             return;
         };
 
-        let title = format!(" {} ", overlay.leader);
-        let popup_area = centered_rect(area, POPUP_WIDTH, overlay.actions.len() as u16 + 2);
+        let title = format!(" {} ", invitation_actions_state.leader);
+        let popup_area = centered_rect(
+            area,
+            POPUP_WIDTH,
+            invitation_actions_state.actions.len() as u16 + 2,
+        );
 
         frame.render_widget(Clear, popup_area);
 
-        let items: Vec<ListItem> = overlay
+        let items: Vec<ListItem> = invitation_actions_state
             .actions
             .iter()
             .enumerate()
             .map(|(index, action)| {
-                let style = selection_style(Color::Reset, overlay.actions.is_selected(index));
+                let style = selection_style(
+                    Color::Reset,
+                    invitation_actions_state.actions.is_selected(index),
+                );
 
                 ListItem::new(Span::styled(format!(" {}", action.label()), style))
             })
@@ -104,8 +112,10 @@ impl Lifecycle for InvitationActionsPopup {
                     Step::Next
                 };
 
-                if let Some(overlay) = state.game.overlays.get_mut::<InvitationActionsState>() {
-                    overlay.actions.move_selection(step);
+                if let Some(invitation_actions_state) =
+                    state.game.overlays.get_mut::<InvitationActionsState>()
+                {
+                    invitation_actions_state.actions.move_selection(step);
                 }
 
                 EventFlow::Consumed
@@ -134,8 +144,10 @@ impl Lifecycle for InvitationActionsPopup {
             return EventFlow::Ignored;
         };
 
-        if let Some(overlay) = state.game.overlays.get_mut::<InvitationActionsState>() {
-            overlay.actions.select_index(index);
+        if let Some(invitation_actions_state) =
+            state.game.overlays.get_mut::<InvitationActionsState>()
+        {
+            invitation_actions_state.actions.select_index(index);
         }
 
         self.activate(state, sender)
