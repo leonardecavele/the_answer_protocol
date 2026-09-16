@@ -475,11 +475,6 @@ impl Component for GameView {
 }
 
 impl Lifecycle for GameView {
-    fn on_tick(&mut self, state: &mut AppState, sender: &mpsc::Sender<ApplicationEvent>) {
-        self.dialogue.on_tick(state, sender);
-        self.footer.on_tick(state, sender);
-    }
-
     fn handle_device_event(
         &mut self,
         state: &mut AppState,
@@ -500,5 +495,10 @@ impl Lifecycle for GameView {
 
         self.update_focus_from_mouse(state, event);
         self.dispatch_children(state, event, sender)
+    }
+
+    fn on_tick(&mut self, state: &mut AppState, sender: &mpsc::Sender<ApplicationEvent>) {
+        self.dialogue.on_tick(state, sender);
+        self.footer.on_tick(state, sender);
     }
 }
