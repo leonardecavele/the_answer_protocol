@@ -1,6 +1,6 @@
 use crate::combat_instances::PlayerCombatInfo;
 use crate::constants::{
-    BASE_COMMAND_RESPONSE, CODE_NL_SEP, CODE_SP_SEP, ErrorCode, MAX_TIME_FOR_COMBAT,
+    BASE_COMMAND_RESPONSE, CODE_NL_SEP, CODE_SP_SEP, ErrorCode, MAX_CODE_SIZE, MAX_TIME_FOR_COMBAT,
     NO_MORE_MESSAGES, NPC_COUNTER_ATTACK_CHANCE, NPC_COUNTER_DMG, NPC_MOB, PLAYER_ATTACK_DMG,
     SKIP_PLAYER_EXISTS_TEST, TEST_FILES_DIR,
 };
@@ -185,6 +185,7 @@ impl GameManager {
         players_to_notify.push(leader.to_owned());
         let args_to_send = object! { "code": code_without_nl_sp,
         "time": MAX_TIME_FOR_COMBAT.as_secs(),
+        "max_code_size": MAX_CODE_SIZE,
         "nl_sep": CODE_NL_SEP,
         "sp_sep": CODE_SP_SEP,
         "npc_id": npc_representation,
@@ -1033,6 +1034,16 @@ impl GameManager {
                 self.fight_create_command(player_name, npc_id, Vec::new())
             }
             "FIGHT_ATTACK" => {
+                let sent_code = data;
+                let code_len = sent_code.len();
+
+                if code_len > MAX_CODE_SIZE {
+                    warn!("Code too big: {} > {}", code_len, MAX_CODE_SIZE);
+                    return generate_json(player_name, command_name, ErrorCode::TooBigData, "")
+                        .dump();
+                } else {
+                    debug!("Code size: {}", code_len);
+                }
                 let Some(file_and_npc_id) = ({
                     let player_id = match self.get_player_id(player_name) {
                         Some(id) => *id,
@@ -1075,8 +1086,6 @@ impl GameManager {
                 };
 
                 let (file_name, npc_id) = file_and_npc_id;
-
-                let sent_code = data;
 
                 /*check if the code is correct*/
                 self.test_code(&file_name, sent_code, player_name, npc_id);
