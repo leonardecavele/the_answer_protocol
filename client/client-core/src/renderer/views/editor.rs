@@ -34,6 +34,7 @@ const MIN_EDITOR_WIDTH: u16 = 80;
 const NO_IMAGE: &str = " No image ";
 const HEALTH_BAR_HEIGHT: u16 = 1;
 const SUBMIT_WIDTH: u16 = 12;
+const COUNTER_WIDTH: u16 = 14;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum EditorMode {
@@ -45,6 +46,7 @@ pub struct EditorView {
     editor: Editor,
     npc_id: String,
     time: u64,
+    max_code_size: u32,
     nl_sep: String,
     sp_sep: String,
     started_at: Instant,
@@ -71,6 +73,7 @@ impl EditorView {
             editor,
             npc_id: fight_data.npc_id.clone(),
             time: fight_data.time,
+            max_code_size: fight_data.max_code_size,
             nl_sep: fight_data.nl_sep.clone(),
             sp_sep: fight_data.sp_sep.clone(),
             started_at: Instant::now(),
@@ -167,20 +170,39 @@ impl EditorView {
         self.editor.apply(Delete {});
     }
 
+    fn remaining_length(&self) -> usize {
+        self.max_code_size
+            .saturating_sub(self.editor.code_ref().len_chars() as u32) as usize
+    }
+
     fn paste_register(&mut self) {
-        let Some(text) = self.register.clone() else {
+        let Some(register) = self.register.clone() else {
             return;
         };
+
+        let text: String = register.chars().take(self.remaining_length()).collect();
+
+        if text.is_empty() {
+            return;
+        }
 
         self.editor.apply(InsertText { text });
     }
 
     fn insert_line_below(&mut self) {
+        if self.remaining_length() == 0 {
+            return;
+        }
+
         self.move_to_line_end();
         self.editor.apply(InsertNewline {});
     }
 
     fn insert_line_above(&mut self) {
+        if self.remaining_length() == 0 {
+            return;
+        }
+
         self.move_to_line_start();
         self.editor.apply(InsertNewline {});
         self.editor.apply(MoveUp { shift: false });
@@ -362,16 +384,39 @@ impl EditorView {
 
         let chunks = Layout::default()
             .direction(Direction::Horizontal)
-            .constraints([Constraint::Min(1), Constraint::Length(submit_width)])
+            .constraints([
+                Constraint::Length(COUNTER_WIDTH),
+                Constraint::Min(1),
+                Constraint::Length(submit_width),
+            ])
             .split(area);
 
-        frame.render_widget(self.footer(state), chunks[0]);
+        frame.render_widget(self.counter(), chunks[0]);
+        frame.render_widget(self.footer(state), chunks[1]);
 
         if is_editing {
-            self.submit_button.draw(state, frame, chunks[1]);
+            self.submit_button.draw(state, frame, chunks[2]);
         } else {
             self.submit_button.hide();
         }
+    }
+
+    fn counter(&self) -> Paragraph<'static> {
+        let length = self.editor.code_ref().len_chars();
+
+        let style = match length >= self.max_code_size as usize {
+            true => Style::default()
+                .fg(ERROR_COLOR)
+                .add_modifier(Modifier::BOLD),
+            false => dim_style(),
+        };
+
+        Paragraph::new(Span::styled(
+            format!("{}/{}", length, self.max_code_size),
+            style,
+        ))
+        .alignment(Alignment::Center)
+        .block(default_block())
     }
 
     fn footer(&self, state: &AppState) -> Paragraph<'static> {
@@ -494,9 +539,12 @@ impl Lifecycle for EditorView {
 
         match self.mode {
             EditorMode::Insert => {
+                let inserts_text =
+                    matches!(key.code, KeyCode::Char(_) | KeyCode::Enter | KeyCode::Tab);
+
                 if key.code == KeyCode::Esc {
                     self.mode = EditorMode::Normal;
-                } else {
+                } else if !inserts_text || self.remaining_length() > 0 {
                     let _ = self.editor.input(*key, &self.editor_area);
                 }
             }
