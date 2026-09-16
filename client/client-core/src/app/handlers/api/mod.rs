@@ -16,7 +16,7 @@ use client_api::events::{
     ChatEvent, FightEvent, GameServerEvent, GroupEvent, ItemEvent, QuestEvent, RoomEvent,
     ServerEvent, SessionEvent,
 };
-use client_api::{ApiRequest, ApiResponse, FrameDirection};
+use client_api::{ApiRequest, ApiResponse, ErrorCode, FrameDirection};
 
 impl App {
     pub fn handle_api_event(&mut self, event: ApiEvent) {
@@ -56,11 +56,20 @@ impl App {
     }
 
     pub fn handle_api_response(&mut self, response: ApiResponse, original_request: ApiRequest) {
+        let response_clone = response.clone();
+
         if let Some(error) = response.get_error() {
             self.state
                 .ui
                 .notifications
                 .push(Notification::warning(error.to_string()));
+
+            if let (ApiRequest::FightAttack(_), ApiResponse::FightAttack(Err(_))) =
+                (original_request, response_clone)
+                && error.kind() == Some(ErrorCode::DataTooBig)
+            {
+                self.state.game.fight.resume()
+            }
 
             return;
         }

@@ -1,4 +1,4 @@
-use crate::error::CommandError;
+use crate::error::{CommandError, ErrorCode};
 use crate::protocol::command::Command;
 use crate::protocol::response::ServerResponse;
 use serde::{Deserialize, Deserializer, Serialize};
@@ -33,7 +33,7 @@ impl<'de> Deserialize<'de> for QuestStatus {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QuestReward {
     pub qty: u32,
-    pub chance: u32,
+    pub chance: f32,
     pub r#type: String,
 }
 
@@ -82,8 +82,8 @@ impl Command for QuestCommand {
     }
 
     fn refine_error(&self, error: &mut CommandError) {
-        error.with_message(match error.code {
-            Some(404) => Some("npc not found".to_string()),
+        error.with_message(match error.kind() {
+            Some(ErrorCode::NotFound) => Some("npc not found".to_string()),
             _ => None,
         })
     }

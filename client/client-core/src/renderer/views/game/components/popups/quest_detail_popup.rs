@@ -41,10 +41,10 @@ impl QuestDetailPopup {
         let item_name = state.game.manifest.item_name(&reward.r#type);
         let item = format!("{} x{}", item_name, reward.qty);
 
-        if quest.is_completed() || reward.chance >= 100 {
+        if quest.is_completed() || reward.chance >= 100.0 {
             item
         } else {
-            format!("{} ({}% chance)", item, reward.chance)
+            format!("{} ({:.1}% chance)", item, reward.chance)
         }
     }
 

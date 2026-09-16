@@ -1,4 +1,4 @@
-use crate::error::CommandError;
+use crate::error::{CommandError, ErrorCode};
 use crate::protocol::command::Command;
 use crate::protocol::response::ServerResponse;
 use serde::{Deserialize, Serialize};
@@ -33,9 +33,9 @@ impl Command for ConnectCommand {
     }
 
     fn refine_error(&self, error: &mut CommandError) {
-        error.with_message(match error.code {
-            Some(201) => Some(format!("{} already taken", self.player_name)),
-            Some(400) => Some(
+        error.with_message(match error.kind() {
+            Some(ErrorCode::NameInUse) => Some(format!("{} already taken", self.player_name)),
+            Some(ErrorCode::BadRequest) => Some(
                 "a username must be 3 to 20 characters, start with a letter, \
                  and use only letters, digits, - or _"
                     .to_string(),

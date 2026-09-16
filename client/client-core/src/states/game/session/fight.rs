@@ -14,6 +14,12 @@ pub enum FightPhase {
 }
 
 impl FightPhase {
+    fn resume(&mut self) {
+        if let Self::AwaitingResult = self {
+            *self = Self::Editing
+        }
+    }
+
     fn submit(&mut self) {
         if let Self::Editing = self {
             *self = Self::AwaitingResult
@@ -85,6 +91,10 @@ impl FightState {
 
     pub fn submit(&mut self) {
         self.phase.submit();
+    }
+
+    pub fn resume(&mut self) {
+        self.phase.resume();
     }
 
     pub fn resolve(&mut self, success: bool) {

@@ -1,6 +1,110 @@
 use std::time::Duration;
 use thiserror::Error;
 
+/// The error codes the gateway and the game server can answer with, as listed in the root
+/// [TAP protocol reference](../../PROTOCOL.md).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ErrorCode {
+    NameInUse = 201,
+    NoContent = 204,
+    NoExit = 301,
+    BadRequest = 400,
+    NotInGroup = 401,
+    AlreadyInGroup = 402,
+    Forbidden = 403,
+    NotFound = 404,
+    ActionNotAllowed = 405,
+    NoQuestAvailable = 406,
+    NotInSameRoom = 407,
+    NpcInCombat = 408,
+    ActionAlreadyTaken = 409,
+    PlayerAlreadyInCombat = 410,
+    PlayerNotInCombat = 411,
+    FileNotFound = 412,
+    RoomNotFound = 413,
+    MissingItem = 414,
+    NotUsable = 415,
+    DataTooBig = 416,
+    TooManyRequests = 429,
+    ConnectionFailed = 900,
+    SendFailed = 901,
+    GameServerTimeout = 902,
+    InvalidGroupCommand = 997,
+    InvalidQuestion = 998,
+    InvalidCommand = 999,
+}
+
+impl ErrorCode {
+    pub fn from_code(code: i32) -> Option<Self> {
+        match code {
+            201 => Some(Self::NameInUse),
+            204 => Some(Self::NoContent),
+            301 => Some(Self::NoExit),
+            400 => Some(Self::BadRequest),
+            401 => Some(Self::NotInGroup),
+            402 => Some(Self::AlreadyInGroup),
+            403 => Some(Self::Forbidden),
+            404 => Some(Self::NotFound),
+            405 => Some(Self::ActionNotAllowed),
+            406 => Some(Self::NoQuestAvailable),
+            407 => Some(Self::NotInSameRoom),
+            408 => Some(Self::NpcInCombat),
+            409 => Some(Self::ActionAlreadyTaken),
+            410 => Some(Self::PlayerAlreadyInCombat),
+            411 => Some(Self::PlayerNotInCombat),
+            412 => Some(Self::FileNotFound),
+            413 => Some(Self::RoomNotFound),
+            414 => Some(Self::MissingItem),
+            415 => Some(Self::NotUsable),
+            416 => Some(Self::DataTooBig),
+            429 => Some(Self::TooManyRequests),
+            900 => Some(Self::ConnectionFailed),
+            901 => Some(Self::SendFailed),
+            902 => Some(Self::GameServerTimeout),
+            997 => Some(Self::InvalidGroupCommand),
+            998 => Some(Self::InvalidQuestion),
+            999 => Some(Self::InvalidCommand),
+            _ => None,
+        }
+    }
+
+    pub fn code(self) -> i32 {
+        self as i32
+    }
+
+    pub fn message(self) -> &'static str {
+        match self {
+            Self::NameInUse => "this username is already taken",
+            Self::NoContent => "there is nothing to show",
+            Self::NoExit => "there is no exit that way",
+            Self::BadRequest => "bad request",
+            Self::NotInGroup => "you are not in a group",
+            Self::AlreadyInGroup => "you are already in a group",
+            Self::Forbidden => "you are not allowed to do that",
+            Self::NotFound => "not found",
+            Self::ActionNotAllowed => "action not allowed",
+            Self::NoQuestAvailable => "no quest available",
+            Self::NotInSameRoom => "not in this room",
+            Self::NpcInCombat => "this npc is already fighting someone",
+            Self::ActionAlreadyTaken => "you have already taken your action",
+            Self::PlayerAlreadyInCombat => "you are already in a fight",
+            Self::PlayerNotInCombat => "you are not in a fight",
+            Self::FileNotFound => "the server could not load the requested file",
+            Self::RoomNotFound => "room not found",
+            Self::MissingItem => "an item is required to enter this room",
+            Self::NotUsable => "item cannot be used",
+            Self::DataTooBig => "sent data is too big",
+            Self::TooManyRequests => "too many commands sent in a short time",
+            Self::ConnectionFailed => "server unavailable",
+            Self::SendFailed => "the server could not deliver your message",
+            Self::GameServerTimeout => "the game server did not answer in time",
+            Self::InvalidGroupCommand | Self::InvalidQuestion | Self::InvalidCommand => {
+                "the server could not process this command"
+            }
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct CommandError {
     pub code: Option<i32>,
@@ -24,36 +128,15 @@ impl CommandError {
         }
     }
 
-    pub fn default_message_from_code(code_opt: Option<i32>) -> String {
-        let code = code_opt.unwrap_or(-1);
+    pub fn kind(&self) -> Option<ErrorCode> {
+        self.code.and_then(ErrorCode::from_code)
+    }
 
-        match code {
-            201 => String::from("this username is already taken"),
-            204 => String::from("there is nothing to show"),
-            301 => String::from("there is no exit that way"),
-            400 => String::from("bad request"),
-            401 => String::from("you are not in a group"),
-            402 => String::from("you are already in a group"),
-            403 => String::from("you are not allowed to do that"),
-            404 => String::from("not found"),
-            405 => String::from("action not allowed"),
-            406 => String::from("no quest available"),
-            407 => String::from("not in this room"),
-            408 => String::from("this npc is already fighting someone"),
-            409 => String::from("you have already taken your action"),
-            410 => String::from("you are already in a fight"),
-            411 => String::from("you are not in a fight"),
-            412 => String::from("the server could not load the requested file"),
-            413 => String::from("room not found"),
-            414 => String::from("an item is required to enter this room"),
-            415 => String::from("item cannot be used"),
-            429 => String::from("too many commands sent in a short time"),
-            900 => String::from("server unavailable"),
-            901 => String::from("the server could not deliver your message"),
-            902 => String::from("the game server did not answer in time"),
-            997..=999 => String::from("the server could not process this command"),
-            _ => "unknown server error".to_string(),
-        }
+    pub fn default_message_from_code(code_opt: Option<i32>) -> String {
+        code_opt
+            .and_then(ErrorCode::from_code)
+            .map_or("unknown server error", ErrorCode::message)
+            .to_string()
     }
 }
 
