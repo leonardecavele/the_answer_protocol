@@ -48,6 +48,7 @@ var (
 	ResponseRoomNotFound          = ResponseError(serverError.RoomNotFoundError, "ROOM_NOT_FOUND")
 	ResponseMissingItem           = ResponseError(serverError.MissingItemError, "MISSING_ITEM")
 	ResponseNotUsable             = ResponseError(serverError.NotUsableError, "NOT_USABLE")
+	ResponseDataTooBig            = ResponseError(serverError.DataTooBigError, "DATA_TOO_BIG")
 	ResponseTooManyRequests       = ResponseError(serverError.TooManyRequestsError, "TOO_MANY_REQUESTS")
 	ResponseConnectionFailed      = ResponseError(serverError.ConnectionFailedError, "CONNECTION_FAILED")
 	ResponseGameServerClosed      = ResponseConnectionFailed
