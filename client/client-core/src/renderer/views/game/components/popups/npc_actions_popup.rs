@@ -5,7 +5,7 @@ use crate::renderer::layout::centered_rect;
 use crate::renderer::theme::{popup_block, selection_style};
 use crate::states::AppState;
 use crate::states::game::NpcActionsState;
-use crossterm::event::{Event as CrosstermEvent, KeyCode, MouseButton, MouseEventKind};
+use crossterm::event::{KeyCode, KeyEvent};
 use mpsc::Sender;
 use ratatui::{
     Frame,
@@ -31,6 +31,22 @@ impl NpcActionsPopup {
 
     pub fn hit(&self, column: u16, row: u16) -> Option<usize> {
         hit_row(self.list_area, column, row)
+    }
+
+    fn close_stale_overlay(&self, state: &mut AppState) -> Option<EventFlow> {
+        let Some(overlay) = state.game.overlays.get::<NpcActionsState>() else {
+            return Some(EventFlow::Ignored);
+        };
+
+        let npc_id = overlay.npc_id.clone();
+
+        if state.game.find_npc(&npc_id).is_some() {
+            return None;
+        }
+
+        state.game.overlays.close::<NpcActionsState>();
+
+        Some(EventFlow::Consumed)
     }
 
     fn activate(&self, state: &mut AppState, event_sender: &Sender<ApplicationEvent>) -> EventFlow {
@@ -90,59 +106,58 @@ impl Component for NpcActionsPopup {
 }
 
 impl Lifecycle for NpcActionsPopup {
-    fn handle_device_event(
+    fn on_key(
         &mut self,
         state: &mut AppState,
-        event: &CrosstermEvent,
-        event_sender: &Sender<ApplicationEvent>,
+        key: &KeyEvent,
+        sender: &Sender<ApplicationEvent>,
     ) -> EventFlow {
-        let Some(overlay) = state.game.overlays.get::<NpcActionsState>() else {
-            return EventFlow::Ignored;
-        };
-
-        let npc_id = overlay.npc_id.clone();
-
-        if state.game.find_npc(&npc_id).is_none() {
-            state.game.overlays.close::<NpcActionsState>();
-            return EventFlow::Consumed;
+        if let Some(flow) = self.close_stale_overlay(state) {
+            return flow;
         }
 
-        match event {
-            CrosstermEvent::Key(key) => match key.code {
-                KeyCode::Up | KeyCode::Down => {
-                    let step = if key.code == KeyCode::Up {
-                        Step::Previous
-                    } else {
-                        Step::Next
-                    };
-
-                    if let Some(overlay) = state.game.overlays.get_mut::<NpcActionsState>() {
-                        overlay.actions.move_selection(step);
-                    }
-
-                    EventFlow::Consumed
-                }
-                KeyCode::Esc => {
-                    state.game.close_top_overlay();
-                    EventFlow::Consumed
-                }
-                KeyCode::Enter => self.activate(state, event_sender),
-                _ => EventFlow::Ignored,
-            },
-            CrosstermEvent::Mouse(mouse)
-                if mouse.kind == MouseEventKind::Down(MouseButton::Left) =>
-            {
-                let Some(index) = self.hit(mouse.column, mouse.row) else {
-                    return EventFlow::Ignored;
+        match key.code {
+            KeyCode::Up | KeyCode::Down => {
+                let step = if key.code == KeyCode::Up {
+                    Step::Previous
+                } else {
+                    Step::Next
                 };
 
                 if let Some(overlay) = state.game.overlays.get_mut::<NpcActionsState>() {
-                    overlay.actions.select_index(index);
+                    overlay.actions.move_selection(step);
                 }
 
-                self.activate(state, event_sender)
+                EventFlow::Consumed
             }
+            KeyCode::Esc => {
+                state.game.close_top_overlay();
+                EventFlow::Consumed
+            }
+            KeyCode::Enter => self.activate(state, sender),
             _ => EventFlow::Ignored,
         }
+    }
+
+    fn on_click(
+        &mut self,
+        state: &mut AppState,
+        column: u16,
+        row: u16,
+        sender: &Sender<ApplicationEvent>,
+    ) -> EventFlow {
+        if let Some(flow) = self.close_stale_overlay(state) {
+            return flow;
+        }
+
+        let Some(index) = self.hit(column, row) else {
+            return EventFlow::Ignored;
+        };
+
+        if let Some(overlay) = state.game.overlays.get_mut::<NpcActionsState>() {
+            overlay.actions.select_index(index);
+        }
+
+        self.activate(state, sender)
     }
 }

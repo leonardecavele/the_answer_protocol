@@ -4,7 +4,7 @@ use crate::renderer::layout::percent_of;
 use crate::renderer::text::wrap_slice_to_lines;
 use crate::renderer::theme::{TRACE_COLOR, overlay_block};
 use crate::states::AppState;
-use crossterm::event::{Event as CrosstermEvent, KeyCode};
+use crossterm::event::{KeyCode, KeyEvent};
 use mpsc::Sender;
 use ratatui::layout::Rect;
 use ratatui::style::Style;
@@ -61,16 +61,15 @@ impl ScrollableComponent for TraceOverlay {
 }
 
 impl Lifecycle for TraceOverlay {
-    fn handle_device_event(
+    fn on_key(
         &mut self,
         state: &mut AppState,
-        event: &CrosstermEvent,
+        key: &KeyEvent,
         _sender: &Sender<ApplicationEvent>,
     ) -> EventFlow {
-        if let CrosstermEvent::Key(key) = event
-            && key.code == KeyCode::Esc
-        {
+        if key.code == KeyCode::Esc {
             state.ui.show_trace_log = false;
+
             return EventFlow::Consumed;
         }
 

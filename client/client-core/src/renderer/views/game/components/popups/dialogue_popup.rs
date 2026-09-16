@@ -7,7 +7,7 @@ use crate::states::AppState;
 use crate::states::game::DialogueState;
 use client_api::ApiRequest;
 use client_api::commands::TalkCommand;
-use crossterm::event::{Event as CrosstermEvent, KeyCode};
+use crossterm::event::{KeyCode, KeyEvent};
 use mpsc::Sender;
 use ratatui::{
     layout::Rect,
@@ -116,47 +116,45 @@ impl ScrollableComponent for DialoguePopup {
 }
 
 impl Lifecycle for DialoguePopup {
-    fn handle_device_event(
+    fn on_key(
         &mut self,
         state: &mut AppState,
-        event: &CrosstermEvent,
+        key: &KeyEvent,
         sender: &Sender<ApplicationEvent>,
     ) -> EventFlow {
         let Some(dialog) = state.game.overlays.get::<DialogueState>().cloned() else {
             return EventFlow::Ignored;
         };
 
-        match event {
-            CrosstermEvent::Key(key) => {
-                if key.code == KeyCode::Esc {
-                    state.game.close_dialogue();
+        if key.code == KeyCode::Esc {
+            state.game.close_dialogue();
 
-                    return EventFlow::Consumed;
-                }
+            return EventFlow::Consumed;
+        }
 
-                if key.code != KeyCode::Enter {
-                    return EventFlow::Ignored;
-                }
+        if key.code == KeyCode::Enter {
+            self.next(state, &dialog, sender);
 
-                self.next(state, &dialog, sender);
-
-                return EventFlow::Consumed;
-            }
-            CrosstermEvent::Mouse(mouse) => {
-                if mouse.kind
-                    != crossterm::event::MouseEventKind::Down(crossterm::event::MouseButton::Left)
-                {
-                    return EventFlow::Ignored;
-                }
-
-                self.next(state, &dialog, sender);
-
-                return EventFlow::Consumed;
-            }
-            _ => {}
+            return EventFlow::Consumed;
         }
 
         EventFlow::Ignored
+    }
+
+    fn on_click(
+        &mut self,
+        state: &mut AppState,
+        _column: u16,
+        _row: u16,
+        sender: &Sender<ApplicationEvent>,
+    ) -> EventFlow {
+        let Some(dialog) = state.game.overlays.get::<DialogueState>().cloned() else {
+            return EventFlow::Ignored;
+        };
+
+        self.next(state, &dialog, sender);
+
+        EventFlow::Consumed
     }
 
     fn on_tick(&mut self, state: &mut AppState, _sender: &Sender<ApplicationEvent>) {

@@ -7,7 +7,7 @@ use crate::states::AppState;
 use crate::states::game::{ItemActionsState, ItemDetailState, Overlay};
 use client_api::ApiRequest;
 use client_api::commands::{DropCommand, TakeCommand, UseCommand};
-use crossterm::event::{Event as CrosstermEvent, KeyCode, MouseButton, MouseEventKind};
+use crossterm::event::{KeyCode, KeyEvent};
 use mpsc::Sender;
 use ratatui::{
     Frame,
@@ -128,11 +128,11 @@ impl Component for ItemActionsPopup {
 }
 
 impl Lifecycle for ItemActionsPopup {
-    fn handle_device_event(
+    fn on_key(
         &mut self,
         state: &mut AppState,
-        event: &CrosstermEvent,
-        event_sender: &Sender<ApplicationEvent>,
+        key: &KeyEvent,
+        sender: &Sender<ApplicationEvent>,
     ) -> EventFlow {
         let Some(overlay) = state.game.overlays.get::<ItemActionsState>() else {
             return EventFlow::Ignored;
@@ -140,42 +140,50 @@ impl Lifecycle for ItemActionsPopup {
 
         let item_id = overlay.item_id.clone();
 
-        match event {
-            CrosstermEvent::Key(key) => match key.code {
-                KeyCode::Up | KeyCode::Down => {
-                    let step = if key.code == KeyCode::Up {
-                        Step::Previous
-                    } else {
-                        Step::Next
-                    };
-
-                    if let Some(overlay) = state.game.overlays.get_mut::<ItemActionsState>() {
-                        overlay.actions.move_selection(step);
-                    }
-
-                    EventFlow::Consumed
-                }
-                KeyCode::Esc => {
-                    state.game.close_top_overlay();
-                    EventFlow::Consumed
-                }
-                KeyCode::Enter => self.activate(state, &item_id, event_sender),
-                _ => EventFlow::Ignored,
-            },
-            CrosstermEvent::Mouse(mouse)
-                if mouse.kind == MouseEventKind::Down(MouseButton::Left) =>
-            {
-                let Some(index) = self.hit(mouse.column, mouse.row) else {
-                    return EventFlow::Ignored;
+        match key.code {
+            KeyCode::Up | KeyCode::Down => {
+                let step = if key.code == KeyCode::Up {
+                    Step::Previous
+                } else {
+                    Step::Next
                 };
 
                 if let Some(overlay) = state.game.overlays.get_mut::<ItemActionsState>() {
-                    overlay.actions.select_index(index);
+                    overlay.actions.move_selection(step);
                 }
 
-                self.activate(state, &item_id, event_sender)
+                EventFlow::Consumed
             }
+            KeyCode::Esc => {
+                state.game.close_top_overlay();
+                EventFlow::Consumed
+            }
+            KeyCode::Enter => self.activate(state, &item_id, sender),
             _ => EventFlow::Ignored,
         }
+    }
+
+    fn on_click(
+        &mut self,
+        state: &mut AppState,
+        column: u16,
+        row: u16,
+        sender: &Sender<ApplicationEvent>,
+    ) -> EventFlow {
+        let Some(overlay) = state.game.overlays.get::<ItemActionsState>() else {
+            return EventFlow::Ignored;
+        };
+
+        let item_id = overlay.item_id.clone();
+
+        let Some(index) = self.hit(column, row) else {
+            return EventFlow::Ignored;
+        };
+
+        if let Some(overlay) = state.game.overlays.get_mut::<ItemActionsState>() {
+            overlay.actions.select_index(index);
+        }
+
+        self.activate(state, &item_id, sender)
     }
 }

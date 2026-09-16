@@ -10,7 +10,6 @@ use client_api::ApiRequest;
 use client_api::commands::{
     GroupCreateCommand, GroupLeaveCommand, QuitCommand, StatusCommand, WhoCommand,
 };
-use crossterm::event::{Event as CrosstermEvent, MouseButton, MouseEventKind};
 use ratatui::widgets::Paragraph;
 use ratatui::{
     Frame,
@@ -198,27 +197,20 @@ impl Component for Header {
 }
 
 impl Lifecycle for Header {
-    fn handle_device_event(
+    fn on_click(
         &mut self,
         state: &mut AppState,
-        event: &CrosstermEvent,
-        event_sender: &Sender<ApplicationEvent>,
+        column: u16,
+        row: u16,
+        sender: &Sender<ApplicationEvent>,
     ) -> EventFlow {
-        let CrosstermEvent::Mouse(mouse) = event else {
-            return EventFlow::Ignored;
-        };
-
-        if mouse.kind != MouseEventKind::Down(MouseButton::Left) {
-            return EventFlow::Ignored;
-        }
-
-        if self.chat.hit(mouse.column, mouse.row) {
+        if self.chat.hit(column, row) {
             state.game.overlays.toggle(Overlay::Chat(ChatState));
             state.game.is_chat_unread = false;
             return EventFlow::Consumed;
         }
 
-        if self.fights.hit(mouse.column, mouse.row) {
+        if self.fights.hit(column, row) {
             let count = state.game.fight.history().len();
 
             state
@@ -228,12 +220,12 @@ impl Lifecycle for Header {
             return EventFlow::Consumed;
         }
 
-        if self.help.hit(mouse.column, mouse.row) {
+        if self.help.hit(column, row) {
             state.game.overlays.toggle(Overlay::Help(HelpState));
             return EventFlow::Consumed;
         }
 
-        if self.trace.hit(mouse.column, mouse.row) {
+        if self.trace.hit(column, row) {
             state.ui.show_trace_log = !state.ui.show_trace_log;
             return EventFlow::Consumed;
         }
@@ -251,12 +243,12 @@ impl Lifecycle for Header {
 
         let Some(request) = requests
             .into_iter()
-            .find_map(|(button, request)| button.hit(mouse.column, mouse.row).then_some(request))
+            .find_map(|(button, request)| button.hit(column, row).then_some(request))
         else {
             return EventFlow::Ignored;
         };
 
-        let _ = event_sender.try_send(ApplicationEvent::Send(SendEvent::ApiRequest(request)));
+        let _ = sender.try_send(ApplicationEvent::Send(SendEvent::ApiRequest(request)));
 
         EventFlow::Consumed
     }

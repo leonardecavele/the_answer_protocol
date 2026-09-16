@@ -1,8 +1,6 @@
 use crate::collections::Step;
 use crate::events::ApplicationEvent;
-use crate::renderer::components::{
-    Component, EventFlow, Lifecycle, hit_row, is_mouse_in_rect, scroll_direction,
-};
+use crate::renderer::components::{Component, EventFlow, Lifecycle, hit_row, is_mouse_in_rect};
 use crate::renderer::layout::{centered_rect, percent_of};
 use crate::renderer::text::wrap_str_to_lines;
 use crate::renderer::theme::{
@@ -11,7 +9,7 @@ use crate::renderer::theme::{
 use crate::states::AppState;
 use crate::states::game::FightSummaryState;
 use client_api::events::{FightEndData, FightEndPlayerData};
-use crossterm::event::{Event as CrosstermEvent, KeyCode, MouseButton, MouseEventKind};
+use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect},
@@ -260,61 +258,17 @@ impl Component for FightSummaryPopup {
 }
 
 impl Lifecycle for FightSummaryPopup {
-    fn handle_device_event(
+    fn on_key(
         &mut self,
         state: &mut AppState,
-        event: &CrosstermEvent,
-        _event_sender: &Sender<ApplicationEvent>,
+        key: &KeyEvent,
+        _sender: &Sender<ApplicationEvent>,
     ) -> EventFlow {
         if !state.game.overlays.is_open::<FightSummaryState>() {
             return EventFlow::Ignored;
         }
 
         let count = state.game.fight.history().len();
-
-        if let CrosstermEvent::Mouse(mouse) = event {
-            if mouse.kind == MouseEventKind::Down(MouseButton::Left)
-                && let Some(index) = self.hit_fight(state, mouse.column, mouse.row)
-                && let Some(overlay) = state.game.overlays.get_mut::<FightSummaryState>()
-            {
-                overlay.selected = index;
-                return EventFlow::Consumed;
-            }
-
-            let Some(step) = scroll_direction(mouse.kind) else {
-                return EventFlow::Ignored;
-            };
-
-            if self
-                .detail_area
-                .is_some_and(|area| is_mouse_in_rect(mouse.column, mouse.row, area))
-            {
-                self.scroll(step, 1);
-                return EventFlow::Consumed;
-            }
-
-            if self
-                .list_area
-                .is_some_and(|area| is_mouse_in_rect(mouse.column, mouse.row, area))
-            {
-                let selection_step = match step {
-                    Step::Previous => Step::Next,
-                    Step::Next => Step::Previous,
-                };
-
-                if let Some(overlay) = state.game.overlays.get_mut::<FightSummaryState>() {
-                    overlay.move_selection(selection_step, count);
-                }
-
-                return EventFlow::Consumed;
-            }
-
-            return EventFlow::Ignored;
-        }
-
-        let CrosstermEvent::Key(key) = event else {
-            return EventFlow::Ignored;
-        };
 
         match key.code {
             KeyCode::Up | KeyCode::Down => {
@@ -335,5 +289,60 @@ impl Lifecycle for FightSummaryPopup {
             }
             _ => EventFlow::Ignored,
         }
+    }
+
+    fn on_click(
+        &mut self,
+        state: &mut AppState,
+        column: u16,
+        row: u16,
+        _sender: &Sender<ApplicationEvent>,
+    ) -> EventFlow {
+        if !state.game.overlays.is_open::<FightSummaryState>() {
+            return EventFlow::Ignored;
+        }
+
+        let Some(index) = self.hit_fight(state, column, row) else {
+            return EventFlow::Ignored;
+        };
+
+        if let Some(overlay) = state.game.overlays.get_mut::<FightSummaryState>() {
+            overlay.selected = index;
+        }
+
+        EventFlow::Consumed
+    }
+
+    fn on_scroll(&mut self, state: &mut AppState, step: Step, column: u16, row: u16) -> EventFlow {
+        if !state.game.overlays.is_open::<FightSummaryState>() {
+            return EventFlow::Ignored;
+        }
+
+        if self
+            .detail_area
+            .is_some_and(|area| is_mouse_in_rect(column, row, area))
+        {
+            self.scroll(step, 1);
+            return EventFlow::Consumed;
+        }
+
+        if !self
+            .list_area
+            .is_some_and(|area| is_mouse_in_rect(column, row, area))
+        {
+            return EventFlow::Ignored;
+        }
+
+        let count = state.game.fight.history().len();
+        let selection_step = match step {
+            Step::Previous => Step::Next,
+            Step::Next => Step::Previous,
+        };
+
+        if let Some(overlay) = state.game.overlays.get_mut::<FightSummaryState>() {
+            overlay.move_selection(selection_step, count);
+        }
+
+        EventFlow::Consumed
     }
 }

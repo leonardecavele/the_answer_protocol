@@ -8,9 +8,7 @@ use crate::states::game::{FightPhase, Sprite};
 use client_api::ApiRequest;
 use client_api::commands::FightAttackCommand;
 use client_api::events::FightStartData;
-use crossterm::event::{
-    Event as CrosstermEvent, KeyCode, KeyEvent, KeyModifiers, MouseButton, MouseEventKind,
-};
+use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use mpsc::Sender;
 use ratatui::Frame;
 use ratatui::layout::{Alignment, Constraint, Direction, Layout, Position, Rect};
@@ -458,31 +456,38 @@ impl Lifecycle for EditorView {
         let _ = sender.try_send(ApplicationEvent::Custom(CustomEvent::FightTimedOut));
     }
 
-    fn handle_device_event(
+    fn on_click(
         &mut self,
         state: &mut AppState,
-        event: &CrosstermEvent,
-        event_sender: &Sender<ApplicationEvent>,
+        column: u16,
+        row: u16,
+        sender: &Sender<ApplicationEvent>,
     ) -> EventFlow {
         if state.game.fight.phase() != FightPhase::Editing {
             return EventFlow::Ignored;
         }
 
-        if let CrosstermEvent::Mouse(mouse) = event
-            && mouse.kind == MouseEventKind::Down(MouseButton::Left)
-            && self.submit_button.is_mouse_over(mouse.column, mouse.row)
-        {
-            self.submit(state, event_sender);
+        if self.submit_button.is_mouse_over(column, row) {
+            self.submit(state, sender);
 
             return EventFlow::Consumed;
         }
 
-        let CrosstermEvent::Key(key) = event else {
+        EventFlow::Ignored
+    }
+
+    fn on_key(
+        &mut self,
+        state: &mut AppState,
+        key: &KeyEvent,
+        sender: &Sender<ApplicationEvent>,
+    ) -> EventFlow {
+        if state.game.fight.phase() != FightPhase::Editing {
             return EventFlow::Ignored;
-        };
+        }
 
         if key.code == KeyCode::Char('s') && key.modifiers.contains(KeyModifiers::CONTROL) {
-            self.submit(state, event_sender);
+            self.submit(state, sender);
 
             return EventFlow::Consumed;
         }

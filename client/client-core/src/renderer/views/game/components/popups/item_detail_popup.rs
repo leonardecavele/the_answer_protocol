@@ -6,7 +6,7 @@ use crate::renderer::text::wrap_str_to_lines;
 use crate::renderer::theme::{close_hint, dim_style, popup_block};
 use crate::states::AppState;
 use crate::states::game::ItemDetailState;
-use crossterm::event::{Event as CrosstermEvent, KeyCode};
+use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::{
     Frame,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
@@ -142,19 +142,15 @@ impl Component for ItemDetailPopup {
 }
 
 impl Lifecycle for ItemDetailPopup {
-    fn handle_device_event(
+    fn on_key(
         &mut self,
         state: &mut AppState,
-        event: &CrosstermEvent,
-        _event_sender: &Sender<ApplicationEvent>,
+        key: &KeyEvent,
+        _sender: &Sender<ApplicationEvent>,
     ) -> EventFlow {
         if !state.game.overlays.is_open::<ItemDetailState>() {
             return EventFlow::Ignored;
         }
-
-        let CrosstermEvent::Key(key) = event else {
-            return EventFlow::Ignored;
-        };
 
         match key.code {
             KeyCode::Esc | KeyCode::Enter | KeyCode::Char('q') => {
