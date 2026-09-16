@@ -14,7 +14,7 @@ pub struct ClientConfig {
 impl Default for ClientConfig {
     fn default() -> Self {
         ClientConfig {
-            connect_timeout: Duration::from_secs(5),
+            connect_timeout: Duration::from_secs(2),
             handshake_timeout: Duration::from_secs(2),
             request_timeout: Duration::from_secs(10),
             close_timeout: Duration::from_secs(2),

@@ -1,6 +1,7 @@
+use std::time::Duration;
 use crate::collections::Step;
 use crate::events::{ApplicationEvent, ConnectionEvent};
-use crate::notification::{Notification, NotificationTopic};
+use crate::notification::{Notification, NotificationDuration, NotificationTopic};
 use crate::renderer::components::{Button, Component, EventFlow, Lifecycle, TextInput};
 use crate::renderer::views::login::focus::LoginFocus;
 use crate::states::AppState;
@@ -213,7 +214,7 @@ impl Lifecycle for LoginView {
                         state.ui.notifications.push(
                             Notification::info("Connecting...")
                                 .with_topic(NotificationTopic::Connection)
-                                .with_ms(5_000),
+                                .with_duration(NotificationDuration::Finite(Duration::from_secs(2))),
                         );
                         let _ = event_sender.try_send(ApplicationEvent::Connection(
                             ConnectionEvent::AttemptStarted {
