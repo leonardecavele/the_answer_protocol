@@ -1,19 +1,18 @@
 use crate::events::ApplicationEvent;
 use crate::renderer::components::{
-    CloseButton, Component, EventFlow, Lifecycle, Scrollable, ScrollableHit, is_mouse_in_rect,
+    CloseButton, Component, EventFlow, Lifecycle, Scrollable, is_mouse_in_rect,
 };
 use crate::renderer::layout::percent_of;
 use crate::states::AppState;
 
 use crate::renderer::views::game::components::{
-    ActionHistoryPanel, ChatOverlay, DialoguePopup, Footer, FooterHit, Header, HelpOverlay,
+    ActionHistoryPanel, ChatOverlay, DialoguePopup, FightSummaryPopup, Footer, Header, HelpOverlay,
     InventoryPanel, InventoryPanelHit, InvitationActionsPopup, ItemActionsPopup, ItemDetailPopup,
     LeftPanel, LeftPanelHit, NpcActionsPopup, PlayerActionsPopup, QuestDetailPopup, RightPanel,
-    RightPanelHit,
 };
 use crate::states::game::{
-    ChatState, GameFocus, HelpState, InvitationActionsState, ItemActionsState, ItemLocation,
-    NpcActionsState, Overlay, OverlayKind, PlayerActionsState, QuestDetailState,
+    ChatState, FightSummaryState, GameFocus, HelpState, InvitationActionsState, ItemActionsState,
+    ItemLocation, NpcActionsState, Overlay, OverlayKind, PlayerActionsState, QuestDetailState,
 };
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
 use ratatui::Frame;
@@ -39,6 +38,7 @@ pub struct GameView {
     item_actions: ItemActionsPopup,
     item_detail: ItemDetailPopup,
     quest_detail: QuestDetailPopup,
+    fight_summary: FightSummaryPopup,
     dialogue: Scrollable<DialoguePopup>,
     help: Scrollable<HelpOverlay>,
     close_button: CloseButton,
@@ -66,6 +66,7 @@ impl GameView {
             item_actions: ItemActionsPopup::new(),
             item_detail: ItemDetailPopup::new(),
             quest_detail: QuestDetailPopup::new(),
+            fight_summary: FightSummaryPopup::new(),
             dialogue: Scrollable::new(DialoguePopup::new()),
             help: Scrollable::new(HelpOverlay::new()),
             close_button: CloseButton::new(),
@@ -82,6 +83,7 @@ impl GameView {
             OverlayKind::ItemActions => &mut self.item_actions,
             OverlayKind::ItemDetail => &mut self.item_detail,
             OverlayKind::QuestDetail => &mut self.quest_detail,
+            OverlayKind::FightSummary => &mut self.fight_summary,
             OverlayKind::Dialogue => &mut self.dialogue,
         }
     }
@@ -194,6 +196,16 @@ impl GameView {
                 state.game.is_chat_unread = false;
                 return EventFlow::Consumed;
             }
+
+            if key.code == KeyCode::F(2) {
+                let count = state.game.fight.history().len();
+
+                state
+                    .game
+                    .overlays
+                    .toggle(Overlay::FightSummary(FightSummaryState::new(count)));
+                return EventFlow::Consumed;
+            }
         }
 
         EventFlow::Ignored
@@ -247,7 +259,7 @@ impl GameView {
                 LeftPanelHit::None => {}
             }
 
-            if let ScrollableHit::Box = self.action_history.hit(mouse.column, mouse.row) {
+            if self.action_history.hit(mouse.column, mouse.row) {
                 state.game.set_focus(GameFocus::ActionHistory);
             }
 
@@ -255,11 +267,11 @@ impl GameView {
                 state.game.set_focus(GameFocus::InventoryGrid);
             }
 
-            if let RightPanelHit::Image = self.right_panel.hit(mouse.column, mouse.row) {
+            if self.right_panel.hit(mouse.column, mouse.row) {
                 state.game.set_focus(GameFocus::RightPanel);
             }
 
-            if let FooterHit::CommandInput = self.footer.hit(mouse.column, mouse.row) {
+            if self.footer.hit(mouse.column, mouse.row) {
                 state.game.set_focus(GameFocus::Input);
             }
 

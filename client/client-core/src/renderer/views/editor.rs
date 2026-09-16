@@ -80,7 +80,7 @@ impl EditorView {
             timed_out: false,
             image_renderer: ImageRenderer::new(),
             submit_button: Interactive::new(Button::new("SUBMIT")),
-            mode: EditorMode::Normal,
+            mode: EditorMode::Insert,
             pending: None,
             register: None,
         })

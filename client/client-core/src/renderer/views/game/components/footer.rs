@@ -18,11 +18,6 @@ const LAG_LABEL: &str = "LAG";
 const LAG_WIDTH: u16 = 9;
 const HISTORY_CAPACITY: usize = 10;
 
-pub enum FooterHit {
-    CommandInput,
-    None,
-}
-
 #[derive(Default)]
 pub struct Footer {
     pub input: Interactive<TextInput>,
@@ -45,14 +40,9 @@ impl Footer {
         }
     }
 
-    pub fn hit(&self, column: u16, row: u16) -> FooterHit {
-        if let Some(area) = self.area
-            && is_mouse_in_rect(column, row, area)
-        {
-            return FooterHit::CommandInput;
-        }
-
-        FooterHit::None
+    pub fn hit(&self, column: u16, row: u16) -> bool {
+        self.area
+            .is_some_and(|area| is_mouse_in_rect(column, row, area))
     }
 
     fn set_value(&mut self, value: String) {

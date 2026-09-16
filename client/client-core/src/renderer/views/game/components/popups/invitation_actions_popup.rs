@@ -1,6 +1,6 @@
 use crate::collections::Step;
 use crate::events::{ApplicationEvent, SendEvent};
-use crate::renderer::components::{Component, EventFlow, Lifecycle, is_mouse_in_rect};
+use crate::renderer::components::{Component, EventFlow, Lifecycle, hit_row};
 use crate::renderer::layout::centered_rect;
 use crate::renderer::theme::{popup_block, selection_style};
 use crate::states::AppState;
@@ -30,13 +30,7 @@ impl InvitationActionsPopup {
     }
 
     pub fn hit(&self, column: u16, row: u16) -> Option<usize> {
-        let area = self.list_area?;
-
-        if !is_mouse_in_rect(column, row, area) {
-            return None;
-        }
-
-        Some(row.saturating_sub(area.y) as usize)
+        hit_row(self.list_area, column, row)
     }
 
     fn activate(&self, state: &mut AppState, event_sender: &Sender<ApplicationEvent>) -> EventFlow {

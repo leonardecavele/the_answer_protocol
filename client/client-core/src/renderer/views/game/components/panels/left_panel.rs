@@ -2,7 +2,7 @@ use crate::collections::{SelectableList, Step};
 use crate::events::{ApplicationEvent, SendEvent};
 use crate::manifest::NpcKind;
 use crate::renderer::components::{
-    Component, EventFlow, LabelButton, Lifecycle, is_mouse_in_rect, scroll_direction,
+    Component, EventFlow, LabelButton, Lifecycle, hit_row, is_mouse_in_rect, scroll_direction,
 };
 use crate::renderer::text::truncate_to_width;
 use crate::renderer::theme::{
@@ -24,8 +24,6 @@ use ratatui::{
     widgets::{List, ListItem},
 };
 use tokio::sync::mpsc::Sender;
-
-const BORDERS_HEIGHT: u16 = 2;
 
 pub enum LeftPanelHit {
     Player(usize),
@@ -64,18 +62,11 @@ impl LeftPanel {
     }
 
     fn hit_entry(area: Option<Rect>, offset: usize, column: u16, row: u16) -> Option<usize> {
-        let area = area?;
-
-        if !is_mouse_in_rect(column, row, area) || row <= area.y || row + 1 >= area.bottom() {
-            return None;
-        }
-
-        Some(offset + (row - area.y - 1) as usize)
+        hit_row(area, column, row).map(|row_index| offset + row_index)
     }
 
     fn visible_count(area: Option<Rect>) -> usize {
-        area.map(|area| area.height.saturating_sub(BORDERS_HEIGHT) as usize)
-            .unwrap_or(0)
+        area.map(|area| area.height as usize).unwrap_or(0)
     }
 
     pub fn hit(&self, state: &AppState, column: u16, row: u16) -> LeftPanelHit {
@@ -214,9 +205,10 @@ impl LeftPanel {
             .collect();
 
         let title = format!(" Room Players ({}) ", room.players.len());
-        let list = List::new(items).block(panel_block(title, focused));
-        frame.render_widget(list, area);
-        self.players_area = Some(area);
+        let block = panel_block(title, focused);
+
+        self.players_area = Some(block.inner(area));
+        frame.render_widget(List::new(items).block(block), area);
     }
 
     fn draw_npcs(&mut self, state: &AppState, room: &Room, frame: &mut Frame, area: Rect) {
@@ -244,9 +236,10 @@ impl LeftPanel {
             })
             .collect();
 
-        let list = List::new(items).block(panel_block(" Room NPCs ", focused));
-        frame.render_widget(list, area);
-        self.npcs_area = Some(area);
+        let block = panel_block(" Room NPCs ", focused);
+
+        self.npcs_area = Some(block.inner(area));
+        frame.render_widget(List::new(items).block(block), area);
     }
 
     fn draw_items(&mut self, state: &AppState, room: &Room, frame: &mut Frame, area: Rect) {
@@ -268,9 +261,10 @@ impl LeftPanel {
             })
             .collect();
 
-        let list = List::new(items).block(panel_block(" Room Items ", focused));
-        frame.render_widget(list, area);
-        self.items_area = Some(area);
+        let block = panel_block(" Room Items ", focused);
+
+        self.items_area = Some(block.inner(area));
+        frame.render_widget(List::new(items).block(block), area);
     }
 
     fn draw_invitations(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
@@ -293,9 +287,10 @@ impl LeftPanel {
             })
             .collect();
 
-        let list = List::new(items).block(panel_block(" Invited By ", focused));
-        frame.render_widget(list, area);
-        self.invitations_area = Some(area);
+        let block = panel_block(" Invited By ", focused);
+
+        self.invitations_area = Some(block.inner(area));
+        frame.render_widget(List::new(items).block(block), area);
     }
 
     fn draw_quests(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
@@ -332,9 +327,10 @@ impl LeftPanel {
             })
             .collect();
 
-        let list = List::new(items).block(panel_block(" Quests ", focused));
-        frame.render_widget(list, area);
-        self.quests_area = Some(area);
+        let block = panel_block(" Quests ", focused);
+
+        self.quests_area = Some(block.inner(area));
+        frame.render_widget(List::new(items).block(block), area);
 
         let width = self.quests_button.width();
 
