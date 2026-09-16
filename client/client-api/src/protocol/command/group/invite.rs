@@ -1,4 +1,4 @@
-use crate::error::CommandError;
+use crate::error::{CommandError, ErrorCode};
 use crate::protocol::command::Command;
 use crate::protocol::response::ServerResponse;
 
@@ -25,10 +25,12 @@ impl Command for GroupInviteCommand {
     }
 
     fn refine_error(&self, error: &mut CommandError) {
-        error.with_message(match error.code {
-            Some(402) => Some("this player is already in a group".to_string()),
-            Some(403) => Some("no such user".to_string()),
-            Some(404) => Some("group not found".to_string()),
+        error.with_message(match error.kind() {
+            Some(ErrorCode::AlreadyInGroup) => {
+                Some("this player is already in a group".to_string())
+            }
+            Some(ErrorCode::Forbidden) => Some("no such user".to_string()),
+            Some(ErrorCode::NotFound) => Some("group not found".to_string()),
             _ => None,
         })
     }

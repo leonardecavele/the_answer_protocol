@@ -55,6 +55,7 @@ pub struct QuestStepData {
 pub struct FightStartData {
     pub code: String,
     pub time: u64,
+    pub max_code_size: u32,
     pub nl_sep: String,
     pub sp_sep: String,
     pub npc_id: String,

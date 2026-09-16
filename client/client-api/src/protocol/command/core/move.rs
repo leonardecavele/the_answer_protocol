@@ -1,4 +1,4 @@
-use crate::error::CommandError;
+use crate::error::{CommandError, ErrorCode};
 use crate::protocol::command::Command;
 use crate::protocol::response::ServerResponse;
 use serde::{Deserialize, Serialize};
@@ -49,8 +49,8 @@ impl Command for MoveCommand {
     }
 
     fn refine_error(&self, error: &mut CommandError) {
-        error.with_message(match error.code {
-            Some(301) => Some(format!("there is no exit to the {}", self.direction)),
+        error.with_message(match error.kind() {
+            Some(ErrorCode::NoExit) => Some(format!("there is no exit to the {}", self.direction)),
             _ => None,
         })
     }

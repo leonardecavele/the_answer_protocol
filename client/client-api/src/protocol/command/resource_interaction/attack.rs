@@ -1,4 +1,4 @@
-use crate::error::CommandError;
+use crate::error::{CommandError, ErrorCode};
 use crate::protocol::command::Command;
 use crate::protocol::response::ServerResponse;
 use serde::{Deserialize, Serialize};
@@ -37,9 +37,9 @@ impl Command for AttackCommand {
     }
 
     fn refine_error(&self, error: &mut CommandError) {
-        error.with_message(match error.code {
-            Some(404) => Some("npc not found".to_string()),
-            Some(405) => Some("this npc cannot be attacked".to_string()),
+        error.with_message(match error.kind() {
+            Some(ErrorCode::NotFound) => Some("npc not found".to_string()),
+            Some(ErrorCode::ActionNotAllowed) => Some("this npc cannot be attacked".to_string()),
             _ => None,
         })
     }

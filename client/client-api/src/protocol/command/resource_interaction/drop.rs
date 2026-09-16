@@ -1,4 +1,4 @@
-use crate::error::CommandError;
+use crate::error::{CommandError, ErrorCode};
 use crate::protocol::command::Command;
 use crate::protocol::response::ServerResponse;
 
@@ -43,8 +43,8 @@ impl Command for DropCommand {
     }
 
     fn refine_error(&self, error: &mut CommandError) {
-        error.with_message(match error.code {
-            Some(404) => Some("item not in inventory".to_string()),
+        error.with_message(match error.kind() {
+            Some(ErrorCode::NotFound) => Some("item not in inventory".to_string()),
             _ => None,
         })
     }
