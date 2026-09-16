@@ -10,6 +10,8 @@ pub const SKIP_PLAYER_EXISTS_TEST: u32 = 0;
 pub const NPC_MIN_DMG: u32 = 25;
 pub const RESTART_ITEM_TIMER_BATCH: u32 = 10;
 pub const MINUTE: u64 = 60;
+pub const MAX_CODE_SIZE: usize = 1800;
+
 pub const PLAYER_ATTACK_DMG: u32 = 1;
 pub const NPC_COUNTER_DMG: u32 = 1;
 pub const NPC_COUNTER_ATTACK_CHANCE: u32 = 10;
@@ -61,6 +63,7 @@ pub enum ErrorCode {
     RoomNotFound,
     MissingItem,
     NotUsable,
+    TooBigData
 }
 
 impl ErrorCode {
@@ -79,6 +82,7 @@ impl ErrorCode {
             Self::RoomNotFound => 413,
             Self::MissingItem => 414,
             Self::NotUsable => 415,
+            Self::TooBigData => 416,
             Self::InvalidGroupCommand => 997,
             Self::InvalidQuestion => 998,
             Self::InvalidCommand => 999,
