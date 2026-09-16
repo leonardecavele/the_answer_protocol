@@ -7,6 +7,7 @@ use std::collections::HashMap;
 use std::collections::HashSet;
 use std::fs;
 use strum::IntoEnumIterator;
+use tracing::debug;
 
 pub struct Parser {
     npcs: HashMap<NpcId, Npc>,
@@ -170,6 +171,7 @@ impl Parser {
                     if quests.contains_key(quest.get_name()) {
                         return Err(format!("duplicate quest: {}", quest.get_name()));
                     }
+                    debug!("quest parsed: {}", quest.get_name());
                     quests.insert(quest.get_name().to_string(), quest);
                 } else {
                     return Err(format!("invalid quest: {}", item));
