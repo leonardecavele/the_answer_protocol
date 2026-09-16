@@ -29,7 +29,7 @@ impl NpcActionsPopup {
         Self::default()
     }
 
-    pub fn hit(&self, column: u16, row: u16) -> Option<usize> {
+    fn hit_action(&self, column: u16, row: u16) -> Option<usize> {
         hit_row(self.list_area, column, row)
     }
 
@@ -155,7 +155,7 @@ impl Lifecycle for NpcActionsPopup {
             return flow;
         }
 
-        let Some(index) = self.hit(column, row) else {
+        let Some(index) = self.hit_action(column, row) else {
             return EventFlow::Ignored;
         };
 
