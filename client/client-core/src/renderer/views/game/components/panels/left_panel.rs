@@ -177,6 +177,32 @@ impl LeftPanel {
         }
     }
 
+    fn move_selection<T>(list: Option<&mut SelectableList<T>>, step: Step) {
+        if let Some(list) = list {
+            list.move_selection(step);
+        }
+    }
+
+    fn move_focused_selection(&self, state: &mut AppState, step: Step) -> EventFlow {
+        let focus = state.game.focus();
+        let room = state.game.room.as_mut();
+
+        match focus {
+            GameFocus::PlayerList => Self::move_selection(room.map(|room| &mut room.players), step),
+            GameFocus::NpcList => Self::move_selection(room.map(|room| &mut room.npcs), step),
+            GameFocus::RoomItemsList => {
+                Self::move_selection(room.map(|room| &mut room.items), step)
+            }
+            GameFocus::QuestList => Self::move_selection(Some(&mut state.game.player.quests), step),
+            GameFocus::InvitationList => {
+                Self::move_selection(Some(&mut state.game.group.invitations), step)
+            }
+            _ => return EventFlow::Ignored,
+        }
+
+        EventFlow::Consumed
+    }
+
     fn draw_players(&mut self, state: &AppState, room: &Room, frame: &mut Frame, area: Rect) {
         let focused = state.game.focus() == GameFocus::PlayerList;
 
@@ -410,164 +436,113 @@ impl Lifecycle for LeftPanel {
             _ => return EventFlow::Ignored,
         };
 
+        let step = match key.code {
+            crossterm::event::KeyCode::Up => Some(Step::Previous),
+            crossterm::event::KeyCode::Down => Some(Step::Next),
+            _ => None,
+        };
+
+        if let Some(step) = step {
+            return self.move_focused_selection(state, step);
+        }
+
+        if key.code != crossterm::event::KeyCode::Enter {
+            return EventFlow::Ignored;
+        }
+
         match state.game.focus() {
-            GameFocus::PlayerList => match key.code {
-                crossterm::event::KeyCode::Up => {
-                    if let Some(room) = &mut state.game.room {
-                        room.players.move_selection(Step::Previous);
-                    }
-                    EventFlow::Consumed
-                }
-                crossterm::event::KeyCode::Down => {
-                    if let Some(room) = &mut state.game.room {
-                        room.players.move_selection(Step::Next);
-                    }
-                    EventFlow::Consumed
-                }
-                crossterm::event::KeyCode::Enter => {
-                    let selected = state
-                        .game
-                        .room
-                        .as_ref()
-                        .and_then(|room| room.players.selected())
-                        .cloned()
-                        .filter(|player_name| !state.game.player.is_me(player_name));
+            GameFocus::PlayerList => {
+                let selected = state
+                    .game
+                    .room
+                    .as_ref()
+                    .and_then(|room| room.players.selected())
+                    .cloned()
+                    .filter(|player_name| !state.game.player.is_me(player_name));
 
-                    match selected {
-                        Some(player_name) => {
-                            let can_invite = state
-                                .game
-                                .group
-                                .is_leader(state.game.player.name.as_deref());
+                match selected {
+                    Some(player_name) => {
+                        let can_invite = state
+                            .game
+                            .group
+                            .is_leader(state.game.player.name.as_deref());
 
-                            state.game.overlays.open(Overlay::PlayerActions(
-                                PlayerActionsState::new(player_name, can_invite),
-                            ));
-                            EventFlow::Consumed
-                        }
-                        None => EventFlow::Ignored,
-                    }
-                }
-                _ => EventFlow::Ignored,
-            },
-            GameFocus::InvitationList => match key.code {
-                crossterm::event::KeyCode::Up => {
-                    state.game.group.invitations.move_selection(Step::Previous);
-                    EventFlow::Consumed
-                }
-                crossterm::event::KeyCode::Down => {
-                    state.game.group.invitations.move_selection(Step::Next);
-                    EventFlow::Consumed
-                }
-                crossterm::event::KeyCode::Enter => {
-                    match state.game.group.invitations.selected().cloned() {
-                        Some(leader) => {
-                            state.game.overlays.open(Overlay::InvitationActions(
-                                InvitationActionsState::new(leader),
-                            ));
-                            EventFlow::Consumed
-                        }
-                        None => EventFlow::Ignored,
-                    }
-                }
-                _ => EventFlow::Ignored,
-            },
-            GameFocus::NpcList => match key.code {
-                crossterm::event::KeyCode::Up => {
-                    if let Some(room) = &mut state.game.room {
-                        room.npcs.move_selection(Step::Previous);
-                    }
-                    EventFlow::Consumed
-                }
-                crossterm::event::KeyCode::Down => {
-                    if let Some(room) = &mut state.game.room {
-                        room.npcs.move_selection(Step::Next);
-                    }
-                    EventFlow::Consumed
-                }
-                crossterm::event::KeyCode::Enter => {
-                    if !state.game.dialogue_cooldown_elapsed() {
-                        return EventFlow::Consumed;
-                    }
-
-                    let selected = state
-                        .game
-                        .room
-                        .as_ref()
-                        .and_then(|room| room.npcs.selected())
-                        .map(|npc| (npc.id.clone(), npc.kind.clone()));
-
-                    match selected {
-                        Some((npc_id, kind)) => {
-                            state
-                                .game
-                                .overlays
-                                .open(Overlay::NpcActions(NpcActionsState::new(npc_id, &kind)));
-                            EventFlow::Consumed
-                        }
-                        None => EventFlow::Ignored,
-                    }
-                }
-                _ => EventFlow::Ignored,
-            },
-            GameFocus::RoomItemsList => match key.code {
-                crossterm::event::KeyCode::Up => {
-                    if let Some(room) = &mut state.game.room {
-                        room.items.move_selection(Step::Previous);
-                    }
-                    EventFlow::Consumed
-                }
-                crossterm::event::KeyCode::Down => {
-                    if let Some(room) = &mut state.game.room {
-                        room.items.move_selection(Step::Next);
-                    }
-                    EventFlow::Consumed
-                }
-                crossterm::event::KeyCode::Enter => {
-                    let selected = state
-                        .game
-                        .room
-                        .as_ref()
-                        .and_then(|room| room.items.selected());
-
-                    match selected {
-                        Some(item) => {
-                            state
-                                .game
-                                .overlays
-                                .open(Overlay::ItemActions(ItemActionsState::new(
-                                    item.id.clone(),
-                                    item.useable,
-                                    ItemLocation::Room,
-                                )));
-                            EventFlow::Consumed
-                        }
-                        None => EventFlow::Ignored,
-                    }
-                }
-                _ => EventFlow::Ignored,
-            },
-            GameFocus::QuestList => match key.code {
-                crossterm::event::KeyCode::Up => {
-                    state.game.player.quests.move_selection(Step::Previous);
-                    EventFlow::Consumed
-                }
-                crossterm::event::KeyCode::Down => {
-                    state.game.player.quests.move_selection(Step::Next);
-                    EventFlow::Consumed
-                }
-                crossterm::event::KeyCode::Enter => match state.game.player.quests.selected() {
-                    Some(quest) => {
-                        let id = quest.id;
                         state
                             .game
                             .overlays
-                            .open(Overlay::QuestDetail(QuestDetailState::new(id)));
+                            .open(Overlay::PlayerActions(PlayerActionsState::new(
+                                player_name,
+                                can_invite,
+                            )));
                         EventFlow::Consumed
                     }
                     None => EventFlow::Ignored,
-                },
-                _ => EventFlow::Ignored,
+                }
+            }
+            GameFocus::InvitationList => match state.game.group.invitations.selected().cloned() {
+                Some(leader) => {
+                    state.game.overlays.open(Overlay::InvitationActions(
+                        InvitationActionsState::new(leader),
+                    ));
+                    EventFlow::Consumed
+                }
+                None => EventFlow::Ignored,
+            },
+            GameFocus::NpcList => {
+                if !state.game.dialogue_cooldown_elapsed() {
+                    return EventFlow::Consumed;
+                }
+
+                let selected = state
+                    .game
+                    .room
+                    .as_ref()
+                    .and_then(|room| room.npcs.selected())
+                    .map(|npc| (npc.id.clone(), npc.kind.clone()));
+
+                match selected {
+                    Some((npc_id, kind)) => {
+                        state
+                            .game
+                            .overlays
+                            .open(Overlay::NpcActions(NpcActionsState::new(npc_id, &kind)));
+                        EventFlow::Consumed
+                    }
+                    None => EventFlow::Ignored,
+                }
+            }
+            GameFocus::RoomItemsList => {
+                let selected = state
+                    .game
+                    .room
+                    .as_ref()
+                    .and_then(|room| room.items.selected());
+
+                match selected {
+                    Some(item) => {
+                        state
+                            .game
+                            .overlays
+                            .open(Overlay::ItemActions(ItemActionsState::new(
+                                item.id.clone(),
+                                item.useable,
+                                ItemLocation::Room,
+                            )));
+                        EventFlow::Consumed
+                    }
+                    None => EventFlow::Ignored,
+                }
+            }
+            GameFocus::QuestList => match state.game.player.quests.selected() {
+                Some(quest) => {
+                    let id = quest.id;
+                    state
+                        .game
+                        .overlays
+                        .open(Overlay::QuestDetail(QuestDetailState::new(id)));
+                    EventFlow::Consumed
+                }
+                None => EventFlow::Ignored,
             },
             _ => EventFlow::Ignored,
         }
