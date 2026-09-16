@@ -13,6 +13,48 @@ use tokio::sync::mpsc;
 
 const PAGE_STEP: u16 = 10;
 
+/// A vertical scroll position counted from the bottom of the content, so that a fresh offset
+/// shows the top and stays there while the content grows underneath.
+pub struct ScrollOffset {
+    offset: u16,
+    max_offset: u16,
+}
+
+impl Default for ScrollOffset {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl ScrollOffset {
+    pub fn new() -> Self {
+        Self {
+            offset: u16::MAX,
+            max_offset: 0,
+        }
+    }
+
+    pub fn reset(&mut self) {
+        self.offset = u16::MAX;
+    }
+
+    pub fn fit(&mut self, content_height: u16, visible_count: u16) {
+        self.max_offset = content_height.saturating_sub(visible_count);
+        self.offset = self.offset.min(self.max_offset);
+    }
+
+    pub fn scroll(&mut self, step: Step, amount: u16) {
+        self.offset = match step {
+            Step::Previous => self.offset.saturating_add(amount).min(self.max_offset),
+            Step::Next => self.offset.saturating_sub(amount),
+        };
+    }
+
+    pub fn row(&self) -> u16 {
+        self.max_offset.saturating_sub(self.offset)
+    }
+}
+
 pub trait ScrollableComponent: Lifecycle {
     fn is_scrollable(&self, _state: &AppState) -> bool {
         true
@@ -29,8 +71,7 @@ pub trait ScrollableComponent: Lifecycle {
 
 pub struct Scrollable<T: ScrollableComponent> {
     pub inner: T,
-    pub scroll_offset: u16,
-    pub last_max_scroll: u16,
+    scroll: ScrollOffset,
     area: Option<Rect>,
 }
 
@@ -38,20 +79,9 @@ impl<T: ScrollableComponent> Scrollable<T> {
     pub fn new(inner: T) -> Self {
         Self {
             inner,
-            scroll_offset: u16::MAX,
-            last_max_scroll: 0,
+            scroll: ScrollOffset::new(),
             area: None,
         }
-    }
-
-    fn scroll(&mut self, step: Step, amount: u16) {
-        self.scroll_offset = match step {
-            Step::Previous => self
-                .scroll_offset
-                .saturating_add(amount)
-                .min(self.last_max_scroll),
-            Step::Next => self.scroll_offset.saturating_sub(amount),
-        };
     }
 }
 
@@ -71,14 +101,9 @@ impl<T: ScrollableComponent> Component for Scrollable<T> {
 
         let lines = self.inner.get_content(state, max_width);
 
-        let content_height = lines.len() as u16;
-        let inner_height = inner_area.height;
-        let max_scroll = content_height.saturating_sub(inner_height);
+        self.scroll.fit(lines.len() as u16, inner_area.height);
 
-        self.last_max_scroll = max_scroll;
-        self.scroll_offset = self.scroll_offset.min(max_scroll);
-
-        let actual_scroll = max_scroll.saturating_sub(self.scroll_offset);
+        let actual_scroll = self.scroll.row();
         let paragraph = Paragraph::new(lines)
             .block(block)
             .scroll((actual_scroll, 0));
@@ -108,7 +133,7 @@ impl<T: ScrollableComponent> Lifecycle for Scrollable<T> {
         };
 
         if let Some((step, amount)) = scroll {
-            self.scroll(step, amount);
+            self.scroll.scroll(step, amount);
             return EventFlow::Consumed;
         }
 
@@ -134,7 +159,7 @@ impl<T: ScrollableComponent> Lifecycle for Scrollable<T> {
             return EventFlow::Ignored;
         }
 
-        self.scroll(step, 1);
+        self.scroll.scroll(step, 1);
 
         EventFlow::Consumed
     }

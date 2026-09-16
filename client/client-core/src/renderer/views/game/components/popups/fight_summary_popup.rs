@@ -1,6 +1,8 @@
 use crate::collections::Step;
 use crate::events::ApplicationEvent;
-use crate::renderer::components::{Component, EventFlow, Lifecycle, hit_row, is_mouse_in_rect};
+use crate::renderer::components::{
+    Component, EventFlow, Lifecycle, ScrollOffset, hit_row, is_mouse_in_rect,
+};
 use crate::renderer::layout::{centered_rect, percent_of};
 use crate::renderer::text::wrap_str_to_lines;
 use crate::renderer::theme::{
@@ -31,8 +33,7 @@ pub struct FightSummaryPopup {
     area: Option<Rect>,
     list_area: Option<Rect>,
     detail_area: Option<Rect>,
-    scroll_offset: u16,
-    last_max_scroll: u16,
+    scroll: ScrollOffset,
     shown_fight: Option<usize>,
 }
 
@@ -48,8 +49,7 @@ impl FightSummaryPopup {
             area: None,
             list_area: None,
             detail_area: None,
-            scroll_offset: u16::MAX,
-            last_max_scroll: 0,
+            scroll: ScrollOffset::new(),
             shown_fight: None,
         }
     }
@@ -82,18 +82,8 @@ impl FightSummaryPopup {
     fn sync_selection(&mut self, selected: usize) {
         if self.shown_fight != Some(selected) {
             self.shown_fight = Some(selected);
-            self.scroll_offset = u16::MAX;
+            self.scroll.reset();
         }
-    }
-
-    fn scroll(&mut self, step: Step, amount: u16) {
-        self.scroll_offset = match step {
-            Step::Previous => self
-                .scroll_offset
-                .saturating_add(amount)
-                .min(self.last_max_scroll),
-            Step::Next => self.scroll_offset.saturating_sub(amount),
-        };
     }
 
     fn draw_list(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
@@ -192,17 +182,12 @@ impl FightSummaryPopup {
             .flat_map(|player| Self::player_lines(player, fight, inner_area.width as usize))
             .collect();
 
-        let max_scroll = (lines.len() as u16).saturating_sub(inner_area.height);
-
-        self.last_max_scroll = max_scroll;
-        self.scroll_offset = self.scroll_offset.min(max_scroll);
-
-        let actual_scroll = max_scroll.saturating_sub(self.scroll_offset);
+        self.scroll.fit(lines.len() as u16, inner_area.height);
 
         frame.render_widget(
             Paragraph::new(lines)
                 .block(block)
-                .scroll((actual_scroll, 0)),
+                .scroll((self.scroll.row(), 0)),
             area,
         );
     }
@@ -322,7 +307,7 @@ impl Lifecycle for FightSummaryPopup {
             .detail_area
             .is_some_and(|area| is_mouse_in_rect(column, row, area))
         {
-            self.scroll(step, 1);
+            self.scroll.scroll(step, 1);
             return EventFlow::Consumed;
         }
 
