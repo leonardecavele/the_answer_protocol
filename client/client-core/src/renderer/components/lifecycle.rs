@@ -1,4 +1,4 @@
-use super::interactive::scroll_direction;
+use super::mouse::scroll_direction;
 use crate::collections::Step;
 use crate::events::ApplicationEvent;
 use crate::states::AppState;

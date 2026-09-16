@@ -1,5 +1,4 @@
 use super::component::Component;
-use super::interactive::is_mouse_in_rect;
 use super::lifecycle::{EventFlow, Lifecycle};
 use crate::events::ApplicationEvent;
 use crate::states::AppState;
@@ -41,11 +40,6 @@ impl<T: ScrollableComponent> Scrollable<T> {
             last_max_scroll: 0,
             area: None,
         }
-    }
-
-    pub fn hit(&self, column: u16, row: u16) -> bool {
-        self.area
-            .is_some_and(|area| is_mouse_in_rect(column, row, area))
     }
 }
 

@@ -1,9 +1,7 @@
 use crate::collections::Step;
 use crate::events::{ApplicationEvent, ConnectionEvent};
 use crate::notification::{Notification, NotificationTopic};
-use crate::renderer::components::{
-    Button, Component, EventFlow, Interactive, Lifecycle, TextInput,
-};
+use crate::renderer::components::{Button, Component, EventFlow, Lifecycle, TextInput};
 use crate::renderer::views::login::focus::LoginFocus;
 use crate::states::AppState;
 use crossterm::event::{Event as CrosstermEvent, KeyCode, KeyEvent, MouseEvent, MouseEventKind};
@@ -16,27 +14,27 @@ const MAX_PLAYER_NAME_LENGTH: usize = 20;
 
 pub struct LoginView {
     pub focus: LoginFocus,
-    pub name_input: Interactive<TextInput>,
-    pub ip_input: Interactive<TextInput>,
-    pub port_input: Interactive<TextInput>,
-    pub connect_button: Interactive<Button>,
-    pub quit_button: Interactive<Button>,
+    pub name_input: TextInput,
+    pub ip_input: TextInput,
+    pub port_input: TextInput,
+    pub connect_button: Button,
+    pub quit_button: Button,
 }
 
 impl LoginView {
     pub fn new(ip: String, port: String) -> Self {
         let mut view = Self {
             focus: LoginFocus::default(),
-            name_input: Interactive::new(TextInput::new("Player Name")),
-            ip_input: Interactive::new(TextInput::new("Server IP")),
-            port_input: Interactive::new(TextInput::new("Server Port")),
-            connect_button: Interactive::new(Button::new("Connect")),
-            quit_button: Interactive::new(Button::new("Quit")),
+            name_input: TextInput::new("Player Name"),
+            ip_input: TextInput::new("Server IP"),
+            port_input: TextInput::new("Server Port"),
+            connect_button: Button::new("Connect"),
+            quit_button: Button::new("Quit"),
         };
 
-        view.name_input.inner.max_length = MAX_PLAYER_NAME_LENGTH;
-        view.ip_input.inner.value = ip;
-        view.port_input.inner.value = port;
+        view.name_input.max_length = MAX_PLAYER_NAME_LENGTH;
+        view.ip_input.value = ip;
+        view.port_input.value = port;
         view.update_focus();
 
         view
@@ -56,11 +54,11 @@ impl LoginView {
     }
 
     fn update_focus(&mut self) {
-        self.name_input.inner.is_focused = self.focus == LoginFocus::PlayerName;
-        self.ip_input.inner.is_focused = self.focus == LoginFocus::ServerIp;
-        self.port_input.inner.is_focused = self.focus == LoginFocus::ServerPort;
-        self.connect_button.inner.is_focused = self.focus == LoginFocus::ConnectButton;
-        self.quit_button.inner.is_focused = self.focus == LoginFocus::QuitButton;
+        self.name_input.is_focused = self.focus == LoginFocus::PlayerName;
+        self.ip_input.is_focused = self.focus == LoginFocus::ServerIp;
+        self.port_input.is_focused = self.focus == LoginFocus::ServerPort;
+        self.connect_button.is_focused = self.focus == LoginFocus::ConnectButton;
+        self.quit_button.is_focused = self.focus == LoginFocus::QuitButton;
     }
 }
 
@@ -156,21 +154,21 @@ impl Lifecycle for LoginView {
             })
                 // Mouse navigation (Left click)
                 if *kind == MouseEventKind::Down(crossterm::event::MouseButton::Left) => {
-                    if self.name_input.is_mouse_over(*column, *row) {
+                    if self.name_input.hit(*column, *row) {
                         self.set_focus(LoginFocus::PlayerName);
                         return EventFlow::Consumed;
-                    } else if self.ip_input.is_mouse_over(*column, *row) {
+                    } else if self.ip_input.hit(*column, *row) {
                         self.set_focus(LoginFocus::ServerIp);
                         return EventFlow::Consumed;
-                    } else if self.port_input.is_mouse_over(*column, *row) {
+                    } else if self.port_input.hit(*column, *row) {
                         self.set_focus(LoginFocus::ServerPort);
                         return EventFlow::Consumed;
-                    } else if self.connect_button.is_mouse_over(*column, *row) {
+                    } else if self.connect_button.hit(*column, *row) {
                         self.set_focus(LoginFocus::ConnectButton);
-                        self.connect_button.inner.is_pressed = true;
-                    } else if self.quit_button.is_mouse_over(*column, *row) {
+                        self.connect_button.is_pressed = true;
+                    } else if self.quit_button.hit(*column, *row) {
                         self.set_focus(LoginFocus::QuitButton);
-                        self.quit_button.inner.is_pressed = true;
+                        self.quit_button.is_pressed = true;
                     }
                 }
             _ => {}
@@ -193,10 +191,10 @@ impl Lifecycle for LoginView {
                     .connect_button
                     .handle_device_event(state, event, event_sender);
 
-                if self.connect_button.inner.take_pressed() {
-                    let name = self.name_input.inner.value.clone();
-                    let ip = self.ip_input.inner.value.clone();
-                    let port = self.port_input.inner.value.clone();
+                if self.connect_button.take_pressed() {
+                    let name = self.name_input.value.clone();
+                    let ip = self.ip_input.value.clone();
+                    let port = self.port_input.value.clone();
 
                     if name.is_empty() || ip.is_empty() || port.is_empty() {
                         state.ui.notifications.push(
@@ -226,7 +224,7 @@ impl Lifecycle for LoginView {
                     .quit_button
                     .handle_device_event(state, event, event_sender);
 
-                if self.quit_button.inner.take_pressed() {
+                if self.quit_button.take_pressed() {
                     state.should_quit = true;
                 }
 

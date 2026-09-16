@@ -1,8 +1,6 @@
 use crate::collections::Step;
 use crate::events::{ApplicationEvent, SendEvent};
-use crate::renderer::components::{
-    Component, EventFlow, Interactive, Lifecycle, TextInput, is_mouse_in_rect,
-};
+use crate::renderer::components::{Component, EventFlow, Lifecycle, TextInput};
 use crate::renderer::theme::{ERROR_COLOR, default_block};
 use crate::states::AppState;
 use crate::states::game::GameFocus;
@@ -20,7 +18,7 @@ const HISTORY_CAPACITY: usize = 10;
 
 #[derive(Default)]
 pub struct Footer {
-    pub input: Interactive<TextInput>,
+    pub input: TextInput,
     tmp_value: Option<String>,
     history: VecDeque<String>,
     history_index: usize,
@@ -29,8 +27,8 @@ pub struct Footer {
 
 impl Footer {
     pub fn new() -> Self {
-        let mut input = Interactive::new(TextInput::new("Command"));
-        input.inner.is_focused = true;
+        let mut input = TextInput::new("Command");
+        input.is_focused = true;
         Self {
             input,
             tmp_value: None,
@@ -40,14 +38,9 @@ impl Footer {
         }
     }
 
-    pub fn hit(&self, column: u16, row: u16) -> bool {
-        self.area
-            .is_some_and(|area| is_mouse_in_rect(column, row, area))
-    }
-
     fn set_value(&mut self, value: String) {
-        self.input.inner.value = value;
-        self.input.inner.cursor_to_end();
+        self.input.value = value;
+        self.input.cursor_to_end();
     }
 
     fn push_history(&mut self, command: String) {
@@ -69,7 +62,7 @@ impl Footer {
                 }
 
                 if self.history_index == self.history.len() {
-                    self.tmp_value = Some(self.input.inner.value.clone());
+                    self.tmp_value = Some(self.input.value.clone());
                 }
 
                 self.history_index -= 1;
@@ -107,6 +100,10 @@ impl Footer {
 }
 
 impl Component for Footer {
+    fn drawn_area(&self) -> Option<Rect> {
+        self.area
+    }
+
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
         let lag_width = if state.network.has_lag { LAG_WIDTH } else { 0 };
 
@@ -116,7 +113,7 @@ impl Component for Footer {
             .split(area);
 
         self.area = Some(chunks[0]);
-        self.input.inner.is_focused = state.game.focus() == GameFocus::Input;
+        self.input.is_focused = state.game.focus() == GameFocus::Input;
         self.input.draw(state, frame, chunks[0]);
 
         if state.network.has_lag {
@@ -143,7 +140,7 @@ impl Lifecycle for Footer {
         if let CrosstermEvent::Key(key) = event {
             match key.code {
                 KeyCode::Enter => {
-                    let command = self.input.inner.value.trim().to_string();
+                    let command = self.input.value.trim().to_string();
 
                     if command.is_empty() {
                         state.game.set_focus(GameFocus::RightPanel);

@@ -103,11 +103,6 @@ impl RightPanel {
         }
     }
 
-    pub fn hit(&self, column: u16, row: u16) -> bool {
-        self.area
-            .is_some_and(|area| is_mouse_in_rect(column, row, area))
-    }
-
     pub fn hit_exit(&self, column: u16, row: u16) -> Option<Direction> {
         self.exits
             .iter()
@@ -283,6 +278,10 @@ impl RightPanel {
 }
 
 impl Component for RightPanel {
+    fn drawn_area(&self) -> Option<Rect> {
+        self.area
+    }
+
     fn draw(&mut self, state: &AppState, frame: &mut Frame, area: Rect) {
         self.area = Some(area);
         self.exits.clear();

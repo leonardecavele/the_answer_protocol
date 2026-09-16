@@ -1,5 +1,5 @@
 use crate::events::{ApplicationEvent, CustomEvent, SendEvent};
-use crate::renderer::components::{Button, Component, EventFlow, Interactive, Lifecycle};
+use crate::renderer::components::{Button, Component, EventFlow, Lifecycle};
 use crate::renderer::image::ImageRenderer;
 use crate::renderer::layout::percent_of;
 use crate::renderer::theme::{ERROR_COLOR, SUCCESS_COLOR, WARNING_COLOR, default_block, dim_style};
@@ -51,7 +51,7 @@ pub struct EditorView {
     editor_area: Rect,
     timed_out: bool,
     image_renderer: ImageRenderer,
-    submit_button: Interactive<Button>,
+    submit_button: Button,
     mode: EditorMode,
     pending: Option<char>,
     register: Option<String>,
@@ -77,7 +77,7 @@ impl EditorView {
             editor_area: Rect::default(),
             timed_out: false,
             image_renderer: ImageRenderer::new(),
-            submit_button: Interactive::new(Button::new("SUBMIT")),
+            submit_button: Button::new("SUBMIT"),
             mode: EditorMode::Insert,
             pending: None,
             register: None,
@@ -370,7 +370,7 @@ impl EditorView {
         if is_editing {
             self.submit_button.draw(state, frame, chunks[1]);
         } else {
-            self.submit_button.last_area = None;
+            self.submit_button.hide();
         }
     }
 
@@ -467,7 +467,7 @@ impl Lifecycle for EditorView {
             return EventFlow::Ignored;
         }
 
-        if self.submit_button.is_mouse_over(column, row) {
+        if self.submit_button.hit(column, row) {
             self.submit(state, sender);
 
             return EventFlow::Consumed;
