@@ -112,10 +112,10 @@ func HandleClient(client *session.Client, gameServerManager *game_conn.GameServe
 		str, err := helper.ReadStringWithLimit(reader, '\n', config.ReadStringMaxSize)
 		if err != nil {
 			if errors.Is(err, serverError.ErrReadStringTooLong) {
-				if writeErr := client.Write(protocol.ResponseTooManyRequests); writeErr != nil && shouldLogClientIOError(client, writeErr) {
+				if writeErr := client.Write(protocol.ResponseDataTooBig); writeErr != nil && shouldLogClientIOError(client, writeErr) {
 					logger.AppLogger.Error("%s Write error: %v\n", client.LogIdentity(), writeErr)
 				} else if writeErr == nil {
-					logger.AppLogger.Info("%s Client Write: %s", client.LogIdentity(), protocol.ResponseTooManyRequests)
+					logger.AppLogger.Info("%s Client Write: %s", client.LogIdentity(), protocol.ResponseDataTooBig)
 				}
 			}
 			if !errors.Is(err, io.EOF) && shouldLogClientIOError(client, err) {
