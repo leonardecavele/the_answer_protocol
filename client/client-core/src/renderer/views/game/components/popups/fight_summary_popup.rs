@@ -4,10 +4,10 @@ use crate::renderer::components::{
     Component, EventFlow, Lifecycle, ScrollOffset, hit_row, is_mouse_in_rect,
 };
 use crate::renderer::layout::{centered_rect, percent_of};
-use crate::renderer::text::wrap_str_to_lines;
+use crate::renderer::text::{truncate_to_width, wrap_str_to_lines};
 use crate::renderer::theme::{
-    ERROR_COLOR, MUTED_COLOR, SUCCESS_COLOR, WARNING_COLOR, close_hint, dim_style, popup_block,
-    selection_style,
+    ERROR_COLOR, MUTED_COLOR, PLAYER_COLOR, SUCCESS_COLOR, WARNING_COLOR, close_hint, dim_style,
+    popup_block, selection_style,
 };
 use crate::states::AppState;
 use crate::states::game::FightSummaryState;
@@ -27,7 +27,7 @@ const POPUP_HEIGHT_PERCENT: u16 = 80;
 const MIN_WIDTH: u16 = 40;
 const MIN_HEIGHT: u16 = 10;
 const LIST_WIDTH: u16 = 13;
-const RANKING_WIDTH: u16 = 30;
+const RANKING_WIDTH: u16 = 34;
 const FOOTER_HEIGHT: u16 = 2;
 const EMPTY_HISTORY: &str = " No fight has ended yet. ";
 
@@ -86,14 +86,30 @@ impl FightSummaryPopup {
             .map(|player| player.success)
     }
 
-    fn duration_label(elapsed_ms: u32) -> String {
-        let seconds = elapsed_ms / 1000;
-
-        if seconds < 60 {
-            return format!("{}s", seconds);
+    fn gap_label(elapsed_ms: u32, leader_ms: u32) -> Option<String> {
+        if elapsed_ms == leader_ms {
+            return None;
         }
 
-        format!("{}m {:02}s", seconds / 60, seconds % 60)
+        let gap = i64::from(elapsed_ms) - i64::from(leader_ms);
+        let sign = if gap > 0 { '+' } else { '-' };
+
+        Some(format!(
+            "{}{}",
+            sign,
+            Self::duration_label(gap.unsigned_abs() as u32)
+        ))
+    }
+
+    fn duration_label(elapsed_ms: u32) -> String {
+        let seconds = elapsed_ms / 1000;
+        let millis = elapsed_ms % 1000;
+
+        if seconds < 60 {
+            return format!("{}.{:03}s", seconds, millis);
+        }
+
+        format!("{}m {:02}.{:03}s", seconds / 60, seconds % 60, millis)
     }
 
     fn sync_selection(&mut self, selected: usize) {
@@ -189,41 +205,70 @@ impl FightSummaryPopup {
             return;
         };
 
-        let mut lines = vec![
-            Line::from(Span::styled(
-                " Ranking ",
-                Style::default()
-                    .fg(WARNING_COLOR)
-                    .add_modifier(Modifier::BOLD),
-            )),
-            Line::from(""),
-        ];
+        let players = Self::ranked_players(fight);
 
-        for (rank, player) in Self::ranked_players(fight).into_iter().enumerate() {
-            let (label, color) = Self::outcome(player);
-
-            lines.push(Line::from(vec![
-                Span::styled(format!(" {}. ", rank + 1), dim_style()),
-                Span::styled(
-                    player.name.clone(),
-                    Style::default().add_modifier(Modifier::BOLD),
-                ),
-            ]));
-
-            lines.push(Line::from(vec![
-                Span::styled(
-                    format!("    {}", Self::duration_label(player.elapsed_ms)),
-                    dim_style(),
-                ),
-                Span::styled(format!("  {}", label), Style::default().fg(color)),
-            ]));
-
-            lines.push(Line::from(""));
-        }
+        let Some(leader) = players.first() else {
+            return;
+        };
 
         let block = Block::default()
             .borders(Borders::RIGHT)
             .border_style(dim_style());
+        let max_width = block.inner(area).width as usize;
+
+        let mut lines = vec![
+            Line::from(Span::styled(
+                " RANKING ",
+                Style::default()
+                    .fg(WARNING_COLOR)
+                    .add_modifier(Modifier::REVERSED | Modifier::BOLD),
+            )),
+            Line::from(""),
+        ];
+
+        for (rank, player) in players.iter().enumerate() {
+            let (label, color) = Self::outcome(player);
+            let is_me = state.game.player.is_me(&player.name);
+
+            let rank_style = match rank {
+                0 => Style::default()
+                    .fg(WARNING_COLOR)
+                    .add_modifier(Modifier::BOLD),
+                _ => dim_style(),
+            };
+
+            let name_style = match is_me {
+                true => Style::default()
+                    .fg(PLAYER_COLOR)
+                    .add_modifier(Modifier::BOLD),
+                false => Style::default().add_modifier(Modifier::BOLD),
+            };
+
+            let name = match is_me {
+                true => format!("{} (You)", player.name),
+                false => player.name.clone(),
+            };
+
+            lines.push(Line::from(vec![
+                Span::styled(format!(" #{} ", rank + 1), rank_style),
+                Span::styled(truncate_to_width(&name, max_width - 5), name_style),
+            ]));
+
+            let mut details = vec![
+                Span::styled(
+                    format!("     {:>10}", Self::duration_label(player.elapsed_ms)),
+                    dim_style(),
+                ),
+                Span::styled(format!("  {:<4}", label), Style::default().fg(color)),
+            ];
+
+            if let Some(gap) = Self::gap_label(player.elapsed_ms, leader.elapsed_ms) {
+                details.push(Span::styled(gap, dim_style()));
+            }
+
+            lines.push(Line::from(details));
+            lines.push(Line::from(""));
+        }
 
         frame.render_widget(Paragraph::new(lines).block(block), area);
     }
