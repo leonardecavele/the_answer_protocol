@@ -147,11 +147,8 @@ impl App {
         self.state.ui.notifications.push(notification.with_ms(3000));
     }
 
-    pub fn on_fight_end(&mut self, _fight_end: FightEndData) {
-        //TODO: ajouter les donnees du combat dans l'etat globale
-        //TODO: afficher sur la vue du jeu un access a ces donnees (clique souris + clavier)
-        //TODO: permettre de selectionner un combat dans la liste et mettre en forme le resultat (popup ?)
-
+    pub fn on_fight_end(&mut self, fight_end: FightEndData) {
+        self.state.game.fight.push_history(fight_end);
         self.state.game.fight.end();
         self.state.game.log_action("The fight ended.".to_string());
         self.view_manager.set_view(Box::new(GameView::new()));

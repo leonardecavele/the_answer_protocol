@@ -1,5 +1,6 @@
 mod chat;
 mod dialogue;
+mod fight_summary;
 mod help;
 mod invitation_actions;
 mod item_actions;
@@ -10,6 +11,7 @@ mod quest_detail;
 
 pub use chat::ChatState;
 pub use dialogue::{DialogueState, END_OF_DIALOGUE_TAG};
+pub use fight_summary::FightSummaryState;
 pub use help::HelpState;
 pub use invitation_actions::InvitationActionsState;
 pub use item_actions::{ItemActionsState, ItemLocation};
@@ -30,6 +32,7 @@ pub enum Overlay {
     QuestDetail(QuestDetailState),
     PlayerActions(PlayerActionsState),
     InvitationActions(InvitationActionsState),
+    FightSummary(FightSummaryState),
     Dialogue(DialogueState),
 }
 
@@ -43,6 +46,7 @@ pub enum OverlayKind {
     QuestDetail,
     PlayerActions,
     InvitationActions,
+    FightSummary,
     Dialogue,
 }
 
@@ -67,6 +71,7 @@ impl Overlay {
             Overlay::QuestDetail(_) => OverlayKind::QuestDetail,
             Overlay::PlayerActions(_) => OverlayKind::PlayerActions,
             Overlay::InvitationActions(_) => OverlayKind::InvitationActions,
+            Overlay::FightSummary(_) => OverlayKind::FightSummary,
             Overlay::Dialogue(_) => OverlayKind::Dialogue,
         }
     }

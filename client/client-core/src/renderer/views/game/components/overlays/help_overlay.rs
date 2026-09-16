@@ -65,6 +65,7 @@ impl ScrollableComponent for HelpOverlay {
             Line::from("  ctrl+h: toggle help"),
             Line::from("  ctrl+t: toggle event overlay"),
             Line::from("  f1: toggle chat overlay"),
+            Line::from("  f2: toggle fight history"),
             Line::from("  mouse click: focus panels (input, room npcs, image)"),
             Line::from(""),
             Line::from(vec![Span::styled(

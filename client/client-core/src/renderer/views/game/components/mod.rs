@@ -12,6 +12,6 @@ pub use panels::{
     RightPanelHit,
 };
 pub use popups::{
-    DialoguePopup, InvitationActionsPopup, ItemActionsPopup, ItemDetailPopup, NpcActionsPopup,
-    PlayerActionsPopup, QuestDetailPopup,
+    DialoguePopup, FightSummaryPopup, InvitationActionsPopup, ItemActionsPopup, ItemDetailPopup,
+    NpcActionsPopup, PlayerActionsPopup, QuestDetailPopup,
 };

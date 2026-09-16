@@ -6,14 +6,14 @@ use crate::renderer::layout::percent_of;
 use crate::states::AppState;
 
 use crate::renderer::views::game::components::{
-    ActionHistoryPanel, ChatOverlay, DialoguePopup, Footer, FooterHit, Header, HelpOverlay,
-    InventoryPanel, InventoryPanelHit, InvitationActionsPopup, ItemActionsPopup, ItemDetailPopup,
-    LeftPanel, LeftPanelHit, NpcActionsPopup, PlayerActionsPopup, QuestDetailPopup, RightPanel,
-    RightPanelHit,
+    ActionHistoryPanel, ChatOverlay, DialoguePopup, FightSummaryPopup, Footer, FooterHit, Header,
+    HelpOverlay, InventoryPanel, InventoryPanelHit, InvitationActionsPopup, ItemActionsPopup,
+    ItemDetailPopup, LeftPanel, LeftPanelHit, NpcActionsPopup, PlayerActionsPopup,
+    QuestDetailPopup, RightPanel, RightPanelHit,
 };
 use crate::states::game::{
-    ChatState, GameFocus, HelpState, InvitationActionsState, ItemActionsState, ItemLocation,
-    NpcActionsState, Overlay, OverlayKind, PlayerActionsState, QuestDetailState,
+    ChatState, FightSummaryState, GameFocus, HelpState, InvitationActionsState, ItemActionsState,
+    ItemLocation, NpcActionsState, Overlay, OverlayKind, PlayerActionsState, QuestDetailState,
 };
 use crossterm::event::{Event as CrosstermEvent, KeyCode};
 use ratatui::Frame;
@@ -39,6 +39,7 @@ pub struct GameView {
     item_actions: ItemActionsPopup,
     item_detail: ItemDetailPopup,
     quest_detail: QuestDetailPopup,
+    fight_summary: FightSummaryPopup,
     dialogue: Scrollable<DialoguePopup>,
     help: Scrollable<HelpOverlay>,
     close_button: CloseButton,
@@ -66,6 +67,7 @@ impl GameView {
             item_actions: ItemActionsPopup::new(),
             item_detail: ItemDetailPopup::new(),
             quest_detail: QuestDetailPopup::new(),
+            fight_summary: FightSummaryPopup::new(),
             dialogue: Scrollable::new(DialoguePopup::new()),
             help: Scrollable::new(HelpOverlay::new()),
             close_button: CloseButton::new(),
@@ -82,6 +84,7 @@ impl GameView {
             OverlayKind::ItemActions => &mut self.item_actions,
             OverlayKind::ItemDetail => &mut self.item_detail,
             OverlayKind::QuestDetail => &mut self.quest_detail,
+            OverlayKind::FightSummary => &mut self.fight_summary,
             OverlayKind::Dialogue => &mut self.dialogue,
         }
     }
@@ -192,6 +195,16 @@ impl GameView {
             if key.code == KeyCode::F(1) {
                 state.game.overlays.toggle(Overlay::Chat(ChatState));
                 state.game.is_chat_unread = false;
+                return EventFlow::Consumed;
+            }
+
+            if key.code == KeyCode::F(2) {
+                let count = state.game.fight.history().len();
+
+                state
+                    .game
+                    .overlays
+                    .toggle(Overlay::FightSummary(FightSummaryState::new(count)));
                 return EventFlow::Consumed;
             }
         }
