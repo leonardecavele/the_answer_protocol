@@ -1,15 +1,14 @@
 use crate::events::ApplicationEvent;
 use crate::renderer::components::{
-    CloseButton, Component, EventFlow, Lifecycle, Scrollable, ScrollableHit, is_mouse_in_rect,
+    CloseButton, Component, EventFlow, Lifecycle, Scrollable, is_mouse_in_rect,
 };
 use crate::renderer::layout::percent_of;
 use crate::states::AppState;
 
 use crate::renderer::views::game::components::{
-    ActionHistoryPanel, ChatOverlay, DialoguePopup, FightSummaryPopup, Footer, FooterHit, Header,
-    HelpOverlay, InventoryPanel, InventoryPanelHit, InvitationActionsPopup, ItemActionsPopup,
-    ItemDetailPopup, LeftPanel, LeftPanelHit, NpcActionsPopup, PlayerActionsPopup,
-    QuestDetailPopup, RightPanel, RightPanelHit,
+    ActionHistoryPanel, ChatOverlay, DialoguePopup, FightSummaryPopup, Footer, Header, HelpOverlay,
+    InventoryPanel, InventoryPanelHit, InvitationActionsPopup, ItemActionsPopup, ItemDetailPopup,
+    LeftPanel, LeftPanelHit, NpcActionsPopup, PlayerActionsPopup, QuestDetailPopup, RightPanel,
 };
 use crate::states::game::{
     ChatState, FightSummaryState, GameFocus, HelpState, InvitationActionsState, ItemActionsState,
@@ -260,7 +259,7 @@ impl GameView {
                 LeftPanelHit::None => {}
             }
 
-            if let ScrollableHit::Box = self.action_history.hit(mouse.column, mouse.row) {
+            if self.action_history.hit(mouse.column, mouse.row) {
                 state.game.set_focus(GameFocus::ActionHistory);
             }
 
@@ -268,11 +267,11 @@ impl GameView {
                 state.game.set_focus(GameFocus::InventoryGrid);
             }
 
-            if let RightPanelHit::Image = self.right_panel.hit(mouse.column, mouse.row) {
+            if self.right_panel.hit(mouse.column, mouse.row) {
                 state.game.set_focus(GameFocus::RightPanel);
             }
 
-            if let FooterHit::CommandInput = self.footer.hit(mouse.column, mouse.row) {
+            if self.footer.hit(mouse.column, mouse.row) {
                 state.game.set_focus(GameFocus::Input);
             }
 

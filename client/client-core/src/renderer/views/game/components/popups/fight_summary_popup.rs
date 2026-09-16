@@ -1,7 +1,7 @@
 use crate::collections::Step;
 use crate::events::ApplicationEvent;
 use crate::renderer::components::{
-    Component, EventFlow, Lifecycle, is_mouse_in_rect, scroll_direction,
+    Component, EventFlow, Lifecycle, hit_row, is_mouse_in_rect, scroll_direction,
 };
 use crate::renderer::layout::{centered_rect, percent_of};
 use crate::renderer::text::wrap_str_to_lines;
@@ -57,14 +57,8 @@ impl FightSummaryPopup {
     }
 
     pub fn hit_fight(&self, state: &AppState, column: u16, row: u16) -> Option<usize> {
-        let area = self.list_area?;
-
-        if !is_mouse_in_rect(column, row, area) {
-            return None;
-        }
-
+        let row_index = hit_row(self.list_area, column, row)?;
         let count = state.game.fight.history().len();
-        let row_index = row.saturating_sub(area.y) as usize;
 
         count.checked_sub(1)?.checked_sub(row_index)
     }
