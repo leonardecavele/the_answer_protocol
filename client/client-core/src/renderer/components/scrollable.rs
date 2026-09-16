@@ -11,11 +11,6 @@ use ratatui::text::Line;
 use ratatui::widgets::{Block, Clear, Paragraph};
 use tokio::sync::mpsc;
 
-pub enum ScrollableHit {
-    Box,
-    None,
-}
-
 pub trait ScrollableComponent: Lifecycle {
     fn is_scrollable(&self, _state: &AppState) -> bool {
         true
@@ -48,14 +43,9 @@ impl<T: ScrollableComponent> Scrollable<T> {
         }
     }
 
-    pub fn hit(&self, column: u16, row: u16) -> ScrollableHit {
-        if let Some(area) = self.area
-            && is_mouse_in_rect(column, row, area)
-        {
-            return ScrollableHit::Box;
-        }
-
-        ScrollableHit::None
+    pub fn hit(&self, column: u16, row: u16) -> bool {
+        self.area
+            .is_some_and(|area| is_mouse_in_rect(column, row, area))
     }
 }
 
@@ -130,7 +120,7 @@ impl<T: ScrollableComponent> Lifecycle for Scrollable<T> {
                 _ => {}
             }
         } else if let CrosstermEvent::Mouse(mouse) = event
-            && matches!(self.hit(mouse.column, mouse.row), ScrollableHit::Box)
+            && self.hit(mouse.column, mouse.row)
         {
             if mouse.kind == MouseEventKind::ScrollUp {
                 self.scroll_offset = self
@@ -145,7 +135,7 @@ impl<T: ScrollableComponent> Lifecycle for Scrollable<T> {
         }
 
         if let CrosstermEvent::Mouse(mouse) = event
-            && matches!(self.hit(mouse.column, mouse.row), ScrollableHit::None)
+            && !self.hit(mouse.column, mouse.row)
         {
             return EventFlow::Ignored;
         }

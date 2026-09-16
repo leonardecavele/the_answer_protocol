@@ -76,11 +76,6 @@ impl Placement {
     }
 }
 
-pub enum RightPanelHit {
-    Image,
-    None,
-}
-
 pub struct RightPanel {
     animation_start: Instant,
     shown_npc: Option<String>,
@@ -108,14 +103,9 @@ impl RightPanel {
         }
     }
 
-    pub fn hit(&self, column: u16, row: u16) -> RightPanelHit {
-        if let Some(area) = self.area
-            && is_mouse_in_rect(column, row, area)
-        {
-            return RightPanelHit::Image;
-        }
-
-        RightPanelHit::None
+    pub fn hit(&self, column: u16, row: u16) -> bool {
+        self.area
+            .is_some_and(|area| is_mouse_in_rect(column, row, area))
     }
 
     pub fn hit_exit(&self, column: u16, row: u16) -> Option<Direction> {

@@ -2,16 +2,19 @@ mod chat;
 mod combat;
 mod dialogue;
 mod group;
+mod item;
 mod player;
+mod quest;
 mod room;
-mod server;
+mod session;
 
 use crate::app::App;
 use crate::events::ApiEvent;
 use crate::notification::{Notification, NotificationTopic};
 use crate::states::game::ChatChannel;
 use client_api::events::{
-    GameServerEvent, GroupEvent, ItemEvent, QuestEvent, RoomEvent, ServerEvent,
+    ChatEvent, FightEvent, GameServerEvent, GroupEvent, ItemEvent, QuestEvent, RoomEvent,
+    ServerEvent, SessionEvent,
 };
 use client_api::{ApiRequest, ApiResponse, FrameDirection};
 
@@ -154,125 +157,81 @@ impl App {
 
     pub fn handle_server_event(&mut self, event: ServerEvent) {
         match event {
-            ServerEvent::Connect(name) => {
-                self.on_player_joined_server(name);
-            }
-            ServerEvent::Spawn(spawn_data) => match spawn_data.r#type.as_str() {
-                "NPC" => {
-                    self.on_npc_spawned(spawn_data);
-                }
-                "ITEM" => {
-                    self.on_item_spawned(spawn_data);
-                }
-                t => {
-                    self.state.ui.notifications.push(
-                        Notification::warning(format!("Unknown spawn event: {}", t))
-                            .with_topic(NotificationTopic::Protocol),
-                    );
-                }
+            ServerEvent::Session(session_event) => match session_event {
+                SessionEvent::Connect(name) => self.on_player_joined_server(name),
+                SessionEvent::Quit(name) => self.on_player_quit_server(name),
+                SessionEvent::Stats(count) => self.on_stats(count),
+                SessionEvent::Broadcast(message) => self.on_broadcast(message),
             },
-            ServerEvent::Despawn(spawn_data) => match spawn_data.r#type.as_str() {
-                "ITEM" => {
-                    self.on_item_despawned(spawn_data);
-                }
-                t => {
-                    self.state.ui.notifications.push(
-                        Notification::warning(format!("Unknown despawn event: {}", t))
-                            .with_topic(NotificationTopic::Protocol),
-                    );
-                }
+            ServerEvent::GameServer(game_server_event) => match game_server_event {
+                GameServerEvent::Connected => self.on_game_server_connected(),
+                GameServerEvent::Disconnected => self.on_game_server_disconnected(),
             },
-            ServerEvent::Kill(kill_data) => {
-                self.on_kill(kill_data);
-            }
-            ServerEvent::Death(death_data) => {
-                self.on_death(death_data);
-            }
-            ServerEvent::FightStart(fight_data) => {
-                self.on_fight_start(fight_data);
-            }
-            ServerEvent::FightResult(fight_result) => {
-                self.on_fight_result(fight_result);
-            }
-            ServerEvent::CounterAttack(counter_attack) => {
-                self.on_counter_attack(counter_attack);
-            }
-            ServerEvent::FightEnd => {
-                self.on_fight_end();
-            }
-            ServerEvent::Teleport => {
-                self.on_teleport();
-            }
-            ServerEvent::Quit(name) => {
-                self.on_player_quit_server(name);
-            }
             ServerEvent::Room(room_event) => match room_event {
-                RoomEvent::PresenceEnter(name) => {
-                    self.on_player_entered(name);
-                }
-                RoomEvent::PresenceLeave(name) => {
-                    self.on_player_left(name);
-                }
-                RoomEvent::Chat(chat) => {
-                    self.on_chat_received(ChatChannel::Room, chat.sender, chat.message);
-                }
-                RoomEvent::Take(player, item_id) => {
-                    self.on_item_taken_by(player, item_id);
-                }
-                RoomEvent::Drop(player, item_id) => {
-                    self.on_item_dropped_by(player, item_id);
-                }
+                RoomEvent::PresenceEnter(name) => self.on_player_entered(name),
+                RoomEvent::PresenceLeave(name) => self.on_player_left(name),
+                RoomEvent::Spawn(spawn_data) => match spawn_data.r#type.as_str() {
+                    "NPC" => self.on_npc_spawned(spawn_data),
+                    "ITEM" => self.on_item_spawned(spawn_data),
+                    t => {
+                        self.state.ui.notifications.push(
+                            Notification::warning(format!("Unknown spawn event: {}", t))
+                                .with_topic(NotificationTopic::Protocol),
+                        );
+                    }
+                },
+                RoomEvent::Despawn(spawn_data) => match spawn_data.r#type.as_str() {
+                    "ITEM" => self.on_item_despawned(spawn_data),
+                    t => {
+                        self.state.ui.notifications.push(
+                            Notification::warning(format!("Unknown despawn event: {}", t))
+                                .with_topic(NotificationTopic::Protocol),
+                        );
+                    }
+                },
+                RoomEvent::Take(player, item_id) => self.on_item_taken_by(player, item_id),
+                RoomEvent::Drop(player, item_id) => self.on_item_dropped_by(player, item_id),
             },
             ServerEvent::Group(group_event) => match group_event {
-                GroupEvent::Invite(leader) => {
-                    self.on_group_invited_by(leader);
+                GroupEvent::Invite(leader) => self.on_group_invited_by(leader),
+                GroupEvent::InviteRemoved(leader) => self.on_group_invite_removed(leader),
+                GroupEvent::Join(user) => self.on_group_member_joined(user),
+                GroupEvent::Leave(user) => self.on_group_member_left(user),
+                GroupEvent::Move(direction) => self.on_group_moved(direction),
+            },
+            ServerEvent::Chat(chat_event) => match chat_event {
+                ChatEvent::Global(chat) => {
+                    self.on_chat_received(ChatChannel::Global, chat.sender, chat.message)
                 }
-                GroupEvent::InviteRemoved(leader) => {
-                    self.on_group_invite_removed(leader);
+                ChatEvent::Room(chat) => {
+                    self.on_chat_received(ChatChannel::Room, chat.sender, chat.message)
                 }
-                GroupEvent::Join(user) => {
-                    self.on_group_member_joined(user);
+                ChatEvent::Group(chat) => {
+                    self.on_chat_received(ChatChannel::Group, chat.sender, chat.message)
                 }
-                GroupEvent::Leave(user) => {
-                    self.on_group_member_left(user);
+                ChatEvent::Private(chat) => {
+                    let channel = ChatChannel::Private(chat.sender.clone());
+                    self.on_chat_received(channel, chat.sender, chat.message);
                 }
-                GroupEvent::Chat(chat) => {
-                    self.on_chat_received(ChatChannel::Group, chat.sender, chat.message);
-                }
-                GroupEvent::Move(direction) => {
-                    self.on_group_moved(direction);
-                }
+            },
+            ServerEvent::Fight(fight_event) => match fight_event {
+                FightEvent::Start(data) => self.on_fight_start(data),
+                FightEvent::Result(data) => self.on_fight_result(data),
+                FightEvent::End(data) => self.on_fight_end(data),
             },
             ServerEvent::Quest(quest_event) => match quest_event {
                 QuestEvent::Add(data) => self.on_quest_add(data),
                 QuestEvent::Step(data) => self.on_quest_step(data),
                 QuestEvent::Complete(data) => self.on_quest_complete(data),
             },
-            ServerEvent::GlobalChat(chat) => {
-                self.on_chat_received(ChatChannel::Global, chat.sender, chat.message);
-            }
-            ServerEvent::PrivateChat(chat) => {
-                let channel = ChatChannel::Private(chat.sender.clone());
-                self.on_chat_received(channel, chat.sender, chat.message);
-            }
-            ServerEvent::Stats(count) => {
-                self.on_stats(count);
-            }
-            ServerEvent::GameServer(game_server_event) => match game_server_event {
-                GameServerEvent::Connected => {
-                    self.on_game_server_connected();
-                }
-                GameServerEvent::Disconnected => {
-                    self.on_game_server_disconnected();
-                }
-            },
             ServerEvent::Item(item_event) => match item_event {
                 ItemEvent::Add(item_identifier) => self.on_item_add(item_identifier),
             },
-            ServerEvent::Broadcast(message) => self.on_broadcast(message),
-            ServerEvent::Unknown(raw) => {
-                self.on_unknown_event(raw);
-            }
+            ServerEvent::Kill(kill_data) => self.on_kill(kill_data),
+            ServerEvent::Death(death_data) => self.on_death(death_data),
+            ServerEvent::CounterAttack(counter_attack) => self.on_counter_attack(counter_attack),
+            ServerEvent::Teleport => self.on_teleport(),
+            ServerEvent::Unknown(raw) => self.on_unknown_event(raw),
         }
     }
 }

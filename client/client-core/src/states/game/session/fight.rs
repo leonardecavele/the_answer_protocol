@@ -1,3 +1,8 @@
+use client_api::events::FightEndData;
+use std::collections::VecDeque;
+
+const MAX_HISTORY: usize = 10;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum FightPhase {
     #[default]
@@ -55,6 +60,7 @@ impl NpcHealth {
 
 #[derive(Default)]
 pub struct FightState {
+    history: VecDeque<FightEndData>,
     phase: FightPhase,
     npc_health: Option<NpcHealth>,
 }
@@ -68,6 +74,13 @@ impl FightState {
     pub fn end(&mut self) {
         self.phase.reset();
         self.npc_health = None;
+    }
+
+    pub fn push_history(&mut self, data: FightEndData) {
+        self.history.push_back(data);
+        if self.history.len() > MAX_HISTORY {
+            self.history.pop_front();
+        }
     }
 
     pub fn submit(&mut self) {
@@ -96,5 +109,9 @@ impl FightState {
 
     pub fn npc_health(&self) -> Option<&NpcHealth> {
         self.npc_health.as_ref()
+    }
+
+    pub fn history(&self) -> &VecDeque<FightEndData> {
+        &self.history
     }
 }

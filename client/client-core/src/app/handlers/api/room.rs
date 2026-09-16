@@ -1,10 +1,8 @@
 use crate::app::App;
 use crate::collections::SelectableList;
-use crate::network::RequestChain;
 use crate::states::game::{Item, Npc, Room};
-use client_api::ApiRequest;
-use client_api::commands::{LookCommand, LookResponse, StatusCommand};
-use client_api::events::{DeathData, SpawnData};
+use client_api::commands::LookResponse;
+use client_api::events::SpawnData;
 
 impl App {
     pub fn on_look(&mut self, response: LookResponse) {
@@ -133,46 +131,5 @@ impl App {
         self.state
             .game
             .log_action(format!("{} dropped {}.", player, name));
-    }
-
-    pub fn on_death(&mut self, death: DeathData) {
-        let is_me = self.state.game.player.is_me(&death.player_name);
-        let respawn_here = self
-            .state
-            .game
-            .room
-            .as_ref()
-            .is_some_and(|room| room.id == death.respawn_room_id);
-
-        if !is_me && let Some(room) = &mut self.state.game.room {
-            if respawn_here {
-                room.player_entered(death.player_name.clone());
-            } else {
-                room.player_left(&death.player_name);
-            }
-        }
-
-        let message = match (is_me, respawn_here) {
-            (true, true) => "You died and respawned here".to_string(),
-            (true, false) => {
-                format!("You died and respawned in {}", death.respawn_room_id)
-            }
-            (false, true) => {
-                format!("{} died and respawned here", death.player_name)
-            }
-            (false, false) => format!(
-                "{} died and respawned in {}",
-                death.player_name, death.respawn_room_id
-            ),
-        };
-
-        if is_me {
-            self.send_chain(RequestChain::new(vec![
-                ApiRequest::Look(LookCommand),
-                ApiRequest::Status(StatusCommand),
-            ]));
-        }
-
-        self.state.game.log_action(message);
     }
 }
