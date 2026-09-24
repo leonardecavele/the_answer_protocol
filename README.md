@@ -73,6 +73,16 @@ and lifecycle details are documented in the [TUI](client/tui/README.md) and
 - `/usr/bin/bwrap`
 - `cargo-clippy` and `rustfmt`
 
+### Quick start
+
+```bash
+make install         # verify tools and fetch locked dependencies
+make build           # build both servers and both clients
+make run-server      # start the Rust engine and the Go gateway in the background
+make run-client      # CLI client (TUI); use make run-client-gui for the GUI
+make stop            # stop the background servers
+```
+
 ## Building and Running
 
 Build the complete project:
@@ -101,14 +111,14 @@ through `CLIENT_ARGS`.
 
 For the subject's CLI-client requirement, this project implements option 2:
 an interactive terminal user interface (TUI), launched with
-`make run-client-tui` (and by the default `make run`).
+`make run-client` (and by the default `make run`).
 
 Run one component at a time:
 
 ```bash
 make run-rust-server
 make run-go-server
-make run-client-tui
+make run-client
 make run-client-gui
 ```
 
@@ -119,11 +129,12 @@ make run-client-gui
 | `make install` | Verify tools and fetch locked dependencies. |
 | `make build` | Build the servers and clients. |
 | `make run` | Start both servers and the TUI. |
-| `make stop` | Stop servers started by `make run`. |
+| `make run-server` | Build the servers and the TUI, then start both servers in the background without a client. |
+| `make stop` | Stop servers started by `make run` or `make run-server`. |
 | `make lint` | Run all formatting and static-analysis checks. |
 | `make clean` | Remove Go and Cargo build artifacts. |
-| `make build-client-tui` | Build the terminal client. |
-| `make run-client-tui` | Build and run the terminal client. |
+| `make build-client` | Build the terminal client (TUI). |
+| `make run-client` | Build and run the terminal client (TUI). |
 | `make build-client-gui` | Build the graphical client. |
 | `make run-client-gui` | Build and run the graphical client. |
 | `make build-go-server` | Build the public TAP gateway. |
@@ -151,9 +162,13 @@ The project makes the following documented implementation choices:
 | --- | --- |
 | Line endings | Emit `LF` and accept either `LF` or `CRLF` for common client compatibility. |
 | Frame size | Accept client frames up to 65,536 bytes to carry JSON state and encoded C submissions with a fixed bound. |
-| Usernames | Require 3–20 ASCII characters: an ASCII letter first, then ASCII letters, digits, `_`, or `-`; preserve the submitted case while comparing names case-insensitively. |
+| Usernames | Require 3–20 ASCII characters: an ASCII letter first, then ASCII letters, digits, `_`, or `-`; preserve the submitted case while comparing names case-insensitively, to avoid ambiguous identities. This departs from RFC 42TAP §9.2, which asks servers to handle Unicode usernames; Unicode usernames are rejected with `ERR 400 INVALID_USERNAME`, while chat messages accept any valid UTF-8. |
 | Server split | Keep public TAP in Go and use private single-line JSON to isolate the Rust game engine. |
-| Chat | Add private messages alongside the RFC global, room, and group scopes. |
+| Chat | Add private messages alongside the RFC global, room, and group scopes. Chat events go to the other players in the scope; the sender does not receive its own message back. |
+| `LOOK` exits | Map uppercase directions to destination display names (for example `"SOUTH": "Pature"`) instead of the room identifiers shown in RFC §5.1.2; `room.id` and `MOVE` use identifiers. |
+| Quest payloads | `QUEST` and `QUESTS` entries carry `name`, `description`, a `reward` array, `status`, `current_step`, and `max_step` instead of the RFC's `quest_id`, single `reward`, and `progress` string. `QUEST` starts the quest directly (`in progress`) rather than returning an `available` offer. |
+| Departures | `QUIT` and disconnections notify other players with `EVT QUIT` and `EVT STATS`; no `EVT ROOM PRESENCE LEAVE` is sent for a departing player. |
+| Errors and events | Error codes, error names, and events beyond those of the RFC are project extensions, listed in [PROTOCOL.md](PROTOCOL.md#errors). |
 | Groups | Limit groups to five players, expire invitations after five minutes, and accept `GROUP QUIT` as a leave alias. |
 | Group leadership | Reserve grouped `MOVE` and `QUEST` commands for the group leader; members follow a leader's move and receive eligible grouped quests. |
 | Group locality | Require the inviter and invitee to be in the same room for `GROUP INVITE`, and the joining player and leader to be in the same room for `GROUP JOIN`. |
@@ -180,9 +195,17 @@ damage = current_npc_hp if base_damage * 2 > current_npc_hp else base_damage
 
 The finishing rule avoids leaving a negligible final remainder. A failed or
 expired submission deals 25–50 damage to the player. Hostile NPCs respawn after
-30 seconds; a defeated player respawns in the safe starting room with reduced
-health. `STATUS` reports `healthy`, `normal`, or `critical` from the player's
-remaining-health ratio.
+30 seconds. A defeated player loses their inventory, completed quests, and
+dialogue progress, and respawns in the safe starting room with the starting
+100 HP. When a fight ends after a participant died, the surviving participants
+are moved back to the starting room with `EVT TELEPORT`. `STATUS` reports
+`healthy`, `normal`, or `critical` from the player's remaining-health ratio.
+
+During a fight, the only world commands a participant can use are `LOOK`,
+`STATUS`, and `FIGHT ATTACK`; the others, such as `MOVE`, `TAKE`, `TALK`, or
+`USE`, return `ERR 410 PLAYER_ALREADY_IN_COMBAT`. Chat, `WHO`, group
+commands, and `QUIT` remain available. There is no `DEFEND` or `FLEE` command:
+`GROUP LEAVE` does not remove a player from a running fight.
 
 C submissions are compiled with Clang, executed inside Bubblewrap, and checked
 against trusted public and hidden tests. The [Rust server documentation](server/rust_server/README.md#c-challenge-combat)
@@ -190,14 +213,17 @@ contains the sandbox and lifecycle details.
 
 ## Quest System
 
-Quest definitions are data-driven and contain descriptions, ordered objectives,
-completion conditions, and probabilistic rewards. `QUEST` assigns an eligible
-quest individually or to the members selected by a grouped leader request;
-`QUESTS` returns the saved active state. The authoritative game engine owns
-validation, progression, rewards, and persistence. Gameplay checks advance
-quest steps; `QUEST STEP` and `QUEST COMPLETE` events update client progress
-and display notifications. See the [quest documentation](server/rust_server/README.md#quests)
-for progression and reward handling.
+Quest definitions in `quests.json` contain names, descriptions, step counts,
+and probabilistic rewards. Completion conditions are implemented in the game
+engine and matched by quest name. `QUEST` picks one of the NPC's quests at
+random among those the player does not already have active and starts it
+immediately, individually or for the members selected by a grouped leader
+request; `QUESTS` returns the active quests and every completed run. The
+authoritative game engine owns validation, progression, rewards, and
+persistence. Gameplay checks advance quest steps; `QUEST STEP` and
+`QUEST COMPLETE` events update client progress and display notifications.
+See the [quest documentation](server/rust_server/README.md#quests) for
+progression and reward handling.
 
 ## World Design
 
@@ -223,9 +249,29 @@ are unique: taking removes one from its room, dropping exposes it to other
 players, and ordinary dropped items expire after one minute. The lost object
 returns to `pature`; wraps spawn periodically in the foyer.
 
+The server matches item names exactly: `TAKE`, `DROP`, and `USE` accept an
+identifier such as `0.objet_perdu` or one of the server names `objet_perdu`,
+`wrap_du_foyer`, `t_shirt_bde`, and `merci`. The clients also accept the
+display names shown on screen, such as `objet perdu`.
+
+All quests come from one quest-giver, `ndalailallema` (`5.ndalailallema`), in
+`devant_le_bocal`. Entering that room requires the lost object. From the spawn
+room:
+
+```text
+MOVE south            pature
+TAKE objet_perdu
+MOVE east             devant_l'école
+MOVE west             entree
+MOVE west             afk
+MOVE south            cluster_du_haut
+MOVE east             devant_le_bocal
+QUEST ndalailallema
+```
+
 Rooms, exits, initial items, NPCs, dialogue, and quests are loaded from JSON.
 Startup validation rejects invalid exits and unknown room, item, NPC, or quest
-references. The [Rust server documentation](server/rust_server/README.md#world-assets)
+references. The [Rust server documentation](server/rust_server/README.md#world-configuration-and-assets)
 owns the detailed asset schema and timing rules.
 
 ## Repository layout
@@ -245,7 +291,7 @@ owns the detailed asset schema and timing rules.
 
 ## Server Logging
 
-The Go gateway writes structured lines in the form
+The Go gateway writes one leveled text record per line in the form
 `HH:MM:SS.ffffff LEVEL message`, with informational records on stdout,
 errors on stderr, and both in `server/go_server/app.log`. Records cover connections and IP addresses,
 commands and parameters, responses and error codes, internal server traffic,
@@ -254,8 +300,8 @@ Rust engine uses `tracing` for startup, parsing, command dispatch, world saves,
 tester activity, combat, and shutdown.
 
 Connection-attempt limits, the 20-player ceiling, and the 25-input-per-second
-per-IP limit detect and reject flooding. Filtering the structured level and message
-fields exposes recurring failures without blocking request handling. Detailed
+per-IP limit detect and reject flooding. Filtering the level and message fields
+exposes recurring failures without blocking request handling. Detailed
 destinations and limits are owned by the [Go server documentation](server/go_server/README.md#logging).
 
 ## Group Contributions
@@ -283,9 +329,11 @@ For combat, attack a hostile NPC directly, then run correct, incorrect, and
 expired C submissions in solo and grouped fights. Verify start/result/end
 events, damage, death, safe respawn, kill broadcast, and NPC respawn.
 
-For quests, obtain a quest from a quest-giver, confirm individual and grouped
-assignment, list it with `QUESTS`, reconnect, and verify that the active quest
-state was restored.
+For quests, follow the route in [World Design](#world-design) to the
+quest-giver, obtain a quest, confirm individual and grouped assignment, list it
+with `QUESTS`, reconnect, and verify that the active quest state was restored.
+
+There are no automated tests; the checks above are manual.
 
 ## Resources
 

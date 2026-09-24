@@ -155,8 +155,8 @@ Use `Client::connect_with(address, ClientConfig)` to override defaults.
 | `event_channel_capacity` | 512 | Decoded event backlog. |
 | `frame_channel_capacity` | 512 | Raw frame backlog. |
 
-The public [gateway](../../server/go_server/README.md) accepts client frames up to 4,096 bytes, so outgoing
-commands remain within that server-side limit.
+The public [gateway](../../server/go_server/README.md) accepts client frames up to 65,536 bytes, the
+same bound as `max_frame_length`.
 
 ## Errors
 

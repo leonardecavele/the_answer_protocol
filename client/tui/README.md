@@ -37,8 +37,8 @@ loop.
 From the repository root:
 
 ```bash
-make build-client-tui
-make run-client-tui
+make build-client
+make run-client
 ```
 
 Shared flags and defaults are listed in the
@@ -47,7 +47,7 @@ Shared flags and defaults are listed in the
 Example with another endpoint:
 
 ```bash
-make run-client-tui CLIENT_ARGS="--ip 192.0.2.10 --port 38800"
+make run-client CLIENT_ARGS="--ip 192.0.2.10 --port 38800"
 ```
 
 ## Terminal lifecycle
@@ -95,7 +95,7 @@ The frontend writes to `tui.log` using the core's
 [logging setup](../client-core/README.md#notifications-and-logging). For example:
 
 ```bash
-RUST_LOG=info make run-client-tui
+RUST_LOG=info make run-client
 ```
 
 ## Linting

@@ -91,6 +91,11 @@ Example response payload:
 }
 ```
 
+`exits` maps each uppercase direction to the destination room's display name
+(underscores replaced by spaces, first letter capitalized), not to its
+`<numeric-id>.<name>` identifier. `room.id` and the `MOVE` response use the
+identifier.
+
 #### MOVE
 
 ```text
@@ -119,7 +124,9 @@ OK bye
 ```
 
 Releases the player's world and group state, notifies the other clients, and
-closes the connection.
+closes the connection. The other clients receive `EVT QUIT <username>` and
+`EVT STATS players=<count>`; no `EVT ROOM PRESENCE LEAVE` is emitted for a
+departing player.
 
 Before a successful `CONNECT`, `QUIT` returns `ERR 400 NOT_CONNECTED`.
 
@@ -134,7 +141,9 @@ CHAT GROUP <message>
 CHAT PRIVATE <username> <message>
 ```
 
-Each valid command returns `OK`. Delivery occurs through the matching event:
+Each valid command returns `OK`. Delivery occurs through the matching event,
+sent to the other players in the scope; the sender does not receive its own
+message back:
 
 | Scope | Event sent to recipients |
 | --- | --- |
@@ -202,8 +211,11 @@ inventory.
 
 ```text
 TAKE <item-identifier>
-OK taken=<item-name>
+OK taken=<item-identifier>
 ```
+
+The response always carries the protocol identifier (for example
+`taken=0.objet_perdu`), even when the item was requested by name.
 
 Other players in the room receive
 `EVT TAKE <username> <item-identifier>`.
@@ -312,12 +324,20 @@ Example payload:
       "type": "MERCI"
     }
   ],
-  "status": "in progress"
+  "status": "in progress",
+  "current_step": 0,
+  "max_step": 1
 }
 ```
 
+The NPC picks one of its quests at random among those the player does not
+already have active, and the quest starts immediately with status
+`in progress`; there is no separate acceptance step. Quests are identified by
+`name`, and progress is reported as `current_step` out of `max_step`.
+
 For a group, only the leader starts the quest. The grouped request applies the
-quest to the eligible members and returns one public TAP response.
+quest to the eligible members, who receive `EVT QUEST ADD <quest-json>`, and
+returns one public TAP response.
 
 #### QUESTS
 
@@ -326,7 +346,9 @@ QUESTS
 OK [<quest-json>,...]
 ```
 
-Returns the player's active quests. An empty JSON array is valid.
+Returns the player's active quests (`"status": "in progress"`) followed by one
+entry per completed run (`"status": "completed"`, with the rewards actually
+won). An empty JSON array is valid.
 
 ### Code-challenge fights
 
@@ -350,6 +372,8 @@ OK Processing
 
 The submission is a single TAP line. The client replaces spaces and line
 breaks using the `sp_sep` and `nl_sep` values received in the start event.
+The encoded submission is limited to `max_code_size` bytes (1,800); a longer
+one is rejected before evaluation.
 Evaluation is asynchronous; its outcome is delivered through
 `EVT FIGHT RESULT` and the fight eventually closes with `EVT FIGHT END`.
 
@@ -357,6 +381,12 @@ Evaluation is asynchronous; its outcome is delivered through
 
 The server reports failures as `ERR <code> <name>`. Codes are not unique: a
 client retains both the number and symbolic name.
+
+RFC 42TAP defines `201 NAME_IN_USE`, `301 NO_EXIT`, `401 NOT_IN_GROUP`,
+`402 ALREADY_IN_GROUP`, `404 ITEM_NOT_FOUND`, `404 ITEM_NOT_IN_INVENTORY`,
+`404 NPC_NOT_FOUND`, `405 NPC_NOT_HOSTILE`, `406 NO_QUEST_AVAILABLE`,
+`900 CONNECTION_FAILED`, and `901 SEND_FAILED`. Every other code or name below
+is a project extension for cases the RFC does not cover.
 
 | Code | Error name | Meaning |
 | --- | --- | --- |
@@ -385,7 +415,6 @@ client retains both the number and symbolic name.
 | `405` | `PLAYER_NOT_FOUND` | The [game engine](server/rust_server/README.md) cannot resolve the player. |
 | `405` | `NPC_NOT_HOSTILE` | The selected NPC cannot be attacked. |
 | `406` | `NO_QUEST_AVAILABLE` | The NPC has no available quest. |
-| `407` | `NPC_NOT_IN_ROOM` | The selected NPC is not in the player's room. |
 | `407` | `NOT_IN_SAME_ROOM` | Group participants are not in the same room. |
 | `408` | `NPC_IN_COMBAT` | The NPC already belongs to another fight. |
 | `409` | `ACTION_ALREADY_TAKEN` | The player already acted in this combat round. |
@@ -425,6 +454,7 @@ wait for the pending `OK` or `ERR`.
 | `EVT STATS players=<count>` | The authenticated-player count changed. |
 | `EVT GAME SERVER CONNECTED` | The [Go gateway](server/go_server/README.md) connected to the game engine. |
 | `EVT GAME SERVER DISCONNECTED` | The game-engine connection became unavailable. |
+| `EVT BROADCAST <message>` | An administrator sent a message from the gateway console. |
 
 ### Chat events
 
@@ -440,6 +470,7 @@ wait for the pending `OK` or `ERR`.
 | Frame | Meaning |
 | --- | --- |
 | `EVT GROUP INVITE <leader>` | The recipient was invited to a group. |
+| `EVT GROUP INVITE <leader> REMOVED` | A pending invitation expired or its group was disbanded. |
 | `EVT GROUP JOIN <username>` | A player joined the recipient's group. |
 | `EVT GROUP LEAVE <username>` | A player left or the group was dissolved. |
 | `EVT GROUPMOVE <leader> <direction>` | A member moved with the group leader. |
@@ -460,6 +491,38 @@ username.
 | `EVT DESPAWN type=ITEM id=<item-identifier>` | A dropped item despawned. |
 | `EVT KILL <username> <npc-identifier>` | A player killed an NPC. |
 | `EVT DEATH <username> respawn_room_id=<room-name>` | A player died and respawned. |
+| `EVT COUNTER ATTACK <counter-attack-json>` | The NPC hit back after an `ATTACK`; sent to the attacker only. |
+
+`EVT COUNTER ATTACK` data:
+
+```json
+{
+  "dealt_damage": 1,
+  "current_hp": 99,
+  "npc_id": "10.crappo"
+}
+```
+
+### Quest events
+
+Quest events are sent only to the player concerned.
+
+| Frame | Meaning |
+| --- | --- |
+| `EVT QUEST ADD <quest-json>` | A group leader's `QUEST` assigned the quest to this member. The data uses the `QUEST` response format. |
+| `EVT QUEST STEP <step-json>` | An active quest advanced one step without completing. |
+| `EVT QUEST COMPLETE <complete-json>` | A quest completed and its rewards were added to the inventory. |
+
+```json
+{"name": "Cringe", "current_step": 2}
+```
+
+```json
+{"name": "Cringe", "reward_items": ["2.t_shirt_bde"]}
+```
+
+`reward_items` lists the identifiers of the items actually won and may be
+empty.
 
 ### Fight events
 
@@ -473,6 +536,7 @@ EVT FIGHT START <fight-start-json>
 {
   "code": "int<SP>answer(void)<SP>{<NL>...<NL>}",
   "time": 222,
+  "max_code_size": 1800,
   "nl_sep": "<NL>",
   "sp_sep": "<SP>",
   "npc_id": "12.ldecavel",
@@ -491,15 +555,51 @@ EVT FIGHT RESULT <fight-result-json>
 {
   "player_name": "ALICE",
   "success": true,
-  "damage_dealt": 50
+  "damage_dealt": 50,
+  "current_hp": 100
 }
 ```
+
+After a success, `damage_dealt` is the damage dealt to the NPC and
+`current_hp` is the NPC's remaining health. After a failure or a missed
+deadline, they are the damage taken by the player and the player's remaining
+health. Every participant in the fight receives the event.
 
 #### Fight end
 
 ```text
-EVT FIGHT END
+EVT FIGHT END <fight-end-json>
 ```
+
+```json
+{
+  "players": [
+    {
+      "name": "ALICE",
+      "code": "int<SP>answer(void)<SP>{<NL>...<NL>}",
+      "success": true,
+      "damage_dealt": 50,
+      "elapsed_ms": 4210
+    }
+  ],
+  "nl_sep": "<NL>",
+  "sp_sep": "<SP>"
+}
+```
+
+`players` summarizes each participant's submission. `code` is encoded with
+`nl_sep` and `sp_sep`.
+
+#### Teleport
+
+```text
+EVT TELEPORT
+```
+
+When a fight ends after at least one participant died, every surviving
+participant who did not leave the group is moved back to `devant_l'école` and
+receives this event without data. The other players in the old and new rooms
+receive the matching `EVT ROOM PRESENCE LEAVE` and `EVT ROOM PRESENCE ENTER`.
 
 Structured event data is encoded as compact, single-line JSON. An unrecognized
 event remains an event and is exposed by the Rust client as
@@ -523,3 +623,18 @@ to implementations. This project standardizes them as follows:
 - `QUEST` supports individual and grouped quest assignment.
 - Hostile NPC fights use sandboxed C challenges and asynchronous fight events.
 - Wraps spawn periodically in the foyer as renewable consumable resources.
+
+The following points differ from RFC 42TAP:
+
+- Usernames are limited to ASCII identifier characters; Unicode usernames are
+  rejected with `ERR 400 INVALID_USERNAME`. Chat messages accept any valid
+  UTF-8.
+- `LOOK` exits use uppercase directions and destination display names instead
+  of room identifiers.
+- `QUEST` and `QUESTS` entries use `name`, a `reward` array, `status`,
+  `current_step`, and `max_step` instead of `quest_id`, a single `reward`, and
+  a `progress` string. `QUEST` starts the quest directly (`in progress`)
+  instead of returning an `available` offer.
+- `QUIT` and disconnections emit `EVT QUIT`, not `EVT ROOM PRESENCE LEAVE`.
+- The `PRIVATE` chat scope, and the error codes and events of this document
+  that the RFC does not define, are project extensions.

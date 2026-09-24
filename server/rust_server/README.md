@@ -9,12 +9,12 @@ chat broadcast scopes, and public RFC 42TAP text framing, while delegating autho
 game logic, world mutations, and code evaluation to this Rust engine. The server supports
 seamless disconnections and reconnections without losing server or player state.
 
-The public protocol is defined in [TAP.html](../../TAP.html), [TAP.pdf](../../TAP.pdf),
-and the repository [protocol reference](../../PROTOCOL.md).
+The public protocol follows RFC 42TAP, supplied with the subject, and is
+documented in the repository [protocol reference](../../PROTOCOL.md).
 
 ## Requirements
 
-- Rust toolchain with Cargo and Rust 2024 edition support
+- Rust 1.91 or newer, with Cargo
 - Linux on `x86_64` or `aarch64`
 - `/usr/bin/clang`
 - `/usr/bin/bwrap`
@@ -55,7 +55,7 @@ At startup, the server:
 1. parses and validates the world JSON configuration files (`npcs.json`, `items.json`, `rooms.json`, `quests.json`);
 2. binds the internal TCP port;
 3. accepts a connection from the Go gateway;
-4. restores the server state (`saves/server_state.toml`) and player states (`saves/<player>.toml`);
+4. restores the server state (`saves/server_save/server_state.toml`) and player states (`saves/player_saves/<player>.toml`);
 5. ensures essential world entities exist (such as the lost item `0.objet_perdu`);
 6. starts the authoritative 20 Hz game loop.
 
@@ -79,8 +79,9 @@ results from worker threads, advances timers, emits batched events, and saves th
 | Fight deadline | 222 seconds (3 min 42 s) |
 | Periodic item spawns | Configured per item model cooldown |
 
-Saves are written to TOML files below `saves/` (`saves/server_state.toml` and
-`saves/<player_name>.toml`) every 2 minutes and upon disconnect or shutdown.
+Saves are written to TOML files below `saves/` (`saves/server_save/server_state.toml`
+and `saves/player_saves/<player_name>.toml`) every 2 minutes and upon disconnect or
+shutdown.
 
 ## World configuration and assets
 
@@ -143,7 +144,8 @@ The leader is excluded from `grouped_players`. Grouped `MOVE`, `QUEST`, and
 }
 ```
 
-Standard error codes matching RFC 42TAP specifications:
+Error codes (RFC 42TAP codes where the RFC defines one, project extensions
+otherwise; see the [protocol reference](../../PROTOCOL.md#errors)):
 - `0`: `NoError`
 - `301`: `NoExit`
 - `404`: `ItemNotFound`, `ItemNotInInventory`, `NpcNotFound`
@@ -157,6 +159,7 @@ Standard error codes matching RFC 42TAP specifications:
 - `413`: `RoomNotFound`
 - `414`: `MissingItem`
 - `415`: `NotUsable`
+- `416`: `TooBigData`
 - `997`: `InvalidGroupCommand`
 - `998`: `InvalidQuestion`
 - `999`: `InvalidCommand`
@@ -203,7 +206,7 @@ The Go gateway converts each internal entry to the public TAP event form (`EVT <
 | Internal command | Result |
 | --- | --- |
 | `CONNECT` | Register or restore a player save and emit `ROOM PRESENCE ENTER`. |
-| `QUIT` | Save and disconnect the active player, emitting `ROOM PRESENCE LEAVE`. |
+| `QUIT` | Save and disconnect the active player; a held lost item returns to `pature`. No `ROOM PRESENCE LEAVE` is emitted. |
 | `LOOK` | Return room, exits, players, items, and NPCs as JSON. |
 | `MOVE` | Move one player or an entire group across rooms. |
 | `TAKE` | Transfer a room item to an inventory and emit `TAKE`. |
@@ -214,10 +217,10 @@ The Go gateway converts each internal entry to the public TAP event form (`EVT <
 | `ATTACK` | Direct 1 HP attack on an NPC (10% chance of NPC counter-attack). |
 | `STATUS` | Return health and status as JSON. |
 | `QUEST` | Assign an individual or grouped quest. |
-| `QUESTS` | Return active quests and progress as JSON. |
+| `QUESTS` | Return active quests and completed runs, with progress, as JSON. |
 | `FIGHT_CREATE` | Start an individual or grouped C challenge combat. |
 | `FIGHT_ATTACK` | Queue a C submission for sandboxed compilation & execution. |
-| `GROUP LEAVE` | Leave the active combat instance group. |
+| `GROUP LEAVE` | Record that a player left the group during a fight; the player stays in the fight until it ends. |
 
 ### Interactive admin console
 
@@ -242,7 +245,13 @@ and consumes the instance.
 Quest definitions contain descriptions, ordered objectives, and probabilistic
 rewards (`merci`, `t_shirt_bde`, `wrap_du_foyer`). An NPC can assign a quest to
 one player or, through a grouped `QUEST` request, to every eligible member of the
-leader's group. `QUESTS` serializes the active quest state for the client.
+leader's group. Each `QUEST` picks one of the NPC's quests at random among those
+the player does not already have active, and starts it immediately (`in progress`).
+`QUESTS` returns the active quests followed by one entry per completed run.
+
+Quest texts, step counts, and rewards come from `quests.json`, but the completion
+conditions are implemented in `game_manager.rs` and matched by quest name.
+Renaming a quest in `quests.json` therefore requires the matching code change.
 
 Gameplay checks advance active quest instances, including campus tours and
 selected coding challenges completed within their quest-specific deadlines.
@@ -265,8 +274,8 @@ all eligible members.
 
 For each `FIGHT_ATTACK`, the server:
 
-1. restores spaces and newlines from the negotiated TAP separators (`<SP>` and `<NL>`);
-2. limits the submission to 64 KiB, rejects null bytes, and validates the challenge filename;
+1. rejects an encoded submission longer than 1,800 bytes (`MAX_CODE_SIZE`, sent to clients as `max_code_size`) with error `416`;
+2. restores spaces and newlines from the negotiated TAP separators (`<SP>` and `<NL>`), then re-checks the decoded code against a 64 KiB bound, rejects null bytes, and validates the challenge filename;
 3. acquires an execution permit from the sandbox queue (max 2 concurrent sandboxes);
 4. compiles the submission together with the trusted test harness via Bubblewrap and Clang (timeout: 8 seconds);
 5. runs the compiled binary inside Bubblewrap with resource limits and a strict BPF seccomp filter (timeout: 2 seconds);
@@ -284,14 +293,23 @@ via seccomp (`SYS_write`, `SYS_close`, `SYS_wait4`, `SYS_rt_sigreturn`, `SYS_exe
 - **Failed submission:** Deals 25 to 50 base damage to the player (`NPC_MIN_DMG` to `NPC_MAX_DMG`).
   Each `t_shirt_bde` equipped reduces NPC damage by 10% (up to 30% reduction).
 - **Player death (`HP == 0`):** Death is strictly punitive — **the player loses everything**:
-  - The player's disk save file (`saves/<player_name>.toml`) is deleted.
+  - The player's state is reset; the reset state replaces the save in `saves/player_saves/` at the next save.
   - All inventory items are lost (non-unique items are recycled; the unique `0.objet_perdu` drops on the floor in the current room).
   - Completed quest history (`completed_quests`) and NPC dialogue progress are wiped.
   - The player respawns at the starting room (`devant_l'école`) with starting HP (100).
   - A `DEATH` event (`respawn_room_id=devant_l'école`) is emitted to the room and spawn room.
 
 Fight creation emits `FIGHT START`; each evaluation emits `FIGHT RESULT`; a
-completed or expired instance emits `FIGHT END`.
+completed or expired instance emits `FIGHT END` with a per-player summary.
+When at least one participant died, the surviving participants who did not leave
+the group are moved back to `devant_l'école` and receive `TELEPORT`.
+
+During a fight, the engine only accepts `LOOK`, `STATUS`, `FIGHT_ATTACK`,
+`GROUP LEAVE`, and `QUIT` from a participant; any other engine command returns
+`410 PLAYER_ALREADY_IN_COMBAT`. Chat, `WHO`, and group commands are handled by
+the gateway and remain available. A participant who has not submitted when the
+222-second deadline expires takes NPC damage, and `QUIT` during a fight without
+a submission applies the same damage before disconnecting.
 
 ## Design choices
 
@@ -316,10 +334,10 @@ design choice implemented in the Rust server:
   Defensive scaling is tied to the world item `t_shirt_bde`. Each equipped shirt mitigates NPC retaliation damage by 10% (up to 30% for 3 shirts), offering a tangible gameplay incentive to explore and complete quests.
 - **Combat states and additional commands:**
   - States transition cleanly: *Idle* $\to$ *In-Combat* (`FIGHT START`) $\to$ *Evaluating* $\to$ *Resolved* (`FIGHT END`).
-  - `GROUP LEAVE`: Operates as a combat retreat/flee mechanism, allowing an individual player to leave an active combat instance without forcing the entire group out.
-  - `USE`: Allows consuming healing items (`wrap_du_foyer`) in and out of combat to recover health up to the 100 HP ceiling.
+  - There is no dedicated `DEFEND` or `FLEE` command. `GROUP LEAVE` during a fight only records the departure: the player stays in the fight until it ends and is not teleported afterwards.
+  - `USE` consumes healing items (`wrap_du_foyer`) outside fights to recover health up to the 100 HP ceiling; it is refused during a fight.
 - **Punitive permadeath-lite (loss of everything on death):**
-  When a player's HP reaches 0, the server executes a full character wipe: the disk save is removed, the inventory is emptied, completed quests are cleared, and the player respawns at `devant_l'école`. This design creates genuine stakes for combat encounters and coding submissions, discouraging reckless brute-force attempts.
+  When a player's HP reaches 0, the server executes a full character wipe: the inventory is emptied, completed quests and dialogue progress are cleared, and the player respawns at `devant_l'école` with the starting 100 HP. This design creates genuine stakes for combat encounters and coding submissions, discouraging reckless brute-force attempts.
 
 ### 2. Quest system implementation and justification (RFC §6.1.2 & Subject V.1)
 
@@ -373,7 +391,7 @@ design choice implemented in the Rust server:
 
 ### 6. Comprehensive server logging (Subject Chapter V.1)
 
-- High-performance, structured logging using `tracing-subscriber` with microsecond-resolution UTC timestamps.
+- Leveled text logging using `tracing-subscriber` with microsecond-resolution UTC timestamps.
 - Simultaneous dual output: formatted ANSI console output and persistent file logging (`app.log`).
 - Comprehensive event coverage: connection/disconnection lifecycles, incoming player commands, server replies, error codes, room transitions, combat results, quest progression, and administrative interventions.
 

@@ -79,9 +79,9 @@ quest, and fight operations.
 | --- | --- |
 | Authenticated players | 20 |
 | Concurrent client connections | 21 (includes one room-full response slot) |
-| Maximum TAP frame | 4,096 bytes |
+| Maximum TAP frame | 65,536 bytes |
 | Authentication timeout | 30 seconds |
-| Client read timeout | 30 minutes |
+| Client read timeout | 10 minutes |
 | Socket write timeout | 5 seconds |
 | Client input frames per IP | 25 per second |
 | Connection attempts per IP | 20 per second |
@@ -106,7 +106,8 @@ control characters other than the terminating `LF` and its optional preceding
 The gateway handles these concerns directly:
 
 - `CONNECT`, `QUIT`, and `WHO` session behavior;
-- global, group, and private chat;
+- global, room, group, and private chat, whose events go to the other players
+  in the scope but not back to the sender;
 - group creation, invitations, joining, and leaving;
 - public TAP parsing, validation, responses, errors, and event formatting.
 
@@ -237,7 +238,7 @@ reconnection.
 | `game_conn` | Rust connection, JSON envelopes, routing, and questions. |
 | `protocol` | TAP response strings, event formatting, and error mapping. |
 | `session` | Clients, usernames, groups, invitations, and rate windows. |
-| `logger` | Structured process logging. |
+| `logger` | Leveled process logging. |
 
 ## Logging
 
@@ -257,7 +258,8 @@ reset at process start.
 
 ```bash
 make lint-go-server
-(cd server/go_server && go test ./...)
 ```
 
-The lint target checks formatting with `gofmt` and runs `go vet`.
+The lint target checks formatting with `gofmt` and runs `go vet`. The gateway
+has no automated Go tests; its behavior is checked manually as described in
+the root README's Testing section.

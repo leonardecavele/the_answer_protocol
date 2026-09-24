@@ -73,7 +73,7 @@ opens `LoginView`. A manifest error falls back to the default manifest and
 appears as a notification.
 
 Submitting the login form starts `NetworkManager`, which connects through
-`client-api` and authenticates the uppercase player name. Once authenticated,
+`client-api` and authenticates the player name as typed. Once authenticated,
 the application records the endpoint and player, queues its initial state
 load, and switches to `GameView`.
 

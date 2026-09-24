@@ -25,9 +25,10 @@ sends `CHAT GLOBAL hello`, and `inv` sends `INVENTORY`.
 
 Command names, subcommands, and aliases are case-insensitive, and every
 multi-word command has a short alias: `say` for `chat global`, `inv` for
-`inventory`, `gc` for `group create`. Items and NPCs can be named by their
-display name as well as their identifier, so `drop objet perdu` and
-`drop 0.objet_perdu` are equivalent.
+`inventory`, `gc` for `group create`. For `take`, `drop`, and `use`, items can
+be named by their display name as well as their identifier, so
+`drop objet perdu` and `drop 0.objet_perdu` are equivalent. NPCs are named by
+their identifier or server name, for example `talk 10.crappo` or `talk crappo`.
 
 The full command list and alias table are in the
 [Client API README](client-api/README.md#requests-and-responses). In-game,
@@ -55,14 +56,14 @@ From the repository root:
 
 ```bash
 make install
-make build-client-tui
+make build-client
 make build-client-gui
 ```
 
-Launch either frontend:
+Launch either frontend (`run-client` starts the TUI):
 
 ```bash
-make run-client-tui
+make run-client
 make run-client-gui
 ```
 
@@ -77,7 +78,7 @@ Both clients accept these options through `CLIENT_ARGS`:
 Examples:
 
 ```bash
-make run-client-tui CLIENT_ARGS="--ip 192.0.2.10 --port 38800"
+make run-client CLIENT_ARGS="--ip 192.0.2.10 --port 38800"
 make run-client-gui CLIENT_ARGS="--ip 192.0.2.10 --port 38800 --assets ./assets"
 ```
 
