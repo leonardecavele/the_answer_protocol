@@ -54,6 +54,12 @@ impl Room {
         self.items.iter().any(|item| item.id == id)
     }
 
+    pub fn find_item_by_name(&mut self, name: &str) -> Option<&Item> {
+        self.items
+            .iter()
+            .find(|item| item.name.eq_ignore_ascii_case(name))
+    }
+
     pub fn take_item(&mut self, id: &str) -> Option<Item> {
         let index = self.items.iter().position(|item| item.id == id)?;
         self.items.remove(index)

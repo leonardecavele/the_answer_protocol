@@ -33,9 +33,16 @@ impl App {
         if let Some(mut request) = ApiRequest::parse(&command) {
             match &mut request {
                 ApiRequest::Drop(DropCommand { item_identifier })
-                | ApiRequest::Use(UseCommand { item_identifier })
-                | ApiRequest::Take(TakeCommand { item_identifier }) => {
+                | ApiRequest::Use(UseCommand { item_identifier }) => {
                     if let Some(item) = self.state.game.player.find_item_by_name(item_identifier) {
+                        *item_identifier = item.id.clone();
+                    }
+                }
+
+                ApiRequest::Take(TakeCommand { item_identifier }) => {
+                    if let Some(room) = self.state.game.room.as_mut()
+                        && let Some(item) = room.find_item_by_name(item_identifier)
+                    {
                         *item_identifier = item.id.clone();
                     }
                 }
