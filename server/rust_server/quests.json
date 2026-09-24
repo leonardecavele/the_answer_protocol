@@ -107,7 +107,7 @@
     },
     {
       "name": "Chauve qui peut !",
-      "description": "Battez acampion.",
+      "description": "Battez acampion en duel.",
       "nb_steps": 1,
       "loots": {
         "merci": { "qty": 6, "chance": 42.0 }
@@ -115,7 +115,7 @@
     },
     {
       "name": "Un baby ?",
-      "description": "Battez crappo.",
+      "description": "Battez crappo en duel.",
       "nb_steps": 1,
       "loots": {
         "merci": { "qty": 6, "chance": 42.0 }
@@ -123,7 +123,7 @@
     },
     {
       "name": "Bel homme",
-      "description": "Battez enchevri.",
+      "description": "Battez enchevri en duel.",
       "nb_steps": 1,
       "loots": {
         "merci": { "qty": 6, "chance": 42.0 }
@@ -131,7 +131,7 @@
     },
     {
       "name": "Pause dej",
-      "description": "Battez ibady.",
+      "description": "Battez ibady en duel.",
       "nb_steps": 1,
       "loots": {
         "merci": { "qty": 6, "chance": 42.0 }
@@ -139,7 +139,7 @@
     },
     {
       "name": "Quoi? Feur.",
-      "description": "Battez ldecavel.",
+      "description": "Battez ldecavel en duel.",
       "nb_steps": 1,
       "loots": {
         "merci": { "qty": 6, "chance": 42.0 }
@@ -147,7 +147,7 @@
     },
     {
       "name": "Détrôner le Sensei",
-      "description": "Battez mdourdoi.",
+      "description": "Battez mdourdoi en duel.",
       "nb_steps": 1,
       "loots": {
         "merci": { "qty": 6, "chance": 42.0 }
