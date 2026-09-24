@@ -101,18 +101,10 @@ impl App {
             (ApiRequest::GroupInvite(cmd), ApiResponse::GroupInvite(Ok(_))) => {
                 self.on_group_invite_sent(cmd.username);
             }
-            (ApiRequest::GlobalChat(cmd), ApiResponse::GlobalChat(Ok(_))) => {
-                self.on_global_chat_sent(cmd.message);
-            }
-            (ApiRequest::RoomChat(cmd), ApiResponse::RoomChat(Ok(_))) => {
-                self.on_room_chat_sent(cmd.message);
-            }
-            (ApiRequest::GroupChat(cmd), ApiResponse::GroupChat(Ok(_))) => {
-                self.on_group_chat_sent(cmd.message);
-            }
-            (ApiRequest::PrivateChat(cmd), ApiResponse::PrivateChat(Ok(_))) => {
-                self.on_private_chat_sent(cmd.to, cmd.message);
-            }
+            (ApiRequest::GlobalChat(_), ApiResponse::GlobalChat(Ok(_))) => {}
+            (ApiRequest::RoomChat(_), ApiResponse::RoomChat(Ok(_))) => {}
+            (ApiRequest::GroupChat(_), ApiResponse::GroupChat(Ok(_))) => {}
+            (ApiRequest::PrivateChat(_), ApiResponse::PrivateChat(Ok(_))) => {}
             (ApiRequest::Look(_), ApiResponse::Look(Ok(response))) => {
                 self.on_look(response);
             }
