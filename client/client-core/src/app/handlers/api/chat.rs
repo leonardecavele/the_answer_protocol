@@ -3,40 +3,62 @@ use crate::notification::Notification;
 use crate::states::game::{ChatChannel, ChatMessage, ChatSender, ChatState};
 
 impl App {
+    pub fn on_global_chat_sent(&mut self, message: String) {
+        self.state.game.chat_log.push(ChatMessage {
+            channel: ChatChannel::Global,
+            sender: ChatSender::Me,
+            content: message,
+        });
+    }
+
+    pub fn on_room_chat_sent(&mut self, message: String) {
+        self.state.game.chat_log.push(ChatMessage {
+            channel: ChatChannel::Room,
+            sender: ChatSender::Me,
+            content: message,
+        });
+    }
+
+    pub fn on_group_chat_sent(&mut self, message: String) {
+        self.state.game.chat_log.push(ChatMessage {
+            channel: ChatChannel::Group,
+            sender: ChatSender::Me,
+            content: message,
+        });
+    }
+
+    pub fn on_private_chat_sent(&mut self, to: String, message: String) {
+        self.state.game.chat_log.push(ChatMessage {
+            sender: ChatSender::Me,
+            channel: ChatChannel::Private(to),
+            content: message,
+        });
+    }
+
     pub fn on_chat_received(&mut self, channel: ChatChannel, sender: String, content: String) {
-        let is_me = Some(sender.clone()) == self.state.game.player.name;
+        if self.state.game.player.name.as_deref() == Some(sender.as_str()) {
+            return;
+        }
 
-        if !is_me {
-            if let ChatChannel::Private(_) = channel {
-                self.state.ui.notifications.push(Notification::info(format!(
-                    "New private message from {}.",
-                    sender
-                )));
-            }
-
-            if !self.state.game.overlays.is_open::<ChatState>() {
-                self.state.game.is_chat_unread = true;
-            }
+        if let ChatChannel::Private(_) = channel {
+            self.state.ui.notifications.push(Notification::info(format!(
+                "New private message from {}.",
+                sender
+            )));
         }
 
         self.state
             .game
             .log_action(format!("{} ({}): {}", channel.prefix(), sender, content));
 
-        let chat_message = if is_me {
-            ChatMessage {
-                channel,
-                sender: ChatSender::Me,
-                content,
-            }
-        } else {
-            ChatMessage {
-                channel,
-                sender: ChatSender::Other(sender),
-                content,
-            }
-        };
+        if !self.state.game.overlays.is_open::<ChatState>() {
+            self.state.game.is_chat_unread = true;
+        }
 
-        self.state.game.chat_log.push(chat_message);
+        self.state.game.chat_log.push(ChatMessage {
+            channel,
+            sender: ChatSender::Other(sender),
+            content,
+        });
     }
 }
