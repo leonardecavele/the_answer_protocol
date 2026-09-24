@@ -8,6 +8,12 @@ use tracing::warn;
 pub struct Exits([Option<String>; DIRECTION_COUNT]);
 
 impl Exits {
+    pub fn find_exit_by_name(&self, name: &str) -> Option<Direction> {
+        self.iter()
+            .find(|(_, direction_name)| direction_name.eq_ignore_ascii_case(name))
+            .map(|(direction, _)| direction)
+    }
+
     pub fn get(&self, direction: Direction) -> Option<&str> {
         self.0[direction.quarter_turns()].as_deref()
     }

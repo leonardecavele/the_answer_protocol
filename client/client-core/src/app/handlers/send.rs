@@ -2,7 +2,7 @@ use crate::app::App;
 use crate::events::SendEvent;
 use crate::notification::{Notification, NotificationTopic};
 use client_api::ApiRequest;
-use client_api::commands::{DropCommand, TakeCommand, UseCommand};
+use client_api::commands::{DropCommand, MoveCommand, TakeCommand, UseCommand};
 
 impl App {
     pub fn handle_send_event(&mut self, event: SendEvent) {
@@ -46,6 +46,15 @@ impl App {
                         *item_identifier = item.id.clone();
                     }
                 }
+
+                ApiRequest::Move(MoveCommand { direction }) => {
+                    if let Some(room) = self.state.game.room.as_mut()
+                        && let Some(exit_direction) = room.exits.find_exit_by_name(direction)
+                    {
+                        *direction = exit_direction.key().to_string();
+                    }
+                }
+
                 _ => {}
             }
 
