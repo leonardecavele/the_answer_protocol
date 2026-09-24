@@ -67,8 +67,8 @@ HELPERS = \
 # GLOBAL
 
 .PHONY: install build \
-	build-go-server build-rust-server build-client-tui build-client-gui \
-	run-go-server run-rust-server run-client-tui run-client-gui \
+	build-go-server build-rust-server build-client build-client-gui \
+	run-go-server run-rust-server run-client run-client-gui \
 	lint-client lint-go-server lint-rust-server \
 	run stop lint clean
 
@@ -88,7 +88,7 @@ install:
 	@$(HELPERS) info_log "fetching Go server dependencies"
 	@cd $(GO_SERVER_DIR) && $(GO) mod download
 
-build: build-go-server build-rust-server build-client-tui build-client-gui
+build: build-go-server build-rust-server build-client build-client-gui
 	@$(HELPERS) info_log "all components built"
 
 run:
@@ -96,7 +96,7 @@ run:
 	@$(HELPERS) \
 		ensure_stopped "$(GO_SERVER_PID_FILE)" "go server" "$(abspath $(GO_SERVER_DIR)/go_server)" && \
 		ensure_stopped "$(RUST_SERVER_PID_FILE)" "rust server" "$(abspath $(RUST_SERVER_DIR)/target/release/rust_server)"
-	@$(MAKE) build-go-server build-rust-server build-client-tui
+	@$(MAKE) build-go-server build-rust-server build-client
 	@$(HELPERS) info_log "starting Rust server in background"
 	@(cd $(RUST_SERVER_DIR) && exec ./target/release/rust_server $(RUST_SERVER_ARGS)) < /dev/null > /dev/null 2>&1 & \
 		echo $$! > "$(RUST_SERVER_PID_FILE)"
@@ -111,7 +111,7 @@ run-server:
 	@$(HELPERS) \
 		ensure_stopped "$(GO_SERVER_PID_FILE)" "go server" "$(abspath $(GO_SERVER_DIR)/go_server)" && \
 		ensure_stopped "$(RUST_SERVER_PID_FILE)" "rust server" "$(abspath $(RUST_SERVER_DIR)/target/release/rust_server)"
-	@$(MAKE) build-go-server build-rust-server build-client-tui
+	@$(MAKE) build-go-server build-rust-server build-client
 	@$(HELPERS) info_log "starting Rust server in background"
 	@(cd $(RUST_SERVER_DIR) && exec ./target/release/rust_server $(RUST_SERVER_ARGS)) < /dev/null > /dev/null 2>&1 & \
 		echo $$! > "$(RUST_SERVER_PID_FILE)"
@@ -138,7 +138,7 @@ clean:
 
 # CLIENT
 
-build-client-tui:
+build-client:
 	@$(HELPERS) ensure_cargo && info_log "building TUI client"
 	@cd $(CLIENT_DIR) && $(CARGO) build --package tui --release
 
@@ -146,7 +146,7 @@ build-client-gui:
 	@$(HELPERS) ensure_cargo && ensure_gui && info_log "building GUI client"
 	@cd $(CLIENT_DIR) && $(CARGO) build --package gui --release
 
-run-client-tui: build-client-tui
+run-client: build-client
 	@$(HELPERS) info_log "running TUI client"
 	@cd $(CLIENT_DIR) && ./target/release/tui $(CLIENT_ARGS)
 
