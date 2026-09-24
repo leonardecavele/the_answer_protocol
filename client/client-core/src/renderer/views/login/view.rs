@@ -1,4 +1,3 @@
-use std::time::Duration;
 use crate::collections::Step;
 use crate::events::{ApplicationEvent, ConnectionEvent};
 use crate::notification::{Notification, NotificationDuration, NotificationTopic};
@@ -9,6 +8,7 @@ use crossterm::event::{Event as CrosstermEvent, KeyCode, KeyEvent, MouseEvent, M
 use mpsc::Sender;
 use ratatui::Frame;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
+use std::time::Duration;
 use tokio::sync::mpsc;
 
 const MAX_PLAYER_NAME_LENGTH: usize = 20;
@@ -214,7 +214,9 @@ impl Lifecycle for LoginView {
                         state.ui.notifications.push(
                             Notification::info("Connecting...")
                                 .with_topic(NotificationTopic::Connection)
-                                .with_duration(NotificationDuration::Finite(Duration::from_secs(2))),
+                                .with_duration(NotificationDuration::Finite(Duration::from_secs(
+                                    2,
+                                ))),
                         );
                         let _ = event_sender.try_send(ApplicationEvent::Connection(
                             ConnectionEvent::AttemptStarted {
