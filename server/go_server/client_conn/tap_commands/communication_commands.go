@@ -26,6 +26,7 @@ func chatGroupScope(client *session.Client, message string, _ *game_conn.GameSer
 	}
 
 	group.BroadcastEvent(protocol.EventBatch{
+		IgnoredPlayers: []string{client.Username},
 		Events: []protocol.Event{
 			{
 				EmittedBy: client.Username,
@@ -39,6 +40,7 @@ func chatGroupScope(client *session.Client, message string, _ *game_conn.GameSer
 
 func chatGlobalScope(client *session.Client, message string, _ *game_conn.GameServerManager) (string, error) {
 	client.Room.BroadcastEvent(protocol.EventBatch{
+		IgnoredPlayers: []string{client.Username},
 		Events: []protocol.Event{
 			{
 				EmittedBy: client.Username,
@@ -74,6 +76,9 @@ func chatRoomScope(client *session.Client, message string, gameServerManager *ga
 	routed := make(map[string]struct{}, len(usernames))
 	for _, username := range usernames {
 		username = strings.ToUpper(strings.TrimSpace(username))
+		if username == "" || strings.EqualFold(username, client.Username) {
+			continue
+		}
 		if _, ok := routed[username]; ok {
 			continue
 		}
@@ -96,15 +101,6 @@ func chatPrivateScope(client *session.Client, message string, _ *game_conn.GameS
 	}
 
 	ok = client.Room.RouteEvent(username, protocol.Event{
-		EmittedBy: client.Username,
-		EventName: "PRIVATE CHAT",
-		Data:      privateMessage,
-	})
-	if !ok {
-		return protocol.ResponseNoSuchUser, nil
-	}
-
-	ok = client.Room.RouteEvent(client.Username, protocol.Event{
 		EmittedBy: client.Username,
 		EventName: "PRIVATE CHAT",
 		Data:      privateMessage,
