@@ -26,7 +26,6 @@ func chatGroupScope(client *session.Client, message string, _ *game_conn.GameSer
 	}
 
 	group.BroadcastEvent(protocol.EventBatch{
-		IgnoredPlayers: []string{client.Username},
 		Events: []protocol.Event{
 			{
 				EmittedBy: client.Username,
@@ -40,7 +39,6 @@ func chatGroupScope(client *session.Client, message string, _ *game_conn.GameSer
 
 func chatGlobalScope(client *session.Client, message string, _ *game_conn.GameServerManager) (string, error) {
 	client.Room.BroadcastEvent(protocol.EventBatch{
-		IgnoredPlayers: []string{client.Username},
 		Events: []protocol.Event{
 			{
 				EmittedBy: client.Username,
