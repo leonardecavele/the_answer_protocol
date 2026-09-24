@@ -40,7 +40,7 @@ impl Player {
         }
     }
     pub fn reset(&mut self) {
-        self.hp = PLAYER_STARTING_HP;
+        self.hp = 75; // PLAYER_STARTING_HP;
         self.max_hp = PLAYER_STARTING_MAX_HP;
         self.inventory = Inventory::new();
         self.current_room = PLAYER_ROOM_SPAWN.to_owned();
