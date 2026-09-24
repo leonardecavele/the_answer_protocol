@@ -63,7 +63,7 @@ pub enum ErrorCode {
     RoomNotFound,
     MissingItem,
     NotUsable,
-    TooBigData
+    TooBigData,
 }
 
 impl ErrorCode {
