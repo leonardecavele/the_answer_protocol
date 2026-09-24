@@ -46,7 +46,7 @@ flowchart LR
 Clients connect only to the Go gateway. Go owns public protocol framing,
 authentication, connection limits, chat, groups, and translation between TAP
 and the internal JSON protocol. Rust owns the authoritative world state and
-runs its deterministic game loop at 10 Hz. This separation keeps concurrent
+runs its deterministic game loop at 20 Hz. This separation keeps concurrent
 networking independent from gameplay simulation and native code evaluation.
 
 Go uses a goroutine per accepted client, independent event writers, protected
@@ -67,7 +67,7 @@ and lifecycle details are documented in the [TUI](client/tui/README.md) and
 ### Requirements
 
 - Go 1.18 or newer
-- Rust toolchain with Cargo and Rust 2024 edition support
+- Rust 1.91 or newer, with Cargo
 - Linux on `x86_64` or `aarch64`
 - `/usr/bin/clang`
 - `/usr/bin/bwrap`
@@ -98,6 +98,10 @@ make run \
 
 Both clients accept `--ip`, `--port`, and an optional `--assets <directory>`
 through `CLIENT_ARGS`.
+
+For the subject's CLI-client requirement, this project implements option 2:
+an interactive terminal user interface (TUI), launched with
+`make run-client-tui` (and by the default `make run`).
 
 Run one component at a time:
 
@@ -146,17 +150,21 @@ The project makes the following documented implementation choices:
 | Area | Choice and rationale |
 | --- | --- |
 | Line endings | Emit `LF` and accept either `LF` or `CRLF` for common client compatibility. |
-| Frame size | Accept up to 4,096 bytes to carry JSON state and encoded C submissions with a fixed bound. |
-| Usernames | Use 3–20 ASCII identifier characters and canonical uppercase lookup to avoid ambiguous identities. |
+| Frame size | Accept client frames up to 65,536 bytes to carry JSON state and encoded C submissions with a fixed bound. |
+| Usernames | Require 3–20 ASCII characters: an ASCII letter first, then ASCII letters, digits, `_`, or `-`; preserve the submitted case while comparing names case-insensitively. |
 | Server split | Keep public TAP in Go and use private single-line JSON to isolate the Rust game engine. |
 | Chat | Add private messages alongside the RFC global, room, and group scopes. |
 | Groups | Limit groups to five players, expire invitations after five minutes, and accept `GROUP QUIT` as a leave alias. |
+| Group leadership | Reserve grouped `MOVE` and `QUEST` commands for the group leader; members follow a leader's move and receive eligible grouped quests. |
+| Group locality | Require the inviter and invitee to be in the same room for `GROUP INVITE`, and the joining player and leader to be in the same room for `GROUP JOIN`. |
+| Session lifecycle | Return `ERR 400 NOT_CONNECTED` when `QUIT` is sent before a successful `CONNECT`. |
 | Items | Support unique instances, identifiers or exact names, `USE` behaviors, expiry, and renewable wrap spawns. |
 | Combat | Add cooperative `FIGHT CREATE` and `FIGHT ATTACK` C challenges with asynchronous events. |
 
 ## Combat System
 
-`ATTACK` provides the basic RFC direct-damage operation. The main turn-based
+`ATTACK` deals exactly 1 damage and gives the NPC a 10% chance to counterattack
+for 1 damage. The main turn-based
 system uses `FIGHT CREATE` and `FIGHT ATTACK`: a solo player or group leader
 starts a fight, then every participant receives one C submission turn. There
 is no fixed initiative queue; completed sandbox evaluations are applied by the

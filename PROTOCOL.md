@@ -22,7 +22,7 @@ error-name    = 1*(ALPHA / DIGIT / "_")
 utf8-nonascii = <a valid non-ASCII UTF-8 sequence>
 ```
 
-Client frames, including the line ending, are limited to 4,096 bytes. A client
+Client frames, including the line ending, are limited to 65,536 bytes. A client
 keeps at most one command awaiting an `OK` or `ERR` response while continuing
 to process any interleaved `EVT` frames.
 
@@ -47,7 +47,8 @@ The client then has 30 seconds to authenticate with `CONNECT`. A username:
 - starts with an ASCII letter;
 - contains only ASCII letters, digits, `_`, or `-` after the first character.
 
-Accepted usernames are canonicalized to uppercase.
+Accepted usernames retain their submitted case. Identity lookup and uniqueness
+checks are case-insensitive.
 
 ## Commands
 
@@ -119,6 +120,8 @@ OK bye
 
 Releases the player's world and group state, notifies the other clients, and
 closes the connection.
+
+Before a successful `CONNECT`, `QUIT` returns `ERR 400 NOT_CONNECTED`.
 
 ### Chat
 
@@ -262,8 +265,10 @@ Example payload:
 }
 ```
 
-This is the direct-damage combat command. The code-challenge combat flow uses
-`FIGHT` instead.
+This direct-damage command deals exactly 1 damage. After each attack, the NPC
+has a 10% chance to counterattack for 1 damage; that retaliation is delivered
+as an asynchronous `EVT COUNTER ATTACK` event. The code-challenge combat flow
+uses `FIGHT` instead.
 
 #### STATUS
 
@@ -505,8 +510,8 @@ event remains an event and is exposed by the Rust client as
 RFC 42TAP intentionally leaves several gameplay and representation decisions
 to implementations. This project standardizes them as follows:
 
-- The public endpoint uses protocol version 1 and canonical uppercase player
-  names.
+- The public endpoint uses protocol version 1, preserves player-name case, and
+  performs case-insensitive identity lookup and uniqueness checks.
 - Resource and room identifiers use `<numeric-id>.<name>` where an identifier
   is needed on the wire.
 - `LOOK`, `STATUS`, quest responses, inventory contents, and fight payloads use
