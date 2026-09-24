@@ -106,6 +106,19 @@ run:
 	@$(HELPERS) info_log "starting TUI client"
 	@cd $(CLIENT_DIR) && exec ./target/release/tui $(CLIENT_ARGS)
 
+run-server:
+	@mkdir -p "$(RUN_DIR)"
+	@$(HELPERS) \
+		ensure_stopped "$(GO_SERVER_PID_FILE)" "go server" "$(abspath $(GO_SERVER_DIR)/go_server)" && \
+		ensure_stopped "$(RUST_SERVER_PID_FILE)" "rust server" "$(abspath $(RUST_SERVER_DIR)/target/release/rust_server)"
+	@$(MAKE) build-go-server build-rust-server build-client-tui
+	@$(HELPERS) info_log "starting Rust server in background"
+	@(cd $(RUST_SERVER_DIR) && exec ./target/release/rust_server $(RUST_SERVER_ARGS)) < /dev/null > /dev/null 2>&1 & \
+		echo $$! > "$(RUST_SERVER_PID_FILE)"
+	@$(HELPERS) info_log "starting Go server in background"
+	@(cd $(GO_SERVER_DIR) && exec ./go_server $(GO_SERVER_ARGS)) < /dev/null > /dev/null 2>&1 & \
+		echo $$! > "$(GO_SERVER_PID_FILE)"
+
 stop:
 	@$(HELPERS) \
 		stop_process "$(GO_SERVER_PID_FILE)" "go server" "$(abspath $(GO_SERVER_DIR)/go_server)"; \
